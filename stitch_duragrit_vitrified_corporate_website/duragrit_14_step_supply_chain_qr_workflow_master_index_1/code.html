@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DuraGrit - Dealer Carton Inward &amp; Barcode Receipt Verification Portal (Step 11 / 14)</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            terracotta: {
+              50: '#FDF6F4',
+              100: '#FBECE8',
+              500: '#E05338',
+              600: '#C84B31',
+              700: '#A93B24',
+              800: '#872E1B'
+            },
+            morbi: {
+              dark: '#131B2E',
+              slate: '#1E293B',
+              surface: '#F8FAFC',
+              border: '#E2E8F0',
+              accent: '#0EA5E9'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+  </style>
+<meta content="web_dashboard" name="shell-type"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+<!-- BEGIN: TopStatusBar -->
+<div class="bg-morbi-dark text-slate-300 text-xs px-6 py-1.5 flex items-center justify-between border-b border-slate-800" data-purpose="top-status-bar"><div class="flex items-center space-x-3"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span><span class="font-medium text-slate-200">Dealer Inward Verification Stream: Active</span><span class="text-slate-400 ml-1">(Morbi Central Cloud Synced)</span></span><span class="text-slate-600">|</span><span class="text-slate-300">Active Verification Station: <span class="text-emerald-400 font-medium">Scanner Terminal #03</span></span><span class="text-slate-600">|</span><span class="text-slate-300">System Status: <span class="text-emerald-400 font-medium">Online</span></span></div>
+<div class="flex items-center space-x-2">
+<span class="bg-terracotta-600 text-white font-bold px-2 py-0.5 rounded text-[11px] tracking-wide uppercase shadow-sm">STEP 11 / 14</span>
+</div></div>
+<!-- END: TopStatusBar -->
+<!-- BEGIN: MainHeader -->
+<header class="bg-white border-b border-morbi-border sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between shadow-xs" data-purpose="site-header">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+<span class="text-2xl font-black tracking-tight text-terracotta-600">DURAGRIT</span>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">VITRIFIED</span>
+</div>
+<div class="h-4 w-px bg-slate-300"></div>
+<span class="text-xs font-semibold tracking-wider text-slate-500 uppercase">RETAIL &amp; QR MANAGE</span>
+</div>
+<!-- Header Actions & User Profile -->
+<div class="flex items-center space-x-5">
+<!-- Notification Icon -->
+<button class="relative text-slate-500 hover:text-slate-700 transition-colors p-1" title="System Notifications">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="absolute top-1 right-1 w-2 h-2 bg-terracotta-500 rounded-full ring-2 ring-white"></span>
+</button>
+<!-- Profile Card Dropdown -->
+<div class="flex items-center space-x-3 pl-2 border-l border-slate-200">
+<div class="w-8 h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center tracking-tight">
+          RK
+        </div>
+<div class="flex flex-col text-left">
+<div class="flex items-center space-x-1">
+<span class="text-xs font-semibold text-slate-800 leading-none">Admin</span>
+<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-[10px] text-slate-400 font-medium">Super Admin</span>
+</div>
+<button class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 ml-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainDashboardLayout -->
+<div class="flex flex-1 overflow-hidden">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-64 bg-white border-r border-morbi-border flex flex-col justify-between py-5 shrink-0" data-purpose="sidebar-navigation">
+<nav class="space-y-1 px-3">
+<!-- 1. User Manage -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>1. User Manage</span>
+</a>
+<!-- 2. Product Manage (Active Parent / Focus on Step 09 Dispatch) -->
+<div class="bg-terracotta-50/80 rounded-lg p-1.5 border border-terracotta-100">
+<a class="flex items-center space-x-3 px-2 py-1.5 rounded-md text-xs font-semibold text-terracotta-700" href="#">
+<svg class="w-4 h-4 text-terracotta-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>2. Product Manage</span>
+</a>
+<!-- Sub-items inside active section -->
+<div class="mt-1 pl-7 pr-1 space-y-1"><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Overview Catalog</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Batch Serials &amp; Dispatch</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Carton &amp; Dispatch Allocation</a><a class="block py-1 text-[11px] font-semibold text-terracotta-600 border-l-2 border-terracotta-600 pl-2" href="#">Carton Inward &amp; Receiving</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Roll Feeder Archive</a></div>
+</div>
+<!-- 3. Cashback Request -->
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center space-x-3">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>3. Cashback Request</span>
+</div>
+<span class="bg-terracotta-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">18</span>
+</a>
+<!-- 4. Report -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>4. Report</span>
+</a>
+</nav>
+<!-- Bottom Sign Out -->
+<div class="px-4 border-t border-slate-100 pt-4">
+<a class="flex items-center space-x-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>Sign out</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- BEGIN: MainContentArea -->
+<main class="flex-1 bg-slate-50 overflow-y-auto px-8 py-7" data-purpose="primary-workspace"><div class="flex flex-col w-full space-y-6">
+<!-- TOP HEADER & TELEMETRY STRIP -->
+<div class="bg-white rounded-xl shadow-sm p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative overflow-hidden">
+<div class="absolute -right-16 -top-16 w-56 h-56 bg-terracotta-500/5 rounded-full pointer-events-none blur-2xl"></div>
+<div class="space-y-2 max-w-3xl">
+<div class="flex items-center flex-wrap gap-2.5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5"></span>
+          WORKFLOW STATUS: 14 / 14 STAGES FULLY OPERATIONAL (100% HEALTHY)
+        </span>
+<span class="text-slate-300">•</span>
+<span class="text-xs font-semibold text-slate-500 tracking-wide uppercase">FY 2024-25 Q3 MORBI CORE</span>
+</div>
+<h1 class="text-2xl lg:text-3xl font-black tracking-tight text-morbi-dark">
+        14-Step Supply Chain, QR Traceability &amp; Settlement Master Index
+      </h1>
+<p class="text-xs md:text-sm text-slate-500 leading-relaxed">
+        Complete operational directory and architectural overview across manufacturing kiln allocation, logistics inward/outward, contractor cash incentives, and fiscal close.
+      </p>
+</div>
+<!-- Quick Actions -->
+<div class="flex items-center flex-wrap gap-2.5 shrink-0">
+<button class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Export Dossier (PDF)</span>
+</button>
+<button class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">troubleshoot</span>
+<span>Run E2E Audit</span>
+</button>
+<button class="px-4 py-2 bg-terracotta-600 hover:bg-terracotta-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all hover:shadow-md inline-flex items-center space-x-1.5 cursor-pointer" onclick="document.getElementById('sim-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-[16px]">play_circle</span>
+<span>+ Launch Real-Time Simulation</span>
+</button>
+</div>
+</div>
+<!-- EXECUTIVE SUMMARY KPIS -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+<!-- Card 1 -->
+<div class="bg-white rounded-xl shadow-sm p-5 relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Workflow Velocity</span>
+<div class="text-2xl font-black text-morbi-dark mt-1">14 / 14 Steps</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">sync_saved_locally</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-xs">
+<span class="inline-flex items-center font-bold text-emerald-600">
+<span class="material-symbols-outlined text-[14px] mr-1">check_circle</span>
+          100% End-to-End Verified
+        </span>
+<span class="text-slate-400 font-medium truncate ml-2">Kiln Feeder to RBI UPI</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-xl shadow-sm p-5 relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Lifetime QR Redemptions</span>
+<div class="text-2xl font-black text-morbi-dark mt-1">1,940,200</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-terracotta-50 text-terracotta-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-xs">
+<span class="inline-flex items-center font-bold text-emerald-600">
+<span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>
+          +18.4% MoM
+        </span>
+<span class="text-slate-500 font-mono">65,230 Today</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-xl shadow-sm p-5 relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Fiscal Recon &amp; TDS</span>
+<div class="text-2xl font-black text-morbi-dark mt-1">₹ 48.92 L</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-sky-50 text-morbi-accent flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-xs">
+<span class="inline-flex items-center font-bold text-morbi-slate">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+          Zero Delta (₹ 0.00)
+        </span>
+<span class="text-terracotta-700 font-semibold">Sec 194R Compliant</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white rounded-xl shadow-sm p-5 relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Anti-Fraud Shield Efficacy</span>
+<div class="text-2xl font-black text-morbi-dark mt-1">99.8%</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">shield</span>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-xs">
+<span class="text-rose-600 font-bold">14 Forfeited (₹46.7k)</span>
+<span class="text-slate-400 font-mono">Node #07 Shield</span>
+</div>
+</div>
+</div>
+<!-- MASTER WORKFLOW PIPELINE VISUALIZATION (4 PHASES) -->
+<div class="bg-white rounded-xl shadow-sm p-6 space-y-5">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+<div>
+<div class="text-[11px] font-bold uppercase tracking-wider text-terracotta-600">Architectural Cadence</div>
+<h2 class="text-base font-bold text-morbi-dark">4-Phase End-to-End Industrial Traceability Pipeline</h2>
+</div>
+<div class="flex items-center space-x-3 text-xs text-slate-500">
+<span class="inline-flex items-center">
+<span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span> All 14 Nodes Morbi Synced
+        </span>
+<span class="text-slate-300">•</span>
+<span class="font-mono text-slate-400">Latency: 14ms</span>
+</div>
+</div>
+<!-- Phase Stepper Ribbon -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+<!-- Phase 1 -->
+<div class="bg-slate-50 hover:bg-terracotta-50/40 transition-colors p-4 rounded-xl flex flex-col justify-between relative group">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-terracotta-100 text-terracotta-700 uppercase">Phase 1</span>
+<span class="material-symbols-outlined text-emerald-500 text-sm">verified</span>
+</div>
+<div class="font-bold text-xs text-morbi-dark">Manufacturing &amp; Roll Feeder</div>
+<div class="text-[11px] text-slate-500 mt-1">Steps 01, 02, 03, 04, 08, 09</div>
+</div>
+<div class="mt-4">
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-terracotta-600 h-1.5 rounded-full w-full"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] text-slate-400 mt-1.5 font-mono">
+<span>6 Modules</span>
+<span class="text-emerald-600 font-bold">100% Synced</span>
+</div>
+</div>
+</div>
+<!-- Phase 2 -->
+<div class="bg-slate-50 hover:bg-terracotta-50/40 transition-colors p-4 rounded-xl flex flex-col justify-between relative group">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-sky-100 text-sky-800 uppercase">Phase 2</span>
+<span class="material-symbols-outlined text-emerald-500 text-sm">verified</span>
+</div>
+<div class="font-bold text-xs text-morbi-dark">Warehouse Logistics &amp; Inward</div>
+<div class="text-[11px] text-slate-500 mt-1">Steps 05, 10, 11</div>
+</div>
+<div class="mt-4">
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-sky-600 h-1.5 rounded-full w-full"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] text-slate-400 mt-1.5 font-mono">
+<span>3 Modules</span>
+<span class="text-emerald-600 font-bold">100% Synced</span>
+</div>
+</div>
+</div>
+<!-- Phase 3 -->
+<div class="bg-slate-50 hover:bg-terracotta-50/40 transition-colors p-4 rounded-xl flex flex-col justify-between relative group">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-800 uppercase">Phase 3</span>
+<span class="material-symbols-outlined text-emerald-500 text-sm">verified</span>
+</div>
+<div class="font-bold text-xs text-morbi-dark">Contractor Loyalty &amp; Instant UPI</div>
+<div class="text-[11px] text-slate-500 mt-1">Steps 06, 12</div>
+</div>
+<div class="mt-4">
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-amber-500 h-1.5 rounded-full w-full"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] text-slate-400 mt-1.5 font-mono">
+<span>2 Modules</span>
+<span class="text-emerald-600 font-bold">100% Synced</span>
+</div>
+</div>
+</div>
+<!-- Phase 4 -->
+<div class="bg-slate-50 hover:bg-terracotta-50/40 transition-colors p-4 rounded-xl flex flex-col justify-between relative group">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-100 text-purple-800 uppercase">Phase 4</span>
+<span class="material-symbols-outlined text-emerald-500 text-sm">verified</span>
+</div>
+<div class="font-bold text-xs text-morbi-dark">Anti-Fraud &amp; Fiscal Close</div>
+<div class="text-[11px] text-slate-500 mt-1">Steps 07, 13, 14</div>
+</div>
+<div class="mt-4">
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-purple-600 h-1.5 rounded-full w-full"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] text-slate-400 mt-1.5 font-mono">
+<span>3 Modules</span>
+<span class="text-emerald-600 font-bold">100% Synced</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- FILTER & SEARCH BAR -->
+<div class="bg-white rounded-xl shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center space-x-2 w-full sm:w-auto">
+<span class="text-xs font-bold uppercase text-slate-400 tracking-wider">Filter Phase:</span>
+<div class="inline-flex rounded-lg bg-slate-100 p-1 text-xs font-semibold" id="phase-filter-group">
+<button class="phase-btn active px-3 py-1 rounded bg-white text-morbi-dark shadow-xs transition-all" onclick="filterSteps('all')">All (14)</button>
+<button class="phase-btn px-3 py-1 rounded text-slate-500 hover:text-slate-800 transition-all" onclick="filterSteps('p1')">Manufacturing</button>
+<button class="phase-btn px-3 py-1 rounded text-slate-500 hover:text-slate-800 transition-all" onclick="filterSteps('p2')">Logistics</button>
+<button class="phase-btn px-3 py-1 rounded text-slate-500 hover:text-slate-800 transition-all" onclick="filterSteps('p3')">Disbursal</button>
+<button class="phase-btn px-3 py-1 rounded text-slate-500 hover:text-slate-800 transition-all" onclick="filterSteps('p4')">Audit &amp; Fiscal</button>
+</div>
+</div>
+<div class="relative w-full sm:w-72">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 bg-slate-50 text-xs rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white transition-colors" id="step-search" oninput="searchWorkflowSteps()" placeholder="Search step title, telemetry or function..." type="text"/>
+</div>
+</div>
+<!-- COMPLETE 14-STEP WORKFLOW DIRECTORY & INTERACTIVE DRILL-DOWN GRID -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="workflow-grid">
+<!-- STEP 01 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p1" data-search="raw tile kiln batch stamping morbi central spectrometry lot generation">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-terracotta-100 text-terracotta-700 font-mono font-extrabold text-xs flex items-center justify-center">01</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 1 • Mfg</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Raw Tile Kiln Batch Stamping</h3>
+<p class="text-xs text-slate-500 mt-1.5">Morbi Central Kiln #01 &amp; #02 Spectrometry, raw clay verification, and optical lot index generation.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Active Kiln Telemetry:</span>
+<span class="font-mono font-semibold text-slate-800">1,215°C • 98.4% Yield</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Current Batch Code:</span>
+<span class="font-mono text-terracotta-600 font-semibold">KLN-2024-Q3-094</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 01 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 01: Raw Tile Kiln Batch Stamping', 'Continuous optical inspection and temperature-regulated batch marking at Kiln 01/02. Integrated with spectrometer laser scanners.', '1,215°C', '98.4% Yield', 'KLN-2024-Q3-094')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 02 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p1" data-search="roll feeder cryptographic token allocation dual hsm keyring seed laser etching line">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-terracotta-100 text-terracotta-700 font-mono font-extrabold text-xs flex items-center justify-center">02</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 1 • Crypto</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Roll Feeder Cryptographic Token Allocation</h3>
+<p class="text-xs text-slate-500 mt-1.5">Dual HSM Keyring seed generation and high-speed synchronized laser etching line.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Laser Etch Velocity:</span>
+<span class="font-mono font-semibold text-slate-800">120 Tokens / Min</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>HSM Entropy Status:</span>
+<span class="font-mono text-emerald-600 font-semibold">256-bit ECDSA OK</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 02 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 02: Roll Feeder Cryptographic Token Allocation', 'Generation of dual-layer encrypted tokens via FIPS 140-2 Level 3 HSM. Synced directly into feeder roll matrix.', '120 Tokens/Min', 'Entropy 100%', 'HSM-SEED-POOL-V2')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 03 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p1" data-search="master carton 2d matrix aggregation carton-level qr feeder association">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-terracotta-100 text-terracotta-700 font-mono font-extrabold text-xs flex items-center justify-center">03</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 1 • Aggregation</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Master Carton 2D Matrix Aggregation</h3>
+<p class="text-xs text-slate-500 mt-1.5">Carton-level parent-child QR linking tile tokens with outer shipping master carton labels.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Aggregation Ratio:</span>
+<span class="font-mono font-semibold text-slate-800">4 Tiles : 1 Carton</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Orphan Detection:</span>
+<span class="font-mono text-emerald-600 font-semibold">0 Unassigned</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 03 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 03: Master Carton 2D Matrix Aggregation', 'High-density 2D Datamatrix aggregation tying individual vitrified tile serials to outer 600x1200 shipping box.', '4:1 Ratio', '0 Orphans', 'PACK-LINE-04')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 04 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p1" data-search="regional depot dispatch gate pass e-way bill generation logistics telemetry">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-terracotta-100 text-terracotta-700 font-mono font-extrabold text-xs flex items-center justify-center">04</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 1 • Outbound</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Regional Depot Dispatch Gate Pass</h3>
+<p class="text-xs text-slate-500 mt-1.5">Automatic E-Way Bill generation, RFID toll tag binding, and live outward vehicle dispatch gate pass.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Depot Clearance:</span>
+<span class="font-mono font-semibold text-slate-800">18 Trucks Loaded</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>NIC E-Way Bill API:</span>
+<span class="font-mono text-emerald-600 font-semibold">Synced (100%)</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 04 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 04: Regional Depot Dispatch Gate Pass', 'Factory gate exit verification linking RFID boom barrier, gross weighbridge measurement, and government E-Way Bill.', '18 Trucks Cleared', 'API Status OK', 'NIC-GATE-GW-01')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 05 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p2" data-search="user partner directory management contractor kyc authorized dealer registry 1428 masons">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 font-mono font-extrabold text-xs flex items-center justify-center">05</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 2 • KYC</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Active Synced
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">User &amp; Partner Directory Management</h3>
+<p class="text-xs text-slate-500 mt-1.5">Contractor KYC authentication, Authorized Dealer network registry, and Mason skill tier profiling.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Active Mason Pool:</span>
+<span class="font-mono font-semibold text-slate-800">1,428 Verified</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Aadhaar E-KYC Rate:</span>
+<span class="font-mono text-emerald-600 font-semibold">99.1% Matched</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 05 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 05: User &amp; Partner Directory Management', 'Identity registry verifying PAN, Aadhaar OTP, and geolocated workshop addresses for all participating contractors.', '1,428 Masons', 'KYC 99.1%', 'DIR-USER-COR-09')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 06 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p3" data-search="contractor cashback requests payout batch bulk disbursement engine wallet ledger">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 font-mono font-extrabold text-xs flex items-center justify-center">06</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 3 • Payout</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Contractor Cashback Requests &amp; Payout Batch</h3>
+<p class="text-xs text-slate-500 mt-1.5">Bulk disbursement queuing engine, wallet ledger credits, and payout authorization batches.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Pending Payout Queue:</span>
+<span class="font-mono font-semibold text-slate-800">18 Batches (₹1.84L)</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>NPCI Switch Status:</span>
+<span class="font-mono text-emerald-600 font-semibold">Operational (0.8s)</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 06 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 06: Contractor Cashback Requests &amp; Payout Batch', 'Real-time aggregator queuing validated QR claims into structured micro-batches for immediate treasury settlement.', '18 Pending Batches', 'Latency 0.8s', 'PAY-ENG-BATCH-14')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 07 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p4" data-search="enterprise reports territory audits analytics regional heatmaps scanner fleet telemetry">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-purple-100 text-purple-800 font-mono font-extrabold text-xs flex items-center justify-center">07</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 4 • BI &amp; Audit</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Active Synced
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Enterprise Reports, Territory Audits &amp; Analytics</h3>
+<p class="text-xs text-slate-500 mt-1.5">Regional market redemption heatmaps, dealer inward velocity, and scanner fleet health telemetry.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Territories Monitored:</span>
+<span class="font-mono font-semibold text-slate-800">42 Zones (India)</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Scanner Terminal Fleet:</span>
+<span class="font-mono text-emerald-600 font-semibold">128/128 Active</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 07 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 07: Enterprise Reports, Territory Audits &amp; Analytics', 'Comprehensive executive telemetry analyzing spatial redemption velocity, fraud hotspots, and seasonal dealer demand.', '42 Zones', 'Fleet 100% OK', 'REP-BI-AGG-MORBI')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 08 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p1" data-search="product catalog qr allocation portal sku management pgvt gvt reward matrix batch run creator">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-terracotta-100 text-terracotta-700 font-mono font-extrabold text-xs flex items-center justify-center">08</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 1 • Catalog</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Product Catalog &amp; QR Allocation Portal</h3>
+<p class="text-xs text-slate-500 mt-1.5">Master SKU management, PGVT/GVT dimension incentive matrices, and batch run creator.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Active Tile SKUs:</span>
+<span class="font-mono font-semibold text-slate-800">328 Finishes</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Incentive Matrix:</span>
+<span class="font-mono text-terracotta-600 font-semibold">₹25 - ₹120 / Box</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 08 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 08: Product Catalog &amp; QR Allocation Portal', 'Defines point values for Premium Glazed Vitrified Tiles and generates high-volume QR payload structures.', '328 SKUs', 'Matrix Synced', 'CAT-SKU-RULE-88')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 09 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p1" data-search="batch serial registry qr dispatch line feeder roll feeder calibration line diagnostic sync">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-terracotta-100 text-terracotta-700 font-mono font-extrabold text-xs flex items-center justify-center">09</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 1 • Feeder</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Batch Serial Registry &amp; QR Dispatch Line</h3>
+<p class="text-xs text-slate-500 mt-1.5">Roll feeder motor calibration, optical label alignment, and line diagnostic health check.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Roll Reel Headroom:</span>
+<span class="font-mono font-semibold text-slate-800">4,200 Labels Left</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Nozzle Precision:</span>
+<span class="font-mono text-emerald-600 font-semibold">99.98% True Center</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 09 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 09: Batch Serial Registry &amp; QR Dispatch Line', 'Applies dynamic scratch-off surface labels to tiles moving at 3.2 m/s on the secondary conveyor line.', '4,200 Reels', '99.98% Calibrated', 'FDR-ROLL-ALIGN-09')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 10 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p2" data-search="distributor carton dispatch consignment gate pass outbound consignment manifest logistics tracking">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 font-mono font-extrabold text-xs flex items-center justify-center">10</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 2 • Dispatch</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Distributor Carton Dispatch &amp; Gate Pass</h3>
+<p class="text-xs text-slate-500 mt-1.5">Outbound consignment manifests, seal verification, and GPS logistics route activation.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>En Route Shipments:</span>
+<span class="font-mono font-semibold text-slate-800">22 Carriers Active</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Tamper Seal Index:</span>
+<span class="font-mono text-emerald-600 font-semibold">100% Intact</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 10 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 10: Distributor Carton Dispatch &amp; Gate Pass', 'Generates cryptographically signed delivery manifests for national interstate freight haulers.', '22 Active Trucks', '100% Seals Ok', 'LOG-DIST-MNF-10')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 11 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative ring-2 ring-terracotta-500/20" data-phase="p2" data-search="dealer carton inward barcode optical scanning dockside discrepancy reconciliation scanner terminal 03">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-terracotta-600 text-white font-mono font-extrabold text-xs flex items-center justify-center">11</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-terracotta-100 text-terracotta-800">Phase 2 • Current Station</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-terracotta-50 text-terracotta-700">
+<span class="w-1.5 h-1.5 rounded-full bg-terracotta-600 animate-ping mr-1.5"></span>Active Inward
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Dealer Carton Inward &amp; Barcode Verification</h3>
+<p class="text-xs text-slate-500 mt-1.5">Dockside barcode reading, inventory receipt verification, and zero-defect carton reconciliation.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Terminal #03 Scan Rate:</span>
+<span class="font-mono font-semibold text-slate-800">48 Cartons / Hr</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Mismatch Variance:</span>
+<span class="font-mono text-emerald-600 font-semibold">0.00% (Balanced)</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 11 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 11: Dealer Carton Inward &amp; Barcode Receipt Verification', 'Primary portal station for authorized dealerships to log inward shipments and unlock contractor QR claim eligibility.', '48 Cartons/Hr', 'Delta 0.00%', 'TERMINAL-OPT-03')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 12 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p3" data-search="contractor scratch-off qr redemption upi disbursal aadhaar kyc match imps t+0 cash disbursal">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 font-mono font-extrabold text-xs flex items-center justify-center">12</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 3 • Redemption</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Live &amp; Verified
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Contractor Scratch-Off QR Redemption &amp; UPI</h3>
+<p class="text-xs text-slate-500 mt-1.5">Consumer mobile QR scan, instantaneous token burn, Aadhaar match, and instant IMPS cash disbursal.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Average Payout Speed:</span>
+<span class="font-mono font-semibold text-slate-800">1.4 Seconds (T+0)</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>NPCI IMPS Success:</span>
+<span class="font-mono text-emerald-600 font-semibold">99.94% First-Pass</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 12 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 12: Contractor Scratch-Off QR Redemption &amp; UPI Disbursal', 'Zero-latency mobile payouts directly to contractor VPA handles via partnered bank UPI integration.', '1.4s Payout', '99.94% NPCI', 'UPI-IMPS-RAIL-01')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 13 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p4" data-search="anti-fraud geofencing escrow quarantine audit velocity burst detection geofence mismatch escrow burn">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-purple-100 text-purple-800 font-mono font-extrabold text-xs flex items-center justify-center">13</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 4 • Anti-Fraud</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Active Shield
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Anti-Fraud Geofencing &amp; Quarantine Audit</h3>
+<p class="text-xs text-slate-500 mt-1.5">Burst scan detection, GPS dispatch mismatch quarantine, and cryptographic clawback vault.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Neural Shield Node:</span>
+<span class="font-mono font-semibold text-slate-800">v4.2 Active</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>Quarantine Isolation:</span>
+<span class="font-mono text-purple-600 font-semibold">14 Tokens Locked</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 13 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 13: Anti-Fraud Geofencing &amp; Escrow Quarantine Audit', 'Algorithmic anomaly detection isolating suspicious scan velocities (&gt;5 per min) or regional geofence violations.', 'AI v4.2 Active', '14 Quarantined', 'SHIELD-NEURAL-07')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STEP 14 -->
+<div class="step-card bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative" data-phase="p4" data-search="executive settlement ledger reconciliation fiscal close tds sec 194r dual hsm seal zero variance close">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-lg bg-purple-100 text-purple-800 font-mono font-extrabold text-xs flex items-center justify-center">14</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Phase 4 • EOD Close</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Fiscal Locked
+          </span>
+</div>
+<h3 class="text-sm font-bold text-morbi-dark leading-snug">Executive Settlement &amp; Fiscal EOD Close</h3>
+<p class="text-xs text-slate-500 mt-1.5">Section 194R statutory TDS withholding, dual HSM root key ledger lock, and zero-variance reconciliation.</p>
+<div class="mt-4 pt-3 space-y-1.5 bg-slate-50 p-2.5 rounded-lg text-[11px]">
+<div class="flex justify-between text-slate-500">
+<span>Settlement Ledger:</span>
+<span class="font-mono font-semibold text-slate-800">₹48,92,450.00</span>
+</div>
+<div class="flex justify-between text-slate-500">
+<span>EOD Variance Delta:</span>
+<span class="font-mono text-emerald-600 font-semibold">₹ 0.00 (Balanced)</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between">
+<span class="text-[11px] font-mono text-slate-400">Step 14 / 14</span>
+<button class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-700 inline-flex items-center space-x-1 cursor-pointer" onclick="openReviewModal('Step 14: Executive Settlement, Ledger Reconciliation &amp; Fiscal Close', 'Final end-of-day statutory ledger locking. Automated Sec 194R TDS withholding certificates issued to contractor PANs.', '₹48.92 Lakhs', 'Delta ₹0.00', 'HSM-EOD-CLOSE-2024')">
+<span>Review Node</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SECURITY & ARCHITECTURAL ATTESTATION FOOTER CONTAINER -->
+<div class="bg-morbi-dark text-slate-200 rounded-xl shadow-md p-6 lg:p-8 relative overflow-hidden">
+<div class="absolute -right-20 -bottom-20 w-80 h-80 bg-terracotta-600/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
+<div class="space-y-3 max-w-2xl">
+<div class="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-terracotta-500">
+<span class="material-symbols-outlined text-sm">security</span>
+<span>Enterprise Cryptographic Lineage &amp; Zero-Trust Architecture</span>
+</div>
+<h3 class="text-xl font-black text-white tracking-tight">Morbi Central Industrial Chain Orchestrator</h3>
+<p class="text-xs text-slate-400 leading-relaxed">
+          Every vitrified ceramic carton is verified via high-entropy 256-bit asymmetric cryptography from the kiln rolling line to the contractor's instant UPI settlement. Automated statutory tax compliance ensures audit-ready reconciliation across Indian states.
+        </p>
+<!-- Feature Pills -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+<div class="bg-morbi-slate/60 p-2.5 rounded-lg text-center">
+<div class="text-[10px] text-slate-400 font-medium">HSM Root</div>
+<div class="text-xs font-bold text-white mt-0.5">FIPS 140-2 L3</div>
+</div>
+<div class="bg-morbi-slate/60 p-2.5 rounded-lg text-center">
+<div class="text-[10px] text-slate-400 font-medium">Payment Rails</div>
+<div class="text-xs font-bold text-emerald-400 mt-0.5">NPCI IMPS 2.0</div>
+</div>
+<div class="bg-morbi-slate/60 p-2.5 rounded-lg text-center">
+<div class="text-[10px] text-slate-400 font-medium">Anomaly Shield</div>
+<div class="text-xs font-bold text-sky-400 mt-0.5">Neural v4.2</div>
+</div>
+<div class="bg-morbi-slate/60 p-2.5 rounded-lg text-center">
+<div class="text-[10px] text-slate-400 font-medium">TDS Withholding</div>
+<div class="text-xs font-bold text-amber-400 mt-0.5">Sec 194R Auto</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-2.5 shrink-0">
+<button class="px-4 py-2.5 bg-terracotta-600 hover:bg-terracotta-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors text-center inline-flex items-center justify-center space-x-2">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span>Download Architecture Dossier</span>
+</button>
+<button class="px-4 py-2.5 bg-morbi-slate hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors text-center inline-flex items-center justify-center space-x-2">
+<span class="material-symbols-outlined text-[16px]">key</span>
+<span>View HSM Keyring Ledger</span>
+</button>
+</div>
+</div>
+</div>
+<!-- INTERACTIVE NODE REVIEW MODAL -->
+<div class="fixed inset-0 z-50 bg-morbi-dark/60 backdrop-blur-xs flex items-center justify-center p-4 hidden" id="review-modal">
+<div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 relative">
+<div class="flex items-center justify-between pb-3">
+<h4 class="text-base font-bold text-morbi-dark" id="modal-title">Step Review</h4>
+<button class="text-slate-400 hover:text-slate-600 p-1" onclick="closeReviewModal()">
+<span class="material-symbols-outlined text-lg">close</span>
+</button>
+</div>
+<p class="text-xs text-slate-600 leading-relaxed" id="modal-desc"></p>
+<div class="bg-slate-50 rounded-lg p-3 space-y-2 text-xs">
+<div class="flex justify-between">
+<span class="text-slate-500">Metric A:</span>
+<span class="font-mono font-bold text-slate-800" id="modal-m1"></span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-500">Metric B:</span>
+<span class="font-mono font-bold text-slate-800" id="modal-m2"></span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-500">Hardware ID / Tag:</span>
+<span class="font-mono text-terracotta-600 font-bold" id="modal-tag"></span>
+</div>
+</div>
+<div class="flex justify-end space-x-2 pt-2">
+<button class="px-3.5 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold rounded-lg" onclick="closeReviewModal()">Close</button>
+<button class="px-3.5 py-1.5 bg-terracotta-600 hover:bg-terracotta-700 text-white text-xs font-bold rounded-lg shadow-sm" onclick="alert('Diagnostic packet pinged to Morbi Gateway successfully.'); closeReviewModal();">Ping Diagnostic</button>
+</div>
+</div>
+</div>
+<!-- REAL-TIME SIMULATION MODAL -->
+<div class="fixed inset-0 z-50 bg-morbi-dark/60 backdrop-blur-xs flex items-center justify-center p-4 hidden" id="sim-modal">
+<div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+<div class="flex items-center justify-between pb-2">
+<div class="flex items-center space-x-2">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+<h4 class="text-base font-bold text-morbi-dark">DuraGrit E2E Flow Simulation</h4>
+</div>
+<button class="text-slate-400 hover:text-slate-600 p-1" onclick="document.getElementById('sim-modal').classList.add('hidden')">
+<span class="material-symbols-outlined text-lg">close</span>
+</button>
+</div>
+<p class="text-xs text-slate-600">Simulating synthetic carton: <span class="font-mono text-terracotta-600 font-semibold">SIM-CTN-9942</span> from Kiln #01 to Mason UPI wallet.</p>
+<div class="space-y-2 py-2">
+<div class="flex items-center text-xs text-slate-700 space-x-2">
+<span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+<span>1. Kiln Batch Stamped</span>
+</div>
+<div class="flex items-center text-xs text-slate-700 space-x-2">
+<span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+<span>2. Dual HSM QR Token Laser-Etched</span>
+</div>
+<div class="flex items-center text-xs text-slate-700 space-x-2">
+<span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+<span>3. Dealer Terminal #03 Scanned &amp; Inwarded</span>
+</div>
+<div class="flex items-center text-xs text-slate-700 space-x-2">
+<span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+<span>4. Mason UPI Disbursed (₹75.00 IMPS)</span>
+</div>
+<div class="flex items-center text-xs text-slate-700 space-x-2">
+<span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+<span>5. TDS Withheld (₹7.50) &amp; HSM Sealed</span>
+</div>
+</div>
+<button class="w-full py-2 bg-terracotta-600 text-white text-xs font-bold rounded-lg hover:bg-terracotta-700 shadow-sm transition-colors" onclick="alert('Synthetic test cycle executed with 0 variances. All 14 stages confirmed healthy.'); document.getElementById('sim-modal').classList.add('hidden');">
+        Confirm &amp; Log Simulation Telemetry
+      </button>
+</div>
+</div>
+</div>
+<script>
+  function openReviewModal(title, desc, m1, m2, tag) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-desc').innerText = desc;
+    document.getElementById('modal-m1').innerText = m1;
+    document.getElementById('modal-m2').innerText = m2;
+    document.getElementById('modal-tag').innerText = tag;
+    document.getElementById('review-modal').classList.remove('hidden');
+  }
+
+  function closeReviewModal() {
+    document.getElementById('review-modal').classList.add('hidden');
+  }
+
+  function filterSteps(phase) {
+    const cards = document.querySelectorAll('.step-card');
+    const buttons = document.querySelectorAll('.phase-btn');
+
+    buttons.forEach(btn => {
+      btn.classList.remove('bg-white', 'text-morbi-dark', 'shadow-xs');
+      btn.classList.add('text-slate-500');
+    });
+
+    event.target.classList.add('bg-white', 'text-morbi-dark', 'shadow-xs');
+    event.target.classList.remove('text-slate-500');
+
+    cards.forEach(card => {
+      if (phase === 'all' || card.getAttribute('data-phase') === phase) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+
+  function searchWorkflowSteps() {
+    const q = document.getElementById('step-search').value.toLowerCase();
+    const cards = document.querySelectorAll('.step-card');
+
+    cards.forEach(card => {
+      const searchData = card.getAttribute('data-search') || '';
+      const text = card.innerText.toLowerCase();
+      if (searchData.includes(q) || text.includes(q)) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+</script></main>
+<!-- END: MainContentArea -->
+</div>
+<!-- END: MainDashboardLayout -->
+<!-- BEGIN: BottomGlobalFooter -->
+<footer class="bg-white border-t border-morbi-border px-8 py-2.5 flex items-center justify-between text-xs text-slate-500 shrink-0" data-purpose="site-footer">
+<div class="flex items-center space-x-2">
+<span class="font-bold tracking-tight text-slate-700">DURAGRIT VITRIFIED</span>
+<span class="text-slate-400">•</span>
+<span>Retail &amp; QR Portal Workflow</span>
+</div>
+<div class="font-medium text-slate-500">Step 11 of 14</div>
+</footer>
+<!-- END: BottomGlobalFooter -->
+</body></html>

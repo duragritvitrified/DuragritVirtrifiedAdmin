@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DuraGrit - Dealer Carton Inward &amp; Barcode Receipt Verification Portal (Step 11 / 14)</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            terracotta: {
+              50: '#FDF6F4',
+              100: '#FBECE8',
+              500: '#E05338',
+              600: '#C84B31',
+              700: '#A93B24',
+              800: '#872E1B'
+            },
+            morbi: {
+              dark: '#131B2E',
+              slate: '#1E293B',
+              surface: '#F8FAFC',
+              border: '#E2E8F0',
+              accent: '#0EA5E9'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+  </style>
+<meta content="web_dashboard" name="shell-type"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+<!-- BEGIN: TopStatusBar -->
+<div class="bg-morbi-dark text-slate-300 text-xs px-6 py-1.5 flex items-center justify-between border-b border-slate-800" data-purpose="top-status-bar"><div class="flex items-center space-x-3"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span><span class="font-medium text-slate-200">Dealer Inward Verification Stream: Active</span><span class="text-slate-400 ml-1">(Morbi Central Cloud Synced)</span></span><span class="text-slate-600">|</span><span class="text-slate-300">Active Verification Station: <span class="text-emerald-400 font-medium">Scanner Terminal #03</span></span><span class="text-slate-600">|</span><span class="text-slate-300">System Status: <span class="text-emerald-400 font-medium">Online</span></span></div>
+<div class="flex items-center space-x-2">
+<span class="bg-terracotta-600 text-white font-bold px-2 py-0.5 rounded text-[11px] tracking-wide uppercase shadow-sm">STEP 11 / 14</span>
+</div></div>
+<!-- END: TopStatusBar -->
+<!-- BEGIN: MainHeader -->
+<header class="bg-white border-b border-morbi-border sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between shadow-xs" data-purpose="site-header">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+<span class="text-2xl font-black tracking-tight text-terracotta-600">DURAGRIT</span>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">VITRIFIED</span>
+</div>
+<div class="h-4 w-px bg-slate-300"></div>
+<span class="text-xs font-semibold tracking-wider text-slate-500 uppercase">RETAIL &amp; QR MANAGE</span>
+</div>
+<!-- Header Actions & User Profile -->
+<div class="flex items-center space-x-5">
+<!-- Notification Icon -->
+<button class="relative text-slate-500 hover:text-slate-700 transition-colors p-1" title="System Notifications">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="absolute top-1 right-1 w-2 h-2 bg-terracotta-500 rounded-full ring-2 ring-white"></span>
+</button>
+<!-- Profile Card Dropdown -->
+<div class="flex items-center space-x-3 pl-2 border-l border-slate-200">
+<div class="w-8 h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center tracking-tight">
+          RK
+        </div>
+<div class="flex flex-col text-left">
+<div class="flex items-center space-x-1">
+<span class="text-xs font-semibold text-slate-800 leading-none">Admin</span>
+<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-[10px] text-slate-400 font-medium">Super Admin</span>
+</div>
+<button class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 ml-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainDashboardLayout -->
+<div class="flex flex-1 overflow-hidden">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-64 bg-white border-r border-morbi-border flex flex-col justify-between py-5 shrink-0" data-purpose="sidebar-navigation">
+<nav class="space-y-1 px-3">
+<!-- 1. User Manage -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>1. User Manage</span>
+</a>
+<!-- 2. Product Manage (Active Parent / Focus on Step 09 Dispatch) -->
+<div class="bg-terracotta-50/80 rounded-lg p-1.5 border border-terracotta-100">
+<a class="flex items-center space-x-3 px-2 py-1.5 rounded-md text-xs font-semibold text-terracotta-700" href="#">
+<svg class="w-4 h-4 text-terracotta-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>2. Product Manage</span>
+</a>
+<!-- Sub-items inside active section -->
+<div class="mt-1 pl-7 pr-1 space-y-1"><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Overview Catalog</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Batch Serials &amp; Dispatch</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Carton &amp; Dispatch Allocation</a><a class="block py-1 text-[11px] font-semibold text-terracotta-600 border-l-2 border-terracotta-600 pl-2" href="#">Carton Inward &amp; Receiving</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Roll Feeder Archive</a></div>
+</div>
+<!-- 3. Cashback Request -->
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center space-x-3">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>3. Cashback Request</span>
+</div>
+<span class="bg-terracotta-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">18</span>
+</a>
+<!-- 4. Report -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>4. Report</span>
+</a>
+</nav>
+<!-- Bottom Sign Out -->
+<div class="px-4 border-t border-slate-100 pt-4">
+<a class="flex items-center space-x-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>Sign out</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- BEGIN: MainContentArea -->
+<main class="flex-1 bg-slate-50 overflow-y-auto px-8 py-7" data-purpose="primary-workspace"><div class="flex flex-col w-full space-y-6">
+<!-- BEGIN: Top Telemetry Status Strip -->
+<div class="bg-slate-900 text-slate-300 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+<div class="flex items-center flex-wrap gap-4 text-xs font-mono">
+<div class="flex items-center space-x-2">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+<span class="text-slate-100 font-semibold tracking-wide">Contractor QR Scan Stream:</span>
+<span class="text-emerald-400 font-medium">Active (UPI Immediate Payout Switch Online)</span>
+</div>
+<span class="text-slate-600 hidden md:inline">|</span>
+<div class="flex items-center space-x-1.5 text-slate-300">
+<span class="material-symbols-outlined text-sm text-sky-400">account_balance</span>
+<span class="text-slate-400">Active Gateway:</span>
+<span class="text-slate-100 font-semibold">NPCI / RazorpayX Payout Node #04</span>
+</div>
+<span class="text-slate-600 hidden lg:inline">|</span>
+<div class="flex items-center space-x-1 text-slate-400 hidden lg:flex">
+<span>Latency:</span>
+<span class="text-emerald-400 font-semibold">42ms</span>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<span class="bg-[#C85A32] text-white font-black px-2.5 py-1 rounded text-[11px] tracking-wider uppercase shadow-sm">
+        STEP 12 / 14
+      </span>
+</div>
+</div>
+<!-- END: Top Telemetry Status Strip -->
+<!-- BEGIN: Header & Breadcrumb Section -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<div class="space-y-1.5">
+<div class="inline-flex items-center space-x-2 bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full text-xs font-bold tracking-wide">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+<span>CONTRACTOR LOYALTY &amp; INCENTIVE PROGRAM • STEP 12 OF 14</span>
+</div>
+<h1 class="text-2xl lg:text-3xl font-black tracking-tight text-slate-900">
+        Contractor QR Redemption &amp; Cash Incentive Claim Portal
+      </h1>
+<p class="text-sm text-slate-500 max-w-4xl font-normal leading-relaxed">
+        Monitor real-time scratch-off QR redemptions submitted by certified tile masons and contractors across mobile apps, verify anti-counterfeit geolocation hashes, and track instant direct bank payouts.
+      </p>
+</div>
+<div class="flex items-center space-x-3 shrink-0">
+<button class="inline-flex items-center space-x-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs px-3.5 py-2.5 rounded-lg shadow-sm transition-all hover:shadow">
+<span class="material-symbols-outlined text-base text-slate-500">description</span>
+<span>Export Payout Ledger (CSV)</span>
+</button>
+<button class="inline-flex items-center space-x-2 bg-[#C85A32] hover:bg-[#b04b28] text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all">
+<span class="material-symbols-outlined text-base">qr_code_scanner</span>
+<span>+ Initiate Manual Token Redemption</span>
+</button>
+</div>
+</div>
+<!-- END: Header & Breadcrumb Section -->
+<!-- BEGIN: Executive Metric KPI Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+<!-- Card 1 -->
+<div class="bg-white p-5 rounded-xl shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">TOTAL REDEEMED TODAY</span>
+<div class="text-2xl font-black text-slate-900">₹ 8,42,500</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-orange-50 text-[#C85A32] flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">payments</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-xs pt-1">
+<span class="inline-flex items-center font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
+<span class="material-symbols-outlined text-xs mr-0.5">trending_up</span>+22.4% vs Yesterday
+        </span>
+<span class="text-slate-400 text-[11px]">16,850 QR Tokens Processed</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white p-5 rounded-xl shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">INSTANT UPI SETTLEMENT RATE</span>
+<div class="text-2xl font-black text-slate-900">99.4%</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">bolt</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-xs pt-1">
+<span class="inline-flex items-center font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[11px]">
+          T+0 Real-Time
+        </span>
+<span class="text-slate-400 text-[11px]">Avg transfer: 1.8s (IMPS/UPI)</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white p-5 rounded-xl shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ACTIVE SCANNING CONTRACTORS</span>
+<div class="text-2xl font-black text-slate-900">1,428 <span class="text-sm font-semibold text-slate-500">Masons</span></div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">engineering</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-xs pt-1">
+<span class="text-slate-500 font-medium text-[11px]">Across 22 States</span>
+<span class="text-emerald-600 font-semibold text-[11px]">94.2% KYC Verified</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white p-5 rounded-xl shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">SUSPICIOUS / DUPLICATE QUARANTINE</span>
+<div class="text-2xl font-black text-rose-600">14 <span class="text-sm font-semibold text-slate-500">Flags</span></div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">security</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-xs pt-1">
+<span class="inline-flex items-center font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded text-[11px]">
+          Under Audit
+        </span>
+<span class="text-slate-400 text-[11px]">Velocity Guard Active</span>
+</div>
+</div>
+</div>
+<!-- END: Executive Metric KPI Cards -->
+<!-- BEGIN: Filter & Search Controls -->
+<div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+<div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+<!-- Search Input -->
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+<input class="w-full bg-slate-50 pl-10 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 rounded-lg focus:outline-none focus:bg-white transition-all shadow-inner" placeholder="Search by Contractor Name, Phone, QR Token Hash, or Box Serial..." type="text"/>
+</div>
+<!-- Quick Action Controls -->
+<div class="flex items-center space-x-2">
+<select class="bg-slate-50 text-slate-700 text-xs rounded-lg px-3 py-2 font-medium focus:outline-none">
+<option>Tile Series: All Formats ▾</option>
+<option>PGVT Royal Glazed (600×1200mm)</option>
+<option>GVT Supergloss (800×1600mm)</option>
+<option>Slab Master Onyx (1200×1800mm)</option>
+<option>Full Body Heavy Duty (600×600mm)</option>
+</select>
+<select class="bg-slate-50 text-slate-700 text-xs rounded-lg px-3 py-2 font-medium focus:outline-none">
+<option>Payout Method: All (UPI / Bank / Wallet) ▾</option>
+<option>UPI Instant</option>
+<option>Bank IMPS Direct</option>
+<option>Escrow Hold / Locked</option>
+</select>
+<select class="bg-slate-50 text-slate-700 text-xs rounded-lg px-3 py-2 font-medium focus:outline-none">
+<option>State / Hub: All India ▾</option>
+<option>North Hub (Delhi-NCR, UP)</option>
+<option>West Hub (Gujarat, MH)</option>
+<option>South Hub (KA, TN)</option>
+</select>
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-lg transition-colors" title="Reload Streams">
+<span class="material-symbols-outlined text-base">refresh</span>
+</button>
+</div>
+</div>
+<!-- Filter Tabs -->
+<div class="flex flex-wrap items-center gap-2 pt-1">
+<button class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-xs">
+        All Redemptions (1,428)
+      </button>
+<button class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+        Instant Settled (1,392)
+      </button>
+<button class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+        Pending Bank Route (22)
+      </button>
+<button class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors">
+        Flagged / Under Review (14)
+      </button>
+</div>
+</div>
+<!-- END: Filter & Search Controls -->
+<!-- BEGIN: Main Redemptions Registry Table -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs whitespace-nowrap">
+<thead class="bg-slate-50 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+<tr>
+<th class="py-3 px-4">CLAIM ID &amp; TIME</th>
+<th class="py-3 px-4">CONTRACTOR / APPLICATOR</th>
+<th class="py-3 px-4">TILE SKU &amp; BOX SERIAL</th>
+<th class="py-3 px-4">QR TOKEN &amp; INTEGRITY</th>
+<th class="py-3 px-4">CASH VALUE &amp; MULTIPLIER</th>
+<th class="py-3 px-4">PAYOUT STATUS &amp; ROUTE</th>
+<th class="py-3 px-4 text-right">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700">
+<!-- ROW 1 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900">CLM-2024-55102</div>
+<div class="text-[11px] text-emerald-600 flex items-center space-x-1 font-sans">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>Just now • 10:48 AM</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 flex items-center space-x-1.5">
+<span>Amit Gupta</span>
+<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.2 rounded">Gold Tier</span>
+</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 98112 40591 • New Delhi</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">PGVT Royal Glazed (600×1200mm)</div>
+<div class="text-[11px] text-slate-500 font-mono">Box #02940 • Lot: BATCH-PGV-9921</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-mono text-[11px] text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded inline-block">DG-QR-8F2A9C1B-44D1</div>
+<div class="text-[11px] text-emerald-600 font-medium">Valid SHA-256 • 1st Scan Pass</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-sm font-black text-slate-900">₹ 75</div>
+<div class="text-[11px] text-slate-400">Base ₹50 + 1.5x Gold Tier</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Settled Instant • UPI
+              </span>
+<div class="text-[11px] text-slate-500 font-mono mt-0.5">amit.gupta@okaxis • UTR: 430192847101</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-2">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-semibold">View Token</button>
+<button class="bg-white hover:bg-slate-100 text-slate-600 px-2 py-1 rounded text-[11px] font-semibold shadow-xs">Audit Slip</button>
+</td>
+</tr>
+<!-- ROW 2 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900">CLM-2024-55101</div>
+<div class="text-[11px] text-slate-400 font-sans">2 mins ago • 10:46 AM</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 flex items-center space-x-1.5">
+<span>Suresh Kumar</span>
+<span class="bg-slate-200 text-slate-700 text-[10px] font-bold px-1.5 py-0.2 rounded">Silver Tier</span>
+</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 97120 33819 • Faridabad</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">GVT Supergloss Carrara (800×1600mm)</div>
+<div class="text-[11px] text-slate-500 font-mono">Box #02801 • Lot: BATCH-GVT-4043</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-mono text-[11px] text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded inline-block">DG-QR-4D1E33A0-77E2</div>
+<div class="text-[11px] text-emerald-600 font-medium">Valid SHA-256 • Geoloc Verified</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-sm font-black text-slate-900">₹ 60</div>
+<div class="text-[11px] text-slate-400">Base ₹50 + 1.2x Silver</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Settled Instant • UPI
+              </span>
+<div class="text-[11px] text-slate-500 font-mono mt-0.5">suresh.k@icici • UTR: 430192846992</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-2">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-semibold">View Token</button>
+<button class="bg-white hover:bg-slate-100 text-slate-600 px-2 py-1 rounded text-[11px] font-semibold shadow-xs">Audit Slip</button>
+</td>
+</tr>
+<!-- ROW 3 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900">CLM-2024-55100</div>
+<div class="text-[11px] text-slate-400 font-sans">14 mins ago • 10:34 AM</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 flex items-center space-x-1.5">
+<span>Mohan Lal Prajapat</span>
+<span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-1.5 py-0.2 rounded">Platinum Tier</span>
+</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 96500 77142 • Noida</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">Slab Master Onyx Nero (1200×1800mm)</div>
+<div class="text-[11px] text-slate-500 font-mono">Box #01192 • Lot: BATCH-SLB-1218</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-mono text-[11px] text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded inline-block">DG-QR-9B432C11-002A</div>
+<div class="text-[11px] text-emerald-600 font-medium">Valid SHA-256 • Kiln #04 Trace</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-sm font-black text-slate-900">₹ 120</div>
+<div class="text-[11px] text-slate-400">Base ₹60 + 2.0x Platinum</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Settled Instant • UPI
+              </span>
+<div class="text-[11px] text-slate-500 font-mono mt-0.5">mohan.lal@paytm • UTR: 430192845819</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-2">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-semibold">View Token</button>
+<button class="bg-white hover:bg-slate-100 text-slate-600 px-2 py-1 rounded text-[11px] font-semibold shadow-xs">Audit Slip</button>
+</td>
+</tr>
+<!-- ROW 4 -->
+<tr class="bg-rose-50/30 hover:bg-rose-50/50 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900">CLM-2024-55099</div>
+<div class="text-[11px] text-slate-400 font-sans">28 mins ago • 10:20 AM</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 flex items-center space-x-1.5">
+<span>Rameshwar Bind</span>
+<span class="bg-orange-100 text-orange-800 text-[10px] font-bold px-1.5 py-0.2 rounded">Bronze Tier</span>
+</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 97190 22134 • Agra</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">Full Body Heavy Duty (600×600mm)</div>
+<div class="text-[11px] text-slate-500 font-mono">Box #09114 • Lot: BATCH-FB-7192</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-mono text-[11px] text-rose-800 font-bold bg-rose-100 px-2 py-0.5 rounded inline-block">DG-QR-77A91F03-51BC</div>
+<div class="text-[11px] text-rose-600 font-semibold">Velocity Alert • 12 Scans/min</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-sm font-black text-rose-700">₹ 50</div>
+<div class="text-[11px] text-rose-500 font-medium">Escrow Hold</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-600 mr-1.5"></span>Flagged • Velocity Spike
+              </span>
+<div class="text-[11px] text-rose-700 font-medium mt-0.5">Payout Withheld • Under Audit</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-2">
+<button class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded text-[11px] font-bold">Inspect Alert</button>
+<button class="bg-white hover:bg-slate-100 text-slate-600 px-2 py-1 rounded text-[11px] font-semibold shadow-xs">Release Escrow</button>
+</td>
+</tr>
+<!-- ROW 5 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900">CLM-2024-55098</div>
+<div class="text-[11px] text-slate-400 font-sans">45 mins ago • 10:03 AM</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 flex items-center space-x-1.5">
+<span>Deepak Yadav</span>
+<span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-1.5 py-0.2 rounded">New Mason</span>
+</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 98200 66311 • Ghaziabad</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">Ceramic Glazed Wall Deco (300×600mm)</div>
+<div class="text-[11px] text-slate-500 font-mono">Box #07210 • Lot: BATCH-CW-8120</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-mono text-[11px] text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded inline-block">DG-QR-12C889FA-66D9</div>
+<div class="text-[11px] text-amber-600 font-medium">Valid Token • KYC Incomplete</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-sm font-black text-slate-900">₹ 35</div>
+<div class="text-[11px] text-slate-400">Wallet Credited</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-700">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>KYC Pending • Wallet Locked
+              </span>
+<div class="text-[11px] text-slate-500 font-medium mt-0.5">Pending Aadhaar / PAN</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-2">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-semibold">Review KYC</button>
+<button class="bg-white hover:bg-slate-100 text-slate-600 px-2 py-1 rounded text-[11px] font-semibold shadow-xs">Notify Mason</button>
+</td>
+</tr>
+<!-- ROW 6 -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900">CLM-2024-55097</div>
+<div class="text-[11px] text-slate-400 font-sans">1 hr ago • 09:48 AM</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 flex items-center space-x-1.5">
+<span>Harish Patel</span>
+<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.2 rounded">Gold Tier</span>
+</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 98250 11982 • Surat</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">Rustic Outdoor Stone (400×400mm)</div>
+<div class="text-[11px] text-slate-500 font-mono">Box #05701 • Lot: BATCH-RT-3301</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-mono text-[11px] text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded inline-block">DG-QR-63E118B4-99C0</div>
+<div class="text-[11px] text-emerald-600 font-medium">Valid SHA-256 • Verified Bay #01</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-sm font-black text-slate-900">₹ 42</div>
+<div class="text-[11px] text-slate-400">Base ₹35 + 1.2x Tier Bonus</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Settled Instant • IMPS
+              </span>
+<div class="text-[11px] text-slate-500 font-mono mt-0.5">HDFC •••• 4091 • UTR: 430192843105</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-2">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-semibold">View Token</button>
+<button class="bg-white hover:bg-slate-100 text-slate-600 px-2 py-1 rounded text-[11px] font-semibold shadow-xs">Audit Slip</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination -->
+<div class="bg-slate-50 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+<div>
+        Showing <span class="font-semibold text-slate-800">1 to 6</span> of <span class="font-semibold text-slate-800">1,428</span> contractor redemptions
+      </div>
+<div class="flex items-center space-x-1">
+<button class="px-2.5 py-1 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium shadow-xs disabled:opacity-50">
+          Previous
+        </button>
+<button class="px-2.5 py-1 rounded bg-slate-900 text-white font-bold">1</button>
+<button class="px-2.5 py-1 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium">2</button>
+<button class="px-2.5 py-1 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium">3</button>
+<span class="px-1 text-slate-400">...</span>
+<button class="px-2.5 py-1 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium">143</button>
+<button class="px-2.5 py-1 rounded bg-white text-slate-600 hover:bg-slate-100 font-medium shadow-xs">
+          Next
+        </button>
+</div>
+</div>
+</div>
+<!-- END: Main Redemptions Registry Table -->
+<!-- BEGIN: Bottom Industrial Telemetry Terminal Banner -->
+<div class="bg-slate-900 rounded-xl p-5 shadow-lg text-white flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+<div class="flex items-start space-x-4">
+<div class="w-12 h-12 rounded-lg bg-[#C85A32] flex items-center justify-center shrink-0 shadow-md">
+<span class="material-symbols-outlined text-2xl text-white">qr_code_2</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center flex-wrap gap-2">
+<h2 class="text-base font-bold text-white tracking-wide">
+            Automated Contractor UPI Gateway • NPCI &amp; Bank IMPS Multi-Rail Switch
+          </h2>
+<span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>24/24 Banking Nodes Active
+          </span>
+</div>
+<p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+          Instant T+0 bank account deposits upon physical box QR scratch-off validation. Anti-fraud geo-fencing checks against dealer dispatch ledgers prevent unauthorized scans.
+        </p>
+</div>
+</div>
+<div class="flex items-center flex-wrap gap-2.5 shrink-0">
+<button class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs px-3.5 py-2.5 rounded-lg shadow-sm transition-colors">
+<span class="material-symbols-outlined text-sm text-sky-400">monitoring</span>
+<span>Gateway Diagnostics (All IMPS Switches Healthy)</span>
+</button>
+<button class="inline-flex items-center space-x-2 bg-[#C85A32] hover:bg-[#b04b28] text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all">
+<span class="material-symbols-outlined text-sm">sync</span>
+<span>Re-Sync Payout Settlement Ledger</span>
+</button>
+</div>
+</div>
+<!-- END: Bottom Industrial Telemetry Terminal Banner -->
+</div></main>
+<!-- END: MainContentArea -->
+</div>
+<!-- END: MainDashboardLayout -->
+<!-- BEGIN: BottomGlobalFooter -->
+<footer class="bg-white border-t border-morbi-border px-8 py-2.5 flex items-center justify-between text-xs text-slate-500 shrink-0" data-purpose="site-footer">
+<div class="flex items-center space-x-2">
+<span class="font-bold tracking-tight text-slate-700">DURAGRIT VITRIFIED</span>
+<span class="text-slate-400">•</span>
+<span>Retail &amp; QR Portal Workflow</span>
+</div>
+<div class="font-medium text-slate-500">Step 11 of 14</div>
+</footer>
+<!-- END: BottomGlobalFooter -->
+<!-- BEGIN: Comprehensive Token Verification & UPI Payout Audit Modal Overlay -->
+<div aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" id="redemption-audit-modal" role="dialog">
+<div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[90vh]">
+<!-- Modal Header -->
+<div class="bg-white px-6 py-4 border-b border-slate-200 flex items-start justify-between shrink-0">
+<div class="space-y-1.5">
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-[10px] font-black tracking-wider uppercase bg-terracotta-50 text-terracotta-700 border border-terracotta-100 px-2 py-0.5 rounded">
+            CONTRACTOR REDEMPTION AUDIT &amp; UPI GATEWAY
+          </span>
+<span class="inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5"></span>
+            LIVE NPCI SWITCH CONNECTED (IMPS Node #04 • 38ms)
+          </span>
+</div>
+<h2 class="text-xl font-black text-slate-900 tracking-tight">
+          QR Token Verification &amp; Instant UPI Payout Audit
+        </h2>
+<p class="text-xs text-slate-500 font-medium">
+          Claim ID: <span class="font-mono font-bold text-slate-700">CLM-2024-55102</span> • Scanned by <span class="font-bold text-slate-800">Amit Gupta</span> (<span class="text-amber-700 font-semibold">Gold Tier</span>) • Morbi Factory Roll Feeder Ledger Cross-Verification
+        </p>
+</div>
+<button aria-label="Close modal" class="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors ml-3" onclick="document.getElementById('redemption-audit-modal').remove()" type="button">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<!-- Modal Key Metrics Ribbon (4 Columns) -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-4 border-b border-slate-200 shrink-0">
+<div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Cash Incentive</span>
+<div class="text-lg font-black text-terracotta-600 mt-0.5">₹ 75.00</div>
+<span class="text-[10px] text-slate-500 font-medium block">Base ₹50 + 1.5x Gold Tier</span>
+</div>
+<div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Token Integrity</span>
+<div class="text-lg font-black text-emerald-600 mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-base">verified</span> Valid SHA-256
+        </div>
+<span class="text-[10px] text-slate-500 font-medium block">Dual HSM Match • 1st Scan</span>
+</div>
+<div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Contractor KYC</span>
+<div class="text-lg font-black text-slate-900 mt-0.5">100% Verified</div>
+<span class="text-[10px] text-slate-500 font-mono block">Aadhaar + PAN • +91 98112 40591</span>
+</div>
+<div class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Settlement Target</span>
+<div class="text-lg font-black text-slate-900 mt-0.5">Instant UPI</div>
+<span class="text-[10px] text-emerald-600 font-medium block font-mono truncate">amitgupta@okhdfcbank</span>
+</div>
+</div>
+<!-- Modal Scrollable Content: 2-Column Inspection Grid -->
+<div class="overflow-y-auto p-6 space-y-6 flex-1 text-xs">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Left Column: Token & Factory Provenance Audit -->
+<div class="space-y-4">
+<div class="flex items-center space-x-2 pb-1 border-b border-slate-200">
+<span class="material-symbols-outlined text-base text-terracotta-600">qr_code_2</span>
+<h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Physical Token &amp; Kiln Origin Audit</h3>
+</div>
+<!-- Visual Mock Token Card -->
+<div class="bg-slate-900 text-white rounded-xl p-4 shadow-sm border border-slate-800 flex items-start space-x-3.5">
+<div class="bg-white p-2 rounded-lg shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-slate-900">qr_code_scanner</span>
+</div>
+<div class="space-y-1 min-w-0 flex-1">
+<span class="text-[10px] font-mono uppercase text-emerald-400 tracking-wider font-semibold block">Scratch-Off Secret Hash</span>
+<div class="font-mono font-bold text-xs text-white bg-slate-800/80 px-2 py-1 rounded inline-block border border-slate-700">
+                DG-QR-8F2A9C1B-44D1-2024
+              </div>
+<div class="text-[11px] text-slate-300 font-medium mt-1 truncate">
+                SKU: PGVT Royal Glazed (600×1200mm)
+              </div>
+<div class="text-[10px] text-slate-400 font-mono">
+                Box #02940 • Lot: BATCH-PGV-9921
+              </div>
+</div>
+</div>
+<!-- Supply Chain Provenance Steps -->
+<div class="bg-white rounded-xl border border-slate-200 p-3.5 space-y-2.5">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">DuraGrit Dispatch Chain Provenance</span>
+<div class="space-y-2 border-l-2 border-slate-200 pl-3 ml-1">
+<div class="relative">
+<span class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-emerald-500"></span>
+<div class="font-semibold text-slate-800">1. Kiln Production: Morbi Unit #02</div>
+<div class="text-[10px] text-slate-500">Oct 18, 2024 • Passed QC Spectrometry &amp; Water Absorption (0.04%)</div>
+</div>
+<div class="relative">
+<span class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-emerald-500"></span>
+<div class="font-semibold text-slate-800">2. Roll Feeder Serial: Feeder Line #03</div>
+<div class="text-[10px] text-slate-500">Oct 19, 2024 • Token Laser-Etched &amp; HSM Cryptographic Key Inwarded</div>
+</div>
+<div class="relative">
+<span class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-emerald-500"></span>
+<div class="font-semibold text-slate-800">3. Regional Dispatch: Morbi Logistics to Rajesh Tile Emporium</div>
+<div class="text-[10px] text-slate-500">Oct 22, 2024 • Primary Dealer Consignment Manifest #DL-4819</div>
+</div>
+<div class="relative">
+<span class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-emerald-500"></span>
+<div class="font-semibold text-slate-800">4. Dealer Inward: Bay 02 Scanned &amp; Inwarded</div>
+<div class="text-[10px] text-slate-500">Oct 24, 2024 • 10:14 AM • Rajesh Tile Emporium, Mayapuri Industrial Area</div>
+</div>
+<div class="relative">
+<span class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-terracotta-600 ring-2 ring-terracotta-100"></span>
+<div class="font-semibold text-slate-900">5. Contractor Mobile App Scan: Amit Gupta</div>
+<div class="text-[10px] text-slate-600 font-mono">Oct 24, 2024 • 10:48 AM • Geolocation: 28.6139° N, 77.2090° E (New Delhi)</div>
+</div>
+</div>
+</div>
+<!-- Anti-Fraud & Velocity Guard Banner -->
+<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start space-x-2.5">
+<span class="material-symbols-outlined text-emerald-700 text-lg shrink-0 mt-0.5">shield_check</span>
+<div class="space-y-0.5 text-slate-700 text-[11px]">
+<span class="font-bold text-emerald-800 block">Velocity &amp; Anti-Fraud Clearance: Passed</span>
+<p class="leading-normal text-emerald-900">
+                Zero velocity anomalies (1 scan/hr mason history). Geolocation coordinates match dealer retail radius (&lt; 2.4 km). Scratch-off silver mask integrity confirmed valid.
+              </p>
+</div>
+</div>
+</div>
+<!-- Right Column: UPI Payout Gateway & Settlement Breakdown -->
+<div class="space-y-4">
+<div class="flex items-center space-x-2 pb-1 border-b border-slate-200">
+<span class="material-symbols-outlined text-base text-terracotta-600">payments</span>
+<h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">UPI Payout Gateway &amp; Settlement Breakdown</h3>
+</div>
+<!-- Payout Calculation Breakdown Card -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Incentive Calculation Matrix</span>
+<div class="space-y-2 divide-y divide-slate-100">
+<div class="flex justify-between items-center pt-1">
+<span class="text-slate-600">Base Scratch-Off Incentive (600×1200 PGVT)</span>
+<span class="font-mono font-semibold text-slate-800">₹ 50.00</span>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div>
+<span class="text-slate-600 font-medium">Contractor Gold Tier Multiplier</span>
+<span class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded ml-1 font-semibold">1.5x</span>
+</div>
+<span class="font-mono font-semibold text-emerald-600">+₹ 25.00</span>
+</div>
+<div class="flex justify-between items-center pt-2">
+<span class="text-slate-500">TDS / Statutory Withholding (Section 194R Exempt)</span>
+<span class="font-mono text-slate-400">-₹ 0.00</span>
+</div>
+<div class="flex justify-between items-center pt-2 text-sm">
+<span class="font-black text-slate-900">Total Instant Net Payout</span>
+<span class="font-mono font-black text-terracotta-600 text-base">₹ 75.00</span>
+</div>
+</div>
+</div>
+<!-- Live UPI Routing Details -->
+<div class="bg-slate-50 rounded-xl border border-slate-200 p-3.5 space-y-2.5">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Live UPI Routing Specification</span>
+<div class="space-y-1.5 font-mono text-[11px]">
+<div class="flex justify-between items-center">
+<span class="text-slate-500 font-sans">Switch Rail:</span>
+<span class="font-bold text-slate-800">NPCI Unified Payments Interface (UPI 2.0 Auto)</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-slate-500 font-sans">Beneficiary VPA:</span>
+<span class="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">amitgupta@okhdfcbank</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-slate-500 font-sans">Registered Name:</span>
+<span class="font-semibold text-slate-800">Amit Kumar Gupta</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-slate-500 font-sans">Bank Reference (RRN):</span>
+<span class="text-slate-700">RRN-20241024-99410294</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-slate-500 font-sans">Dual HSM Signature:</span>
+<span class="text-emerald-700 font-semibold">Validated • Keyring Node #02</span>
+</div>
+</div>
+</div>
+<!-- Audit Disclaimer Note -->
+<div class="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 flex items-start space-x-2">
+<span class="material-symbols-outlined text-amber-700 text-base shrink-0 mt-0.5">info</span>
+<p class="text-[11px] text-amber-900 leading-normal">
+              Payout authorization directly issues an irreversible IMPS/UPI credit API call to HDFC Bank gateway. Transaction will immediately be recorded on the DuraGrit distributed ledger.
+            </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+<div class="flex items-center space-x-2 text-[11px] text-slate-500">
+<span class="material-symbols-outlined text-slate-400 text-sm">dns</span>
+<span>Station: <strong class="text-slate-700">Delhi NCR Gateway Node</strong> • Auditor: <strong class="text-slate-700">System Auto-Reconciliation / Admin</strong></span>
+</div>
+<div class="flex items-center flex-wrap gap-2.5">
+<button class="border border-amber-300 text-amber-800 hover:bg-amber-50 px-3.5 py-2 rounded-lg font-semibold text-xs transition-colors" onclick="document.getElementById('redemption-audit-modal').remove()" type="button">
+          Place in Escrow Quarantine
+        </button>
+<button class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 px-3.5 py-2 rounded-lg font-semibold text-xs shadow-xs transition-colors inline-flex items-center space-x-1.5" type="button">
+<span class="material-symbols-outlined text-sm text-slate-500">file_download</span>
+<span>Download Audit Slip (PDF)</span>
+</button>
+<button class="bg-terracotta-600 hover:bg-terracotta-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all inline-flex items-center space-x-1.5" onclick="alert('Payout of ₹ 75.00 successfully released to amitgupta@okhdfcbank (UTR: 430192847101)'); document.getElementById('redemption-audit-modal').remove();" type="button">
+<span class="material-symbols-outlined text-base">bolt</span>
+<span>Approve &amp; Release Instant UPI Payout (₹ 75.00)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- END: Comprehensive Token Verification & UPI Payout Audit Modal Overlay --></body></html>

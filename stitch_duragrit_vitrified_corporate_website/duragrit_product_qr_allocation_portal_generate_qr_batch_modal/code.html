@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DuraGrit - Product Manage &amp; QR Code Allocation Portal (Step 08 / 14)</title>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#c84b26',
+              50: '#fdf4f1',
+              100: '#fbe7e2',
+              500: '#c84b26',
+              600: '#b43f1d',
+              700: '#953416',
+            },
+            slate: {
+              850: '#151e2e',
+              900: '#0f172a',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Style Tags -->
+<style data-purpose="typography">
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+<style data-purpose="micro-interactions">
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .chart-bar-hover:hover .chart-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-4px);
+    }
+  </style>
+<!-- END: Custom Style Tags -->
+</head>
+<body class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800">
+<!-- BEGIN: StepIndicatorSuperHeader -->
+<header class="w-full bg-slate-900 border-b border-slate-800 px-6 py-2.5 flex items-center justify-between text-white text-xs z-50"><div class="flex items-center space-x-3"><div class="flex items-center gap-1.5 font-medium text-slate-300"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>QR Allocation Engine: Active (Synced 1s ago)</div><span class="text-slate-600">|</span><span class="text-slate-400">Ledger Status: <span class="text-emerald-400 font-semibold">Synchronized</span> (1 sec ago)</span></div><div class="flex items-center space-x-4"><div class="px-3 py-1 bg-brand rounded font-extrabold tracking-wider text-[11px] shadow-sm text-white">STEP 08 / 14</div></div></header>
+<!-- END: StepIndicatorSuperHeader -->
+<!-- BEGIN: MainPortalFrame -->
+<div class="flex-1 flex flex-col min-h-0 bg-white shadow-xl mx-auto w-full border-x border-slate-200">
+<!-- BEGIN: MainNavbar -->
+<header class="h-16 border-b border-slate-200 bg-white px-6 flex items-center justify-between flex-shrink-0">
+<!-- Brand Logo & Department Identifier -->
+<div class="flex items-center space-x-4">
+<div class="flex items-baseline space-x-2">
+<span class="text-2xl font-black tracking-tight text-brand">DURAGRIT</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">VITRIFIED</span>
+</div>
+<div class="h-5 w-px bg-slate-300"></div>
+<span class="text-xs font-bold uppercase tracking-wider text-slate-500">RETAIL &amp; QR MANAGE</span>
+</div>
+<!-- Right Top Navigation & User Profile -->
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-3 border-r border-slate-200 pr-4">
+<button class="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="System Notifications">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full"></span>
+</button>
+</div>
+<!-- Super Admin Badge Dropdown -->
+<div class="flex items-center space-x-3 cursor-pointer group p-1 rounded-lg hover:bg-slate-50 transition">
+<div class="w-9 h-9 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center ring-2 ring-brand/30">
+            RK
+          </div>
+<div class="flex flex-col text-left">
+<div class="flex items-center gap-1">
+<span class="text-xs font-bold text-slate-900 leading-tight">Admin</span>
+<svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-[11px] text-slate-500 font-medium">Super Admin</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-orange-50 border border-orange-200 text-brand flex items-center justify-center ml-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7 7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+</header>
+<!-- END: MainNavbar -->
+<!-- BEGIN: BodyLayoutWithSidebar -->
+<div class="flex-1 flex overflow-hidden">
+<!-- BEGIN: LeftSidebarNav -->
+<aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between flex-shrink-0">
+<!-- Main Sidebar Links -->
+<div class="p-4 space-y-1.5"><a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition text-sm font-medium" href="#"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span>1. User Manage</span></a><a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-orange-50/80 border-l-4 border-brand text-brand font-semibold text-sm transition shadow-xs" href="#"><svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span class="text-slate-900 font-bold">2. Product Manage</span></a><a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition text-sm font-medium" href="#"><div class="flex items-center space-x-3"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span>3. Cashback Request</span></div><span class="text-xs bg-brand text-white font-bold px-2 py-0.5 rounded-full">18</span></a><a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition text-sm font-medium" href="#"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span>4. Report</span></a></div>
+<!-- Sidebar Footer Action -->
+<div class="p-4 border-t border-slate-200">
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition text-sm font-medium" href="#">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Sign out</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftSidebarNav -->
+<!-- BEGIN: ContentArea -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-8 bg-slate-50/60"><!-- BEGIN: PageTitleAndToolbar --><section class="flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-4 border-b border-slate-200"><div><div class="flex items-center space-x-3 mb-1"><h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Product Catalog &amp; QR Allocation</h1><span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">INVENTORY &amp; SERIAL ENGINE v3.4 • BATCH ALLOCATION</span></div><p class="text-sm text-slate-500 max-w-3xl">Manage vitrified tile series, configure box QR incentive denominations, assign batches to regional production lines, and monitor activation status.</p></div><div class="flex flex-wrap items-center gap-2.5"><button class="inline-flex items-center space-x-2 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition"><svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span>All Categories &amp; Formats</span><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button><button class="inline-flex items-center space-x-2 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition"><svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span>+ New Tile Series</span></button><button class="inline-flex items-center space-x-2 px-4 py-2 bg-brand text-white rounded-lg text-xs font-bold hover:bg-brand-600 shadow-sm transition active:scale-95"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span>+ Generate QR Batch</span></button><button class="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition" title="Serial Generator Settings"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button></div></section><!-- END: PageTitleAndToolbar --><!-- BEGIN: KeyMetricsSection --><section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6"><!-- KPI 1 --><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between"><div><div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Registered SKUs</span><span class="w-8 h-8 rounded-lg bg-orange-50 text-brand flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></span></div><div class="mt-2 flex items-baseline space-x-2"><span class="text-2xl font-black text-slate-900 tracking-tight">24</span><span class="text-xs font-medium text-slate-500">Tile Series</span></div></div><div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs"><span class="inline-flex items-center font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">↑ +3 This Quarter</span><span class="text-slate-500 font-medium">100% Active Production</span></div></div><!-- KPI 2 --><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between"><div><div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active QR Codes Allocated</span><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></span></div><div class="mt-2 flex items-baseline space-x-1"><span class="text-2xl font-black text-slate-900 tracking-tight">1,42,800</span><span class="text-xs font-medium text-slate-500">Serials</span></div></div><div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs"><span class="inline-flex items-center font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">₹ 71.4L Incentive Pool</span><span class="text-slate-500 font-medium">₹50 Avg Yield/Box</span></div></div><!-- KPI 3 --><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between"><div><div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Batches in Transit / Distribution</span><span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM20 17a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m9 0H3m10 0h4l3-4V8h-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></span></div><div class="mt-2 flex items-baseline space-x-2"><span class="text-2xl font-black text-slate-900 tracking-tight">18</span><span class="text-xs font-medium text-slate-500">Active Batches</span></div></div><div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs"><span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">48,290 Scanned &amp; Redeemed</span><span class="text-brand font-semibold">33.8% Scan Velocity</span></div></div><!-- KPI 4 --><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between"><div><div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tamper &amp; Duplicate Shield</span><span class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></span></div><div class="mt-2 flex items-baseline space-x-2"><span class="text-2xl font-black text-slate-900 tracking-tight">0</span><span class="text-xs font-medium text-slate-500">Leaks</span></div></div><div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs"><span class="inline-flex items-center font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded">99.99% Hash Integrity</span><span class="text-emerald-600 font-bold">Geo-Fenced Serials</span></div></div></section><!-- END: KeyMetricsSection --><!-- BEGIN: TableSection --><section class="bg-white rounded-xl border border-slate-200 shadow-xs mt-6 overflow-hidden"><div class="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h3 class="text-base font-bold text-slate-900 font-heading">Tile Products &amp; QR Allocation Inventory</h3><p class="text-xs text-slate-500 mt-0.5">Manage batch assignments, carton QR code rolls, incentive denominations, and activation status.</p></div><div class="flex flex-wrap items-center gap-3"><div class="relative"><svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><input class="pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 w-64 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Search SKU, Batch ID, Format..." type="text"/></div><div class="inline-flex p-1 bg-slate-100 rounded-lg text-xs font-semibold"><button class="px-2.5 py-1 rounded bg-white text-slate-900 shadow-xs">All SKUs (24)</button><button class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800">PGVT</button><button class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800">GVT</button><button class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800">Slabs</button><button class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800">Rustic</button></div></div></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider"><tr><th class="py-3 px-4">SKU / Tile Series</th><th class="py-3 px-4">Format &amp; Specification</th><th class="py-3 px-4">Incentive Denomination</th><th class="py-3 px-4">Active Batch &amp; Range</th><th class="py-3 px-4">Total Generated</th><th class="py-3 px-4">Scan &amp; Redeem Rate</th><th class="py-3 px-4">Status</th><th class="py-3 px-4 text-right">Actions</th></tr></thead><tbody class="divide-y divide-slate-100 font-medium text-slate-700"><tr class="hover:bg-slate-50 transition"><td class="py-3.5 px-4"><div class="flex items-center space-x-3"><div class="w-9 h-9 rounded-lg bg-orange-50 border border-orange-200 text-brand font-bold text-xs flex items-center justify-center flex-shrink-0">6012</div><div><div class="font-bold text-slate-900 text-xs">PGVT Royal Glazed</div><div class="text-[11px] text-slate-400">SKU: PGVT-6012</div></div></div></td><td class="py-3.5 px-4"><div><span class="font-bold text-slate-800">600×1200 mm</span></div><div class="text-[11px] text-slate-500">Vitrified High Gloss</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded font-bold text-slate-900 bg-emerald-50 text-emerald-700 border border-emerald-200">₹50 / box</span><span class="block text-[10px] text-slate-400 mt-0.5">Tier 1 Applicator</span></td><td class="py-3.5 px-4"><div class="font-bold text-slate-900">BATCH-PGV-9921</div><div class="text-[11px] text-slate-400 font-mono">#0001 - #25000</div></td><td class="py-3.5 px-4"><span class="font-bold text-slate-900">25,000</span> <span class="text-slate-400 text-[11px]">QR Codes</span></td><td class="py-3.5 px-4"><div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden mb-1"><div class="bg-brand h-2 rounded-full" style="width: 81.1%"></div></div><div class="text-[11px] text-slate-500 font-semibold">81.1% (20,281 Scanned)</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Active Production</span></td><td class="py-3.5 px-4 text-right"><button class="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-50 rounded text-slate-700 text-xs font-semibold shadow-xs transition">View Serials</button></td></tr><tr class="hover:bg-slate-50 transition"><td class="py-3.5 px-4"><div class="flex items-center space-x-3"><div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center flex-shrink-0">8016</div><div><div class="font-bold text-slate-900 text-xs">GVT Supergloss Carrara</div><div class="text-[11px] text-slate-400">SKU: GVT-8016</div></div></div></td><td class="py-3.5 px-4"><div><span class="font-bold text-slate-800">800×1600 mm</span></div><div class="text-[11px] text-slate-500">Supergloss Mirror Polish</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded font-bold text-slate-900 bg-emerald-50 text-emerald-700 border border-emerald-200">₹50 / box</span><span class="block text-[10px] text-slate-400 mt-0.5">Tier 1 Applicator</span></td><td class="py-3.5 px-4"><div class="font-bold text-slate-900">BATCH-GVT-4043</div><div class="text-[11px] text-slate-400 font-mono">#25001 - #45000</div></td><td class="py-3.5 px-4"><span class="font-bold text-slate-900">20,000</span> <span class="text-slate-400 text-[11px]">QR Codes</span></td><td class="py-3.5 px-4"><div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden mb-1"><div class="bg-slate-800 h-2 rounded-full" style="width: 67.6%"></div></div><div class="text-[11px] text-slate-500 font-semibold">67.6% (13,521 Scanned)</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Active Production</span></td><td class="py-3.5 px-4 text-right"><button class="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-50 rounded text-slate-700 text-xs font-semibold shadow-xs transition">View Serials</button></td></tr><tr class="hover:bg-slate-50 transition"><td class="py-3.5 px-4"><div class="flex items-center space-x-3"><div class="w-9 h-9 rounded-lg bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center flex-shrink-0">1218</div><div><div class="font-bold text-slate-900 text-xs">Slab Master Onyx Nero</div><div class="text-[11px] text-slate-400">SKU: SLB-1218</div></div></div></td><td class="py-3.5 px-4"><div><span class="font-bold text-slate-800">1200×1800 mm</span></div><div class="text-[11px] text-slate-500">Ultra-density Large Slab</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded font-bold text-slate-900 bg-amber-50 text-amber-800 border border-amber-200">₹60 / box</span><span class="block text-[10px] text-slate-400 mt-0.5">Premium Large Format</span></td><td class="py-3.5 px-4"><div class="font-bold text-slate-900">BATCH-SLB-1082</div><div class="text-[11px] text-slate-400 font-mono">#45001 - #57000</div></td><td class="py-3.5 px-4"><span class="font-bold text-slate-900">12,000</span> <span class="text-slate-400 text-[11px]">QR Codes</span></td><td class="py-3.5 px-4"><div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden mb-1"><div class="bg-amber-500 h-2 rounded-full" style="width: 72.4%"></div></div><div class="text-[11px] text-slate-500 font-semibold">72.4% (8,692 Scanned)</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Active Production</span></td><td class="py-3.5 px-4 text-right"><button class="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-50 rounded text-slate-700 text-xs font-semibold shadow-xs transition">View Serials</button></td></tr><tr class="hover:bg-slate-50 transition"><td class="py-3.5 px-4"><div class="flex items-center space-x-3"><div class="w-9 h-9 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 font-bold text-xs flex items-center justify-center flex-shrink-0">4040</div><div><div class="font-bold text-slate-900 text-xs">Rustic Outdoor Stone</div><div class="text-[11px] text-slate-400">SKU: RST-4040</div></div></div></td><td class="py-3.5 px-4"><div><span class="font-bold text-slate-800">400×400 mm</span></div><div class="text-[11px] text-slate-500">Matte Non-slip Anti-skid</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded font-bold text-slate-900 bg-slate-100 text-slate-700 border border-slate-200">₹35 / box</span><span class="block text-[10px] text-slate-400 mt-0.5">Standard Applicator</span></td><td class="py-3.5 px-4"><div class="font-bold text-slate-900">BATCH-RT-3301</div><div class="text-[11px] text-slate-400 font-mono">#57001 - #72000</div></td><td class="py-3.5 px-4"><span class="font-bold text-slate-900">15,000</span> <span class="text-slate-400 text-[11px]">QR Codes</span></td><td class="py-3.5 px-4"><div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden mb-1"><div class="bg-teal-600 h-2 rounded-full" style="width: 38.6%"></div></div><div class="text-[11px] text-slate-500 font-semibold">38.6% (5,796 Scanned)</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Low Stock / Reorder</span></td><td class="py-3.5 px-4 text-right"><button class="px-2.5 py-1 bg-brand hover:bg-brand-600 text-white rounded text-xs font-semibold shadow-xs transition">Generate Batch</button></td></tr><tr class="hover:bg-slate-50 transition"><td class="py-3.5 px-4"><div class="flex items-center space-x-3"><div class="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 font-bold text-xs flex items-center justify-center flex-shrink-0">8120</div><div><div class="font-bold text-slate-900 text-xs">Ceramic Glazed Wall Deco</div><div class="text-[11px] text-slate-400">SKU: CW-8120</div></div></div></td><td class="py-3.5 px-4"><div><span class="font-bold text-slate-800">300×600 mm</span></div><div class="text-[11px] text-slate-500">Digital Wall Ceramic</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded font-bold text-slate-900 bg-emerald-50 text-emerald-700 border border-emerald-200">₹50 / box</span><span class="block text-[10px] text-slate-400 mt-0.5">Tier 1 Applicator</span></td><td class="py-3.5 px-4"><div class="font-bold text-slate-900">BATCH-CW-8120</div><div class="text-[11px] text-slate-400 font-mono">#72001 - #90000</div></td><td class="py-3.5 px-4"><span class="font-bold text-slate-900">18,000</span> <span class="text-slate-400 text-[11px]">QR Codes</span></td><td class="py-3.5 px-4"><div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden mb-1"><div class="bg-brand h-2 rounded-full" style="width: 92.3%"></div></div><div class="text-[11px] text-slate-500 font-semibold">92.3% (16,614 Scanned)</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300">Depleted Batch</span></td><td class="py-3.5 px-4 text-right"><button class="px-2.5 py-1 bg-brand hover:bg-brand-600 text-white rounded text-xs font-semibold shadow-xs transition">Generate Batch</button></td></tr><tr class="hover:bg-slate-50 transition"><td class="py-3.5 px-4"><div class="flex items-center space-x-3"><div class="w-9 h-9 rounded-lg bg-orange-100 border border-orange-200 text-brand font-bold text-xs flex items-center justify-center flex-shrink-0">7192</div><div><div class="font-bold text-slate-900 text-xs">Full Body Heavy Duty</div><div class="text-[11px] text-slate-400">SKU: FB-7192</div></div></div></td><td class="py-3.5 px-4"><div><span class="font-bold text-slate-800">600×600 mm</span></div><div class="text-[11px] text-slate-500">Industrial Vitrified</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded font-bold text-slate-900 bg-emerald-50 text-emerald-700 border border-emerald-200">₹50 / box</span><span class="block text-[10px] text-slate-400 mt-0.5">Tier 1 Applicator</span></td><td class="py-3.5 px-4"><div class="font-bold text-slate-900">BATCH-FB-7192</div><div class="text-[11px] text-slate-400 font-mono">#90001 - #105000</div></td><td class="py-3.5 px-4"><span class="font-bold text-slate-900">15,000</span> <span class="text-slate-400 text-[11px]">QR Codes</span></td><td class="py-3.5 px-4"><div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden mb-1"><div class="bg-slate-800 h-2 rounded-full" style="width: 52.1%"></div></div><div class="text-[11px] text-slate-500 font-semibold">52.1% (7,815 Scanned)</div></td><td class="py-3.5 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Active Production</span></td><td class="py-3.5 px-4 text-right"><button class="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-50 rounded text-slate-700 text-xs font-semibold shadow-xs transition">View Serials</button></td></tr></tbody></table></div><div class="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500"><span>Showing <strong class="text-slate-800">1 to 6</strong> of <strong class="text-slate-800">24</strong> tile series</span><div class="flex items-center space-x-1"><button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-400 cursor-not-allowed">Previous</button><button class="px-2.5 py-1 rounded bg-brand text-white font-bold">1</button><button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">2</button><button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">3</button><button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">4</button><button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Next</button></div></div></section><!-- END: TableSection --><!-- BEGIN: AutomatedReportDispatchFooterBanner --><section class="mt-6 bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-5 text-white flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-800 shadow-md"><div class="flex items-center space-x-4"><div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-brand-100 flex-shrink-0"><svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></div><div><h4 class="text-sm font-bold text-white">High-Volume Production QR Batch Generator • Factory Dispatch Integration</h4><p class="text-xs text-slate-300 mt-0.5">Assign encrypted serial cryptographic packs with real-time UPI cashback links for direct printing on tile carton packaging.</p></div></div><div class="flex items-center space-x-3 w-full md:w-auto justify-end"><button class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition border border-white/10">Download Printing Template (SVG/EPS)</button><button class="px-4 py-2 bg-brand hover:bg-brand-600 text-white rounded-lg text-xs font-bold transition shadow">Run Instant Batch Export</button></div></section><!-- END: AutomatedReportDispatchFooterBanner --></main>
+<!-- END: ContentArea -->
+</div>
+<!-- END: BodyLayoutWithSidebar -->
+<!-- BEGIN: MainFooterBar -->
+<footer class="h-10 bg-slate-50 border-t border-slate-200 px-6 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="font-bold text-slate-700">DURAGRIT VITRIFIED</span>
+<span>•</span>
+<span>Retail &amp; QR Portal Workflow</span>
+</div>
+<div class="text-slate-500 font-medium">Step 8 of 14</div>
+</footer>
+<!-- END: MainFooterBar -->
+</div>
+<!-- END: MainPortalFrame -->
+<!-- BEGIN: GenerateQRBatchModalOverlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto transition-opacity duration-200" id="generateBatchModalOverlay">
+<div class="relative w-full max-w-[800px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[92vh]">
+<!-- Top Header Bar -->
+<div class="px-6 py-5 bg-white border-b border-slate-100 flex items-start justify-between">
+<div class="space-y-1.5">
+<div class="flex flex-wrap items-center gap-2">
+<span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">BATCH GENERATION ENGINE</span>
+<span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            SHA-256 Cryptographic Packaging
+          </span>
+</div>
+<h2 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight font-heading">Generate Production QR Batch</h2>
+<p class="text-xs text-slate-500 font-medium">Allocate cryptographic serialized QR tokens for packaging print lines &amp; contractor UPI rewards.</p>
+</div>
+<button class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer" id="closeBatchModalBtn" title="Close modal">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Scrollable Modal Body -->
+<div class="p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1">
+<!-- Section 1: Tile SKU & Product Selection -->
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<label class="text-xs font-bold text-slate-800 uppercase tracking-wider">1. Tile SKU &amp; Production Line</label>
+<span class="text-[11px] text-slate-400 font-medium">Linked to Morbi Kiln Cluster</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<!-- SKU Dropdown -->
+<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+<div class="text-[11px] font-semibold text-slate-500">Target Tile Series / SKU</div>
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 text-brand font-bold text-xs flex items-center justify-center flex-shrink-0">6012</div>
+<div class="flex-1 min-w-0">
+<div class="text-xs font-bold text-slate-900 truncate">PGVT Royal Glazed (SKU: PGVT-6012)</div>
+<div class="text-[10px] text-slate-500">600×1200 mm • Vitrified High Gloss</div>
+</div>
+</div>
+</div>
+<!-- Production Unit Dropdown -->
+<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+<div class="text-[11px] font-semibold text-slate-500">Production Unit / Factory Plant</div>
+<div class="flex items-center justify-between text-xs font-bold text-slate-900 pt-1">
+<div class="flex items-center gap-1.5 truncate">
+<svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="truncate">Plant Unit 02 - Morbi High-Speed Kiln Line A</span>
+</div>
+<span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 ml-1 flex-shrink-0">Online</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Batch Allocation & Serial Range -->
+<div class="space-y-3">
+<label class="text-xs font-bold text-slate-800 uppercase tracking-wider">2. Batch Allocation &amp; Serial Denomination</label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<!-- Target Carton Quantity -->
+<div class="p-3.5 bg-white border border-slate-200 rounded-xl space-y-2">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-600">Target Carton Quantity</span>
+<span class="text-[10px] font-bold text-brand bg-orange-50 px-2 py-0.5 rounded">1 QR Code / Box</span>
+</div>
+<div class="flex items-center gap-2">
+<input class="w-full text-sm font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none" readonly="" type="text" value="25,000 Boxes"/>
+</div>
+<div class="flex items-center gap-1.5 pt-0.5">
+<button class="text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition" type="button">+5,000</button>
+<button class="text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition" type="button">+10,000</button>
+<button class="text-[10px] font-bold bg-brand text-white px-2 py-0.5 rounded shadow-xs" type="button">+25,000</button>
+<button class="text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition" type="button">+50,000</button>
+</div>
+</div>
+<!-- Serial Number Range Preview -->
+<div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-600">Serial Range Preview</span>
+<span class="text-[10px] font-mono text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">Sequential</span>
+</div>
+<div>
+<div class="font-mono font-black text-slate-900 text-sm tracking-tight">BATCH-PGV-9922</div>
+<div class="text-[11px] text-slate-500 font-mono mt-0.5">#25001 — #50000 (25,000 Serials)</div>
+</div>
+<div class="text-[10px] text-slate-400">Next available in registry • Auto-indexed</div>
+</div>
+</div>
+<!-- Incentive Denomination Banner -->
+<div class="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+              ₹
+            </div>
+<div>
+<div class="text-xs font-bold text-slate-900">Reward Denomination: <span class="text-emerald-700">₹50 / box (Tier 1 Default)</span></div>
+<div class="text-[11px] text-slate-600">Standard contractor &amp; applicator cashback rate upon QR scan validation.</div>
+</div>
+</div>
+<div class="text-left sm:text-right flex-shrink-0">
+<div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Projected Escrow Pool</div>
+<div class="text-base font-black text-slate-900 tracking-tight">₹ 12,50,000</div>
+</div>
+</div>
+</div>
+<!-- Section 3: Security & Fraud Safeguards -->
+<div class="space-y-2.5">
+<div class="flex items-center justify-between">
+<label class="text-xs font-bold text-slate-800 uppercase tracking-wider">3. Security &amp; Anti-Fraud Safeguards</label>
+<span class="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">All 3 Active</span>
+</div>
+<div class="space-y-2">
+<div class="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="text-xs font-bold text-slate-900">Geo-Fence Regional Activation Lock</div>
+<div class="text-[11px] text-slate-500">Bind activations strictly to Northern &amp; Western authorized dealer states (RJ, GJ, DL-NCR, UP).</div>
+</div>
+</div>
+<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex-shrink-0">ENFORCED</span>
+</div>
+<div class="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="text-xs font-bold text-slate-900">Dynamic SHA-256 HMAC QR Encryption</div>
+<div class="text-[11px] text-slate-500">Unique cryptographic hash per sticker with scratch-off physical security layer on packaging.</div>
+</div>
+</div>
+<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex-shrink-0">ACTIVE</span>
+</div>
+<div class="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-orange-50 text-brand flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="text-xs font-bold text-slate-900">One-Time Scan Immediate Token Invalidation</div>
+<div class="text-[11px] text-slate-500">Auto-void QR token immediately upon single UPI claim validation to prevent double-dipping.</div>
+</div>
+</div>
+<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex-shrink-0">INSTANT VOID</span>
+</div>
+</div>
+</div>
+<!-- Section 4: Export & Print Dispatch Package -->
+<div class="space-y-2.5">
+<label class="text-xs font-bold text-slate-800 uppercase tracking-wider">4. Print Dispatch &amp; Export Format</label>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+<div class="p-3 rounded-xl border-2 border-brand bg-orange-50/50 cursor-pointer flex flex-col justify-between">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] font-bold text-slate-900">Vector Print Roll</span>
+<span class="w-3.5 h-3.5 rounded-full bg-brand flex items-center justify-center text-white text-[8px]">✓</span>
+</div>
+<p class="text-[10px] text-slate-600 font-medium">EPS / SVG 600 DPI for high-speed carton roll feeders</p>
+</div>
+<div class="p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer flex flex-col justify-between transition">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] font-bold text-slate-700">PDF Carton Inserts</span>
+<span class="w-3.5 h-3.5 rounded-full border border-slate-300"></span>
+</div>
+<p class="text-[10px] text-slate-500 font-medium">A4 Sheet 24-up Grid for manual packing lines</p>
+</div>
+<div class="p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer flex flex-col justify-between transition">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] font-bold text-slate-700">API Direct Stream</span>
+<span class="w-3.5 h-3.5 rounded-full border border-slate-300"></span>
+</div>
+<p class="text-[10px] text-slate-500 font-medium">Markem-Imaje / Videojet inkjet direct payload</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer Actions -->
+<div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+<div class="text-xs text-slate-500 font-medium flex items-center gap-1.5 self-start sm:self-auto">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Est. Generation: <strong class="text-slate-800">~4.2s</strong> • 25,000 unique records</span>
+</div>
+<div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+<button class="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-2 rounded-lg transition cursor-pointer" id="draftBatchModalBtn" type="button">Hold in Draft</button>
+<button class="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg transition shadow-xs cursor-pointer" id="dismissBatchModalBtn" type="button">Cancel</button>
+<button class="inline-flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-slate-900 to-slate-800 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-sm transition active:scale-95 cursor-pointer" id="generateDispatchBatchBtn" type="button">
+<svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Generate &amp; Dispatch Batch (25,000 Serials)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- END: GenerateQRBatchModalOverlay -->
+<script id="modal-toggle-script">
+  (function setupBatchModalInteractions() {
+    const modal = document.getElementById('generateBatchModalOverlay');
+    const closeBtn = document.getElementById('closeBatchModalBtn');
+    const dismissBtn = document.getElementById('dismissBatchModalBtn');
+    const draftBtn = document.getElementById('draftBatchModalBtn');
+    const actionBtn = document.getElementById('generateDispatchBatchBtn');
+
+    function hideModal() {
+      if (modal) modal.style.display = 'none';
+    }
+    function showModal() {
+      if (modal) modal.style.display = 'flex';
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', hideModal);
+    if (dismissBtn) dismissBtn.addEventListener('click', hideModal);
+    if (draftBtn) draftBtn.addEventListener('click', () => {
+      alert('Batch saved to drafts.');
+      hideModal();
+    });
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) hideModal();
+      });
+    }
+
+    if (actionBtn) {
+      actionBtn.addEventListener('click', function() {
+        this.innerHTML = '<span class="animate-pulse">Encrypting &amp; Packaging...</span>';
+        this.disabled = true;
+        setTimeout(() => {
+          alert('Batch BATCH-PGV-9922 generated successfully! 25,000 encrypted QR tokens dispatched to Factory Line A.');
+          hideModal();
+          this.innerHTML = '<svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg><span>Generate &amp; Dispatch Batch (25,000 Serials)</span>';
+          this.disabled = false;
+        }, 1200);
+      });
+    }
+
+    // Hook up the '+ Generate QR Batch' trigger button on the page
+    document.querySelectorAll('button').forEach(btn => {
+      if (btn.textContent.includes('Generate QR Batch')) {
+        btn.addEventListener('click', showModal);
+      }
+    });
+  })();
+</script></body></html>

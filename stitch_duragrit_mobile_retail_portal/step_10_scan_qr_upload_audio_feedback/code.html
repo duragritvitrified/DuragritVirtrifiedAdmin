@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Step 10: Scan QR &amp; Upload - DuraGrit Vitrified</title>
+<!-- Tailwind CSS CDN with forms and container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts for authentic typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&amp;family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              rust: '#c04323',
+              rustHover: '#a8371a',
+              cardBg: '#fbfbfb',
+              canvas: '#f3f4f6',
+              borderLight: '#e5e7eb',
+              textPrimary: '#1a1f2c',
+              textMuted: '#6b7280',
+              badgeGreen: '#15803d',
+              badgeGreenBg: '#ecfdf5'
+            }
+          },
+          fontFamily: {
+            serifHeading: ['Playfair Display', 'Georgia', 'serif'],
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Viewfinder & Animation Styles -->
+<style data-purpose="hud-grid-and-effects">
+    /* Reticle viewfinder grid lines */
+    .hud-grid-v {
+      position: absolute;
+      top: 12%;
+      bottom: 12%;
+      width: 1px;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    .hud-grid-h {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      height: 1px;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    /* Animated vertical scanning laser */
+    @keyframes laserSweep {
+      0% {
+        top: 20%;
+        opacity: 0.75;
+      }
+      50% {
+        top: 76%;
+        opacity: 1;
+      }
+      100% {
+        top: 20%;
+        opacity: 0.75;
+      }
+    }
+
+    .hud-laser-line {
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, #c04323 15%, #ff7a45 50%, #c04323 85%, transparent 100%);
+      box-shadow: 0 0 12px rgba(255, 87, 34, 0.85), 0 0 4px #ff5722;
+      animation: laserSweep 3.2s ease-in-out infinite;
+      z-index: 20;
+    }
+
+    /* Sub-ambient radar radar beam overlay */
+    @keyframes radarPulse {
+      0%, 100% {
+        opacity: 0.08;
+        transform: scale(0.98);
+      }
+      50% {
+        opacity: 0.22;
+        transform: scale(1.02);
+      }
+    }
+    .hud-radar-sweep {
+      animation: radarPulse 4s ease-in-out infinite;
+    }
+
+    /* Reticle Corner Brackets Pulsing */
+    @keyframes cornerGlow {
+      0%, 100% {
+        border-color: #c04323;
+        box-shadow: 0 0 3px rgba(192, 67, 35, 0.3);
+      }
+      50% {
+        border-color: #ff6e40;
+        box-shadow: 0 0 8px rgba(255, 110, 64, 0.6);
+      }
+    }
+    .hud-bracket {
+      animation: cornerGlow 2.4s ease-in-out infinite;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hud-reticle-circle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 9999px;
+      transition: all 0.2s ease;
+    }
+    .hud-reticle-cross-v {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 1px;
+      height: 32px;
+      background-color: rgba(255, 255, 255, 0.55);
+    }
+    .hud-reticle-cross-h {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      height: 1px;
+      width: 32px;
+      background-color: rgba(255, 255, 255, 0.55);
+    }
+
+    /* Simulated QR Target Box Animation */
+    @keyframes qrHover {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      50% {
+        transform: translate(-50%, -52%) scale(1.02);
+        border-color: rgba(249, 115, 22, 0.65);
+      }
+    }
+    .qr-target-mesh {
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      width: 110px;
+      height: 110px;
+      transform: translate(-50%, -50%);
+      border: 1px dashed rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      animation: qrHover 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Flash shutter animation on capture */
+    @keyframes shutterFlash {
+      0% { opacity: 0; }
+      20% { opacity: 0.95; }
+      100% { opacity: 0; }
+    }
+    .shutter-effect {
+      animation: shutterFlash 0.38s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+    }
+
+    /* Torchlight overlay illumination */
+    .torch-active-glow {
+      background: radial-gradient(circle at 50% 45%, rgba(255, 253, 235, 0.42) 0%, rgba(255, 240, 200, 0.18) 45%, transparent 75%) !important;
+    }
+    
+    /* Collapsible smooth height */
+    .accordion-content {
+      max-height: 400px;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    }
+    .accordion-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0 !important;
+      pointer-events: none;
+    }
+
+    /* Audio wave sound toast animation */
+    @keyframes soundWavePop {
+      0% { transform: scale(0.8); opacity: 0; }
+      25% { transform: scale(1.05); opacity: 1; }
+      75% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0; }
+    }
+    .sound-toast-anim {
+      animation: soundWavePop 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Sound wave bar indicator */
+    .sound-bar {
+      display: inline-block;
+      width: 2px;
+      height: 9px;
+      background-color: currentColor;
+      border-radius: 1px;
+      transition: height 0.15s ease;
+    }
+    .sound-bar:nth-child(1) { height: 5px; }
+    .sound-bar:nth-child(2) { height: 10px; }
+    .sound-bar:nth-child(3) { height: 7px; }
+    .sound-bar.animate {
+      animation: barJump 0.35s ease-in-out infinite alternate;
+    }
+    @keyframes barJump {
+      0% { height: 4px; }
+      100% { height: 11px; }
+    }
+
+    /* BEGIN: Mobile Haptic Recoil & Vibration Animations */
+    @keyframes hapticKick {
+      0% { transform: translate3d(0, 0, 0); }
+      15% { transform: translate3d(-2px, 2.5px, 0) scale(0.998); }
+      35% { transform: translate3d(2.5px, -1.5px, 0) scale(1.002); }
+      55% { transform: translate3d(-1.5px, 1px, 0); }
+      75% { transform: translate3d(1px, -0.5px, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+
+    @keyframes hapticBuzz {
+      0% { transform: translate(0, 0); }
+      10% { transform: translate(-3px, -1.5px); }
+      20% { transform: translate(3px, 2px); }
+      30% { transform: translate(-3px, 1px); }
+      40% { transform: translate(2.5px, -1px); }
+      50% { transform: translate(-2px, 2px); }
+      60% { transform: translate(2px, -1.5px); }
+      70% { transform: translate(-1px, 1px); }
+      80% { transform: translate(1px, -0.5px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes hapticMicroTap {
+      0% { transform: translate3d(0, 0, 0); }
+      30% { transform: translate3d(0, 1.8px, 0); }
+      70% { transform: translate3d(0, -0.8px, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+
+    @keyframes hapticRippleRing {
+      0% {
+        transform: translate(-50%, -50%) scale(0.6);
+        opacity: 0.9;
+        border-width: 3px;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(2.4);
+        opacity: 0;
+        border-width: 1px;
+      }
+    }
+
+    .haptic-kick-anim {
+      animation: hapticKick 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .haptic-buzz-anim {
+      animation: hapticBuzz 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+    .haptic-micro-anim {
+      animation: hapticMicroTap 0.12s ease-out;
+    }
+
+    .haptic-wave-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 80px;
+      height: 80px;
+      border-radius: 9999px;
+      border: 2px solid #ff7a45;
+      pointer-events: none;
+      z-index: 35;
+      animation: hapticRippleRing 0.55s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    @keyframes hapticBadgePulse {
+      0% { transform: scale(0.7); opacity: 0; }
+      20% { transform: scale(1.08); opacity: 1; }
+      80% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0; }
+    }
+    .haptic-toast-anim {
+      animation: hapticBadgePulse 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    /* END: Mobile Haptic Recoil & Vibration Animations */
+  </style>
+<!-- END: Custom Viewfinder Styles -->
+</head>
+<body class="bg-[#f0f2f5] text-brand-textPrimary font-sans antialiased min-h-screen py-6 px-3 flex flex-col items-center justify-start">
+<!-- BEGIN: Outer Presentation Container -->
+<div class="w-full max-w-[540px] flex flex-col items-center">
+<!-- Presentation Header Banner -->
+<div class="w-full flex items-center justify-between mb-4 px-1">
+<h1 class="text-xl md:text-2xl font-black tracking-tight text-[#111827]">Scan QR &amp; Upload</h1>
+<div class="bg-[#c04323] text-white text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase shadow-xs">
+        STEP 10 / 14
+      </div>
+</div>
+<!-- Outer Sheet Border Container -->
+<div class="w-full bg-[#f8f9fa] rounded-2xl border border-gray-200/80 shadow-sm p-3.5 sm:p-5" id="haptic-recoil-container">
+<!-- BEGIN: Mobile App Shell -->
+<main class="w-full bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden" data-purpose="mobile-application-view">
+<!-- BEGIN: App Header -->
+<header class="flex items-center justify-between px-4 py-3.5 border-b border-gray-50 bg-white" data-purpose="top-navigation-bar">
+<!-- Back button and Screen Title -->
+<div class="flex items-center space-x-2.5">
+<button aria-label="Go Back" class="text-gray-800 hover:text-gray-600 active:scale-95 transition-all p-0.5" id="btn-back" type="button">
+<svg class="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<h2 class="text-[17px] font-bold tracking-tight text-gray-900 font-serifHeading">
+              Scan Qr &amp; Upload
+            </h2>
+</div>
+<!-- Header Actions: SFX Toggle + Haptic Toggle + User Badges / Avatar -->
+<div class="flex items-center space-x-1.5 sm:space-x-2">
+<!-- Audio Sound Mute/Unmute Toggle in Header -->
+<button aria-label="Toggle Sound Effects" class="flex items-center space-x-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold transition-all border border-gray-200 active:scale-95 cursor-pointer shadow-2xs" id="sound-toggle-btn" title="Toggle audio feedback" type="button">
+<svg class="w-3.5 h-3.5 text-[#c04323] transition-colors" fill="none" id="sound-icon-on" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<svg class="w-3.5 h-3.5 text-gray-400 hidden" fill="none" id="sound-icon-off" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M17 14l4-4m0 4l-4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="font-bold uppercase tracking-wider hidden xs:inline" id="sound-status-label">SFX</span>
+</button>
+<!-- NEW: Haptic Vibration Toggle Button -->
+<button aria-label="Toggle Haptic Feedback" class="flex items-center space-x-1 bg-amber-50 hover:bg-amber-100 text-[#c04323] px-2 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold transition-all border border-amber-200 active:scale-95 cursor-pointer shadow-2xs" id="haptic-toggle-btn" title="Toggle tactile vibration &amp; test recoil" type="button">
+<svg class="w-3.5 h-3.5 text-[#c04323] transition-transform" fill="none" id="haptic-icon-active" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M1 9l2 3-2 3M23 9l-2 3 2 3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" id="haptic-dot-indicator"></span>
+<span class="font-bold uppercase tracking-wider" id="haptic-status-label">HAPTIC</span>
+</button>
+<div class="bg-[#f0f2f5] text-gray-700 text-[11px] font-bold px-2 py-0.5 rounded tracking-wide border border-gray-200">
+              RK
+            </div>
+<div class="w-7 h-7 rounded-full bg-[#c04323] text-white flex items-center justify-center shadow-sm">
+<svg class="w-4 h-4 fill-current" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+</header>
+<!-- END: App Header -->
+<div class="p-3.5 space-y-3.5">
+<!-- BEGIN: Camera Viewfinder Viewport -->
+<section class="relative w-full aspect-[4/4.2] sm:aspect-[4/3.8] bg-[#141517] rounded-xl overflow-hidden flex flex-col justify-between p-3.5 border border-gray-800 shadow-inner select-none transition-colors duration-300 cursor-crosshair" data-purpose="optical-camera-viewfinder" id="camera-viewfinder" title="Click reticle area to simulate QR lock &amp; scan">
+<!-- Viewfinder Optical Glass Elements & Interactive Flash Overlay -->
+<div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-600 via-transparent to-black"></div>
+<div class="absolute inset-0 pointer-events-none transition-all duration-300 opacity-0" id="torch-beam-layer"></div>
+<div class="absolute inset-0 bg-white pointer-events-none opacity-0 z-30" id="shutter-flash-overlay"></div>
+<!-- Dynamic Haptic Ripple Wave Layer -->
+<div class="absolute inset-0 pointer-events-none z-30 overflow-hidden" id="haptic-wave-container"></div>
+<!-- Subtle Dynamic Radar Sweep Layer -->
+<div class="absolute inset-0 hud-radar-sweep pointer-events-none bg-[radial-gradient(circle_at_50%_50%,_rgba(192,67,35,0.18)_0%,_transparent_65%)]"></div>
+<!-- Alignment Guide Grid lines -->
+<div class="hud-grid-v left-1/3"></div>
+<div class="hud-grid-v left-2/3"></div>
+<div class="hud-grid-h top-1/3"></div>
+<div class="hud-grid-h top-2/3"></div>
+<!-- Optical Center Reticle & Dynamic Animated Laser Line -->
+<div class="hud-reticle-cross-v pointer-events-none"></div>
+<div class="hud-reticle-cross-h pointer-events-none"></div>
+<div class="hud-reticle-circle pointer-events-none" id="reticle-center"></div>
+<div class="hud-laser-line pointer-events-none"></div>
+<!-- Simulated Target QR Bounding Box -->
+<div class="qr-target-mesh flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-[#ff6e40] rounded-full animate-ping opacity-75"></div>
+</div>
+<!-- Viewfinder Corner Markers (Rust/Amber Animated) -->
+<!-- Top-Left Corner -->
+<div class="hud-bracket absolute top-12 left-10 w-6 h-6 border-t-2 border-l-2 border-[#d04928] pointer-events-none"></div>
+<!-- Top-Right Corner -->
+<div class="hud-bracket absolute top-12 right-10 w-6 h-6 border-t-2 border-r-2 border-[#d04928] pointer-events-none"></div>
+<!-- Bottom-Left Corner -->
+<div class="hud-bracket absolute bottom-20 left-10 w-6 h-6 border-b-2 border-l-2 border-[#d04928] pointer-events-none"></div>
+<!-- Bottom-Right Corner -->
+<div class="hud-bracket absolute bottom-20 right-10 w-6 h-6 border-b-2 border-r-2 border-[#d04928] pointer-events-none"></div>
+<!-- Top Camera Controls Bar -->
+<div class="relative z-10 flex items-center justify-between w-full">
+<!-- Live Camera Indicator with Blinking Dot -->
+<div class="inline-flex items-center space-x-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-[10px] text-white font-medium shadow-xs">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block"></span>
+<span class="tracking-wide">CAM OPTIC 01 • 60FPS</span>
+</div>
+<!-- HUD Controls Right Stack: Reticle Chirp Pulse Indicator & Torch Button -->
+<div class="flex items-center space-x-1.5 sm:space-x-2">
+<!-- Audio Feedback Activity Pill -->
+<div class="inline-flex items-center space-x-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 text-[10px] text-gray-300 font-mono" id="audio-live-pill" title="Web Audio Synthesizer Status">
+<div class="flex items-end space-x-0.5 text-amber-400 mr-0.5">
+<span class="sound-bar" id="sbar-1"></span>
+<span class="sound-bar" id="sbar-2"></span>
+<span class="sound-bar" id="sbar-3"></span>
+</div>
+<span class="text-[9px] uppercase tracking-wider text-amber-200" id="audio-activity-text">READY</span>
+</div>
+<!-- Torch Control Toggle Button with Interactive State -->
+<button class="inline-flex items-center space-x-1.5 bg-black/60 backdrop-blur-md hover:bg-black/85 active:scale-95 px-2.5 py-1 rounded-md border border-white/15 text-[10px] font-medium text-white transition-all cursor-pointer shadow-xs" data-purpose="toggle-torch" id="torch-toggle-btn" type="button">
+<svg class="w-3 h-3 text-amber-300 transition-transform" fill="none" id="torch-icon" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span id="torch-label">Torch Off</span>
+</button>
+</div>
+</div>
+<!-- Floating Audio & Haptic Toast Indicator (Over Viewfinder) -->
+<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 z-40" id="audio-feedback-toast">
+<div class="bg-black/85 backdrop-blur-md border border-amber-400/50 text-white px-3.5 py-1.5 rounded-full flex items-center space-x-2 shadow-xl">
+<svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" id="toast-icon-svg" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M11 5L6 9H2v6h4l5 4V5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M15.54 8.46a5 5 0 010 7.07" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[11px] font-mono font-bold text-amber-200 tracking-wider whitespace-nowrap" id="toast-text">SCAN AUDIO</span>
+</div>
+</div>
+<!-- Floating Haptic Tactile Engine Badge Indicator -->
+<div class="absolute top-14 left-1/2 transform -translate-x-1/2 pointer-events-none opacity-0 z-40 transition-all" id="haptic-feedback-badge">
+<div class="bg-neutral-900/90 backdrop-blur-md border border-amber-500/60 text-amber-200 px-3 py-1 rounded-full flex items-center space-x-1.5 shadow-lg">
+<span class="text-xs">📳</span>
+<span class="text-[10px] font-mono font-bold uppercase tracking-wider" id="haptic-badge-text">HAPTIC 40ms</span>
+</div>
+</div>
+<!-- Viewfinder Lower Status Overlays -->
+<div class="relative z-10 flex flex-col items-center space-y-2 mt-auto">
+<!-- Detection HUD Pill -->
+<div class="bg-black/75 backdrop-blur-md border border-white/15 px-3 py-1 rounded text-white flex items-center space-x-1.5 text-[10px] tracking-wide font-mono shadow-sm transition-all duration-300 cursor-pointer" id="detection-pill" title="Click to test lock-on sound &amp; micro-vibration">
+<!-- QR scan vector icon -->
+<svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="6" rx="1" stroke-width="2" width="6" x="3" y="3"></rect>
+<rect height="6" rx="1" stroke-width="2" width="6" x="15" y="3"></rect>
+<rect height="6" rx="1" stroke-width="2" width="6" x="3" y="15"></rect>
+<path d="M15 15h2v2h-2zM19 15h2v2h-2zM15 19h2v2h-2zM19 19h2v2h-2z" stroke-width="1.5"></path>
+</svg>
+<span id="detection-status-text">DETECTING: DTA-TYPE3-HD</span>
+</div>
+<!-- Align Instruction CTA Pill (Clickable trigger to simulate ingest) -->
+<button class="w-full max-w-[340px] bg-white hover:bg-neutral-50 active:scale-[0.98] text-gray-800 py-1.5 px-3 rounded-full flex items-center justify-center space-x-2 shadow-lg transition-all cursor-pointer group" id="trigger-scan-btn" title="Click to simulate capture" type="button">
+<!-- Scan focus icon -->
+<svg class="w-4 h-4 text-[#c04323] group-hover:scale-110 flex-shrink-0 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[11px] font-semibold tracking-normal text-gray-700 truncate" id="scan-btn-label">
+  Align DuraGrit QR within frame for auto-ingest
+</span>
+</button>
+</div>
+</section>
+<!-- END: Camera Viewfinder Viewport -->
+<!-- BEGIN: Status Indicator Metrics Row -->
+<section class="grid grid-cols-3 gap-2" data-purpose="lot-and-sku-metrics">
+<!-- Metric 1: Lot Target -->
+<div class="bg-[#fcfcfd] border border-gray-200/70 rounded-lg p-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:border-gray-300 transition-colors" id="metric-lot-card" title="Click to test focus chirp &amp; micro-tap">
+<span class="block text-[9.5px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">LOT TARGET</span>
+<span class="block text-[12px] font-bold text-gray-900 truncate" id="metric-lot">MOR-24-B9</span>
+</div>
+<!-- Metric 2: SKU Class -->
+<div class="bg-[#fcfcfd] border border-gray-200/70 rounded-lg p-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:border-gray-300 transition-colors" id="metric-sku-card" title="Click to test focus chirp &amp; micro-tap">
+<span class="block text-[9.5px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">SKU CLASS</span>
+<span class="block text-[12px] font-bold text-gray-900 truncate">CER-ADH-70</span>
+</div>
+<!-- Metric 3: Batch State -->
+<div class="bg-[#fcfcfd] border border-gray-200/70 rounded-lg p-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:border-gray-300 transition-colors" id="metric-batch-card" title="Click to test focus chirp &amp; micro-tap">
+<span class="block text-[9.5px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">BATCH STATE</span>
+<span class="inline-flex items-center text-[11px] font-bold text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block mr-1"></span>
+                VALIDATED
+              </span>
+</div>
+</section>
+<!-- END: Status Indicator Metrics Row -->
+<!-- BEGIN: Manual Serial Ingest Accordion Card -->
+<section class="bg-[#fcfcfd] border border-gray-200/80 rounded-xl p-3.5 space-y-3" data-purpose="manual-serial-ingest-card">
+<!-- Header with Dropdown Indicator (Accordion clickable header) -->
+<button aria-expanded="true" class="w-full flex items-start justify-between text-left cursor-pointer focus:outline-none" id="accordion-toggle-btn" type="button">
+<div class="flex items-center space-x-2.5">
+<div class="w-7 h-7 rounded bg-red-50 text-[#c04323] flex items-center justify-center border border-red-100 flex-shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="14" rx="2" stroke-width="1.8" width="20" x="2" y="5"></rect>
+<line stroke-linecap="round" stroke-width="2" x1="6" x2="6.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="10" x2="10.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="14" x2="14.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="18" x2="18.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="6" x2="6.01" y1="13" y2="13"></line>
+<line stroke-linecap="round" stroke-width="1.8" x1="10" x2="14" y1="13" y2="13"></line>
+<line stroke-linecap="round" stroke-width="2" x1="18" x2="18.01" y1="13" y2="13"></line>
+</svg>
+</div>
+<div>
+<h3 class="text-[13px] font-bold text-gray-900 font-serifHeading leading-tight">Manual Serial Ingest</h3>
+<p class="text-[10px] text-gray-500">Having trouble scanning label?</p>
+</div>
+</div>
+<div class="text-gray-500 p-1">
+<svg class="w-4 h-4 transition-transform duration-200" fill="none" id="accordion-icon" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</button>
+<!-- Collapsible Ingest Body -->
+<div class="accordion-content space-y-3" id="accordion-drawer">
+<!-- Manual Input Form -->
+<div class="space-y-1.5 pt-1">
+<label class="block text-[10px] font-medium text-gray-600" for="serial-key-input">Serial / Batch Key</label>
+<div class="flex items-center space-x-2">
+<input class="flex-1 bg-[#f0f2f4] border border-gray-200 text-gray-700 text-[12px] font-mono rounded-md px-3 py-2 focus:ring-1 focus:ring-[#c04323] focus:border-[#c04323] outline-none transition-colors" id="serial-key-input" placeholder="Format: DG-#####-###" type="text" value="DG-88410-B04"/>
+<button class="bg-[#c04323] hover:bg-[#a8371a] active:scale-95 text-white text-[12px] font-semibold px-4 py-2 rounded-md shadow-sm transition-all whitespace-nowrap cursor-pointer" data-purpose="submit-log-code" id="log-code-btn" type="button">
+  Log Code
+</button>
+</div>
+<!-- Helper text format -->
+<p class="text-[9.5px] text-gray-400 flex items-center pt-0.5">
+<span class="mr-1">ⓘ</span> Format: DG-[5-digit Lot]-[Unit Identifier] (Clear input to test error buzz)
+</p>
+</div>
+<!-- Secondary Action: Switch to Manifest CSV / Photo Ingest -->
+<button class="w-full bg-white border border-gray-200 hover:bg-gray-50 active:scale-[0.99] py-2 px-3 rounded-lg flex items-center justify-center space-x-2 text-[11px] font-semibold text-gray-700 shadow-2xs transition-colors cursor-pointer" data-purpose="manifest-switch-button" id="btn-switch-manifest" type="button">
+<svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Switch to Manifest CSV / Photo Ingest</span>
+</button>
+<!-- Device Connection Sync Strip -->
+<div class="bg-[#f0f2f4] rounded-md px-2.5 py-1.5 flex items-center justify-between text-[10px] text-gray-600 border border-gray-200/50">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+<span class="font-medium text-gray-600 truncate">Field Device Sync: <span class="text-gray-800 font-semibold">MOR-FD-08</span></span>
+</div>
+<span class="text-gray-500 font-medium ml-2 uppercase text-[9px] tracking-wide whitespace-nowrap">MORBI YARD 04</span>
+</div>
+</div>
+</section>
+<!-- END: Manual Serial Ingest Accordion Card -->
+<!-- BEGIN: Recent Field Tags (Session) Section -->
+<section class="pt-1 pb-1" data-purpose="recent-field-tags-list">
+<!-- Section Header -->
+<div class="flex items-center justify-between mb-2">
+<h4 class="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+  RECENT FIELD TAGS (SESSION)
+</h4>
+<span class="text-[10px] font-semibold text-gray-500 transition-colors" id="queued-count-badge">
+  3 QUEUED
+</span>
+</div>
+<!-- Tag Items Stack -->
+<div class="space-y-2" id="recent-tags-container">
+<!-- Item 1 -->
+<article class="bg-[#fcfcfd] border border-gray-200/80 rounded-lg p-2.5 flex items-center justify-between shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="16" rx="2" stroke-width="1.8" width="16" x="4" y="4"></rect>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="16" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="12" y1="13" y2="13"></line>
+</svg>
+</div>
+<div>
+<h5 class="text-[12px] font-bold text-gray-900 leading-snug">DG-94812-A01</h5>
+<p class="text-[10px] text-gray-500">Hydraulic Tile Binder • Pallet 14</p>
+</div>
+</div>
+<div class="text-right">
+<span class="inline-block bg-emerald-50 text-emerald-700 font-bold text-[9px] px-1.5 py-0.5 rounded border border-emerald-200/70 tracking-wider">
+  SYNCED
+</span>
+<p class="text-[9.5px] text-gray-400 font-mono mt-0.5">14:22:08</p>
+</div>
+</article>
+<!-- Item 2 -->
+<article class="bg-[#fcfcfd] border border-gray-200/80 rounded-lg p-2.5 flex items-center justify-between shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="16" rx="2" stroke-width="1.8" width="16" x="4" y="4"></rect>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="16" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="12" y1="13" y2="13"></line>
+</svg>
+</div>
+<div>
+<h5 class="text-[12px] font-bold text-gray-900 leading-snug">DG-94812-A02</h5>
+<p class="text-[10px] text-gray-500">Hydraulic Tile Binder • Pallet 15</p>
+</div>
+</div>
+<div class="text-right">
+<span class="inline-block bg-emerald-50 text-emerald-700 font-bold text-[9px] px-1.5 py-0.5 rounded border border-emerald-200/70 tracking-wider">
+  SYNCED
+</span>
+<p class="text-[9.5px] text-gray-400 font-mono mt-0.5">14:23:40</p>
+</div>
+</article>
+</div>
+</section>
+<!-- END: Recent Field Tags Section -->
+</div>
+</main>
+<!-- END: Mobile App Shell -->
+</div>
+<!-- END: Outer Sheet Border Container -->
+<!-- Presentation Footer Row -->
+<footer class="w-full flex items-center justify-between mt-3 text-[11px] text-gray-500 px-1 font-medium">
+<div>
+<span class="font-bold text-[#c04323] tracking-wide">DURAGRIT VITRIFIED</span> • Retail &amp; QR Portal Workflow
+</div>
+<div>
+  Step 10 of 14
+</div>
+</footer>
+</div>
+<!-- END: Outer Presentation Container -->
+<!-- BEGIN: Web Audio Synthesizer Engine & Mobile Haptic Vibration System -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ==========================================
+    // 1. Web Audio API Synthesizer
+    // ==========================================
+    let audioCtx = null;
+    let soundEnabled = true;
+    let hapticEnabled = true;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    const initAudioOnTouch = () => {
+      getAudioContext();
+      document.removeEventListener('click', initAudioOnTouch);
+      document.removeEventListener('touchstart', initAudioOnTouch);
+    };
+    document.addEventListener('click', initAudioOnTouch, { once: true, passive: true });
+    document.addEventListener('touchstart', initAudioOnTouch, { once: true, passive: true });
+
+    // Visual wave pulse indicator helper
+    const audioActivityText = document.getElementById('audio-activity-text');
+    const toast = document.getElementById('audio-feedback-toast');
+    const toastText = document.getElementById('toast-text');
+    const hapticBadge = document.getElementById('haptic-feedback-badge');
+    const hapticBadgeText = document.getElementById('haptic-badge-text');
+    const recoilContainer = document.getElementById('haptic-recoil-container');
+    const cameraViewfinder = document.getElementById('camera-viewfinder');
+    const hapticWaveContainer = document.getElementById('haptic-wave-container');
+
+    const soundBars = [
+      document.getElementById('sbar-1'),
+      document.getElementById('sbar-2'),
+      document.getElementById('sbar-3')
+    ];
+
+    function pulseAudioVisual(label = 'SFX') {
+      if (!soundEnabled) return;
+      
+      soundBars.forEach(b => { if (b) b.classList.add('animate'); });
+      if (audioActivityText) {
+        audioActivityText.textContent = label;
+        audioActivityText.classList.remove('text-amber-200');
+        audioActivityText.classList.add('text-emerald-400');
+      }
+
+      if (toast && toastText) {
+        toastText.textContent = label;
+        toast.classList.remove('sound-toast-anim', 'opacity-0');
+        void toast.offsetWidth;
+        toast.classList.add('sound-toast-anim');
+      }
+
+      setTimeout(() => {
+        soundBars.forEach(b => { if (b) b.classList.remove('animate'); });
+        if (audioActivityText) {
+          audioActivityText.textContent = soundEnabled ? 'ACTIVE' : 'MUTED';
+          audioActivityText.classList.remove('text-emerald-400');
+          audioActivityText.classList.add(soundEnabled ? 'text-amber-200' : 'text-gray-400');
+        }
+      }, 700);
+    }
+
+    // Audio SFX Library using Synthesizers
+    const SoundFX = {
+      playScanSuccess: () => {
+        if (!soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        pulseAudioVisual('BEEP • 1760Hz');
+
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(880, now);
+        gain1.gain.setValueAtTime(0.24, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.08);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1760, now + 0.07);
+        gain2.gain.setValueAtTime(0, now);
+        gain2.gain.setValueAtTime(0.3, now + 0.07);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+        const oscHarmonic = ctx.createOscillator();
+        const gainHarmonic = ctx.createGain();
+        oscHarmonic.type = 'triangle';
+        oscHarmonic.frequency.setValueAtTime(880, now + 0.07);
+        gainHarmonic.gain.setValueAtTime(0.08, now + 0.07);
+        gainHarmonic.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        oscHarmonic.connect(gainHarmonic);
+        gainHarmonic.connect(ctx.destination);
+
+        osc2.start(now + 0.07);
+        osc2.stop(now + 0.28);
+        oscHarmonic.start(now + 0.07);
+        oscHarmonic.stop(now + 0.22);
+      },
+
+      playFocusChirp: () => {
+        if (!soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        pulseAudioVisual('OPTIC LOCK');
+
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.06);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      },
+
+      playTorchClick: (isTurnOn = true) => {
+        if (!soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        pulseAudioVisual(isTurnOn ? 'TORCH ON' : 'TORCH OFF');
+
+        const now = ctx.currentTime;
+        const baseFreq = isTurnOn ? 620 : 420;
+        
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.04);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+        const oscSnap = ctx.createOscillator();
+        const gainSnap = ctx.createGain();
+        oscSnap.type = 'square';
+        oscSnap.frequency.setValueAtTime(2400, now);
+        gainSnap.gain.setValueAtTime(0.07, now);
+        gainSnap.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        oscSnap.connect(gainSnap);
+        gainSnap.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.04);
+        oscSnap.start(now);
+        oscSnap.stop(now + 0.025);
+      },
+
+      playErrorTone: () => {
+        if (!soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        pulseAudioVisual('INVALID CODE');
+
+        const now = ctx.currentTime;
+        [0, 0.12].forEach((offset) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, now + offset);
+          gain.gain.setValueAtTime(0.2, now + offset);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.09);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + offset);
+          osc.stop(now + offset + 0.09);
+        });
+      },
+
+      playButtonTap: () => {
+        if (!soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(280, now + 0.035);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.035);
+      }
+    };
+
+    // ==========================================
+    // 2. Comprehensive Mobile Haptic Vibration Engine
+    // ==========================================
+    const HapticEngine = {
+      // Trigger Native Vibration API with safe fallback
+      vibrateNative: (pattern) => {
+        if (!hapticEnabled) return;
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate(pattern);
+          } catch (e) {
+            // gracefully ignore restricted environments
+          }
+        }
+      },
+
+      // Visual screen recoil and badge notification
+      triggerVisualKick: (type = 'kick', badgeLabel = '📳 HAPTIC PULSE') => {
+        if (!hapticEnabled) return;
+
+        // Display floating badge
+        if (hapticBadge && hapticBadgeText) {
+          hapticBadgeText.textContent = badgeLabel;
+          hapticBadge.classList.remove('haptic-toast-anim', 'opacity-0');
+          void hapticBadge.offsetWidth;
+          hapticBadge.classList.add('haptic-toast-anim');
+        }
+
+        // Apply recoil animation on viewport / card container
+        if (recoilContainer) {
+          recoilContainer.classList.remove('haptic-kick-anim', 'haptic-buzz-anim', 'haptic-micro-anim');
+          void recoilContainer.offsetWidth;
+          if (type === 'kick') {
+            recoilContainer.classList.add('haptic-kick-anim');
+          } else if (type === 'buzz') {
+            recoilContainer.classList.add('haptic-buzz-anim');
+          } else if (type === 'tap') {
+            recoilContainer.classList.add('haptic-micro-anim');
+          }
+        }
+
+        // Reticle shake
+        const reticle = document.getElementById('reticle-center');
+        if (reticle) {
+          reticle.classList.remove('haptic-kick-anim', 'haptic-buzz-anim');
+          void reticle.offsetWidth;
+          reticle.classList.add(type === 'buzz' ? 'haptic-buzz-anim' : 'haptic-kick-anim');
+        }
+
+        // Visual wave ripple ring in camera reticle
+        if (hapticWaveContainer) {
+          const ripple = document.createElement('div');
+          ripple.className = 'haptic-wave-ring';
+          if (type === 'buzz') {
+            ripple.style.borderColor = '#ef4444';
+          } else if (type === 'kick') {
+            ripple.style.borderColor = '#10b981';
+          }
+          hapticWaveContainer.appendChild(ripple);
+          setTimeout(() => {
+            if (ripple && ripple.parentNode) {
+              ripple.parentNode.removeChild(ripple);
+            }
+          }, 600);
+        }
+      },
+
+      // 1. Successful QR Scan: crisp double-pulse [40, 60, 80]
+      qrScanSuccess: () => {
+        HapticEngine.vibrateNative([40, 60, 80]);
+        HapticEngine.triggerVisualKick('kick', '📳 HAPTIC DOUBLE-PULSE [40, 60, 80ms]');
+      },
+
+      // 2. Torch toggle: micro-tap 25ms
+      torchMicroTap: (isOn) => {
+        HapticEngine.vibrateNative(25);
+        HapticEngine.triggerVisualKick('tap', `📳 HAPTIC TAP 25ms (${isOn ? 'ON' : 'OFF'})`);
+      },
+
+      // 3. Manual Serial entry confirmation pulse [35, 40, 35]
+      serialConfirmation: () => {
+        HapticEngine.vibrateNative([35, 40, 35]);
+        HapticEngine.triggerVisualKick('kick', '📳 HAPTIC CONFIRM [35, 40, 35ms]');
+      },
+
+      // 4. Error / invalid code: double buzzing pattern [90, 50, 90, 50, 120]
+      errorBuzz: () => {
+        HapticEngine.vibrateNative([90, 50, 90, 50, 120]);
+        HapticEngine.triggerVisualKick('buzz', '⚠️ HAPTIC BUZZ [90, 50, 90, 50, 120ms]');
+      },
+
+      // 5. Light interactive focus chirp tap 15ms
+      focusTap: () => {
+        HapticEngine.vibrateNative(15);
+        HapticEngine.triggerVisualKick('tap', '📳 HAPTIC TICK 15ms');
+      }
+    };
+
+    // ==========================================
+    // 3. Haptic Vibration Toggle & State Control
+    // ==========================================
+    const hapticToggleBtn = document.getElementById('haptic-toggle-btn');
+    const hapticStatusLabel = document.getElementById('haptic-status-label');
+    const hapticDot = document.getElementById('haptic-dot-indicator');
+    const hapticIcon = document.getElementById('haptic-icon-active');
+
+    if (hapticToggleBtn) {
+      hapticToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hapticEnabled = !hapticEnabled;
+
+        if (hapticEnabled) {
+          hapticStatusLabel.textContent = 'HAPTIC';
+          hapticToggleBtn.classList.remove('bg-gray-200', 'text-gray-400', 'border-gray-300');
+          hapticToggleBtn.classList.add('bg-amber-50', 'text-[#c04323]', 'border-amber-200');
+          if (hapticDot) hapticDot.classList.remove('hidden');
+          if (hapticIcon) {
+            hapticIcon.classList.remove('text-gray-400');
+            hapticIcon.classList.add('text-[#c04323]');
+          }
+          // Sample test pulse on re-enabling
+          HapticEngine.serialConfirmation();
+        } else {
+          hapticStatusLabel.textContent = 'OFF';
+          hapticToggleBtn.classList.add('bg-gray-200', 'text-gray-400', 'border-gray-300');
+          hapticToggleBtn.classList.remove('bg-amber-50', 'text-[#c04323]', 'border-amber-200');
+          if (hapticDot) hapticDot.classList.add('hidden');
+          if (hapticIcon) {
+            hapticIcon.classList.add('text-gray-400');
+            hapticIcon.classList.remove('text-[#c04323]');
+          }
+          if (hapticBadge && hapticBadgeText) {
+            hapticBadgeText.textContent = 'HAPTIC MUTED';
+            hapticBadge.classList.remove('haptic-toast-anim', 'opacity-0');
+            void hapticBadge.offsetWidth;
+            hapticBadge.classList.add('haptic-toast-anim');
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // 4. Sound Toggle & Mute Control
+    // ==========================================
+    const soundToggleBtn = document.getElementById('sound-toggle-btn');
+    const soundIconOn = document.getElementById('sound-icon-on');
+    const soundIconOff = document.getElementById('sound-icon-off');
+    const soundStatusLabel = document.getElementById('sound-status-label');
+
+    if (soundToggleBtn) {
+      soundToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        soundEnabled = !soundEnabled;
+
+        if (soundEnabled) {
+          getAudioContext();
+          soundIconOn.classList.remove('hidden');
+          soundIconOff.classList.add('hidden');
+          soundStatusLabel.textContent = 'SFX';
+          soundToggleBtn.classList.remove('bg-gray-200', 'text-gray-400');
+          soundToggleBtn.classList.add('bg-gray-100', 'text-gray-700');
+          if (audioActivityText) {
+            audioActivityText.textContent = 'ACTIVE';
+            audioActivityText.classList.remove('text-gray-400');
+            audioActivityText.classList.add('text-amber-200');
+          }
+          SoundFX.playScanSuccess();
+        } else {
+          soundIconOn.classList.add('hidden');
+          soundIconOff.classList.remove('hidden');
+          soundStatusLabel.textContent = 'MUTED';
+          soundToggleBtn.classList.add('bg-gray-200', 'text-gray-400');
+          soundToggleBtn.classList.remove('bg-gray-100', 'text-gray-700');
+          if (audioActivityText) {
+            audioActivityText.textContent = 'MUTED';
+            audioActivityText.classList.remove('text-amber-200');
+            audioActivityText.classList.add('text-gray-400');
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // 5. Torch Light Toggle Feature with Micro-tap Haptic
+    // ==========================================
+    const torchBtn = document.getElementById('torch-toggle-btn');
+    const torchLabel = document.getElementById('torch-label');
+    const torchIcon = document.getElementById('torch-icon');
+    const torchLayer = document.getElementById('torch-beam-layer');
+    let isTorchOn = false;
+
+    if (torchBtn && torchLayer) {
+      torchBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isTorchOn = !isTorchOn;
+        SoundFX.playTorchClick(isTorchOn);
+        HapticEngine.torchMicroTap(isTorchOn);
+
+        if (isTorchOn) {
+          torchLabel.textContent = 'Torch On';
+          torchBtn.classList.remove('bg-black/60', 'text-white');
+          torchBtn.classList.add('bg-amber-400', 'text-gray-950', 'border-amber-300');
+          torchIcon.classList.remove('text-amber-300');
+          torchIcon.classList.add('text-gray-950');
+          torchLayer.classList.add('torch-active-glow', 'opacity-100');
+          torchLayer.classList.remove('opacity-0');
+        } else {
+          torchLabel.textContent = 'Torch Off';
+          torchBtn.classList.add('bg-black/60', 'text-white');
+          torchBtn.classList.remove('bg-amber-400', 'text-gray-950', 'border-amber-300');
+          torchIcon.classList.add('text-amber-300');
+          torchIcon.classList.remove('text-gray-950');
+          torchLayer.classList.remove('torch-active-glow', 'opacity-100');
+          torchLayer.classList.add('opacity-0');
+        }
+      });
+    }
+
+    // ==========================================
+    // 6. Viewfinder Reticle & Metric Card Focus Chirps
+    // ==========================================
+    const detectionPill = document.getElementById('detection-pill');
+    const metricCards = [
+      document.getElementById('metric-lot-card'),
+      document.getElementById('metric-sku-card'),
+      document.getElementById('metric-batch-card')
+    ];
+
+    if (cameraViewfinder) {
+      cameraViewfinder.addEventListener('click', (e) => {
+        if (e.target.closest('#trigger-scan-btn') || e.target.closest('#torch-toggle-btn')) {
+          return;
+        }
+        SoundFX.playFocusChirp();
+        HapticEngine.focusTap();
+      });
+    }
+
+    if (detectionPill) {
+      detectionPill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        SoundFX.playFocusChirp();
+        HapticEngine.focusTap();
+      });
+    }
+
+    metricCards.forEach(card => {
+      if (card) {
+        card.addEventListener('click', () => {
+          SoundFX.playFocusChirp();
+          HapticEngine.focusTap();
+        });
+      }
+    });
+
+    // ==========================================
+    // 7. Dynamic Tag Ingestion Simulation with Full Double-pulse Haptic
+    // ==========================================
+    const scanTriggerBtn = document.getElementById('trigger-scan-btn');
+    const shutterOverlay = document.getElementById('shutter-flash-overlay');
+    const detectionStatus = document.getElementById('detection-status-text');
+    const scanBtnLabel = document.getElementById('scan-btn-label');
+    const tagsContainer = document.getElementById('recent-tags-container');
+    const queuedCountBadge = document.getElementById('queued-count-badge');
+    const reticleCircle = document.getElementById('reticle-center');
+    const brackets = document.querySelectorAll('.hud-bracket');
+
+    let totalQueued = 3;
+    let scanSequenceNumber = 3;
+
+    function getCurrentTimeStr() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    function addScannedTag(serialCode, palletDesc = 'Hydraulic Tile Binder • Pallet ' + (15 + scanSequenceNumber)) {
+      totalQueued++;
+      queuedCountBadge.textContent = `${totalQueued} QUEUED`;
+      queuedCountBadge.classList.add('text-[#c04323]', 'font-bold');
+
+      const newArticle = document.createElement('article');
+      newArticle.className = 'bg-[#fcfcfd] border border-amber-300/80 rounded-lg p-2.5 flex items-center justify-between shadow-sm transition-all transform duration-300 scale-[0.97] opacity-0';
+      newArticle.innerHTML = `
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <div>
+            <h5 class="text-[12px] font-bold text-gray-900 leading-snug">${serialCode}</h5>
+            <p class="text-[10px] text-gray-500">${palletDesc}</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="inline-block bg-emerald-50 text-emerald-700 font-bold text-[9px] px-1.5 py-0.5 rounded border border-emerald-200/70 tracking-wider">
+            SYNCED
+          </span>
+          <p class="text-[9.5px] text-gray-400 font-mono mt-0.5">${getCurrentTimeStr()}</p>
+        </div>
+      `;
+
+      tagsContainer.prepend(newArticle);
+      requestAnimationFrame(() => {
+        newArticle.classList.remove('scale-[0.97]', 'opacity-0');
+        newArticle.classList.add('scale-100', 'opacity-100');
+      });
+
+      setTimeout(() => {
+        newArticle.classList.remove('border-amber-300/80');
+        newArticle.classList.add('border-gray-200/80');
+      }, 1800);
+    }
+
+    function triggerScanFeedback() {
+      // Audio feedback: dual-tone ascending confirmation chime
+      SoundFX.playScanSuccess();
+      
+      // Native vibration & visual recoil simulation
+      HapticEngine.qrScanSuccess();
+
+      // 1. Shutter camera flash
+      shutterOverlay.classList.remove('shutter-effect');
+      void shutterOverlay.offsetWidth;
+      shutterOverlay.classList.add('shutter-effect');
+
+      // 2. Corner bracket highlight
+      brackets.forEach(b => {
+        b.style.transform = 'scale(1.15)';
+        b.style.borderColor = '#10b981';
+      });
+      if (reticleCircle) {
+        reticleCircle.style.borderColor = '#10b981';
+        reticleCircle.style.transform = 'translate(-50%, -50%) scale(1.3)';
+      }
+
+      // 3. Status Pill Feedback
+      scanSequenceNumber++;
+      const nextSerial = `DG-94812-A0${scanSequenceNumber}`;
+      detectionStatus.textContent = `CAPTURED: ${nextSerial}`;
+      detectionPill.classList.remove('bg-black/75');
+      detectionPill.classList.add('bg-emerald-800/90', 'border-emerald-400');
+
+      scanBtnLabel.textContent = `✓ Ingested ${nextSerial}`;
+
+      setTimeout(() => {
+        brackets.forEach(b => {
+          b.style.transform = '';
+          b.style.borderColor = '';
+        });
+        if (reticleCircle) {
+          reticleCircle.style.borderColor = '';
+          reticleCircle.style.transform = 'translate(-50%, -50%) scale(1)';
+        }
+        detectionPill.classList.add('bg-black/75');
+        detectionPill.classList.remove('bg-emerald-800/90', 'border-emerald-400');
+        detectionStatus.textContent = 'DETECTING: DTA-TYPE3-HD';
+        scanBtnLabel.textContent = 'Align DuraGrit QR within frame for auto-ingest';
+      }, 1500);
+
+      // 4. Add Tag to Queue
+      addScannedTag(nextSerial);
+    }
+
+    if (scanTriggerBtn) {
+      scanTriggerBtn.addEventListener('click', triggerScanFeedback);
+    }
+
+    // ==========================================
+    // 8. Manual Ingest Accordion & Secondary Actions
+    // ==========================================
+    const accordionBtn = document.getElementById('accordion-toggle-btn');
+    const accordionDrawer = document.getElementById('accordion-drawer');
+    const accordionIcon = document.getElementById('accordion-icon');
+    let isAccordionOpen = true;
+
+    if (accordionBtn && accordionDrawer && accordionIcon) {
+      accordionBtn.addEventListener('click', () => {
+        SoundFX.playButtonTap();
+        HapticEngine.focusTap();
+        isAccordionOpen = !isAccordionOpen;
+        accordionBtn.setAttribute('aria-expanded', isAccordionOpen);
+        if (isAccordionOpen) {
+          accordionDrawer.classList.remove('collapsed');
+          accordionIcon.classList.remove('-rotate-90');
+        } else {
+          accordionDrawer.classList.add('collapsed');
+          accordionIcon.classList.add('-rotate-90');
+        }
+      });
+    }
+
+    const switchManifestBtn = document.getElementById('btn-switch-manifest');
+    if (switchManifestBtn) {
+      switchManifestBtn.addEventListener('click', () => {
+        SoundFX.playButtonTap();
+        HapticEngine.focusTap();
+      });
+    }
+
+    const backBtn = document.getElementById('btn-back');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        SoundFX.playButtonTap();
+        HapticEngine.focusTap();
+      });
+    }
+
+    // ==========================================
+    // 9. Manual Serial Ingest Form Submission & Error Buzz
+    // ==========================================
+    const logCodeBtn = document.getElementById('log-code-btn');
+    const serialInput = document.getElementById('serial-key-input');
+
+    if (logCodeBtn && serialInput) {
+      logCodeBtn.addEventListener('click', () => {
+        const val = serialInput.value.trim().replace(/^#\s*/, '');
+        
+        // If empty or invalid: play error tone & buzzing haptic
+        if (!val) {
+          SoundFX.playErrorTone();
+          HapticEngine.errorBuzz();
+
+          serialInput.classList.add('border-red-500', 'bg-red-50');
+          setTimeout(() => {
+            serialInput.classList.remove('border-red-500', 'bg-red-50');
+          }, 800);
+          serialInput.focus();
+          return;
+        }
+
+        // Tap feedback
+        SoundFX.playButtonTap();
+        HapticEngine.focusTap();
+
+        logCodeBtn.textContent = 'Logging...';
+        logCodeBtn.classList.add('opacity-75');
+
+        setTimeout(() => {
+          SoundFX.playScanSuccess();
+          HapticEngine.serialConfirmation();
+          addScannedTag(val, 'Manual Ingest • Batch Log Verified');
+          logCodeBtn.textContent = 'Log Code';
+          logCodeBtn.classList.remove('opacity-75');
+          serialInput.value = `DG-88410-B0${Math.floor(Math.random() * 8) + 5}`;
+        }, 400);
+      });
+
+      serialInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          logCodeBtn.click();
+        }
+      });
+    }
+  });
+</script>
+</body></html>

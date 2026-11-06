@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B0000" />
+      <stop offset="100%" stop-color="#4A0000" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background Rounded Shield -->
+  <rect width="512" height="512" rx="108" fill="url(#bgGrad)" />
+  
+  <!-- Outer Gold Hex Border -->
+  <path d="M 256 64 L 432 152 L 432 328 L 256 448 L 80 328 L 80 152 Z" 
+        fill="none" stroke="url(#goldGrad)" stroke-width="12" stroke-linejoin="round" opacity="0.85" filter="url(#shadow)" />
+
+  <!-- Inner Diamond Grid / Vitrified Tile Pattern -->
+  <g opacity="0.15" stroke="#FFFFFF" stroke-width="4">
+    <line x1="120" y1="120" x2="392" y2="392" />
+    <line x1="392" y1="120" x2="120" y2="392" />
+    <line x1="256" y1="80" x2="256" y2="432" />
+    <line x1="80" y1="256" x2="432" y2="256" />
+  </g>
+
+  <!-- Corporate Monogram DG -->
+  <g fill="url(#goldGrad)" filter="url(#shadow)">
+    <!-- Letter D -->
+    <path d="M 160 176 L 220 176 C 265 176, 290 205, 290 256 C 290 307, 265 336, 220 336 L 160 336 Z M 198 214 L 198 298 L 216 298 C 242 298, 252 284, 252 256 C 252 228, 242 214, 216 214 Z" />
+    
+    <!-- Letter G -->
+    <path d="M 336 176 C 295 176, 270 205, 270 256 C 270 307, 295 336, 340 336 C 375 336, 396 318, 400 286 L 340 286 L 340 252 L 436 252 L 436 332 C 412 355, 380 368, 340 368 C 275 368, 232 324, 232 256 C 232 188, 275 144, 340 144 C 378 144, 408 158, 430 180 L 404 206 C 388 190, 366 176, 336 176 Z" />
+  </g>
+
+  <!-- DuraGrit Bottom Subtitle -->
+  <text x="256" y="415" 
+        font-family="system-ui, -apple-system, sans-serif" 
+        font-size="28" 
+        font-weight="900" 
+        letter-spacing="6" 
+        text-anchor="middle" 
+        fill="#FFFFFF">DURAGRIT</text>
+</svg>

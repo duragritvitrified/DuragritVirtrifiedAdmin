@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DuraGrit Vitrified - Retail &amp; QR Portal | User Management</title>
+<!-- Tailwind CSS CDN with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Custom Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff5f2',
+              100: '#ffe8e2',
+              200: '#ffd0c4',
+              500: '#ea580c',
+              600: '#c84b26',
+              700: '#b23d1d',
+              800: '#8e3016',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<!-- Google Fonts for crisp corporate typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style data-purpose="custom-enhancements">
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Subtle custom scrollbar for dashboard containment */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+<meta content="web_dashboard" name="shell-type"/></head>
+<body class="bg-[#f2f4f7] min-h-screen text-slate-800 p-3 sm:p-6 lg:p-8 flex flex-col justify-between">
+<!-- BEGIN: PresentationHeader -->
+<!-- Top Presentation Indicator Bar matching slide document -->
+<header class="max-w-[1440px] w-full mx-auto mb-4 flex items-center justify-between px-2">
+<div>
+<h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">User Management</h1>
+</div>
+<div class="bg-[#c84b26] text-white text-xs sm:text-sm font-black tracking-wider uppercase px-4 py-1.5 rounded-lg shadow-sm">
+      Step 05 / 14
+    </div>
+</header>
+<!-- END: PresentationHeader -->
+<!-- BEGIN: MainDashboardContainer -->
+<main class="max-w-[1440px] w-full mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1"><div class="flex flex-col w-full">
+<!-- Dynamic Parent Step Override Script for Shell Context Sync -->
+<script>
+    (function syncShellMeta() {
+      // Synchronize the app shell presentation indicator to Step 06
+      const stepBadges = document.querySelectorAll('header div, footer div');
+      stepBadges.forEach(el => {
+        if (el.textContent.includes('Step 05') || el.textContent.includes('STEP 05')) {
+          el.textContent = 'STEP 06 / 14';
+        }
+        if (el.textContent.includes('Step 5 of 14')) {
+          el.textContent = 'Step 6 of 14';
+        }
+      });
+      const headerTitle = document.querySelector('header h1');
+      if (headerTitle) {
+        headerTitle.textContent = 'Cashback Management & Payouts';
+      }
+    })();
+  </script>
+<!-- Top Inner Navigation Bar (Matches Step 05 Brand Header) -->
+<div class="w-full bg-white px-6 py-3.5 flex items-center justify-between border-b border-slate-100">
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5">
+<span class="font-extrabold tracking-tight text-brand-600 text-lg">DURAGRIT</span>
+<span class="bg-slate-100 text-slate-500 text-[11px] font-bold px-1.5 py-0.5 rounded tracking-wider">VITRIFIED</span>
+</div>
+<span class="text-slate-300 font-light text-sm">|</span>
+<span class="text-xs font-semibold text-slate-700 tracking-wide uppercase">Retail &amp; QR Manage</span>
+</div>
+<!-- Right Profile / Admin Badge -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-2 pl-3 py-1 pr-2 rounded-full hover:bg-slate-50 transition cursor-pointer">
+<div class="w-7 h-7 rounded-full bg-slate-800 text-white text-[11px] font-bold flex items-center justify-center">
+          RK
+        </div>
+<div class="flex flex-col text-left">
+<span class="text-xs font-semibold text-slate-800 leading-tight">Admin</span>
+<span class="text-[10px] text-slate-400 font-medium">Super Admin</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-base">expand_more</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
+<span class="material-symbols-outlined text-base">person</span>
+</div>
+</div>
+</div>
+<!-- Main Body Wrapper (Sidebar + Main Dashboard Content) -->
+<div class="w-full flex flex-1">
+<!-- LEFT SIDEBAR -->
+<aside class="w-60 bg-white flex flex-col justify-between py-6 px-3 border-r border-slate-100 flex-shrink-0">
+<nav class="space-y-1.5 font-sans">
+<!-- 1. User Manage (Inactive) -->
+<a class="flex items-center px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition group" href="#users">
+<span class="material-symbols-outlined text-lg mr-3 text-slate-400 group-hover:text-slate-600">group</span>
+<span class="text-xs font-semibold">1. User Manage</span>
+</a>
+<!-- 2. Product Manage (Inactive) -->
+<a class="flex items-center px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition group" href="#products">
+<span class="material-symbols-outlined text-lg mr-3 text-slate-400 group-hover:text-slate-600">inventory_2</span>
+<span class="text-xs font-semibold">2. Product Manage</span>
+</a>
+<!-- 3. Cashback Request (ACTIVE STEP 6) -->
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-brand-50/70 text-brand-600 font-bold transition shadow-[inset_0_0_0_1px_rgba(200,75,38,0.12)]" href="#cashback">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-lg mr-3 text-brand-600" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="text-xs tracking-tight">3. Cashback Request</span>
+</div>
+<span class="bg-brand-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-md min-w-[20px] text-center shadow-sm">18</span>
+</a>
+<!-- 4. Report (Inactive) -->
+<a class="flex items-center px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition group" href="#report">
+<span class="material-symbols-outlined text-lg mr-3 text-slate-400 group-hover:text-slate-600">bar_chart</span>
+<span class="text-xs font-semibold">4. Report</span>
+</a>
+</nav>
+<!-- Sidebar Bottom Action -->
+<div class="pt-4 border-t border-slate-100">
+<button class="flex items-center px-3.5 py-2 w-full text-slate-500 hover:text-rose-600 rounded-lg text-xs font-semibold transition">
+<span class="material-symbols-outlined text-lg mr-2.5 text-slate-400 group-hover:text-rose-600">logout</span>
+          Sign out
+        </button>
+</div>
+</aside>
+<!-- RIGHT CONTENT AREA -->
+<main class="flex-1 bg-slate-50/50 p-6 lg:p-8 flex flex-col space-y-6">
+<!-- Breadcrumbs & Screen Top Bar -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<div class="flex items-center space-x-2">
+<h2 class="text-xl font-bold tracking-tight text-slate-900">Cashback Requests</h2>
+<span class="bg-slate-200/80 text-slate-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+              QUEUE 2.4 • AUDIT ACTIVE
+            </span>
+</div>
+<p class="text-xs text-slate-500 mt-1">Review, approve, and disburse cashback rewards generated from tile box QR scans.</p>
+</div>
+<!-- Header Actions -->
+<div class="flex items-center space-x-2.5 self-start sm:self-auto">
+<button class="flex items-center space-x-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg shadow-sm transition">
+<span class="material-symbols-outlined text-base text-slate-500">playlist_add</span>
+<span>Create Payout Batch</span>
+</button>
+<button class="flex items-center space-x-1.5 px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow-sm transition shadow-brand-600/20" id="bulkApproveBtn">
+<span class="material-symbols-outlined text-base">done_all</span>
+<span>Bulk Approve Payouts (18)</span>
+</button>
+</div>
+</div>
+<!-- 4 KPI SUMMARY CARDS -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Pending Claims -->
+<div class="bg-white p-4 rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="text-xs font-semibold text-slate-500 tracking-tight">Total Pending Claims</span>
+<div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined text-lg">pending</span>
+</div>
+</div>
+<div class="mt-3">
+<div class="text-2xl font-black tracking-tight text-slate-900">₹ 1,48,500</div>
+<div class="flex items-center space-x-1 text-[11px] font-semibold text-emerald-600 mt-1">
+<span class="material-symbols-outlined text-xs">arrow_upward</span>
+<span>18 claims awaiting review</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Approved for Payout -->
+<div class="bg-white p-4 rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="text-xs font-semibold text-slate-500 tracking-tight">Approved for Payout</span>
+<div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+<span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+</div>
+</div>
+<div class="mt-3">
+<div class="text-2xl font-black tracking-tight text-slate-900">₹ 3,82,250</div>
+<div class="flex items-center space-x-1 text-[11px] font-medium text-slate-500 mt-1">
+<span class="material-symbols-outlined text-xs text-brand-500">schedule</span>
+<span>Scheduled for 5:00 PM batch</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Today's Disbursed -->
+<div class="bg-white p-4 rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="text-xs font-semibold text-slate-500 tracking-tight">Today's Disbursed</span>
+<div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined text-lg">bolt</span>
+</div>
+</div>
+<div class="mt-3">
+<div class="text-2xl font-black tracking-tight text-slate-900">₹ 84,200</div>
+<div class="flex items-center space-x-1 text-[11px] font-medium text-slate-500 mt-1">
+<span class="material-symbols-outlined text-xs text-emerald-500">check_circle</span>
+<span>46 instant UPI transfers</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Flagged / Disputed -->
+<div class="bg-white p-4 rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="text-xs font-semibold text-slate-500 tracking-tight">Flagged / Disputed</span>
+<div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+<span class="material-symbols-outlined text-lg">gshield</span>
+</div>
+</div>
+<div class="mt-3 flex items-baseline justify-between">
+<div class="text-2xl font-black tracking-tight text-slate-900">4 Claims</div>
+<span class="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded tracking-wider uppercase">
+              REQUIRES AUDIT
+            </span>
+</div>
+<div class="text-[11px] text-rose-500 font-medium mt-1">Duplicate geo-fence detected</div>
+</div>
+</div>
+<!-- SEARCH, FILTERS & ACTION BAR -->
+<div class="bg-white p-3 rounded-xl shadow-sm space-y-3">
+<div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+<!-- Search Box -->
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+<input class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-500 transition" placeholder="Search by Claim ID, Contractor name, mobile, UPI VPA..." type="text"/>
+</div>
+<!-- Quick Dropdowns -->
+<div class="flex flex-wrap items-center gap-2">
+<!-- Status Filter -->
+<select class="text-xs bg-slate-50 text-slate-700 font-medium py-2 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer">
+<option>All Request Statuses</option>
+<option>Pending Approval</option>
+<option>Approved for Payout</option>
+<option>Flagged / Audit</option>
+<option>Disbursed</option>
+</select>
+<!-- Contractor Tier Filter -->
+<select class="text-xs bg-slate-50 text-slate-700 font-medium py-2 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer">
+<option>All Contractor Tiers</option>
+<option>Tier 1 - Master Mason</option>
+<option>Tier 2 - Tile Applicator</option>
+<option>Tier 3 - Apprentice</option>
+</select>
+<!-- Date Range Filter -->
+<select class="text-xs bg-slate-50 text-slate-700 font-medium py-2 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer">
+<option>Date: Last 7 Days</option>
+<option>Today</option>
+<option>Current Month</option>
+<option>Custom Range</option>
+</select>
+<!-- Export CSV -->
+<button class="flex items-center space-x-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition" title="Export current dataset">
+<span class="material-symbols-outlined text-sm">download</span>
+<span class="hidden sm:inline">Export</span>
+</button>
+</div>
+</div>
+<!-- Filter Sub-bar / Active counter -->
+<div class="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-1">
+<div class="flex items-center space-x-2">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-brand-600"></span>
+</span>
+<span>Live Scan Queue: Instant verification engine running</span>
+</div>
+<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono text-[10px]">
+            Showing 10 of 18 pending requests
+          </span>
+</div>
+</div>
+<!-- CASHBACK REQUESTS DATA TABLE CONTAINER -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/80 text-[10px] uppercase font-black tracking-wider text-slate-500">
+<th class="py-3 px-4 w-10">
+<input class="rounded text-brand-600 focus:ring-brand-500 cursor-pointer" id="selectAllCheckbox" type="checkbox"/>
+</th>
+<th class="py-3 px-3">CLAIM ID &amp; TIME</th>
+<th class="py-3 px-3">CONTRACTOR / APPLICATOR</th>
+<th class="py-3 px-3">TILES SCANNED / QR BATCH</th>
+<th class="py-3 px-3">DEALER LINK / ORIGIN</th>
+<th class="py-3 px-3 text-right">CLAIM AMOUNT</th>
+<th class="py-3 px-3">PAYOUT UPI &amp; KYC</th>
+<th class="py-3 px-3">STATUS</th>
+<th class="py-3 px-4 text-center">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="text-xs text-slate-700 divide-y divide-slate-100/70 font-normal">
+<!-- ROW 1 -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84920</span>
+<span class="text-[10px] text-slate-400">12 mins ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Amit Gupta</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 98112 40591</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 1 Master</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">40 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">GVT Royal 600x1200</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #GVT-9921 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Rajesh Tile Emporium</div>
+<div class="text-[11px] text-slate-400">Jaipur, RJ</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 2,000</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">amit.tiles@okhdfc</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>UIDAI Matched</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition shadow-xs">
+                      Approve
+                    </button>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Inspect QR scans">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 2 -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84919</span>
+<span class="text-[10px] text-slate-400">28 mins ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Suresh Kumar</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 97120 33819</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 2 Applicator</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">25 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">PGVT Polish 800x1600</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #PGV-4043 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Balaji Ceramics</div>
+<div class="text-[11px] text-slate-400">Faridabad, HR</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 1,250</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">suresh.kumar@oksbi</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>Aadhaar Link</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition shadow-xs">
+                      Approve
+                    </button>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Inspect QR scans">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 3 (Flagged Audit) -->
+<tr class="bg-rose-50/20 hover:bg-rose-50/40 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-rose-800 block text-xs">CLM-84918</span>
+<span class="text-[10px] text-slate-400">45 mins ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Mohan Lal Prajapat</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 96500 77142</div>
+<span class="inline-block mt-0.5 bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded">Audit Watchlist</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">80 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">Slab Master 1200x1800</div>
+<span class="text-[9px] text-rose-600 font-bold">2 Duplicate QRs Scanned</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Vikas Stoneware Hub</div>
+<div class="text-[11px] text-slate-400">Noida, UP</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-rose-700 text-sm">₹ 4,800</div>
+<div class="text-[10px] text-rose-500 font-semibold">Rate: ₹60 / box</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">mohan.prajapat@paytm</div>
+<span class="inline-flex items-center text-[10px] text-rose-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">warning</span>
+<span>Geo mismatch (12km)</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-rose-100 text-rose-800 px-2.5 py-1 rounded-full text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+<span>Audit Flag</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-slate-800 hover:bg-slate-900 text-white px-2 py-1 rounded text-[11px] font-semibold transition">
+                      Resolve
+                    </button>
+<button class="text-rose-600 hover:text-rose-800 p-1 rounded" title="Flag notes">
+<span class="material-symbols-outlined text-base">report</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 4 -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84917</span>
+<span class="text-[10px] text-slate-400">1 hr ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Deepak Yadav</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 98200 66311</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 1 Master</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">60 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">Slab Vitrified 1200x1800</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #SLB-1082 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Pooja Sanitary &amp; Tiles</div>
+<div class="text-[11px] text-slate-400">Ghaziabad, UP</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 3,600</div>
+<div class="text-[10px] text-slate-400">₹60 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">deepakyadav@axl</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>KYC Bank Verified</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition shadow-xs">
+                      Approve
+                    </button>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Inspect QR scans">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 5 (Approved) -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84916</span>
+<span class="text-[10px] text-slate-400">1 hr 15m ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Rameshwar Bind</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 97190 22134</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 2 Applicator</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">15 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">Ceramic Wall 300x600</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #CW-8120 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Harish Tiles Agency</div>
+<div class="text-[11px] text-slate-400">Agra, UP</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 750</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">rameshwar.bind@sbi</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>Pre-authorized</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>Approved</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<span class="text-[11px] text-slate-400 font-medium">Queued 5PM</span>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 6 -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84915</span>
+<span class="text-[10px] text-slate-400">2 hrs ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Virender Chauhan</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 94140 88203</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 1 Master</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">55 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">PGVT Glazed 600x1200</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #PGV-9918 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Shree Ram Marbles</div>
+<div class="text-[11px] text-slate-400">Gurugram, HR</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 2,750</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">virender.c@icici</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>PAN Verified</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition shadow-xs">
+                      Approve
+                    </button>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Inspect QR scans">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 7 -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84914</span>
+<span class="text-[10px] text-slate-400">2 hrs 40m ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Kamal Kant Sharma</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 98877 12450</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 2 Applicator</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">32 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">Matt Finish 600x600</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #MT-4402 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Kuber Ceramic Studio</div>
+<div class="text-[11px] text-slate-400">Chandigarh, CH</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 1,600</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">kamalkant@okaxis</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>Direct UPI Valid</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition shadow-xs">
+                      Approve
+                    </button>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Inspect QR scans">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 8 (Disbursed) -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84913</span>
+<span class="text-[10px] text-slate-400">3 hrs ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Arvind Kumar Nishad</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 93100 44510</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 1 Master</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">50 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">GVT Supergloss 800x1600</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #SG-9011 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Surat Tiles Pavilion</div>
+<div class="text-[11px] text-slate-400">Surat, GJ</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 2,500</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">arvind.nishad@pnb</div>
+<span class="inline-flex items-center text-[10px] text-blue-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">bolt</span>
+<span>UTR: 409923881</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+<span>Disbursed</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<span class="text-[11px] text-emerald-600 font-semibold">Paid</span>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Receipt">
+<span class="material-symbols-outlined text-base">receipt_long</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 9 -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84912</span>
+<span class="text-[10px] text-slate-400">3 hrs 15m ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Naresh Solanki</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 97234 19800</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 2 Applicator</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">20 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">Rustic Outdoor 400x400</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #RT-3301 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Somany &amp; Dura World</div>
+<div class="text-[11px] text-slate-400">Ahmedabad, GJ</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 1,000</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">nareshsolanki@upi</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>KYC Bank Verified</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition shadow-xs">
+                      Approve
+                    </button>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Inspect QR scans">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 10 -->
+<tr class="hover:bg-slate-50/80 transition group">
+<td class="py-3.5 px-4">
+<input class="row-checkbox rounded text-brand-600 focus:ring-brand-500 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-bold text-slate-900 block text-xs">CLM-84911</span>
+<span class="text-[10px] text-slate-400">4 hrs ago</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-slate-900">Kailash Chandra Saini</div>
+<div class="text-[11px] text-slate-500 font-mono">+91 99291 30419</div>
+<span class="inline-block mt-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.2 rounded">Tier 1 Master</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800">45 Boxes</div>
+<div class="text-[11px] text-slate-500 truncate max-w-[160px]">Full Body Vitrified 600x600</div>
+<span class="text-[9px] text-emerald-600 font-medium">Batch #FB-7192 Verified</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-800 truncate max-w-[150px]">Balaji Ceramics</div>
+<div class="text-[11px] text-slate-400">Jaipur, RJ</div>
+</td>
+<td class="py-3.5 px-3 text-right font-mono">
+<div class="font-bold text-slate-900 text-sm">₹ 2,250</div>
+<div class="text-[10px] text-slate-400">₹50 / box rate</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-mono text-slate-800 text-[11px] truncate max-w-[140px]">kailash.saini@kotak</div>
+<span class="inline-flex items-center text-[10px] text-emerald-600 font-medium space-x-0.5">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>UIDAI Matched</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<div class="flex items-center justify-center space-x-1.5">
+<button class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition shadow-xs">
+                      Approve
+                    </button>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded" title="Inspect QR scans">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- TABLE PAGINATION FOOTER -->
+<div class="px-5 py-3.5 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 font-medium">
+<div>
+            Showing <span class="font-semibold text-slate-900">1–10</span> of <span class="font-semibold text-slate-900">18</span> requests
+          </div>
+<div class="flex items-center space-x-1">
+<button class="px-2.5 py-1 rounded bg-white text-slate-400 hover:bg-slate-100 font-medium text-xs shadow-xs transition disabled:opacity-50" disabled="">
+              &lt; Previous
+            </button>
+<button class="w-7 h-7 rounded bg-brand-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+              1
+            </button>
+<button class="w-7 h-7 rounded bg-white hover:bg-slate-100 text-slate-700 font-medium text-xs flex items-center justify-center shadow-xs transition">
+              2
+            </button>
+<button class="px-2.5 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 font-medium text-xs shadow-xs transition">
+              Next &gt;
+            </button>
+</div>
+</div>
+</div>
+<!-- AUDIT LOG & RECENT DISBURSEMENT ACTIVITY ACCORDION -->
+<div class="bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
+<span class="material-symbols-outlined text-base">format_image_left</span>
+</div>
+<div>
+<div class="text-xs font-bold text-slate-800">QR Fraud Guard Active • Rule Set 4.2</div>
+<div class="text-[11px] text-slate-400">Real-time GPS proximity validation with dealer dispatch records enabled.</div>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<button class="text-xs font-semibold text-brand-600 hover:text-brand-700 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition">
+            View Fraud Threshold Settings →
+          </button>
+</div>
+</div>
+</main>
+</div>
+<!-- Interactive JavaScript for Client-side Table Behavior -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Handle Master Checkbox Selection
+      const masterCheckbox = document.getElementById('selectAllCheckbox');
+      const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+      const bulkApproveBtn = document.getElementById('bulkApproveBtn');
+
+      if (masterCheckbox && rowCheckboxes.length > 0) {
+        masterCheckbox.addEventListener('change', (e) => {
+          rowCheckboxes.forEach(cb => {
+            cb.checked = e.target.checked;
+          });
+          updateBulkButtonText();
+        });
+
+        rowCheckboxes.forEach(cb => {
+          cb.addEventListener('change', () => {
+            const allChecked = Array.from(rowCheckboxes).every(c => c.checked);
+            const someChecked = Array.from(rowCheckboxes).some(c => c.checked);
+            masterCheckbox.checked = allChecked;
+            masterCheckbox.indeterminate = someChecked && !allChecked;
+            updateBulkButtonText();
+          });
+        });
+      }
+
+      function updateBulkButtonText() {
+        if (!bulkApproveBtn) return;
+        const selectedCount = Array.from(rowCheckboxes).filter(c => c.checked).length;
+        if (selectedCount > 0) {
+          bulkApproveBtn.innerHTML = `
+            <span class="material-symbols-outlined text-base">done_all</span>
+            <span>Approve Selected (${selectedCount})</span>
+          `;
+          bulkApproveBtn.classList.remove('bg-brand-600');
+          bulkApproveBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+        } else {
+          bulkApproveBtn.innerHTML = `
+            <span class="material-symbols-outlined text-base">done_all</span>
+            <span>Bulk Approve Payouts (18)</span>
+          `;
+          bulkApproveBtn.classList.add('bg-brand-600');
+          bulkApproveBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+        }
+      }
+
+      // Handle Row Approval Button Micro-interaction
+      const approveButtons = document.querySelectorAll('button:not(#bulkApproveBtn)');
+      approveButtons.forEach(btn => {
+        if (btn.textContent.trim() === 'Approve') {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.textContent = 'Approved';
+            this.classList.remove('bg-brand-600', 'hover:bg-brand-700');
+            this.classList.add('bg-emerald-600', 'text-white', 'cursor-default');
+            
+            // Update row status pill
+            const row = this.closest('tr');
+            if (row) {
+              const statusPill = row.querySelector('td:nth-child(8) span');
+              if (statusPill) {
+                statusPill.className = 'inline-flex items-center space-x-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[11px] font-semibold';
+                statusPill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span>Approved</span>';
+              }
+            }
+          });
+        }
+      });
+    });
+  </script>
+</div></main>
+<!-- END: MainDashboardContainer -->
+<!-- BEGIN: PresentationFooter -->
+<footer class="max-w-[1440px] w-full mx-auto mt-4 flex items-center justify-between px-2 text-xs font-medium text-slate-500">
+<div>
+<span class="font-bold text-[#c84b26]">DURAGRIT VITRIFIED</span>
+<span class="mx-1">•</span>
+<span>Retail &amp; QR Portal Workflow</span>
+</div>
+<div>
+      Step 5 of 14
+    </div>
+</footer>
+<!-- END: PresentationFooter -->
+</body></html>

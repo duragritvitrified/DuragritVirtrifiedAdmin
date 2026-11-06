@@ -1,0 +1,13 @@
+{
+  "appId": "com.duragrit.vitrified.portal",
+  "appName": "DuraGrit Vitrified",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "short_name": "DuraGrit",
+  "name": "DuraGrit Vitrified Retail & QR Portal",
+  "description": "Enterprise QR Serialization, Cashback Escrow, and Retailer ERP Portal",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#8B0000",
+  "background_color": "#8B0000",
+  "orientation": "portrait",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "QR Optical Scanner",
+      "short_name": "Scan QR",
+      "description": "Quickly scan DuraGrit QR code for cashback rewards",
+      "url": "/?module=qr_scan",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Approval Queue",
+      "short_name": "Moderation",
+      "description": "Admin Cashback Approval and NPCI Disbursement Queue",
+      "url": "/?module=approvals",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

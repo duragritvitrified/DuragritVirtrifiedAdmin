@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DuraGrit - Dealer Carton Inward &amp; Barcode Receipt Verification Portal (Step 11 / 14)</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            terracotta: {
+              50: '#FDF6F4',
+              100: '#FBECE8',
+              500: '#E05338',
+              600: '#C84B31',
+              700: '#A93B24',
+              800: '#872E1B'
+            },
+            morbi: {
+              dark: '#131B2E',
+              slate: '#1E293B',
+              surface: '#F8FAFC',
+              border: '#E2E8F0',
+              accent: '#0EA5E9'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+  </style>
+<meta content="web_dashboard" name="shell-type"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+<!-- BEGIN: TopStatusBar -->
+<div class="bg-morbi-dark text-slate-300 text-xs px-6 py-1.5 flex items-center justify-between border-b border-slate-800" data-purpose="top-status-bar"><div class="flex items-center space-x-3"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span><span class="font-medium text-slate-200">Dealer Inward Verification Stream: Active</span><span class="text-slate-400 ml-1">(Morbi Central Cloud Synced)</span></span><span class="text-slate-600">|</span><span class="text-slate-300">Active Verification Station: <span class="text-emerald-400 font-medium">Scanner Terminal #03</span></span><span class="text-slate-600">|</span><span class="text-slate-300">System Status: <span class="text-emerald-400 font-medium">Online</span></span></div>
+<div class="flex items-center space-x-2">
+<span class="bg-terracotta-600 text-white font-bold px-2 py-0.5 rounded text-[11px] tracking-wide uppercase shadow-sm">STEP 11 / 14</span>
+</div></div>
+<!-- END: TopStatusBar -->
+<!-- BEGIN: MainHeader -->
+<header class="bg-white border-b border-morbi-border sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between shadow-xs" data-purpose="site-header">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+<span class="text-2xl font-black tracking-tight text-terracotta-600">DURAGRIT</span>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">VITRIFIED</span>
+</div>
+<div class="h-4 w-px bg-slate-300"></div>
+<span class="text-xs font-semibold tracking-wider text-slate-500 uppercase">RETAIL &amp; QR MANAGE</span>
+</div>
+<!-- Header Actions & User Profile -->
+<div class="flex items-center space-x-5">
+<!-- Notification Icon -->
+<button class="relative text-slate-500 hover:text-slate-700 transition-colors p-1" title="System Notifications">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="absolute top-1 right-1 w-2 h-2 bg-terracotta-500 rounded-full ring-2 ring-white"></span>
+</button>
+<!-- Profile Card Dropdown -->
+<div class="flex items-center space-x-3 pl-2 border-l border-slate-200">
+<div class="w-8 h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center tracking-tight">
+          RK
+        </div>
+<div class="flex flex-col text-left">
+<div class="flex items-center space-x-1">
+<span class="text-xs font-semibold text-slate-800 leading-none">Admin</span>
+<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-[10px] text-slate-400 font-medium">Super Admin</span>
+</div>
+<button class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 ml-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainDashboardLayout -->
+<div class="flex flex-1 overflow-hidden">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-64 bg-white border-r border-morbi-border flex flex-col justify-between py-5 shrink-0" data-purpose="sidebar-navigation">
+<nav class="space-y-1 px-3">
+<!-- 1. User Manage -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>1. User Manage</span>
+</a>
+<!-- 2. Product Manage (Active Parent / Focus on Step 09 Dispatch) -->
+<div class="bg-terracotta-50/80 rounded-lg p-1.5 border border-terracotta-100">
+<a class="flex items-center space-x-3 px-2 py-1.5 rounded-md text-xs font-semibold text-terracotta-700" href="#">
+<svg class="w-4 h-4 text-terracotta-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>2. Product Manage</span>
+</a>
+<!-- Sub-items inside active section -->
+<div class="mt-1 pl-7 pr-1 space-y-1"><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Overview Catalog</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Batch Serials &amp; Dispatch</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Carton &amp; Dispatch Allocation</a><a class="block py-1 text-[11px] font-semibold text-terracotta-600 border-l-2 border-terracotta-600 pl-2" href="#">Carton Inward &amp; Receiving</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Roll Feeder Archive</a></div>
+</div>
+<!-- 3. Cashback Request -->
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center space-x-3">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>3. Cashback Request</span>
+</div>
+<span class="bg-terracotta-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">18</span>
+</a>
+<!-- 4. Report -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>4. Report</span>
+</a>
+</nav>
+<!-- Bottom Sign Out -->
+<div class="px-4 border-t border-slate-100 pt-4">
+<a class="flex items-center space-x-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>Sign out</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- BEGIN: MainContentArea -->
+<main class="flex-1 bg-slate-50 overflow-y-auto px-8 py-7" data-purpose="primary-workspace"><div class="flex flex-col w-full space-y-6">
+<!-- TOP WORKFLOW COMPLETE BANNER & LIVE FINANCIAL GATEWAY TELEMETRY -->
+<div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-center space-x-3">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-emerald-50 text-emerald-700">
+<span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
+          STEP 14 / 14 • WORKFLOW COMPLETE
+        </span>
+<span class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-700">
+          BATCH #DG-CLOSE-20241024
+        </span>
+<span class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-600">
+          FY 2024-25 Q3
+        </span>
+</div>
+<div class="flex items-center space-x-3">
+<button class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-sm">file_download</span>
+<span>Export Full Master Audit Ledger (CSV / XLSX)</span>
+</button>
+<button class="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-terracotta-600 hover:bg-terracotta-700 text-white text-xs font-semibold shadow-md transition-all" type="button">
+<span class="material-symbols-outlined text-sm">lock</span>
+<span>+ Trigger Daily EOD Financial Settlement Close</span>
+</button>
+</div>
+</div>
+<!-- Live Telemetry Strip -->
+<div class="bg-slate-900 text-slate-300 rounded-lg p-3 text-xs flex flex-wrap items-center justify-between gap-3">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span class="font-medium text-white">Automated Daily Close &amp; Banking Settlement Engine:</span>
+<span class="text-emerald-400 font-semibold">ACTIVE</span>
+<span class="text-slate-400">(T+0 NPCI / RBI NEFT &amp; RTGS Rail Synchronized)</span>
+</div>
+<div class="flex items-center space-x-4 text-[11px] text-slate-400">
+<span class="flex items-center space-x-1">
+<span class="text-slate-200 font-medium">Bank Escrow Node:</span>
+<span class="text-white">HDFC Corporate Escrow Node #01</span>
+</span>
+<span>•</span>
+<span class="flex items-center space-x-1">
+<span class="text-slate-200 font-medium">Pool Status:</span>
+<span class="text-emerald-400 font-bold">100% Balanced</span>
+</span>
+<span>•</span>
+<span class="flex items-center space-x-1">
+<span class="text-slate-200 font-medium">Gateway Latency:</span>
+<span class="text-sky-400 font-mono">18ms</span>
+</span>
+</div>
+</div>
+<!-- Header Text Block -->
+<div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900">
+        Executive Settlement, Ledger Reconciliation &amp; Financial Close Portal
+      </h1>
+<p class="text-xs text-slate-500 mt-1 leading-relaxed max-w-5xl">
+        Complete end-to-end financial audit trail from factory roll-feeder QR stamping (Morbi) to dealer carton inwards, contractor scratch-off UPI disbursements, statutory tax withholding (TDS Sec 194R), and zero-variance multi-bank escrow ledger close.
+      </p>
+</div>
+</div>
+<!-- EXECUTIVE SETTLEMENT KPIS RIBBON (4 High-Fidelity Cards) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1 -->
+<div class="bg-white rounded-xl shadow-sm p-4 flex flex-col justify-between space-y-3">
+<div class="flex items-start justify-between">
+<div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Disbursed (Today)</div>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+          ↑ +18.4% MoM
+        </span>
+</div>
+<div>
+<div class="text-2xl font-black tracking-tight text-slate-900 font-mono">₹ 48,92,450</div>
+<div class="text-xs text-slate-600 mt-0.5">65,230 QR Redemptions Settled</div>
+</div>
+<div class="pt-2 flex items-center justify-between text-[11px] text-slate-400">
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs text-terracotta-500">factory</span>
+<span>Morbi Kiln 1 &amp; 2 Output</span>
+</span>
+<span class="font-mono text-slate-600 font-medium">100% Payout</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-xl shadow-sm p-4 flex flex-col justify-between space-y-3">
+<div class="flex items-start justify-between">
+<div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Reconciliation Rate</div>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+          T+0 Real-Time Instant
+        </span>
+</div>
+<div>
+<div class="text-2xl font-black tracking-tight text-slate-900 font-mono">99.98%</div>
+<div class="text-xs text-slate-600 mt-0.5">0 Pending Unreconciled Drops</div>
+</div>
+<div class="pt-2 flex items-center justify-between text-[11px] text-slate-400">
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs text-sky-500">account_balance</span>
+<span>NPCI UPI Switch + IMPS Core Rail</span>
+</span>
+<span class="font-mono text-emerald-600 font-medium">0 Failures</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-xl shadow-sm p-4 flex flex-col justify-between space-y-3">
+<div class="flex items-start justify-between">
+<div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Escrow Liquidity Pools</div>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700">
+          Escrow Balanced
+        </span>
+</div>
+<div>
+<div class="text-2xl font-black tracking-tight text-slate-900 font-mono">₹ 4,38,750</div>
+<div class="text-xs text-slate-600 mt-0.5">₹ 3,92,000 Masons • ₹ 46,750 Reclaimed</div>
+</div>
+<div class="pt-2 flex items-center justify-between text-[11px] text-slate-400">
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs text-rose-500">shield_with_house</span>
+<span>Anti-Fraud Reclaim Active</span>
+</span>
+<span class="font-mono text-slate-600 font-medium">14 Cases</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white rounded-xl shadow-sm p-4 flex flex-col justify-between space-y-3">
+<div class="flex items-start justify-between">
+<div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Statutory TDS (Sec 194R)</div>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
+          100% Tax Compliant
+        </span>
+</div>
+<div>
+<div class="text-2xl font-black tracking-tight text-slate-900 font-mono">₹ 2,44,620</div>
+<div class="text-xs text-slate-600 mt-0.5">1,428 Contractors Tracked</div>
+</div>
+<div class="pt-2 flex items-center justify-between text-[11px] text-slate-400">
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs text-amber-500">receipt_long</span>
+<span>Form 26Q Challan Ready</span>
+</span>
+<span class="font-mono text-emerald-600 font-medium">Valid</span>
+</div>
+</div>
+</div>
+<!-- SECTION 1: MASTER TRACEABILITY & SETTLEMENT RECONCILIATION LEDGER -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Header & Filter Bar -->
+<div class="p-4 space-y-3 bg-slate-50/70">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div>
+<h2 class="text-sm font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+<span>End-to-End Supply Chain Traceability &amp; Settlement Reconciliation Ledger</span>
+<span class="text-[10px] font-semibold bg-terracotta-50 text-terracotta-700 px-2 py-0.5 rounded">65,230 Records Today</span>
+</h2>
+<p class="text-[11px] text-slate-500 mt-0.5">
+            Full 14-step lineage verification: Morbi Kiln Batch → Feeder Roll Hash → Transit Inward → Scan Telemetry → Bank Settlement
+          </p>
+</div>
+<div class="flex items-center space-x-2">
+<button class="p-1.5 rounded-lg bg-white shadow-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" title="Reload Live Telemetry" type="button">
+<span class="material-symbols-outlined text-base">refresh</span>
+</button>
+</div>
+</div>
+<!-- Controls -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
+<div class="md:col-span-2 relative">
+<input class="w-full text-xs pl-8 pr-3 py-2 rounded-lg bg-white shadow-xs placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-1 focus:ring-terracotta-500" placeholder="Search by Batch ID, UTR / RRN, Dealer, Contractor, Bank Account..." type="text"/>
+<span class="material-symbols-outlined text-slate-400 text-sm absolute left-2.5 top-2.5">search</span>
+</div>
+<div>
+<select class="w-full text-xs py-2 px-2.5 rounded-lg bg-white shadow-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-terracotta-500">
+<option>All Settlement Rails (UPI / IMPS)</option>
+<option>NPCI UPI Switch Only</option>
+<option>HDFC IMPS Core Rail</option>
+<option>Internal Escrow Reclaim</option>
+</select>
+</div>
+<div>
+<select class="w-full text-xs py-2 px-2.5 rounded-lg bg-white shadow-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-terracotta-500">
+<option>Regional Depot: All Hubs</option>
+<option>North Hub (Delhi / NCR)</option>
+<option>West Hub (Ahmedabad / Surat)</option>
+<option>Central Hub (Indore / MP)</option>
+<option>East Hub (Lucknow / UP)</option>
+</select>
+</div>
+<div>
+<select class="w-full text-xs py-2 px-2.5 rounded-lg bg-white shadow-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-terracotta-500">
+<option>Status: All Finalized</option>
+<option>Reconciled (Settled)</option>
+<option>Reconciled (TDS Deducted)</option>
+<option>Forfeited &amp; Reclaimed</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs">
+<thead class="bg-slate-100 text-slate-600 font-semibold text-[11px] uppercase tracking-wider">
+<tr>
+<th class="py-3 px-4">Transaction / UTR &amp; Time</th>
+<th class="py-3 px-4">Step Traceability Lineage (1 → 6 → 12)</th>
+<th class="py-3 px-4">Beneficiary &amp; Depot Hub</th>
+<th class="py-3 px-4">SKU, Batch &amp; QR Token</th>
+<th class="py-3 px-4 text-right">Gross Incentive</th>
+<th class="py-3 px-4 text-right">TDS (194R) &amp; Net</th>
+<th class="py-3 px-4">Settlement Bank &amp; RRN</th>
+<th class="py-3 px-4 text-center">Status &amp; Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Row 1: Gold Tier Payout -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900 text-xs">TXN-2024-99841</div>
+<div class="text-[11px] text-slate-400">Today • 10:48:12 AM</div>
+<span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-medium">IMPS P2A</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">Morbi Unit #02 → Feeder #03</div>
+<div class="text-[11px] text-slate-500">Inward: Metro Marbles (Delhi Hub)</div>
+<div class="text-[10px] text-emerald-700 font-medium mt-0.5">Scanned: New Delhi (GPS Verified ±3m)</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-900">Amit Gupta</div>
+<div class="text-[11px] text-slate-500">Rajesh Tile Emporium</div>
+<span class="inline-flex items-center mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
+                Gold Tier (1.5x)
+              </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">PGVT Royal Glazed (600×1200)</div>
+<div class="text-[11px] font-mono text-slate-500">Lot: BATCH-PGV-9921</div>
+<div class="text-[10px] font-mono text-slate-400">Hash: 8F2A...44D1</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="font-bold text-slate-900 font-mono text-sm">₹ 75.00</div>
+<div class="text-[10px] text-slate-400">Base ₹50 + ₹25 Bonus</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="text-[11px] text-slate-400 font-mono">TDS: ₹ 0.00</div>
+<div class="font-bold text-emerald-700 font-mono text-sm">₹ 75.00</div>
+<div class="text-[10px] text-slate-400">Below 20k Threshold</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">HDFC IMPS Core</div>
+<div class="text-[10px] font-mono text-slate-500 mt-0.5">RRN-20241024-99410294</div>
+<div class="text-[10px] text-emerald-700">ACK Code: 00 (Success)</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                Reconciled (Settled)
+              </span>
+<div class="mt-2 flex items-center justify-center space-x-1">
+<button class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition-colors" type="button">Audit Slip</button>
+<button class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition-colors" type="button">Trace</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Silver Tier Payout -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900 text-xs">TXN-2024-99840</div>
+<div class="text-[11px] text-slate-400">Today • 10:46:04 AM</div>
+<span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-medium">NPCI UPI</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">Morbi Unit #01 → Feeder #01</div>
+<div class="text-[11px] text-slate-500">Inward: Rajesh Tile Emporium (Jaipur)</div>
+<div class="text-[10px] text-emerald-700 font-medium mt-0.5">Scanned: Faridabad Site Bay 02</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-900">Suresh Kumar</div>
+<div class="text-[11px] text-slate-500">Jaipur Depot Bay 02</div>
+<span class="inline-flex items-center mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                Silver Tier (1.2x)
+              </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">GVT Supergloss Carrara (800×1600)</div>
+<div class="text-[11px] font-mono text-slate-500">Lot: BATCH-GVT-4043</div>
+<div class="text-[10px] font-mono text-slate-400">Hash: 4D1E...77E2</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="font-bold text-slate-900 font-mono text-sm">₹ 60.00</div>
+<div class="text-[10px] text-slate-400">Base ₹50 + ₹10 Bonus</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="text-[11px] text-slate-400 font-mono">TDS: ₹ 0.00</div>
+<div class="font-bold text-emerald-700 font-mono text-sm">₹ 60.00</div>
+<div class="text-[10px] text-slate-400">Exempt Category</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">ICICI Bank UPI Switch</div>
+<div class="text-[10px] font-mono text-slate-500 mt-0.5">RRN-20241024-99410188</div>
+<div class="text-[10px] text-emerald-700">ACK Code: 00 (Settled)</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                Reconciled (Settled)
+              </span>
+<div class="mt-2 flex items-center justify-center space-x-1">
+<button class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition-colors" type="button">Audit Slip</button>
+<button class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition-colors" type="button">Trace</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Platinum with TDS Sec 194R Deduction -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900 text-xs">TXN-2024-99839</div>
+<div class="text-[11px] text-slate-400">Today • 10:34:55 AM</div>
+<span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-medium">NPCI UPI</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">Morbi Unit #02 → Feeder #04</div>
+<div class="text-[11px] text-slate-500">Inward: Shreenathji Tile (Indore)</div>
+<div class="text-[10px] text-emerald-700 font-medium mt-0.5">Scanned: Sector 62, Noida Site</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-900">Mohan Lal Prajapat</div>
+<div class="text-[11px] text-slate-500">Indore Bay 01 Logistics</div>
+<span class="inline-flex items-center mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700">
+                Platinum Tier (2.0x)
+              </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">Slab Master Onyx Nero (1200×1800)</div>
+<div class="text-[11px] font-mono text-slate-500">Lot: BATCH-SLB-1218</div>
+<div class="text-[10px] font-mono text-slate-400">Hash: 9B43...002A</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="font-bold text-slate-900 font-mono text-sm">₹ 120.00</div>
+<div class="text-[10px] text-slate-400">Base ₹60 + ₹60 Plat Bonus</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="text-[11px] text-rose-600 font-bold font-mono">TDS (10%): -₹ 12.00</div>
+<div class="font-bold text-emerald-700 font-mono text-sm">₹ 108.00</div>
+<div class="text-[10px] text-amber-700 font-medium">Sec 194R Annual &gt;20k</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">State Bank of India UPI</div>
+<div class="text-[10px] font-mono text-slate-500 mt-0.5">RRN-20241024-99409821</div>
+<div class="text-[10px] text-emerald-700">Challan Ref: CH-194R-8831</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                Reconciled (TDS Deducted)
+              </span>
+<div class="mt-2 flex items-center justify-center space-x-1">
+<button class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition-colors" type="button">Audit Slip</button>
+<button class="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 text-[10px] font-semibold transition-colors" type="button">Form 16A</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Escrow Quarantine Case from Step 13 (Anti-Fraud) -->
+<tr class="hover:bg-rose-50/40 bg-rose-50/20 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-rose-900 text-xs">TXN-2024-99838</div>
+<div class="text-[11px] text-slate-400">Today • 10:20:19 AM</div>
+<span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">RECLAIMED</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">Morbi Unit #02 → Feeder #02</div>
+<div class="text-[11px] text-rose-700 font-medium">Pre-Inward Leak Detected</div>
+<div class="text-[10px] text-rose-600 font-medium mt-0.5">Physical QR Burned at Hub</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-900">Rameshwar Bind</div>
+<div class="text-[11px] text-slate-500">Depot Indore Bay 03</div>
+<span class="inline-flex items-center mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                Bronze Tier (Suspended)
+              </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">PGVT Royal Glazed (600×1200)</div>
+<div class="text-[11px] font-mono text-slate-500">Lot: BATCH-FB-7192 • 14 Boxes</div>
+<div class="text-[10px] font-mono text-rose-600">Quarantine Hash: Q-99201</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="font-bold text-slate-500 line-through font-mono text-sm">₹ 700.00</div>
+<div class="text-[10px] text-rose-600 font-bold">Payout Revoked</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="text-[11px] text-slate-400 font-mono">TDS: ₹ 0.00</div>
+<div class="font-bold text-rose-700 font-mono text-sm">₹ 0.00 (Burned)</div>
+<div class="text-[10px] text-rose-600">Escrow Clawback</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">DuraGrit Escrow Pool</div>
+<div class="text-[10px] font-mono text-slate-500 mt-0.5">ESCROW-BURN-8841</div>
+<div class="text-[10px] text-rose-700 font-bold">Ledger Credit Reversed</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                Forfeited &amp; Reclaimed
+              </span>
+<div class="mt-2 flex items-center justify-center space-x-1">
+<button class="px-2 py-0.5 rounded bg-rose-100 hover:bg-rose-200 text-rose-800 text-[10px] font-semibold transition-colors" type="button">Forensic Packet</button>
+<button class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition-colors" type="button">Log</button>
+</div>
+</td>
+</tr>
+<!-- Row 5: Outdoor Stone Payout -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="py-3.5 px-4 font-mono">
+<div class="font-bold text-slate-900 text-xs">TXN-2024-99837</div>
+<div class="text-[11px] text-slate-400">Today • 09:48:40 AM</div>
+<span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-medium">NPCI UPI</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">Morbi Unit #01 → Feeder #02</div>
+<div class="text-[11px] text-slate-500">Inward: Awadh Tiles (Lucknow)</div>
+<div class="text-[10px] text-emerald-700 font-medium mt-0.5">Scanned: Surat Ring Road Site</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-900">Harish Patel</div>
+<div class="text-[11px] text-slate-500">Lucknow Regional Hub</div>
+<span class="inline-flex items-center mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
+                Gold Tier (1.2x)
+              </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-900">Rustic Outdoor Stone (400×400)</div>
+<div class="text-[11px] font-mono text-slate-500">Lot: BATCH-RT-3301</div>
+<div class="text-[10px] font-mono text-slate-400">Hash: 63E1...99C0</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="font-bold text-slate-900 font-mono text-sm">₹ 42.00</div>
+<div class="text-[10px] text-slate-400">Base ₹35 + ₹7 Bonus</div>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="text-[11px] text-slate-400 font-mono">TDS: ₹ 0.00</div>
+<div class="font-bold text-emerald-700 font-mono text-sm">₹ 42.00</div>
+<div class="text-[10px] text-slate-400">Standard Clearance</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-xs font-semibold text-slate-800">Axis Bank UPI Switch</div>
+<div class="text-[10px] font-mono text-slate-500 mt-0.5">RRN-20241024-99407119</div>
+<div class="text-[10px] text-emerald-700">ACK Code: 00 (Settled)</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                Reconciled (Settled)
+              </span>
+<div class="mt-2 flex items-center justify-center space-x-1">
+<button class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition-colors" type="button">Audit Slip</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination & Summary Footer -->
+<div class="p-3 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+<div>
+        Showing <span class="font-semibold text-slate-800">1 - 5</span> of <span class="font-semibold text-slate-800">65,230</span> settled ledger transactions (Batch: DG-CLOSE-20241024)
+      </div>
+<div class="flex items-center space-x-1">
+<button class="px-2.5 py-1 rounded bg-white shadow-xs text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50" disabled="" type="button">Previous</button>
+<button class="px-2.5 py-1 rounded bg-terracotta-600 text-white font-bold shadow-xs" type="button">1</button>
+<button class="px-2.5 py-1 rounded bg-white shadow-xs text-slate-700 hover:bg-slate-100 transition-colors" type="button">2</button>
+<button class="px-2.5 py-1 rounded bg-white shadow-xs text-slate-700 hover:bg-slate-100 transition-colors" type="button">3</button>
+<span class="px-1 text-slate-400">...</span>
+<button class="px-2.5 py-1 rounded bg-white shadow-xs text-slate-700 hover:bg-slate-100 transition-colors" type="button">1,305</button>
+<button class="px-2.5 py-1 rounded bg-white shadow-xs text-slate-700 hover:bg-slate-100 transition-colors" type="button">Next</button>
+</div>
+</div>
+</div>
+<!-- SECTION 2: EXECUTIVE SETTLEMENT SUMMARY & FINANCIAL CLOSING CERTIFICATE (Two-Column Card) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Column (7 cols): Multi-Tier Supply Chain 14-Step Audit Trail Verification -->
+<div class="lg:col-span-7 bg-white rounded-xl shadow-sm p-6 flex flex-col justify-between space-y-5">
+<div>
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-emerald-600 text-xl">verified</span>
+<h3 class="text-sm font-bold text-slate-900 tracking-tight">Multi-Tier Supply Chain Audit Trail Verification</h3>
+</div>
+<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 uppercase tracking-wider">
+            14 / 14 Steps Verified
+          </span>
+</div>
+<p class="text-xs text-slate-500 mt-1">
+          Cryptographically chained ledger blocks from Morbi factory kilns to dealer inwards, contractor UPI sweeps, and central bank clearing nodes.
+        </p>
+</div>
+<!-- 14 Step Micro Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+<!-- 1 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">1. Factory Kiln Batch Stamped (Morbi)</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 2 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">2. Roll Feeder Crypto Token Allocation</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 3 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">3. Master Carton Barcode Generation</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 4 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">4. Distributor E-Way Bill Gate Pass</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 5 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">5. Regional Fleet GPS Telemetry Inward</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 6 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">6. Dealer Dock Optical Barcode Scanning</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 7 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">7. Escrow Pre-Funding Liquidity Hold</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 8 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">8. Contractor Scratch-Off QR Physical Scan</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 9 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">9. Geo-Fence Polygon Anti-Spoof Shield</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 10 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">10. AI Velocity &amp; Anomaly Adjudication</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 11 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">11. Contractor Aadhaar KYC &amp; NPCI Match</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 12 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">12. Instant UPI IMPS T+0 Cash Disbursal</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 13 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+<span class="text-slate-700 font-medium">13. Sec 194R TDS Automated Ledger Booking</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+</div>
+<!-- 14 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/70">
+<span class="text-emerald-900 font-bold">14. Zero-Variance Escrow Ledger Close</span>
+<span class="material-symbols-outlined text-sm text-emerald-600">task_alt</span>
+</div>
+</div>
+<div class="p-3 bg-slate-50 rounded-lg flex items-center justify-between text-xs text-slate-600">
+<span class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-xs text-emerald-600">lock</span>
+<span>Zero cryptographic anomalies detected across 1,940,200 lifetime tokens.</span>
+</span>
+<span class="font-mono text-[11px] text-slate-400">MERKLE-ROOT: 9F20...C81A</span>
+</div>
+</div>
+<!-- Right Column (5 cols): Final EOD Closing Certificate & HSM Keyring Sign-Off -->
+<div class="lg:col-span-5 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white rounded-xl shadow-xl p-6 flex flex-col justify-between space-y-6">
+<div>
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-amber-400">workspace_premium</span>
+<h3 class="text-sm font-bold tracking-tight text-white">Final EOD Closing Certificate</h3>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-400/20 text-amber-300">
+            HSM NODE #02
+          </span>
+</div>
+<p class="text-xs text-slate-400 mt-1">
+          Tamper-evident cryptographically signed closing attestation for corporate treasury and external statutory auditors.
+        </p>
+</div>
+<!-- Financial Metrics Summary Table -->
+<div class="space-y-2.5 bg-slate-800/60 rounded-lg p-3.5 text-xs">
+<div class="flex justify-between items-center text-slate-300">
+<span>Inward Consignment Factory Value:</span>
+<span class="font-mono font-semibold text-white">₹ 1,84,30,000</span>
+</div>
+<div class="flex justify-between items-center text-slate-300">
+<span>Total Disbursed Cash Incentives:</span>
+<span class="font-mono font-semibold text-white">₹ 48,92,450</span>
+</div>
+<div class="flex justify-between items-center text-slate-300">
+<span>Statutory TDS Withheld (194R):</span>
+<span class="font-mono font-semibold text-amber-400">₹ 2,44,620</span>
+</div>
+<div class="flex justify-between items-center text-slate-300">
+<span>Anti-Fraud Escrow Clawback:</span>
+<span class="font-mono font-semibold text-rose-400">₹ 46,750</span>
+</div>
+<div class="pt-2 flex justify-between items-center">
+<span class="font-bold text-emerald-400">Escrow Balance Variance:</span>
+<span class="font-mono font-black text-emerald-400 text-sm">₹ 0.00 (PERFECT MATCH)</span>
+</div>
+</div>
+<!-- Cryptographic Hash Verification Box -->
+<div class="space-y-1.5 text-[11px] font-mono bg-slate-950/70 p-3 rounded-lg text-slate-400">
+<div class="text-slate-300 font-semibold flex items-center justify-between">
+<span>SHA-512 Master Ledger Hash</span>
+<span class="text-emerald-400">VERIFIED ✓</span>
+</div>
+<div class="text-[10px] truncate text-slate-400 select-all">
+          4e91f0a8c2b7194f10e42d7a9b01538c2901ef...b82a0319df4e
+        </div>
+<div class="text-[10px] text-slate-500 pt-1">
+          Certified by Super Admin RK • Oct 24, 2024 11:00:00 IST
+        </div>
+</div>
+<!-- Action Buttons -->
+<div class="space-y-2 pt-1">
+<button class="w-full py-2.5 px-4 rounded-lg bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-2" type="button">
+<span class="material-symbols-outlined text-sm">download</span>
+<span>Download 14-Step Executive Master Dossier (PDF)</span>
+</button>
+<button class="w-full py-2.5 px-4 rounded-lg bg-terracotta-600 hover:bg-terracotta-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-2" type="button">
+<span class="material-symbols-outlined text-sm">lock_clock</span>
+<span>Archive &amp; Lock Fiscal Batch #DG-CLOSE-20241024</span>
+</button>
+</div>
+</div>
+</div>
+<!-- FINAL CELEBRATORY NOTIFICATION BANNER -->
+<div class="bg-gradient-to-r from-emerald-500 via-teal-600 to-slate-900 rounded-xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-xl">workspace_premium</span>
+</div>
+<div>
+<h4 class="text-sm font-bold leading-tight">DuraGrit 14-Step Supply Chain &amp; QR Workflow Cycle Completed</h4>
+<p class="text-xs text-white/80 mt-0.5">
+          All batches from Kiln Roll-Feeders through to Contractor Scratch-Off UPI disbursements are now 100% reconciled and ledger-sealed.
+        </p>
+</div>
+</div>
+<div class="flex items-center space-x-3 shrink-0">
+<span class="text-xs font-mono bg-white/10 px-3 py-1.5 rounded-lg text-white">System Ready for Tomorrow 06:00 IST</span>
+</div>
+</div>
+</div></main>
+<!-- END: MainContentArea -->
+</div>
+<!-- END: MainDashboardLayout -->
+<!-- BEGIN: BottomGlobalFooter -->
+<footer class="bg-white border-t border-morbi-border px-8 py-2.5 flex items-center justify-between text-xs text-slate-500 shrink-0" data-purpose="site-footer">
+<div class="flex items-center space-x-2">
+<span class="font-bold tracking-tight text-slate-700">DURAGRIT VITRIFIED</span>
+<span class="text-slate-400">•</span>
+<span>Retail &amp; QR Portal Workflow</span>
+</div>
+<div class="font-medium text-slate-500">Step 11 of 14</div>
+</footer>
+<!-- END: BottomGlobalFooter -->
+<!-- BEGIN: Modal Backdrop & Overlay Container -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-950/75 backdrop-blur-sm" data-purpose="eod-settlement-modal" id="eod-settlement-modal">
+<!-- Modal Card Dialog Window -->
+<div class="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto transition-all animate-in fade-in zoom-in-95 duration-200">
+<!-- 1. Enterprise Dark Header -->
+<div class="bg-gradient-to-r from-slate-900 via-morbi-dark to-slate-900 text-white p-5 border-b border-slate-800 relative">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-10">
+<div class="space-y-1.5">
+<div class="flex flex-wrap items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono tracking-wider uppercase bg-terracotta-500/20 text-terracotta-500 border border-terracotta-500/30">
+              FINANCIAL SETTLEMENT CLOSE &amp; HSM CRYPTO LOCK
+            </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+              • FISCAL BATCH #DG-CLOSE-20241024
+            </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+              STATUS: READY FOR DUAL-KEY SIGN-OFF
+            </span>
+</div>
+<h2 class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+<span>EOD Settlement Close Confirmation &amp; Fiscal Batch Lock</span>
+<span class="material-symbols-outlined text-amber-400 text-lg">lock_open</span>
+</h2>
+<p class="text-xs text-slate-400 leading-normal max-w-3xl">
+            Irreversible cryptographic ledger seal for FY 2024-25 Q3 • Morbi Central Kiln to Contractor UPI Disbursals
+          </p>
+</div>
+</div>
+<!-- Close Button -->
+<button class="absolute top-5 right-5 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors" onclick="document.getElementById('eod-settlement-modal').remove()" title="Close Dialog" type="button">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<!-- 2. Compact Metric KPI Ribbon (4 Summary Cards) -->
+<div class="bg-slate-50 border-b border-slate-200 px-6 py-3.5 grid grid-cols-2 md:grid-cols-4 gap-3">
+<div class="bg-white rounded-lg p-2.5 border border-slate-200 shadow-xs flex flex-col justify-between">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Settled Disbursals</span>
+<div class="text-base font-black text-slate-900 font-mono mt-0.5">₹ 48,92,450</div>
+<div class="text-[10px] text-emerald-700 font-medium flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs">check_circle</span>
+<span>65,230 QR Tokens</span>
+</div>
+</div>
+<div class="bg-white rounded-lg p-2.5 border border-slate-200 shadow-xs flex flex-col justify-between">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Statutory TDS (Sec 194R)</span>
+<div class="text-base font-black text-slate-900 font-mono mt-0.5">₹ 2,44,620</div>
+<div class="text-[10px] text-amber-700 font-medium flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs">receipt_long</span>
+<span>100% Challan Matched</span>
+</div>
+</div>
+<div class="bg-white rounded-lg p-2.5 border border-slate-200 shadow-xs flex flex-col justify-between">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Anti-Fraud Clawback</span>
+<div class="text-base font-black text-slate-900 font-mono mt-0.5">₹ 46,750</div>
+<div class="text-[10px] text-rose-700 font-medium flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs">security</span>
+<span>14 Forfeited Claims</span>
+</div>
+</div>
+<div class="bg-white rounded-lg p-2.5 border border-slate-200 shadow-xs flex flex-col justify-between">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Zero-Variance Delta</span>
+<div class="text-base font-black text-emerald-700 font-mono mt-0.5">₹ 0.00</div>
+<div class="text-[10px] text-emerald-700 font-bold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs">task_alt</span>
+<span>Balanced (Zero Variance)</span>
+</div>
+</div>
+</div>
+<!-- 3. Two-Column Audit & Sign-off Layout Body -->
+<div class="p-6 overflow-y-auto max-h-[58vh] grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white">
+<!-- Left Column (7 cols): Summary & Statutory Attestation -->
+<div class="lg:col-span-7 flex flex-col space-y-4">
+<div class="border-b border-slate-200 pb-2.5 flex items-center justify-between">
+<h3 class="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-1.5 uppercase">
+<span class="material-symbols-outlined text-sm text-terracotta-600">verified_user</span>
+            Master Settlement Reconciliation Summary &amp; Statutory Attestation
+          </h3>
+<span class="text-[10px] font-mono text-slate-500 font-medium">AUDIT-REF #MOR-2024-Q3</span>
+</div>
+<!-- Bank & Consignment Snapshot -->
+<div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+<div>
+<span class="text-[10px] text-slate-500 block">Inward Consignment Manifest</span>
+<span class="font-mono font-bold text-slate-900">₹ 1,84,30,000</span>
+<span class="text-[10px] text-slate-500 block">(Kiln #01 &amp; #02)</span>
+</div>
+<div>
+<span class="text-[10px] text-slate-500 block">Partner Bank Escrow Rail</span>
+<span class="font-semibold text-slate-900 block truncate">HDFC Corporate Escrow Node #01</span>
+<span class="text-[10px] text-slate-500 block">NPCI 2.0 Settlement Core</span>
+</div>
+</div>
+<!-- Checklist with green checkmarks -->
+<div class="space-y-2 text-xs">
+<div class="text-[11px] font-bold text-slate-700 uppercase tracking-wide">Final Protocol Clearance Checklist:</div>
+<div class="space-y-1.5">
+<div class="flex items-start gap-2 p-2 rounded-md bg-emerald-50/70 border border-emerald-100">
+<span class="material-symbols-outlined text-sm text-emerald-700 shrink-0 mt-0.5">check_circle</span>
+<span class="text-slate-800 text-xs leading-tight"><strong>14-Step Traceability Lineage:</strong> Fully chained cryptographic blocks verified with zero data drops or hash collisions.</span>
+</div>
+<div class="flex items-start gap-2 p-2 rounded-md bg-emerald-50/70 border border-emerald-100">
+<span class="material-symbols-outlined text-sm text-emerald-700 shrink-0 mt-0.5">check_circle</span>
+<span class="text-slate-800 text-xs leading-tight"><strong>Sec 194R TDS Withholding:</strong> Automated ledger booking signed &amp; Form 26Q quarterly challan prepared.</span>
+</div>
+<div class="flex items-start gap-2 p-2 rounded-md bg-emerald-50/70 border border-emerald-100">
+<span class="material-symbols-outlined text-sm text-emerald-700 shrink-0 mt-0.5">check_circle</span>
+<span class="text-slate-800 text-xs leading-tight"><strong>Quarantined Anti-Fraud Clawback:</strong> 14 forfeited claims (₹ 46,750) deposited back into manufacturer reserve pool.</span>
+</div>
+<div class="flex items-start gap-2 p-2 rounded-md bg-emerald-50/70 border border-emerald-100">
+<span class="material-symbols-outlined text-sm text-emerald-700 shrink-0 mt-0.5">check_circle</span>
+<span class="text-slate-800 text-xs leading-tight"><strong>RBI / NPCI EOD Clearing Sync:</strong> Immediate T+0 IMPS/NEFT cutoff synchronized with zero pending switch batches.</span>
+</div>
+</div>
+</div>
+<!-- Warning Notice Box -->
+<div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs flex items-start gap-2.5">
+<span class="material-symbols-outlined text-amber-600 shrink-0 mt-0.5 text-base">warning</span>
+<div class="text-amber-900 leading-relaxed text-[11px]">
+<strong class="font-bold block text-amber-900 text-xs mb-0.5">Fiscal Batch Lock Notice:</strong>
+            Executing this action will irrevocably seal Batch #DG-CLOSE-20241024, generate an immutable SHA-512 cryptographic ledger hash, and publish the attestation certificate to corporate auditors. Subsequent manual edits will require Board-level dual-key recovery.
+          </div>
+</div>
+</div>
+<!-- Right Column (5 cols): Dual HSM Cryptographic Key Sign-Off -->
+<div class="lg:col-span-5 flex flex-col space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+<div class="border-b border-slate-200 pb-2.5 flex items-center justify-between">
+<h3 class="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-1.5 uppercase">
+<span class="material-symbols-outlined text-sm text-slate-700">key</span>
+            Dual HSM Cryptographic Key Sign-Off
+          </h3>
+<span class="text-[10px] font-mono px-1.5 py-0.5 bg-slate-200 rounded font-bold text-slate-700">FIPS 140-2 L3</span>
+</div>
+<!-- Dual Signers -->
+<div class="space-y-2.5 text-xs">
+<!-- Primary Signer -->
+<div class="p-2.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                RK
+              </div>
+<div>
+<div class="font-bold text-slate-900 text-xs">RK (Super Admin / CFO)</div>
+<div class="text-[10px] text-slate-500">Primary Keyholder Authorization</div>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="material-symbols-outlined text-xs mr-1">check</span>
+              Verified
+            </span>
+</div>
+<!-- Secondary Approver -->
+<div class="p-2.5 bg-white rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded-full bg-slate-800 text-amber-300 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-sm">memory</span>
+</div>
+<div>
+<div class="font-bold text-slate-900 text-xs">Treasury HSM Node #02</div>
+<div class="text-[10px] text-slate-500">Morbi Treasury Automated Co-Sign</div>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+<span class="material-symbols-outlined text-xs mr-1">hourglass_bottom</span>
+              Ready
+            </span>
+</div>
+</div>
+<!-- Cryptographic Ledger Hash Box -->
+<div class="bg-slate-950 text-slate-300 p-3 rounded-lg space-y-2 border border-slate-800">
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-mono font-bold text-slate-200 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-amber-400">shield</span>
+              SHA-512 Master Merkle Root
+            </span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-emerald-400/20 text-emerald-400">
+              CRYPTO SEALED
+            </span>
+</div>
+<div class="text-[10px] font-mono bg-slate-900 p-2 rounded text-slate-400 break-all select-all border border-slate-800/80">
+            4e9f01a0c2b7194f10e42d7a9b01538c2901ef83c3194a00b82a0319df4e10b42c67ad8
+          </div>
+<div class="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+<span>Target Block: #7829-EOD</span>
+<button class="text-slate-300 hover:text-white flex items-center gap-0.5 underline font-medium" type="button">
+<span class="material-symbols-outlined text-xs">content_copy</span> Copy Hash
+            </button>
+</div>
+</div>
+<!-- Mandatory Confirmation Checkbox -->
+<div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex items-start gap-2.5">
+<input checked="" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-terracotta-600 focus:ring-terracotta-500 cursor-pointer" id="eod-confirm-checkbox" type="checkbox"/>
+<label class="text-xs text-slate-700 leading-snug cursor-pointer select-none" for="eod-confirm-checkbox">
+            I confirm full audit reconciliation across all <strong>65,230 contractor redemptions</strong> with zero ledger variance and authorize irrevocable banking escrow close.
+          </label>
+</div>
+</div>
+</div>
+<!-- 4. Modal Footer -->
+<div class="bg-slate-100 border-t border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+<div class="flex items-center space-x-2 text-slate-500">
+<span class="material-symbols-outlined text-sm text-slate-400">terminal</span>
+<span class="text-[11px]">Authorized: <strong>HQ Treasury Gateway #01</strong> • Timestamp: <strong>Today, 18:00:00 IST</strong></span>
+</div>
+<div class="flex flex-wrap items-center gap-2 justify-end">
+<button class="px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors" onclick="document.getElementById('eod-settlement-modal').remove()" type="button">
+          Cancel &amp; Review Ledger
+        </button>
+<button class="px-3.5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold shadow-xs transition-colors inline-flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-sm">download</span>
+<span>Pre-Close Audit Dossier (PDF)</span>
+</button>
+<button class="px-4 py-2 rounded-lg bg-terracotta-600 hover:bg-terracotta-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-1.5 focus:ring-2 focus:ring-terracotta-500 focus:outline-none" type="button">
+<span class="material-symbols-outlined text-sm">lock</span>
+<span>Confirm &amp; Execute Irrevocable Fiscal Lock (₹ 48,92,450)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- END: Modal Backdrop & Overlay Container --></body></html>

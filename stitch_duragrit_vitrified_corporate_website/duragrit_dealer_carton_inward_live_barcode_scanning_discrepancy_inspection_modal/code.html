@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DuraGrit - Dealer Carton Inward &amp; Barcode Receipt Verification Portal (Step 11 / 14)</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            terracotta: {
+              50: '#FDF6F4',
+              100: '#FBECE8',
+              500: '#E05338',
+              600: '#C84B31',
+              700: '#A93B24',
+              800: '#872E1B'
+            },
+            morbi: {
+              dark: '#131B2E',
+              slate: '#1E293B',
+              surface: '#F8FAFC',
+              border: '#E2E8F0',
+              accent: '#0EA5E9'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+<!-- BEGIN: TopStatusBar -->
+<div class="bg-morbi-dark text-slate-300 text-xs px-6 py-1.5 flex items-center justify-between border-b border-slate-800" data-purpose="top-status-bar"><div class="flex items-center space-x-3"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span><span class="font-medium text-slate-200">Dealer Inward Verification Stream: Active</span><span class="text-slate-400 ml-1">(Morbi Central Cloud Synced)</span></span><span class="text-slate-600">|</span><span class="text-slate-300">Active Verification Station: <span class="text-emerald-400 font-medium">Scanner Terminal #03</span></span><span class="text-slate-600">|</span><span class="text-slate-300">System Status: <span class="text-emerald-400 font-medium">Online</span></span></div>
+<div class="flex items-center space-x-2">
+<span class="bg-terracotta-600 text-white font-bold px-2 py-0.5 rounded text-[11px] tracking-wide uppercase shadow-sm">STEP 11 / 14</span>
+</div></div>
+<!-- END: TopStatusBar -->
+<!-- BEGIN: MainHeader -->
+<header class="bg-white border-b border-morbi-border sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between shadow-xs" data-purpose="site-header">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+<span class="text-2xl font-black tracking-tight text-terracotta-600">DURAGRIT</span>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">VITRIFIED</span>
+</div>
+<div class="h-4 w-px bg-slate-300"></div>
+<span class="text-xs font-semibold tracking-wider text-slate-500 uppercase">RETAIL &amp; QR MANAGE</span>
+</div>
+<!-- Header Actions & User Profile -->
+<div class="flex items-center space-x-5">
+<!-- Notification Icon -->
+<button class="relative text-slate-500 hover:text-slate-700 transition-colors p-1" title="System Notifications">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="absolute top-1 right-1 w-2 h-2 bg-terracotta-500 rounded-full ring-2 ring-white"></span>
+</button>
+<!-- Profile Card Dropdown -->
+<div class="flex items-center space-x-3 pl-2 border-l border-slate-200">
+<div class="w-8 h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center tracking-tight">
+          RK
+        </div>
+<div class="flex flex-col text-left">
+<div class="flex items-center space-x-1">
+<span class="text-xs font-semibold text-slate-800 leading-none">Admin</span>
+<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-[10px] text-slate-400 font-medium">Super Admin</span>
+</div>
+<button class="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 ml-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainDashboardLayout -->
+<div class="flex flex-1 overflow-hidden">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-64 bg-white border-r border-morbi-border flex flex-col justify-between py-5 shrink-0" data-purpose="sidebar-navigation">
+<nav class="space-y-1 px-3">
+<!-- 1. User Manage -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>1. User Manage</span>
+</a>
+<!-- 2. Product Manage (Active Parent / Focus on Step 09 Dispatch) -->
+<div class="bg-terracotta-50/80 rounded-lg p-1.5 border border-terracotta-100">
+<a class="flex items-center space-x-3 px-2 py-1.5 rounded-md text-xs font-semibold text-terracotta-700" href="#">
+<svg class="w-4 h-4 text-terracotta-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>2. Product Manage</span>
+</a>
+<!-- Sub-items inside active section -->
+<div class="mt-1 pl-7 pr-1 space-y-1"><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Overview Catalog</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Batch Serials &amp; Dispatch</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Carton &amp; Dispatch Allocation</a><a class="block py-1 text-[11px] font-semibold text-terracotta-600 border-l-2 border-terracotta-600 pl-2" href="#">Carton Inward &amp; Receiving</a><a class="block py-1 text-[11px] text-slate-500 hover:text-slate-800" href="#">Roll Feeder Archive</a></div>
+</div>
+<!-- 3. Cashback Request -->
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<div class="flex items-center space-x-3">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>3. Cashback Request</span>
+</div>
+<span class="bg-terracotta-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">18</span>
+</a>
+<!-- 4. Report -->
+<a class="flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors" href="#">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>4. Report</span>
+</a>
+</nav>
+<!-- Bottom Sign Out -->
+<div class="px-4 border-t border-slate-100 pt-4">
+<a class="flex items-center space-x-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span>Sign out</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- BEGIN: MainContentArea -->
+<main class="flex-1 bg-slate-50 overflow-y-auto px-8 py-7" data-purpose="primary-workspace">
+<!-- Top Title & Action Header Section -->
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6" data-purpose="page-title-actions"><div>
+<div class="inline-flex items-center space-x-2 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-white border border-slate-200 px-2.5 py-1 rounded-md mb-2 shadow-2xs">
+<span class="w-1.5 h-1.5 rounded-full bg-terracotta-600"></span>
+<span>REGIONAL DEALER INWARD • NORTHERN &amp; WESTERN HUBS</span>
+</div>
+<h1 class="text-2xl font-bold text-slate-900 tracking-tight">Dealer Carton Inward &amp; Barcode Scan Verification Portal</h1>
+<p class="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+Verify incoming factory consignments, scan carton master barcodes to confirm received inventory, detect transit discrepancies, and unlock dealer point-of-sale allocations.
+</p>
+</div>
+<div class="flex items-center flex-wrap gap-2.5 self-start md:self-auto">
+<button class="inline-flex items-center space-x-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium text-xs px-3.5 py-2 rounded-lg transition-all shadow-xs">
+<svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Download Inward Discrepancy Form (PDF)</span>
+</button>
+<button class="inline-flex items-center space-x-2 bg-terracotta-600 hover:bg-terracotta-700 text-white font-medium text-xs px-4 py-2 rounded-lg transition-all shadow-sm">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>+ Start High-Speed Inward Scan</span>
+</button>
+</div></div>
+<!-- BEGIN: TopMetricsGrid (4 Cards) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" data-purpose="kpi-metrics-grid"><!-- Metric 1: Total Cartons Inwarded -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-slate-500 mb-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">TOTAL CARTONS INWARDED</span>
+<div class="w-7 h-7 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-terracotta-600">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<div class="text-2xl font-black text-slate-900 tracking-tight">54,120 <span class="text-xs font-medium text-slate-500">Boxes</span></div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+<span class="text-emerald-600 font-semibold inline-flex items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span>
+↑ +14.2% This Month
+</span>
+<span class="font-medium text-slate-600">98.6% Reconciliation Rate</span>
+</div>
+</div>
+<!-- Metric 2: Consignments Pending Inward -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-slate-500 mb-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">CONSIGNMENTS PENDING INWARD</span>
+<div class="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="text-2xl font-black text-slate-900 tracking-tight">6</span>
+<span class="text-xs font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">Awaiting Scan</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+<span class="text-slate-700 font-medium">2 Arrived at Bay</span>
+<span class="text-slate-500">4 En Route (FASTag)</span>
+</div>
+</div>
+<!-- Metric 3: Tamper & Seal Integrity -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-slate-500 mb-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">TAMPER &amp; SEAL INTEGRITY</span>
+<div class="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="text-2xl font-black text-slate-900 tracking-tight">100%</span>
+<span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">Secured</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+<span class="text-slate-500">0 Compromised Hashes</span>
+<span class="font-medium text-slate-800">Dual HSM Verified</span>
+</div>
+</div>
+<!-- Metric 4: Instant Incentive Unlock -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-slate-500 mb-2">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">INSTANT INCENTIVE UNLOCK</span>
+<div class="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="text-2xl font-black text-slate-900 tracking-tight">₹ 27,06,000</span>
+<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Escrow Live</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+<span class="text-slate-500">Contractor Cashback Escrow Activated on Inward</span>
+</div>
+</div></section>
+<!-- END: TopMetricsGrid -->
+<!-- BEGIN: FilterToolbar -->
+<section class="bg-white rounded-xl border border-slate-200 p-3 mb-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-xs" data-purpose="search-and-filtering-bar"><!-- Search Input -->
+<div class="relative flex-1 max-w-lg">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+<input class="w-full pl-9 pr-4 py-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-terracotta-500 focus:border-terracotta-500 transition-colors" placeholder="Search by Consignment ID, LR No., Dealer Name, or Truck Reg..." type="text"/>
+</div>
+<!-- Filter Segment Controls -->
+<div class="flex items-center flex-wrap gap-2 text-xs">
+<button class="bg-slate-900 text-white font-medium px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5">
+<span>All Inward Batches (24)</span>
+</button>
+<button class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-2.5 py-1.5 rounded-lg text-xs">
+<span>Pending Scan (6)</span>
+</button>
+<button class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-2.5 py-1.5 rounded-lg text-xs">
+<span>Fully Verified (16)</span>
+</button>
+<button class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-2.5 py-1.5 rounded-lg text-xs">
+<span>Discrepancy Flagged (2)</span>
+</button>
+<div class="relative">
+<button class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1">
+<span>Dealer Hub: All Northern &amp; Western</span>
+<svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<div class="relative hidden xl:block">
+<button class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1">
+<span>Scan Mode: 2D Barcode / RFID</span>
+<svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<button class="p-1.5 text-slate-400 hover:text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50" title="Reset Filters">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div></section>
+<!-- END: FilterToolbar -->
+<!-- BEGIN: MainBatchTableContainer -->
+<section class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden mb-6" data-purpose="batch-registry-table"><div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-xs">
+<thead>
+<tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold tracking-wider uppercase text-[10px]">
+<th class="py-3 px-4">CONSIGNMENT &amp; INWARD ID</th>
+<th class="py-3 px-4">DISTRIBUTOR / DEALER RECEIVER</th>
+<th class="py-3 px-4">INVOICE &amp; LR BILL REF</th>
+<th class="py-3 px-4">SKU &amp; CARTON VOLUME</th>
+<th class="py-3 px-4">SCAN PROGRESS &amp; RECONCILIATION</th>
+<th class="py-3 px-4">HSM SEAL &amp; INTEGRITY</th>
+<th class="py-3 px-4 text-right">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700">
+<!-- Row 1: Rajesh Tile Emporium - In Progress -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 font-mono">INW-2024-9102</div>
+<div class="text-[11px] text-slate-400">Today 10:15 AM</div>
+<div class="inline-flex items-center text-[10px] text-slate-500 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
+Dock Bay 02 - Jaipur Depot
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-800">Rajesh Tile Emporium</div>
+<div class="text-[11px] text-slate-500">Jaipur, Rajasthan</div>
+<div class="font-mono text-[10px] text-slate-400">GST: 08AAACR1234F1Z</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-700">Morbi Logistics Express</div>
+<div class="text-[11px] font-mono text-slate-500">LR #88921 • E-Way: 241098224510</div>
+<div class="text-[10px] text-slate-400 font-mono">GJ-36-T-8942</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-800">PGVT Royal Glazed (600×1200)</div>
+<div class="text-[11px] text-slate-500">4,200 Boxes (105 Pallets)</div>
+<div class="text-[10px] text-slate-400 font-mono">SKU: PGVT-6012</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="w-full bg-slate-200 rounded-full h-1.5 mb-1.5 max-w-[140px]">
+<div class="bg-terracotta-600 h-1.5 rounded-full" style="width: 70%"></div>
+</div>
+<div class="text-[11px] font-semibold text-slate-800">2,940 / 4,200 Scanned (70%)</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
+In-Progress Scan
+</span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Valid • SHA-256 Match
+</span>
+<div class="text-[10px] text-slate-400 mt-1 font-mono">HASH: 8F2A...9C1B</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-1">
+<button class="bg-terracotta-600 hover:bg-terracotta-700 text-white px-2.5 py-1 rounded text-[11px] font-medium transition-colors shadow-xs">
+Resume Scan
+</button>
+<button class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+View Gate Pass
+</button>
+</td>
+</tr>
+<!-- Row 2: Metro Marbles & Granite - Fully Reconciled -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 font-mono">INW-2024-9101</div>
+<div class="text-[11px] text-slate-400">Today 08:30 AM</div>
+<div class="inline-flex items-center text-[10px] text-slate-500 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Dock Bay 01 - Delhi Hub
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-800">Metro Marbles &amp; Granite</div>
+<div class="text-[11px] text-slate-500">Kirti Nagar, Delhi NCR</div>
+<div class="font-mono text-[10px] text-slate-400">GST: 07AABCM5421M1Z</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-700">Container Fleet India</div>
+<div class="text-[11px] font-mono text-slate-500">LR #88904 • E-Way: 241098219084</div>
+<div class="text-[10px] text-slate-400 font-mono">DL-1L-AA-5510</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-800">GVT Supergloss Carrara (800×1600)</div>
+<div class="text-[11px] text-slate-500">3,600 Boxes (90 Pallets)</div>
+<div class="text-[10px] text-slate-400 font-mono">SKU: GVT-8016</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="w-full bg-slate-200 rounded-full h-1.5 mb-1.5 max-w-[140px]">
+<div class="bg-emerald-500 h-1.5 rounded-full" style="width: 100%"></div>
+</div>
+<div class="text-[11px] font-semibold text-slate-800">3,600 / 3,600 (100%)</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Fully Reconciled
+</span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Valid • Verified by Bay
+</span>
+<div class="text-[10px] text-slate-400 mt-1 font-mono">DUAL SEAL PASS</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-1">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+Inward Receipt
+</button>
+<button class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+Audit Slip
+</button>
+</td>
+</tr>
+<!-- Row 3: Om Ceramics Distributor - Fully Reconciled -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 font-mono">INW-2024-9100</div>
+<div class="text-[11px] text-slate-400">Yesterday 06:45 PM</div>
+<div class="inline-flex items-center text-[10px] text-slate-500 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Dock Bay 03 - Ahmedabad Hub
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-800">Om Ceramics Distributor</div>
+<div class="text-[11px] text-slate-500">Sanand, Ahmedabad</div>
+<div class="font-mono text-[10px] text-slate-400">GST: 24AAGCO9934B1D</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-700">Gujarat Roadways Direct</div>
+<div class="text-[11px] font-mono text-slate-500">LR #88892 • E-Way: 241097654120</div>
+<div class="text-[10px] text-slate-400 font-mono">GJ-01-BX-3199</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-800">Rustic Outdoor Stone (400×400)</div>
+<div class="text-[11px] text-slate-500">5,000 Boxes (125 Pallets)</div>
+<div class="text-[10px] text-slate-400 font-mono">SKU: RST-4040</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="w-full bg-slate-200 rounded-full h-1.5 mb-1.5 max-w-[140px]">
+<div class="bg-emerald-500 h-1.5 rounded-full" style="width: 100%"></div>
+</div>
+<div class="text-[11px] font-semibold text-slate-800">5,000 / 5,000 (100%)</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Fully Reconciled
+</span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Valid • Verified
+</span>
+<div class="text-[10px] text-slate-400 mt-1 font-mono">FASTag CONFIRMED</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-1">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+Inward Receipt
+</button>
+<button class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+POD Proof
+</button>
+</td>
+</tr>
+<!-- Row 4: Shreenathji Tile Plaza - Discrepancy Flagged -->
+<tr class="hover:bg-slate-50/70 transition-colors bg-orange-50/30">
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 font-mono">INW-2024-9099</div>
+<div class="text-[11px] text-slate-400">Yesterday 03:20 PM</div>
+<div class="inline-flex items-center text-[10px] text-slate-500 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+Dock Bay 01 - Indore Hub
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-800">Shreenathji Tile Plaza</div>
+<div class="text-[11px] text-slate-500">Indore, MP</div>
+<div class="font-mono text-[10px] text-slate-400">GST: 23AACST7821H1K</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-700">Malwa Cargo Lines</div>
+<div class="text-[11px] font-mono text-slate-500">LR #88860 • E-Way: 241097223190</div>
+<div class="text-[10px] text-slate-400 font-mono">MP-09-HH-6102</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-800">Slab Master Onyx Nero (1200×1800)</div>
+<div class="text-[11px] text-slate-500">2,400 Boxes (80 Pallets)</div>
+<div class="text-[10px] text-slate-400 font-mono">SKU: SLB-1218</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="w-full bg-slate-200 rounded-full h-1.5 mb-1.5 max-w-[140px]">
+<div class="bg-amber-500 h-1.5 rounded-full" style="width: 99%"></div>
+</div>
+<div class="text-[11px] font-semibold text-slate-800">2,398 / 2,400 Scanned (99.9%)</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-50 text-terracotta-700 border border-orange-100 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+Discrepancy (2 Damaged)
+</span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-50 text-terracotta-700 border border-orange-100">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+Flagged • Box Seal Broken
+</span>
+<div class="text-[10px] text-slate-400 mt-1 font-mono">INCIDENT LOGGED</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-1">
+<button class="bg-terracotta-500 hover:bg-terracotta-600 text-white px-2 py-1 rounded text-[11px] font-medium transition-colors shadow-xs">
+Discrepancy Log
+</button>
+<button class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+Claim Report
+</button>
+</td>
+</tr>
+<!-- Row 5: Balaji Infra & Tiles - Truck at Dock -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 font-mono">INW-2024-9098</div>
+<div class="text-[11px] text-slate-400">Oct 24, 02:15 PM</div>
+<div class="inline-flex items-center text-[10px] text-slate-500 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>
+Dock Bay 02 - Pune Hub
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-800">Balaji Infra &amp; Tiles</div>
+<div class="text-[11px] text-slate-500">Hadapsar, Pune, MH</div>
+<div class="font-mono text-[10px] text-slate-400">GST: 27AABCB4109C1L</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-700">Western Corridor Express</div>
+<div class="text-[11px] font-mono text-slate-500">LR #88835 • E-Way: 241096881240</div>
+<div class="text-[10px] text-slate-400 font-mono">MH-12-RN-7724</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-800">Ceramic Glazed Wall Deco (300×600)</div>
+<div class="text-[11px] text-slate-500">4,800 Boxes (120 Pallets)</div>
+<div class="text-[10px] text-slate-400 font-mono">SKU: CW-8120</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="w-full bg-slate-200 rounded-full h-1.5 mb-1.5 max-w-[140px]">
+<div class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+</div>
+<div class="text-[11px] font-semibold text-slate-800">0 / 4,800 Scanned (0%)</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>
+Truck at Dock (Unloading)
+</span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+Pending Inward Scan
+</span>
+<div class="text-[10px] text-slate-400 mt-1 font-mono">GATE VERIFIED</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-1">
+<button class="bg-terracotta-600 hover:bg-terracotta-700 text-white px-2 py-1 rounded text-[11px] font-medium transition-colors shadow-xs">
+Start Inward
+</button>
+<button class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+Check Manifest
+</button>
+</td>
+</tr>
+<!-- Row 6: Awadh Tiles & Sanitary - Fully Reconciled -->
+<tr class="hover:bg-slate-50/70 transition-colors">
+<td class="py-3.5 px-4">
+<div class="font-bold text-slate-900 font-mono">INW-2024-9097</div>
+<div class="text-[11px] text-slate-400">Oct 24, 11:00 AM</div>
+<div class="inline-flex items-center text-[10px] text-slate-500 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Dock Bay 01 - Lucknow Hub
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-slate-800">Awadh Tiles &amp; Sanitary</div>
+<div class="text-[11px] text-slate-500">Lucknow, UP</div>
+<div class="font-mono text-[10px] text-slate-400">GST: 09AAACA9012J1Z</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-700">National Freight Carriers</div>
+<div class="text-[11px] font-mono text-slate-500">LR #88790 • E-Way: 241096554310</div>
+<div class="text-[10px] text-slate-400 font-mono">UP-32-DN-2088</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-slate-800">Full Body Heavy Duty (600×600)</div>
+<div class="text-[11px] text-slate-500">3,000 Boxes (75 Pallets)</div>
+<div class="text-[10px] text-slate-400 font-mono">SKU: FB-7192</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="w-full bg-slate-200 rounded-full h-1.5 mb-1.5 max-w-[140px]">
+<div class="bg-emerald-500 h-1.5 rounded-full" style="width: 100%"></div>
+</div>
+<div class="text-[11px] font-semibold text-slate-800">3,000 / 3,000 (100%)</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Fully Reconciled
+</span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+Valid • Verified
+</span>
+<div class="text-[10px] text-slate-400 mt-1 font-mono">SHA-256 PASS</div>
+</td>
+<td class="py-3.5 px-4 text-right space-x-1">
+<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+Inward Receipt
+</button>
+<button class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded text-[11px] font-medium transition-colors">
+Audit Slip
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer -->
+<div class="bg-slate-50/80 px-4 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500" data-purpose="table-pagination">
+<div>
+Showing <span class="font-semibold text-slate-700">1 to 6</span> of <span class="font-semibold text-slate-700">24</span> active inward consignments
+</div>
+<div class="flex items-center space-x-1">
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs disabled:opacity-50" disabled="">Previous</button>
+<button class="px-2.5 py-1 rounded bg-terracotta-600 text-white font-medium text-xs">1</button>
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs">2</button>
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs">3</button>
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs">4</button>
+<button class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs">Next</button>
+</div>
+</div></section>
+<!-- END: MainBatchTableContainer -->
+<!-- BEGIN: MorbiSyncEngineBanner -->
+<section class="bg-morbi-dark text-slate-200 rounded-xl p-5 border border-slate-800 shadow-md flex flex-col md:flex-row items-center justify-between gap-5" data-purpose="factory-feeder-callout-banner"><div class="flex items-start space-x-4">
+<!-- Depot Scanner Icon Box -->
+<div class="w-10 h-10 rounded-lg bg-terracotta-600/20 border border-terracotta-500/30 flex items-center justify-center shrink-0 mt-0.5 text-terracotta-500">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<h2 class="text-sm font-bold text-white tracking-tight">Regional Depot Optical Scanner Gateway • Automated Handheld &amp; Conveyor Sync</h2>
+<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+12 Connected Terminals
+</span>
+</div>
+<p class="text-xs text-slate-400 mt-1 max-w-2xl leading-normal">
+Real-time sync between Zebra TC57 / Honeywell Xenon 2D barcode scanners and central factory ledger. Auto-activates contractor loyalty QR codes upon confirmed carton inward scan.
+</p>
+</div>
+</div>
+<div class="flex items-center space-x-3 shrink-0 self-end md:self-auto">
+<!-- Diagnostics Secondary CTA -->
+<button class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center space-x-1.5 shadow-sm">
+<svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Scanner Diagnostics (12 Connected Terminals)</span>
+</button>
+<!-- Primary CTA -->
+<button class="bg-terracotta-600 hover:bg-terracotta-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition-colors shadow-md flex items-center space-x-1.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Open Handheld Scanning Webhook</span>
+</button>
+</div></section>
+<!-- END: MorbiSyncEngineBanner -->
+</main>
+<!-- END: MainContentArea -->
+</div>
+<!-- END: MainDashboardLayout -->
+<!-- BEGIN: BottomGlobalFooter -->
+<footer class="bg-white border-t border-morbi-border px-8 py-2.5 flex items-center justify-between text-xs text-slate-500 shrink-0" data-purpose="site-footer">
+<div class="flex items-center space-x-2">
+<span class="font-bold tracking-tight text-slate-700">DURAGRIT VITRIFIED</span>
+<span class="text-slate-400">•</span>
+<span>Retail &amp; QR Portal Workflow</span>
+</div>
+<div class="font-medium text-slate-500">Step 11 of 14</div>
+</footer>
+<!-- END: BottomGlobalFooter -->
+<!-- BEGIN: LiveBarcodeModalOverlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-sm" data-purpose="live-barcode-scan-modal">
+<!-- Modal Container -->
+<div class="bg-white w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[92vh]">
+<!-- 1. Modal Header -->
+<div class="px-6 py-4 bg-white border-b border-slate-200 flex items-start justify-between gap-4 shrink-0">
+<div>
+<div class="flex items-center space-x-2 text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200 font-mono">DEPOT INWARD SCAN GATEWAY</span>
+<span class="text-slate-300">•</span>
+<span class="inline-flex items-center text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold lowercase">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5"></span>
+            Scanner Terminal #03 Online (Zebra TC57 Connected)
+          </span>
+</div>
+<h2 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+<span>Live Barcode Scanning &amp; Discrepancy Inspection</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">INW-2024-9102</span>
+</h2>
+<p class="text-xs text-slate-500 mt-0.5">
+          Consignment INW-2024-9102 • Rajesh Tile Emporium (Jaipur Depot, Bay 02) • Real-time 2D DataMatrix verification against Morbi factory dispatch ledger.
+        </p>
+</div>
+<button class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-lg leading-none" title="Close modal">
+        ✕
+      </button>
+</div>
+<!-- Scrollable Modal Body -->
+<div class="p-6 overflow-y-auto space-y-5 bg-slate-50/50 flex-1">
+<!-- 2. Real-Time Scan Progress & KPI Ribbon (4 compact metric cards) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+<!-- Metric 1: Scanned Boxes -->
+<div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-xs flex flex-col justify-between">
+<div class="flex items-center justify-between text-slate-500 mb-1.5">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">SCANNED BOXES</span>
+<span class="text-xs font-bold text-terracotta-600">70% Complete</span>
+</div>
+<div class="text-xl font-black text-slate-900 tracking-tight">
+            2,940 <span class="text-xs font-medium text-slate-400">/ 4,200</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-1.5 mt-2.5">
+<div class="bg-terracotta-600 h-1.5 rounded-full" style="width: 70%"></div>
+</div>
+</div>
+<!-- Metric 2: Validated & Inwarded -->
+<div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-xs flex flex-col justify-between">
+<div class="flex items-center justify-between text-slate-500 mb-1.5">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">VALIDATED &amp; INWARDED</span>
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+</div>
+<div class="text-xl font-black text-emerald-700 tracking-tight">
+            2,938 <span class="text-xs font-medium text-slate-500">Boxes</span>
+</div>
+<div class="text-[10px] font-medium text-emerald-600 mt-2 flex items-center gap-1">
+<span>99.93% Pass Rate</span> • <span class="text-slate-400 font-mono">SHA-256 Match</span>
+</div>
+</div>
+<!-- Metric 3: Discrepancy / Damaged -->
+<div class="bg-white rounded-xl border border-orange-200 p-3.5 shadow-xs flex flex-col justify-between bg-orange-50/20">
+<div class="flex items-center justify-between text-slate-500 mb-1.5">
+<span class="text-[10px] font-bold uppercase tracking-wider text-terracotta-700">DISCREPANCY / DAMAGED</span>
+<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+</div>
+<div class="text-xl font-black text-terracotta-600 tracking-tight">
+            2 <span class="text-xs font-medium text-slate-500">Boxes Flagged</span>
+</div>
+<div class="flex items-center gap-1.5 mt-2 flex-wrap text-[9px] font-semibold">
+<span class="bg-orange-100 text-terracotta-700 px-1.5 py-0.5 rounded border border-orange-200">1 Broken Seal</span>
+<span class="bg-orange-100 text-terracotta-700 px-1.5 py-0.5 rounded border border-orange-200">1 Crushed Carton</span>
+</div>
+</div>
+<!-- Metric 4: Incentive Escrow Unlocked -->
+<div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-xs flex flex-col justify-between">
+<div class="flex items-center justify-between text-slate-500 mb-1.5">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">ESCROW UNLOCKED</span>
+<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">Escrow Live</span>
+</div>
+<div class="text-xl font-black text-slate-900 tracking-tight">
+            ₹ 18,36,250
+          </div>
+<div class="text-[10px] text-slate-400 mt-2 truncate" title="Auto-allocated to contractor payout pool">
+            Auto-allocated to contractor payout pool
+          </div>
+</div>
+</div>
+<!-- 3. Two-Column Live Inspection Interface -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+<!-- Left Column (5 cols): Live Scanner Stream & Rapid Scan Input -->
+<div class="lg:col-span-5 flex flex-col space-y-3.5">
+<div class="bg-morbi-dark rounded-xl p-4 text-white border border-slate-800 relative overflow-hidden flex flex-col items-center justify-center min-h-[220px]">
+<!-- Viewfinder Overlay Elements -->
+<div class="absolute inset-4 border border-dashed border-emerald-500/40 rounded-lg pointer-events-none flex flex-col justify-between p-2">
+<div class="flex justify-between">
+<span class="w-3 h-3 border-t-2 border-l-2 border-emerald-400"></span>
+<span class="w-3 h-3 border-t-2 border-r-2 border-emerald-400"></span>
+</div>
+<div class="flex justify-between">
+<span class="w-3 h-3 border-b-2 border-l-2 border-emerald-400"></span>
+<span class="w-3 h-3 border-b-2 border-r-2 border-emerald-400"></span>
+</div>
+</div>
+<!-- Laser Scan Line Simulator -->
+<div class="w-3/4 h-0.5 bg-terracotta-500 shadow-md animate-pulse mb-3"></div>
+<!-- Center Scan Graphic / Status -->
+<div class="flex flex-col items-center text-center space-y-1.5 z-10">
+<div class="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-emerald-400 mb-1">
+<svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-xs font-semibold text-slate-200">Awaiting Next Master Carton 2D Barcode...</span>
+<span class="text-[10px] text-slate-400 font-mono">Conveyor Feed Velocity: 1.2 m/s • Sensor Calibrated</span>
+</div>
+<div class="absolute bottom-2 right-3 text-[9px] font-mono text-emerald-400 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> OPTICAL SYNC: ACTIVE
+            </div>
+</div>
+<!-- Barcode Input Box -->
+<div class="bg-white rounded-xl border border-slate-200 p-3.5 space-y-2.5 shadow-xs">
+<div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Optical / Rapid Scanner Input Bar
+              </label>
+<div class="relative">
+<input class="w-full pl-3 pr-20 py-2 text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-terracotta-500" readonly="" type="text" value="DG-PGV-9921-02941-8F2A"/>
+<span class="absolute right-2 top-2 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  READY
+                </span>
+</div>
+</div>
+<!-- Mode Toggles & Indicators -->
+<div class="flex items-center justify-between text-[11px] text-slate-600 pt-1 border-t border-slate-100">
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="font-medium">Auto-Scan Active (Audio ON)</span>
+</div>
+<div class="flex items-center space-x-2 text-[10px]">
+<span class="text-slate-400">Mode:</span>
+<span class="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">Rapid Conveyor</span>
+</div>
+</div>
+<!-- Quick Scan Control Buttons -->
+<div class="grid grid-cols-3 gap-2 pt-1">
+<button class="px-2 py-1.5 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded text-[11px] font-medium text-center transition-colors">
+                Manual Entry
+              </button>
+<button class="px-2 py-1.5 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded text-[11px] font-medium text-center transition-colors">
+                Pause Stream
+              </button>
+<button class="px-2 py-1.5 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded text-[11px] font-medium text-center transition-colors">
+                Sound Test
+              </button>
+</div>
+</div>
+</div>
+<!-- Right Column (7 cols): Live Scan Audit Stream / Recent Scans Feed & Discrepancies -->
+<div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between">
+<div>
+<!-- Audit Feed Tabs -->
+<div class="flex items-center justify-between border-b border-slate-200 pb-2.5 mb-3">
+<div class="flex items-center space-x-2 text-xs">
+<button class="font-bold text-slate-900 border-b-2 border-terracotta-600 pb-1 px-1">
+                  All Scanned (2,940)
+                </button>
+<button class="font-semibold text-terracotta-600 hover:text-slate-800 pb-1 px-1 flex items-center gap-1">
+<span>Flagged Discrepancies (2)</span>
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+</button>
+<button class="font-medium text-slate-500 hover:text-slate-800 pb-1 px-1">
+                  Pending Inward (1,260)
+                </button>
+</div>
+<span class="text-[10px] text-slate-400 font-mono">Real-time Stream: 120ms</span>
+</div>
+<!-- Scan Feed Items -->
+<div class="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+<!-- Item 1 (Valid) -->
+<div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs hover:border-slate-300 transition-colors">
+<div class="flex items-start space-x-3">
+<span class="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0"></span>
+<div>
+<div class="font-bold text-slate-900 flex items-center gap-2">
+<span>Carton #02940</span>
+<span class="text-[10px] font-mono text-slate-400 font-normal">SKU: PGVT-6012 (600×1200)</span>
+</div>
+<div class="text-[10px] font-mono text-slate-500 mt-0.5">HASH: 8F2A9C1B...44D1 • Dual HSM Verified</div>
+</div>
+</div>
+<div class="text-right shrink-0">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Verified • Inwarded
+                  </span>
+<div class="text-[10px] text-slate-400 mt-0.5">10:14:22 AM</div>
+</div>
+</div>
+<!-- Item 2 (Valid) -->
+<div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs hover:border-slate-300 transition-colors">
+<div class="flex items-start space-x-3">
+<span class="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0"></span>
+<div>
+<div class="font-bold text-slate-900 flex items-center gap-2">
+<span>Carton #02939</span>
+<span class="text-[10px] font-mono text-slate-400 font-normal">SKU: PGVT-6012 (600×1200)</span>
+</div>
+<div class="text-[10px] font-mono text-slate-500 mt-0.5">HASH: 4D1E33A0...77E2 • Dual HSM Verified</div>
+</div>
+</div>
+<div class="text-right shrink-0">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Verified • Inwarded
+                  </span>
+<div class="text-[10px] text-slate-400 mt-0.5">10:14:18 AM</div>
+</div>
+</div>
+<!-- Item 3 (FLAGGED ALERT - Broken Seal) -->
+<div class="p-2.5 rounded-lg border border-orange-200 bg-orange-50/30 flex items-center justify-between text-xs">
+<div class="flex items-start space-x-3">
+<span class="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0"></span>
+<div>
+<div class="font-bold text-slate-900 flex items-center gap-2">
+<span class="text-terracotta-700">Carton #02114 [FLAGGED]</span>
+<span class="text-[10px] font-mono text-slate-400 font-normal">SKU: PGVT-6012</span>
+</div>
+<div class="text-[10px] font-semibold text-terracotta-600 mt-0.5">Reason: Physical Seal Broken / QR Scratch Mismatch</div>
+<div class="text-[10px] text-slate-500 mt-0.5">Allocated to: Quarantine Bay #04</div>
+</div>
+</div>
+<div class="text-right shrink-0 space-y-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-terracotta-700 border border-orange-200">
+                    Quarantine Bay #04
+                  </span>
+<div>
+<button class="text-[10px] font-semibold text-terracotta-600 hover:text-terracotta-700 underline">
+                      Inspect Photo / File Claim
+                    </button>
+</div>
+</div>
+</div>
+<!-- Item 4 (FLAGGED ALERT - Damaged Carton) -->
+<div class="p-2.5 rounded-lg border border-orange-200 bg-orange-50/30 flex items-center justify-between text-xs">
+<div class="flex items-start space-x-3">
+<span class="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0"></span>
+<div>
+<div class="font-bold text-slate-900 flex items-center gap-2">
+<span class="text-terracotta-700">Carton #01852 [FLAGGED]</span>
+<span class="text-[10px] font-mono text-slate-400 font-normal">SKU: PGVT-6012</span>
+</div>
+<div class="text-[10px] font-semibold text-terracotta-600 mt-0.5">Reason: Corner Crushed / Tile Core Damaged</div>
+<div class="text-[10px] text-slate-500 mt-0.5">Status: Transit Claim Initiated with Carrier</div>
+</div>
+</div>
+<div class="text-right shrink-0 space-y-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-terracotta-700 border border-orange-200">
+                    Transit Claim Logged
+                  </span>
+<div>
+<button class="text-[10px] font-semibold text-terracotta-600 hover:text-terracotta-700 underline">
+                      View Damage POD
+                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column Sub-footer info -->
+<div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+<span>Showing last 4 scan events of 2,940</span>
+<a class="text-terracotta-600 hover:underline font-semibold text-[11px]" href="#">View Full Scan Audit Ledger →</a>
+</div>
+</div>
+</div>
+<!-- 4. Chain of Custody & Dispute Resolution Warning Banner -->
+<div class="bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-start space-x-3 text-xs text-slate-700">
+<div class="w-5 h-5 rounded-full bg-amber-500/20 text-terracotta-600 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+          ! 
+        </div>
+<div class="flex-1 leading-relaxed text-[11px]">
+<span class="font-bold text-slate-900">Chain of Custody &amp; Dispute Policy:</span> Any flagged discrepancy automatically puts corresponding contractor cashback tokens in <span class="font-semibold text-terracotta-700">Escrow Hold</span> until claim verification and photo sign-off by the depot quality inspector.
+        </div>
+</div>
+</div>
+<!-- 5. Modal Action Footer -->
+<div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 text-xs">
+<!-- Left Operator Info -->
+<div class="text-slate-500 text-[11px] flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Active Session: <span class="font-semibold text-slate-700">42 min</span></span>
+<span class="text-slate-300">•</span>
+<span>Operator: <span class="font-semibold text-slate-700">Rajesh Gurjar (Scanner ID: ZEBRA-JPR-03)</span></span>
+</div>
+<!-- Right Buttons -->
+<div class="flex items-center space-x-2">
+<button class="px-3 py-1.5 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg font-medium transition-colors">
+          Save Session &amp; Resume Later
+        </button>
+<button class="px-3 py-1.5 text-terracotta-700 bg-orange-50 border border-orange-200 hover:bg-orange-100 rounded-lg font-medium transition-colors">
+          Export Discrepancy Incident Report (PDF)
+        </button>
+<button class="px-4 py-1.5 text-white bg-terracotta-600 hover:bg-terracotta-700 rounded-lg font-semibold shadow-sm transition-colors">
+          Commit Inward Reconciliation (2,938 Boxes)
+        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- END: LiveBarcodeModalOverlay --></body></html>

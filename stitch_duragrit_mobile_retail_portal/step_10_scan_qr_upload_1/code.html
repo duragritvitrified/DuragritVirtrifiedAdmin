@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Step 10: Scan QR &amp; Upload - DuraGrit Vitrified</title>
+<!-- Tailwind CSS CDN with forms and container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts for authentic typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&amp;family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              rust: '#c04323',
+              rustHover: '#a8371a',
+              cardBg: '#fbfbfb',
+              canvas: '#f3f4f6',
+              borderLight: '#e5e7eb',
+              textPrimary: '#1a1f2c',
+              textMuted: '#6b7280',
+              badgeGreen: '#15803d',
+              badgeGreenBg: '#ecfdf5'
+            }
+          },
+          fontFamily: {
+            serifHeading: ['Playfair Display', 'Georgia', 'serif'],
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Viewfinder Styles -->
+<style data-purpose="hud-grid-and-effects">
+    /* Reticle viewfinder grid lines */
+    .hud-grid-v {
+      position: absolute;
+      top: 15%;
+      bottom: 15%;
+      width: 1px;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    .hud-grid-h {
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    .hud-laser-line {
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      top: 50%;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent 0%, #c04323 15%, #ff5722 50%, #c04323 85%, transparent 100%);
+      box-shadow: 0 0 8px rgba(192, 67, 35, 0.7);
+    }
+    .hud-reticle-circle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px;
+      height: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 9999px;
+    }
+    .hud-reticle-cross-v {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 1px;
+      height: 30px;
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+    .hud-reticle-cross-h {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      height: 1px;
+      width: 30px;
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+<!-- END: Custom Viewfinder Styles -->
+</head>
+<body class="bg-[#f0f2f5] text-brand-textPrimary font-sans antialiased min-h-screen py-6 px-3 flex flex-col items-center justify-start">
+<!-- BEGIN: Outer Presentation Container (Matches Reference Sheet Canvas) -->
+<div class="w-full max-w-[540px] flex flex-col items-center">
+<!-- Presentation Header Banner -->
+<div class="w-full flex items-center justify-between mb-4 px-1">
+<h1 class="text-xl md:text-2xl font-black tracking-tight text-[#111827]">Scan QR &amp; Upload</h1>
+<div class="bg-[#c04323] text-white text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase">
+        STEP 10 / 14
+      </div>
+</div>
+<!-- Outer Sheet Border Container -->
+<div class="w-full bg-[#f8f9fa] rounded-2xl border border-gray-200/80 shadow-sm p-3.5 sm:p-5">
+<!-- BEGIN: Mobile App Shell -->
+<main class="w-full bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden" data-purpose="mobile-application-view">
+<!-- BEGIN: App Header -->
+<header class="flex items-center justify-between px-4 py-3.5 border-b border-gray-50 bg-white" data-purpose="top-navigation-bar">
+<!-- Back button and Screen Title -->
+<div class="flex items-center space-x-2.5">
+<button aria-label="Go Back" class="text-gray-800 hover:text-gray-600 transition-colors p-0.5" type="button">
+<svg class="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<h2 class="text-[17px] font-bold tracking-tight text-gray-900 font-serifHeading">
+              Scan Qr &amp; Upload
+            </h2>
+</div>
+<!-- User Badges / Avatar -->
+<div class="flex items-center space-x-2">
+<div class="bg-[#f0f2f5] text-gray-700 text-[11px] font-bold px-2 py-0.5 rounded tracking-wide border border-gray-200">
+              RK
+            </div>
+<div class="w-7 h-7 rounded-full bg-[#c04323] text-white flex items-center justify-center shadow-sm">
+<svg class="w-4 h-4 fill-current" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+</header>
+<!-- END: App Header -->
+<div class="p-3.5 space-y-3.5">
+<!-- BEGIN: Camera Viewfinder Viewport -->
+<section class="relative w-full aspect-[4/4.2] sm:aspect-[4/3.8] bg-[#141517] rounded-xl overflow-hidden flex flex-col justify-between p-3.5 border border-gray-800 shadow-inner" data-purpose="optical-camera-viewfinder">
+<!-- Viewfinder Optical Glass Elements -->
+<div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-600 via-transparent to-black"></div>
+<!-- Alignment Guide Grid lines -->
+<div class="hud-grid-v left-1/3"></div>
+<div class="hud-grid-v left-2/3"></div>
+<div class="hud-grid-h top-1/3"></div>
+<div class="hud-grid-h top-2/3"></div>
+<!-- Optical Center Reticle & Horizontal Scanning Laser Indicator -->
+<div class="hud-reticle-cross-v pointer-events-none"></div>
+<div class="hud-reticle-cross-h pointer-events-none"></div>
+<div class="hud-reticle-circle pointer-events-none"></div>
+<div class="hud-laser-line pointer-events-none"></div>
+<!-- Viewfinder Corner Markers (Rust Orange) -->
+<!-- Top-Left Corner -->
+<div class="absolute top-12 left-10 w-6 h-6 border-t-2 border-l-2 border-[#d04928] pointer-events-none"></div>
+<!-- Top-Right Corner -->
+<div class="absolute top-12 right-10 w-6 h-6 border-t-2 border-r-2 border-[#d04928] pointer-events-none"></div>
+<!-- Bottom-Left Corner -->
+<div class="absolute bottom-20 left-10 w-6 h-6 border-b-2 border-l-2 border-[#d04928] pointer-events-none"></div>
+<!-- Bottom-Right Corner -->
+<div class="absolute bottom-20 right-10 w-6 h-6 border-b-2 border-r-2 border-[#d04928] pointer-events-none"></div>
+<!-- Top Camera Controls Bar -->
+<div class="relative z-10 flex items-center justify-between w-full">
+<!-- Live Camera Indicator -->
+<div class="inline-flex items-center space-x-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-[10px] text-white font-medium">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+<span class="tracking-wide">CAM OPTIC 01 • 60FPS</span>
+</div>
+<!-- Torch Control Toggle Button -->
+<button class="inline-flex items-center space-x-1 bg-black/60 backdrop-blur-md hover:bg-black/80 px-2.5 py-1 rounded-md border border-white/15 text-[10px] font-medium text-white transition-colors" data-purpose="toggle-torch" type="button">
+<svg class="w-3 h-3 text-white/90" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Torch Off</span>
+</button>
+</div>
+<!-- Viewfinder Lower Status Overlays -->
+<div class="relative z-10 flex flex-col items-center space-y-2 mt-auto">
+<!-- Detection HUD Pill -->
+<div class="bg-black/75 backdrop-blur-md border border-white/15 px-3 py-1 rounded text-white flex items-center space-x-1.5 text-[10px] tracking-wide font-mono shadow-sm">
+<!-- QR scan vector icon -->
+<svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="6" rx="1" stroke-width="2" width="6" x="3" y="3"></rect>
+<rect height="6" rx="1" stroke-width="2" width="6" x="15" y="3"></rect>
+<rect height="6" rx="1" stroke-width="2" width="6" x="3" y="15"></rect>
+<path d="M15 15h2v2h-2zM19 15h2v2h-2zM15 19h2v2h-2zM19 19h2v2h-2z" stroke-width="1.5"></path>
+</svg>
+<span>DETECTING: DTA-TYPE3-HD</span>
+</div>
+<!-- Align Instruction CTA Pill -->
+<div class="w-full max-w-[340px] bg-white text-gray-800 py-1.5 px-3 rounded-full flex items-center justify-center space-x-2 shadow-lg">
+<!-- Scan focus icon -->
+<svg class="w-4 h-4 text-[#c04323] flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-[11px] font-semibold tracking-normal text-gray-700 truncate">
+                  Align DuraGrit QR within frame for auto-ingest
+                </span>
+</div>
+</div>
+</section>
+<!-- END: Camera Viewfinder Viewport -->
+<!-- BEGIN: Status Indicator Metrics Row -->
+<section class="grid grid-cols-3 gap-2" data-purpose="lot-and-sku-metrics">
+<!-- Metric 1: Lot Target -->
+<div class="bg-[#fcfcfd] border border-gray-200/70 rounded-lg p-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+<span class="block text-[9.5px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">LOT TARGET</span>
+<span class="block text-[12px] font-bold text-gray-900 truncate">MOR-24-B9</span>
+</div>
+<!-- Metric 2: SKU Class -->
+<div class="bg-[#fcfcfd] border border-gray-200/70 rounded-lg p-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+<span class="block text-[9.5px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">SKU CLASS</span>
+<span class="block text-[12px] font-bold text-gray-900 truncate">CER-ADH-70</span>
+</div>
+<!-- Metric 3: Batch State -->
+<div class="bg-[#fcfcfd] border border-gray-200/70 rounded-lg p-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+<span class="block text-[9.5px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5">BATCH STATE</span>
+<span class="inline-flex items-center text-[11px] font-bold text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block mr-1"></span>
+                VALIDATED
+              </span>
+</div>
+</section>
+<!-- END: Status Indicator Metrics Row -->
+<!-- BEGIN: Manual Serial Ingest Accordion Card -->
+<section class="bg-[#fcfcfd] border border-gray-200/80 rounded-xl p-3.5 space-y-3" data-purpose="manual-serial-ingest-card">
+<!-- Header with Dropdown Indicator -->
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-2.5">
+<div class="w-7 h-7 rounded bg-red-50 text-[#c04323] flex items-center justify-center border border-red-100 flex-shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="14" rx="2" stroke-width="1.8" width="20" x="2" y="5"></rect>
+<line stroke-linecap="round" stroke-width="2" x1="6" x2="6.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="10" x2="10.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="14" x2="14.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="18" x2="18.01" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="2" x1="6" x2="6.01" y1="13" y2="13"></line>
+<line stroke-linecap="round" stroke-width="1.8" x1="10" x2="14" y1="13" y2="13"></line>
+<line stroke-linecap="round" stroke-width="2" x1="18" x2="18.01" y1="13" y2="13"></line>
+</svg>
+</div>
+<div>
+<h3 class="text-[13px] font-bold text-gray-900 font-serifHeading leading-tight">Manual Serial Ingest</h3>
+<p class="text-[10px] text-gray-500">Having trouble scanning label?</p>
+</div>
+</div>
+<button aria-label="Toggle section" class="text-gray-500 hover:text-gray-700" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Manual Input Form -->
+<div class="space-y-1.5 pt-1">
+<label class="block text-[10px] font-medium text-gray-600" for="serial-key-input">Serial / Batch Key</label>
+<div class="flex items-center space-x-2">
+<input class="flex-1 bg-[#f0f2f4] border border-gray-200 text-gray-500 text-[12px] font-mono rounded-md px-3 py-2 focus:ring-1 focus:ring-[#c04323] focus:border-[#c04323] outline-none" id="serial-key-input" placeholder="Format: DG-#####-###" type="text" value="# DG-88410-B04"/>
+<button class="bg-[#c04323] hover:bg-[#a8371a] text-white text-[12px] font-semibold px-4 py-2 rounded-md shadow-sm transition-colors whitespace-nowrap" data-purpose="submit-log-code" type="button">
+                  Log Code
+                </button>
+</div>
+<!-- Helper text format -->
+<p class="text-[9.5px] text-gray-400 flex items-center pt-0.5">
+<span class="mr-1">ⓘ</span> Format: DG-[5-digit Lot]-[Unit Identifier]
+              </p>
+</div>
+<!-- Secondary Action: Switch to Manifest CSV / Photo Ingest -->
+<button class="w-full bg-white border border-gray-200 hover:bg-gray-50 py-2 px-3 rounded-lg flex items-center justify-center space-x-2 text-[11px] font-semibold text-gray-700 shadow-2xs transition-colors" data-purpose="manifest-switch-button" type="button">
+<svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Switch to Manifest CSV / Photo Ingest</span>
+</button>
+<!-- Device Connection Sync Strip -->
+<div class="bg-[#f0f2f4] rounded-md px-2.5 py-1.5 flex items-center justify-between text-[10px] text-gray-600 border border-gray-200/50">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+<span class="font-medium text-gray-600 truncate">Field Device Sync: <span class="text-gray-800 font-semibold">MOR-FD-08</span></span>
+</div>
+<span class="text-gray-500 font-medium ml-2 uppercase text-[9px] tracking-wide whitespace-nowrap">MORBI YARD 04</span>
+</div>
+</section>
+<!-- END: Manual Serial Ingest Accordion Card -->
+<!-- BEGIN: Recent Field Tags (Session) Section -->
+<section class="pt-1 pb-1" data-purpose="recent-field-tags-list">
+<!-- Section Header -->
+<div class="flex items-center justify-between mb-2">
+<h4 class="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                RECENT FIELD TAGS (SESSION)
+              </h4>
+<span class="text-[10px] font-semibold text-gray-500">
+                3 QUEUED
+              </span>
+</div>
+<!-- Tag Items Stack -->
+<div class="space-y-2">
+<!-- Item 1 -->
+<article class="bg-[#fcfcfd] border border-gray-200/80 rounded-lg p-2.5 flex items-center justify-between shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="16" rx="2" stroke-width="1.8" width="16" x="4" y="4"></rect>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="16" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="12" y1="13" y2="13"></line>
+</svg>
+</div>
+<div>
+<h5 class="text-[12px] font-bold text-gray-900 leading-snug">DG-94812-A01</h5>
+<p class="text-[10px] text-gray-500">Hydraulic Tile Binder • Pallet 14</p>
+</div>
+</div>
+<div class="text-right">
+<span class="inline-block bg-emerald-50 text-emerald-700 font-bold text-[9px] px-1.5 py-0.5 rounded border border-emerald-200/70 tracking-wider">
+                    SYNCED
+                  </span>
+<p class="text-[9.5px] text-gray-400 font-mono mt-0.5">14:22:08</p>
+</div>
+</article>
+<!-- Item 2 -->
+<article class="bg-[#fcfcfd] border border-gray-200/80 rounded-lg p-2.5 flex items-center justify-between shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center flex-shrink-0">
+<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="16" rx="2" stroke-width="1.8" width="16" x="4" y="4"></rect>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="16" y1="9" y2="9"></line>
+<line stroke-linecap="round" stroke-width="1.8" x1="8" x2="12" y1="13" y2="13"></line>
+</svg>
+</div>
+<div>
+<h5 class="text-[12px] font-bold text-gray-900 leading-snug">DG-94812-A02</h5>
+<p class="text-[10px] text-gray-500">Hydraulic Tile Binder • Pallet 15</p>
+</div>
+</div>
+<div class="text-right">
+<span class="inline-block bg-emerald-50 text-emerald-700 font-bold text-[9px] px-1.5 py-0.5 rounded border border-emerald-200/70 tracking-wider">
+                    SYNCED
+                  </span>
+<p class="text-[9.5px] text-gray-400 font-mono mt-0.5">14:23:40</p>
+</div>
+</article>
+</div>
+</section>
+<!-- END: Recent Field Tags Section -->
+</div>
+</main>
+<!-- END: Mobile App Shell -->
+</div>
+<!-- END: Outer Sheet Border Container -->
+<!-- Presentation Footer Row -->
+<footer class="w-full flex items-center justify-between mt-3 text-[11px] text-gray-500 px-1 font-medium">
+<div>
+<span class="font-bold text-[#c04323] tracking-wide">DURAGRIT VITRIFIED</span> • Retail &amp; QR Portal Workflow
+      </div>
+<div>
+        Step 10 of 14
+      </div>
+</footer>
+</div>
+<!-- END: Outer Presentation Container -->
+</body></html>

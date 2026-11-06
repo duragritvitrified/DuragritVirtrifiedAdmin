@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DuraGrit - Reports &amp; Analytics Portal (Step 07 / 14)</title>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#c84b26',
+              50: '#fdf4f1',
+              100: '#fbe7e2',
+              500: '#c84b26',
+              600: '#b43f1d',
+              700: '#953416',
+            },
+            slate: {
+              850: '#151e2e',
+              900: '#0f172a',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Style Tags -->
+<style data-purpose="typography">
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+<style data-purpose="micro-interactions">
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .chart-bar-hover:hover .chart-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-4px);
+    }
+  </style>
+<!-- END: Custom Style Tags -->
+</head>
+<body class="min-h-screen flex flex-col bg-slate-100/70 text-slate-800">
+<!-- BEGIN: StepIndicatorSuperHeader -->
+<header class="w-full bg-slate-900 border-b border-slate-800 px-6 py-2.5 flex items-center justify-between text-white text-xs z-50">
+<div class="flex items-center space-x-3">
+<div class="flex items-center gap-1.5 font-medium text-slate-300">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        Enterprise Scan Operations v4.8
+      </div>
+<span class="text-slate-600">|</span>
+<span class="text-slate-400">Ledger Status: <span class="text-emerald-400 font-semibold">Synchronized</span> (3 sec ago)</span>
+</div>
+<div class="flex items-center space-x-4">
+<div class="px-3 py-1 bg-brand rounded font-extrabold tracking-wider text-[11px] shadow-sm text-white">
+        STEP 07 / 14
+      </div>
+</div>
+</header>
+<!-- END: StepIndicatorSuperHeader -->
+<!-- BEGIN: MainPortalFrame -->
+<div class="flex-1 flex flex-col min-h-0 bg-white shadow-xl mx-auto w-full border-x border-slate-200">
+<!-- BEGIN: MainNavbar -->
+<header class="h-16 border-b border-slate-200 bg-white px-6 flex items-center justify-between flex-shrink-0">
+<!-- Brand Logo & Department Identifier -->
+<div class="flex items-center space-x-4">
+<div class="flex items-baseline space-x-2">
+<span class="text-2xl font-black tracking-tight text-brand">DURAGRIT</span>
+<span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">VITRIFIED</span>
+</div>
+<div class="h-5 w-px bg-slate-300"></div>
+<span class="text-xs font-bold uppercase tracking-wider text-slate-500">RETAIL &amp; QR MANAGE</span>
+</div>
+<!-- Right Top Navigation & User Profile -->
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-3 border-r border-slate-200 pr-4">
+<button class="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="System Notifications">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full"></span>
+</button>
+</div>
+<!-- Super Admin Badge Dropdown -->
+<div class="flex items-center space-x-3 cursor-pointer group p-1 rounded-lg hover:bg-slate-50 transition">
+<div class="w-9 h-9 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center ring-2 ring-brand/30">
+            RK
+          </div>
+<div class="flex flex-col text-left">
+<div class="flex items-center gap-1">
+<span class="text-xs font-bold text-slate-900 leading-tight">Admin</span>
+<svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-[11px] text-slate-500 font-medium">Super Admin</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-orange-50 border border-orange-200 text-brand flex items-center justify-center ml-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7 7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+</header>
+<!-- END: MainNavbar -->
+<!-- BEGIN: BodyLayoutWithSidebar -->
+<div class="flex-1 flex overflow-hidden">
+<!-- BEGIN: LeftSidebarNav -->
+<aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between flex-shrink-0">
+<!-- Main Sidebar Links -->
+<div class="p-4 space-y-1.5">
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition text-sm font-medium" href="#">
+<svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>1. User Manage</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition text-sm font-medium" href="#">
+<svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>2. Product Manage</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition text-sm font-medium" href="#">
+<div class="flex items-center space-x-3">
+<svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>3. Cashback Request</span>
+</div>
+<span class="text-xs bg-brand text-white font-bold px-2 py-0.5 rounded-full">18</span>
+</a>
+<!-- ACTIVE ITEM: 4. Report -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-orange-50/80 border-l-4 border-brand text-brand font-semibold text-sm transition shadow-xs" href="#">
+<svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-slate-900 font-bold">4. Report</span>
+</a>
+</div>
+<!-- Sidebar Footer Action -->
+<div class="p-4 border-t border-slate-200">
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition text-sm font-medium" href="#">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Sign out</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftSidebarNav -->
+<!-- BEGIN: ContentArea -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-8 bg-slate-50/60">
+<!-- BEGIN: PageTitleAndToolbar -->
+<section class="flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-4 border-b border-slate-200">
+<div>
+<div class="flex items-center space-x-3 mb-1">
+<h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Reports &amp; Analytics</h1>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                ANALYTICS 3.1 • EXECUTIVE INTELLIGENCE
+              </span>
+</div>
+<p class="text-sm text-slate-500 max-w-3xl">
+              Real-time visibility into tile box QR scan velocity, cashback disbursements, contractor loyalty, and regional dealership distribution.
+            </p>
+</div>
+<!-- Quick Action Buttons & Filters -->
+<div class="flex flex-wrap items-center gap-2.5">
+<!-- Date Filter -->
+<button class="inline-flex items-center space-x-2 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition">
+<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Date Range: Last 30 Days (May 1 - May 30, 2024)</span>
+<svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Region & Series Dropdown -->
+<button class="inline-flex items-center space-x-2 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition">
+<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>All Territories / All Tile Series</span>
+<svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Export Audit Action -->
+<button class="inline-flex items-center space-x-2 px-4 py-2 bg-brand text-white rounded-lg text-xs font-bold hover:bg-brand-600 shadow-sm transition active:scale-95">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Export Audit Report</span>
+</button>
+<!-- Automation Setting -->
+<button class="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition" title="Schedule Automated Dispatch">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</section>
+<!-- END: PageTitleAndToolbar -->
+<!-- BEGIN: KeyMetricsSection -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+<!-- KPI 1 -->
+<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total QR Scans Logged</span>
+<span class="w-8 h-8 rounded-lg bg-orange-50 text-brand flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-2 flex items-baseline space-x-2">
+<span class="text-2xl font-black text-slate-900 tracking-tight">48,290</span>
+<span class="text-xs font-medium text-slate-500">Boxes</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+<span class="inline-flex items-center font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                ↑ +14.2% MoM
+              </span>
+<span class="text-slate-500 font-medium">98.6% Authenticated</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Cashback Disbursed</span>
+<span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-2 flex items-baseline space-x-1">
+<span class="text-2xl font-black text-slate-900 tracking-tight">₹ 24,14,500</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+<span class="inline-flex items-center font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                ↑ +8.7% MoM
+              </span>
+<span class="text-slate-500 font-medium">Avg. ₹50 / box yield</span>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Applicator Network</span>
+<span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-2 flex items-baseline space-x-2">
+<span class="text-2xl font-black text-slate-900 tracking-tight">1,248</span>
+<span class="text-xs font-medium text-slate-500">Contractors</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+<span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                87.4% Repeat Rate
+              </span>
+<span class="text-emerald-600 font-semibold">+112 onboarded</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs relative overflow-hidden flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Fraud &amp; Anomaly Safeguard</span>
+<span class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-2 flex items-baseline space-x-2">
+<span class="text-2xl font-black text-slate-900 tracking-tight">18</span>
+<span class="text-xs font-medium text-slate-500">Flagged Duplicate Scans</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+<span class="inline-flex items-center font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded">
+                0.03% Scan Error
+              </span>
+<span class="text-emerald-600 font-bold">₹9,000 saved</span>
+</div>
+</div>
+</section>
+<!-- END: KeyMetricsSection -->
+<!-- BEGIN: VisualAnalyticsSection -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+<!-- Main Chart: Velocity Trends (Left 7 Cols) -->
+<div class="lg:col-span-7 bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+<div>
+<h3 class="text-base font-bold text-slate-900 font-heading">Scan Velocity &amp; Disbursal Trends</h3>
+<p class="text-xs text-slate-500 mt-0.5">Aggregated daily QR scans verified against instant UPI disbursements</p>
+</div>
+<!-- Interactive Tabs -->
+<div class="inline-flex p-1 bg-slate-100 rounded-lg text-xs font-semibold">
+<button class="px-2.5 py-1 rounded bg-white text-slate-900 shadow-xs">Scan Volume</button>
+<button class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800">Payout (₹)</button>
+<button class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-800">Engagement</button>
+</div>
+</div>
+<!-- Chart Visual Area (CSS/SVG Bars + Lines) -->
+<div class="pt-6 pb-2">
+<div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+<span class="font-medium">15k Scans</span>
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-1.5">
+<span class="w-3 h-3 rounded-xs bg-brand"></span>
+<span class="text-slate-600 font-medium text-[11px]">Authenticated Scans</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-3 h-3 rounded-xs bg-slate-800"></span>
+<span class="text-slate-600 font-medium text-[11px]">Instant UPI Disbursed</span>
+</div>
+</div>
+</div>
+<!-- Bar visualizer columns -->
+<div class="h-56 w-full flex items-end justify-between gap-3 pt-4 border-b border-slate-200 relative">
+<!-- Background Horizontal Gridlines -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+<div class="border-b border-dashed border-slate-400 w-full"></div>
+<div class="border-b border-dashed border-slate-400 w-full"></div>
+<div class="border-b border-dashed border-slate-400 w-full"></div>
+</div>
+<!-- Week 1: Day 1-7 -->
+<div class="flex-1 flex flex-col items-center h-full justify-end group chart-bar-hover relative cursor-pointer">
+<div class="w-full flex items-end justify-center gap-1.5 h-full">
+<div class="w-5 bg-brand/90 hover:bg-brand rounded-t-sm transition-all duration-300" style="height: 65%;"></div>
+<div class="w-5 bg-slate-800 hover:bg-slate-900 rounded-t-sm transition-all duration-300" style="height: 58%;"></div>
+</div>
+<div class="mt-2 text-[11px] font-semibold text-slate-500">W1 (May 1-7)</div>
+<!-- Tooltip -->
+<div class="chart-tooltip absolute -top-8 bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow pointer-events-none opacity-0 transition duration-150 whitespace-nowrap z-10">
+                    10,420 Scans • ₹5.21L Disbursed
+                  </div>
+</div>
+<!-- Week 2: Day 8-14 -->
+<div class="flex-1 flex flex-col items-center h-full justify-end group chart-bar-hover relative cursor-pointer">
+<div class="w-full flex items-end justify-center gap-1.5 h-full">
+<div class="w-5 bg-brand/90 hover:bg-brand rounded-t-sm transition-all duration-300" style="height: 78%;"></div>
+<div class="w-5 bg-slate-800 hover:bg-slate-900 rounded-t-sm transition-all duration-300" style="height: 74%;"></div>
+</div>
+<div class="mt-2 text-[11px] font-semibold text-slate-500">W2 (May 8-14)</div>
+<div class="chart-tooltip absolute -top-8 bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow pointer-events-none opacity-0 transition duration-150 whitespace-nowrap z-10">
+                    12,180 Scans • ₹6.09L Disbursed
+                  </div>
+</div>
+<!-- Week 3: Day 15-21 -->
+<div class="flex-1 flex flex-col items-center h-full justify-end group chart-bar-hover relative cursor-pointer">
+<div class="w-full flex items-end justify-center gap-1.5 h-full">
+<div class="w-5 bg-brand/90 hover:bg-brand rounded-t-sm transition-all duration-300" style="height: 86%;"></div>
+<div class="w-5 bg-slate-800 hover:bg-slate-900 rounded-t-sm transition-all duration-300" style="height: 82%;"></div>
+</div>
+<div class="mt-2 text-[11px] font-semibold text-slate-500">W3 (May 15-21)</div>
+<div class="chart-tooltip absolute -top-8 bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow pointer-events-none opacity-0 transition duration-150 whitespace-nowrap z-10">
+                    13,640 Scans • ₹6.82L Disbursed
+                  </div>
+</div>
+<!-- Week 4: Day 22-30 -->
+<div class="flex-1 flex flex-col items-center h-full justify-end group chart-bar-hover relative cursor-pointer">
+<div class="w-full flex items-end justify-center gap-1.5 h-full">
+<div class="w-5 bg-brand/90 hover:bg-brand rounded-t-sm transition-all duration-300" style="height: 94%;"></div>
+<div class="w-5 bg-slate-800 hover:bg-slate-900 rounded-t-sm transition-all duration-300" style="height: 91%;"></div>
+</div>
+<div class="mt-2 text-[11px] font-semibold text-slate-900 font-bold">W4 (May 22-30)</div>
+<div class="chart-tooltip absolute -top-8 bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow pointer-events-none opacity-0 transition duration-150 whitespace-nowrap z-10">
+                    14,050 Scans • ₹7.02L Disbursed
+                  </div>
+</div>
+</div>
+</div>
+<!-- Footer Benchmark Metric -->
+<div class="mt-4 pt-3 flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Peak Scan Velocity: <strong>Friday 24th May (2,410 boxes scanned in 24h)</strong>
+</span>
+<span class="font-semibold text-slate-700">Audit Compliance: 99.97%</span>
+</div>
+</div>
+<!-- Donut Breakdown: Tile Categories & Formats (Right 5 Cols) -->
+<div class="lg:col-span-5 bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-3 border-b border-slate-100">
+<h3 class="text-base font-bold text-slate-900 font-heading">Top Performing Tile Formats</h3>
+<span class="text-xs text-brand font-semibold cursor-pointer hover:underline">View Catalog</span>
+</div>
+<p class="text-xs text-slate-500 mt-1 mb-4">Volume distribution across vitrified product tiers</p>
+<!-- Progress Bars Breakdown List -->
+<div class="space-y-4">
+<!-- Format 1 -->
+<div>
+<div class="flex justify-between items-center text-xs mb-1.5">
+<span class="font-bold text-slate-800">PGVT Glazed 600×1200</span>
+<span class="text-slate-600 font-semibold">20,281 scans (42%)</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-brand h-2.5 rounded-full" style="width: 42%"></div>
+</div>
+<div class="flex justify-between text-[11px] text-slate-400 mt-1">
+<span>₹50/box reward</span>
+<span>Disbursed: ₹ 10,14,050</span>
+</div>
+</div>
+<!-- Format 2 -->
+<div>
+<div class="flex justify-between items-center text-xs mb-1.5">
+<span class="font-bold text-slate-800">GVT Supergloss 800×1600</span>
+<span class="text-slate-600 font-semibold">13,521 scans (28%)</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-slate-800 h-2.5 rounded-full" style="width: 28%"></div>
+</div>
+<div class="flex justify-between text-[11px] text-slate-400 mt-1">
+<span>₹50/box reward</span>
+<span>Disbursed: ₹ 6,76,050</span>
+</div>
+</div>
+<!-- Format 3 -->
+<div>
+<div class="flex justify-between items-center text-xs mb-1.5">
+<span class="font-bold text-slate-800">Slab Master 1200×1800</span>
+<span class="text-slate-600 font-semibold">8,692 scans (18%)</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-amber-500 h-2.5 rounded-full" style="width: 18%"></div>
+</div>
+<div class="flex justify-between text-[11px] text-slate-400 mt-1">
+<span>₹60/box high-density rate</span>
+<span>Disbursed: ₹ 5,21,520</span>
+</div>
+</div>
+<!-- Format 4 -->
+<div>
+<div class="flex justify-between items-center text-xs mb-1.5">
+<span class="font-bold text-slate-800">Rustic Outdoor 400×400</span>
+<span class="text-slate-600 font-semibold">5,796 scans (12%)</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-teal-600 h-2.5 rounded-full" style="width: 12%"></div>
+</div>
+<div class="flex justify-between text-[11px] text-slate-400 mt-1">
+<span>₹35/box reward</span>
+<span>Disbursed: ₹ 2,02,880</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+<span>Total Boxes Scanned Value: <strong>₹ 2.89 Cr</strong></span>
+<span class="text-brand font-bold">Incentive Yield: 0.83%</span>
+</div>
+</div>
+</section>
+<!-- END: VisualAnalyticsSection -->
+<!-- BEGIN: SplitRankingsAndLeaderboard -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+<!-- Panel 1: Top Hubs & Dealer Distribution -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+<div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+<div>
+<h3 class="text-sm font-bold text-slate-900 font-heading">Top Regional Hubs &amp; Dealerships</h3>
+<p class="text-xs text-slate-500">Distribution of authenticated scans by territorial dealership anchor</p>
+</div>
+<span class="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded">
+                4 Active Zones
+              </span>
+</div>
+<div class="divide-y divide-slate-100">
+<!-- Region 1 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-full bg-orange-100 text-brand font-black text-xs flex items-center justify-center flex-shrink-0">
+                    01
+                  </div>
+<div>
+<h4 class="text-xs font-bold text-slate-900">Jaipur &amp; North Rajasthan</h4>
+<p class="text-[11px] text-slate-500">Top Dealer: <span class="font-semibold text-slate-700">Rajesh Tile Emporium</span></p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">11,420 Scans</span>
+<span class="text-[11px] font-medium text-emerald-600">₹ 5.71 Lakhs Disbursed</span>
+</div>
+</div>
+<!-- Region 2 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                    02
+                  </div>
+<div>
+<h4 class="text-xs font-bold text-slate-900">Ahmedabad &amp; Gujarat Central</h4>
+<p class="text-[11px] text-slate-500">Top Dealer: <span class="font-semibold text-slate-700">Somany &amp; Dura World</span></p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">9,840 Scans</span>
+<span class="text-[11px] font-medium text-emerald-600">₹ 4.92 Lakhs Disbursed</span>
+</div>
+</div>
+<!-- Region 3 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                    03
+                  </div>
+<div>
+<h4 class="text-xs font-bold text-slate-900">Delhi NCR &amp; Gurugram</h4>
+<p class="text-[11px] text-slate-500">Top Dealer: <span class="font-semibold text-slate-700">Shree Ram Marbles</span></p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">8,650 Scans</span>
+<span class="text-[11px] font-medium text-emerald-600">₹ 4.32 Lakhs Disbursed</span>
+</div>
+</div>
+<!-- Region 4 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                    04
+                  </div>
+<div>
+<h4 class="text-xs font-bold text-slate-900">Agra &amp; Western UP</h4>
+<p class="text-[11px] text-slate-500">Top Dealer: <span class="font-semibold text-slate-700">Harish Tiles Agency</span></p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">7,190 Scans</span>
+<span class="text-[11px] font-medium text-emerald-600">₹ 3.59 Lakhs Disbursed</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel 2: Loyalty Leaderboard: Top Masons & Contractors -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+<div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+<div>
+<h3 class="text-sm font-bold text-slate-900 font-heading">Applicator Loyalty Leaderboard</h3>
+<p class="text-xs text-slate-500">Top verified tile applicators by reward scan volume</p>
+</div>
+<span class="text-xs font-bold text-brand cursor-pointer hover:underline">
+                View All 1,248
+              </span>
+</div>
+<div class="divide-y divide-slate-100">
+<!-- Contractor 1 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center flex-shrink-0 border border-amber-200">
+                    🏆
+                  </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-900">Rameshwar Bind</span>
+<span class="text-[10px] font-semibold bg-brand-50 text-brand px-1.5 py-0.2 rounded border border-brand-100">Tier 1 Master</span>
+</div>
+<p class="text-[11px] text-slate-500">Agra, UP • UIDAI &amp; KYC Matched</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">840 Boxes</span>
+<span class="text-[11px] font-bold text-brand">₹ 42,000 Earned</span>
+</div>
+</div>
+<!-- Contractor 2 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    2
+                  </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-900">Virender Chauhan</span>
+<span class="text-[10px] font-semibold bg-brand-50 text-brand px-1.5 py-0.2 rounded border border-brand-100">Tier 1 Master</span>
+</div>
+<p class="text-[11px] text-slate-500">Gurugram, HR • Direct UPI Active</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">790 Boxes</span>
+<span class="text-[11px] font-bold text-brand">₹ 39,500 Earned</span>
+</div>
+</div>
+<!-- Contractor 3 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    3
+                  </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-900">Arvind Kumar Nishad</span>
+<span class="text-[10px] font-semibold bg-brand-50 text-brand px-1.5 py-0.2 rounded border border-brand-100">Tier 1 Master</span>
+</div>
+<p class="text-[11px] text-slate-500">Surat, GJ • Fast Verification</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">720 Boxes</span>
+<span class="text-[11px] font-bold text-brand">₹ 36,000 Earned</span>
+</div>
+</div>
+<!-- Contractor 4 -->
+<div class="p-4 hover:bg-slate-50 transition flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    4
+                  </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-900">Kailash Chandra Saini</span>
+<span class="text-[10px] font-semibold bg-brand-50 text-brand px-1.5 py-0.2 rounded border border-brand-100">Tier 1 Master</span>
+</div>
+<p class="text-[11px] text-slate-500">Jaipur, RJ • Verified Applicator</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-xs font-extrabold text-slate-900 block">680 Boxes</span>
+<span class="text-[11px] font-bold text-brand">₹ 34,000 Earned</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: SplitRankingsAndLeaderboard -->
+<!-- BEGIN: AutomatedReportDispatchFooterBanner -->
+<section class="mt-6 bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-5 text-white flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-800 shadow-md">
+<div class="flex items-center space-x-4">
+<div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-brand-100 flex-shrink-0">
+<svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h4 class="text-sm font-bold text-white">Automated Monthly Tax &amp; Disbursal Reconciliation Report</h4>
+<p class="text-xs text-slate-300 mt-0.5">Next scheduled automated digest dispatches in <strong>2 days (May 31, 23:59 IST)</strong> to <span class="text-orange-300 underline">finance@duragritvitrified.com</span></p>
+</div>
+</div>
+<div class="flex items-center space-x-3 w-full md:w-auto justify-end">
+<button class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition border border-white/10">
+              Configure Recipients
+            </button>
+<button class="px-4 py-2 bg-brand hover:bg-brand-600 text-white rounded-lg text-xs font-bold transition shadow">
+              Run Instant Audit
+            </button>
+</div>
+</section>
+<!-- END: AutomatedReportDispatchFooterBanner -->
+</main>
+<!-- END: ContentArea -->
+</div>
+<!-- END: BodyLayoutWithSidebar -->
+<!-- BEGIN: MainFooterBar -->
+<footer class="h-10 bg-slate-50 border-t border-slate-200 px-6 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="font-bold text-slate-700">DURAGRIT VITRIFIED</span>
+<span>•</span>
+<span>Retail &amp; QR Portal Workflow</span>
+</div>
+<div class="text-slate-500 font-medium">
+        Step 7 of 14
+      </div>
+</footer>
+<!-- END: MainFooterBar -->
+</div>
+<!-- END: MainPortalFrame -->
+</body></html>

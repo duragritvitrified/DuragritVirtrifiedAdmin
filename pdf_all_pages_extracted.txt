@@ -1,0 +1,56 @@
+==================== PAGE 1 : STEP 01 / 14 ====================
+Admin Sign In STEP 01 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 1 of 14
+
+==================== PAGE 2 : STEP 02 / 14 ====================
+Product Catalog & SKU Management STEP 02 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 2 of 14
+
+==================== PAGE 3 : STEP 03 / 14 ====================
+Add New Product SKU STEP 03 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 3 of 14
+
+==================== PAGE 4 : STEP 04 / 14 ====================
+QR Code Batch Generator STEP 04 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 4 of 14
+
+==================== PAGE 5 : STEP 05 / 14 ====================
+User Management STEP 05 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 5 of 14
+
+==================== PAGE 6 : STEP 06 / 14 ====================
+Register New User Modal STEP 06 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 6 of 14
+
+==================== PAGE 7 : STEP 07 / 14 ====================
+Vendor Management STEP 07 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 7 of 14
+
+==================== PAGE 8 : STEP 08 / 14 ====================
+Vendor & Contractor Mobile Sign In STEP 08 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 8 of 14
+
+==================== PAGE 9 : STEP 09 / 14 ====================
+Contractor Dashboard STEP 09 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 9 of 14
+
+==================== PAGE 10 : STEP 10 / 14 ====================
+Scan QR & Upload STEP 10 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 10 of 14
+
+==================== PAGE 11 : STEP 11 / 14 ====================
+My Cashback Requests STEP 11 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 11 of 14
+
+==================== PAGE 12 : STEP 12 / 14 ====================
+Mobile App Admin Panel STEP 12 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 12 of 14
+
+==================== PAGE 13 : STEP 13 / 14 ====================
+QR Cashback Requests (Approval Queue) STEP 13 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 13 of 14
+
+==================== PAGE 14 : STEP 14 / 14 ====================
+Monthly Cashback Application Report STEP 14 / 14
+DURAGRIT VITRIFIED • Retail & QR Portal Workflow Step 14 of 14
+
