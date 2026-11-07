@@ -262,15 +262,6 @@ export function App() {
             </div>
 
             <div className="flex items-center space-x-2">
-              <a
-                href={typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001/' : `${window.location.pathname}?app=admin`}
-                className="px-2 py-1 rounded-md bg-stone-800 hover:bg-stone-700 text-amber-300 hover:text-amber-200 text-[10px] font-bold border border-amber-500/30 flex items-center space-x-1 transition cursor-pointer active:scale-95"
-                title="Switch to Admin Mobile Operations App"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden xs:inline">Admin App</span>
-              </a>
-
               <button
                 onClick={() => {
                   logout();

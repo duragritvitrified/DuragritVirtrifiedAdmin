@@ -147,20 +147,20 @@ export const EMAIL_TEMPLATES = [
 
   {
     id: 'onboarding',
-    name: 'Template 2 • Partner Onboarding Dossier & Credentials',
+    name: 'Template 2 • Vendor Partner Onboarding Dossier & Credentials',
     category: 'Credentials',
     badge: 'HIGH VALUE',
     badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    subject: 'Welcome to DuraGrit Vitrified — Your Login Credentials & APK Setup Guide',
-    description: 'Dispatched to approved contractors, dealers, and distributors. Contains their assigned User ID, Temporary Password, Allocated Kiln Hub, direct Android APK download URL, and iPhone PWA link.',
+    subject: 'Welcome to DuraGrit Vitrified — Your Vendor Partner Login Credentials & Mobile App Setup',
+    description: 'Dispatched to approved vendors, contractors, dealers, and distributors. Contains their assigned User ID, Temporary Passkey, Allocated Kiln Hub, direct Android Vendor APK download, and iPhone Vendor PWA portal link.',
     variables: [
       { tag: '{{recipientName}}', label: 'Contractor / Partner Name', sample: 'Mahesh Sharma' },
       { tag: '{{userId}}', label: 'Partner Login ID', sample: 'USR-2045' },
       { tag: '{{tempPassword}}', label: 'One-Time Temp Password', sample: 'Dura#8492' },
       { tag: '{{role}}', label: 'Assigned Partner Role', sample: 'Tile Contractor / Mason' },
       { tag: '{{hub}}', label: 'Regional Kiln Hub', sample: 'Morbi Central Kiln Hub' },
-      { tag: '{{apkUrl}}', label: 'Android APK Download Path', sample: '/apk/duragrit-contractor-v2.apk' },
-      { tag: '{{pwaUrl}}', label: 'iPhone Safari PWA URL', sample: 'http://localhost:3001' }
+      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk' },
+      { tag: '{{pwaUrl}}', label: 'iPhone Safari Vendor Portal URL', sample: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor' }
     ],
     sampleData: {
       recipientName: 'Mahesh Sharma',
@@ -168,8 +168,8 @@ export const EMAIL_TEMPLATES = [
       tempPassword: 'Dura#8492',
       role: 'Tile Contractor / Mason',
       hub: 'Morbi Central Kiln Hub',
-      apkUrl: 'http://localhost:3000/apk/duragrit-contractor-v2.apk',
-      pwaUrl: 'http://localhost:3001'
+      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+      pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
     },
     generateHtml: (data = {}) => {
       const {
@@ -178,8 +178,8 @@ export const EMAIL_TEMPLATES = [
         tempPassword = 'Dura#8492',
         role = 'Tile Contractor / Mason',
         hub = 'Morbi Central Kiln Hub',
-        apkUrl = 'http://localhost:3000/apk/duragrit-contractor-v2.apk',
-        pwaUrl = 'http://localhost:3001'
+        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+        pwaUrl = 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
       } = data;
 
       return `<!DOCTYPE html>
@@ -187,7 +187,7 @@ export const EMAIL_TEMPLATES = [
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Partner Onboarding Dossier — DuraGrit Vitrified</title>
+  <title>Vendor Partner Onboarding Dossier — DuraGrit Vitrified</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F4F3EF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F4F3EF; padding: 30px 10px;">
@@ -202,7 +202,7 @@ export const EMAIL_TEMPLATES = [
                 <tr>
                   <td>
                     <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">DURAGRIT VITRIFIED</div>
-                    <div style="font-size: 11px; color: #F9CEB8; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">Official Partner Activation Dossier</div>
+                    <div style="font-size: 11px; color: #F9CEB8; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">Official Vendor Partner Activation Dossier</div>
                   </td>
                   <td align="right">
                     <span style="display: inline-block; background-color: #10b981; color: #ffffff; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">APPROVED</span>
@@ -218,15 +218,15 @@ export const EMAIL_TEMPLATES = [
               <h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 10px 0;">Welcome to the DuraGrit Family!</h1>
               <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 24px 0;">
                 Namaste <strong>${recipientName}</strong>,<br>
-                Your registration has been approved as an authorized <strong>${role}</strong>. Below are your secure login credentials to access the Mobile Field Scanner app and start claiming instant UPI cashbacks on genuine DuraGrit tile cartons.
+                Your registration has been approved as an authorized DuraGrit <strong>${role}</strong>. Below are your secure login credentials to access the DuraGrit Vendor Partner Mobile App and start claiming instant UPI cashbacks on genuine DuraGrit tile cartons.
               </p>
 
               <!-- CREDENTIALS BOX -->
               <div style="background-color: #FEF2EE; border: 2px dashed #C84826; border-radius: 14px; padding: 20px; margin-bottom: 26px;">
-                <div style="font-size: 11px; font-weight: 800; color: #A62C11; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; text-align: center;">CONFIDENTIAL LOGIN CREDENTIALS</div>
+                <div style="font-size: 11px; font-weight: 800; color: #A62C11; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; text-align: center;">CONFIDENTIAL VENDOR PARTNER CREDENTIALS</div>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td style="padding: 6px 0; font-size: 13px; color: #475569;">User ID / Login:</td>
+                    <td style="padding: 6px 0; font-size: 13px; color: #475569;">Partner Login ID:</td>
                     <td align="right" style="padding: 6px 0; font-size: 15px; font-weight: 800; color: #0f172a; font-family: monospace;">${userId}</td>
                   </tr>
                   <tr>
@@ -246,30 +246,34 @@ export const EMAIL_TEMPLATES = [
 
               <!-- APP DOWNLOAD ACTION -->
               <div style="text-align: center; margin-bottom: 28px;">
-                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">Step 1: Access & Install the Mobile Scanner App</div>
+                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">Step 1: Download &amp; Install the DuraGrit Vendor Partner App</div>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td width="50%" align="center" style="padding: 0 6px;">
-                      <a href="${apkUrl}" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 12px 16px; border-radius: 10px; box-shadow: 0 4px 10px rgba(5,150,105,0.3);">
-                        🤖 Android App (Install / Open)
+                      <a href="${apkUrl}" download="duragrit-vendor-v2.apk" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 13px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(5,150,105,0.35); text-align: center;">
+                        🤖 Download Vendor App (.APK)
                       </a>
                     </td>
                     <td width="50%" align="center" style="padding: 0 6px;">
-                      <a href="${pwaUrl}" style="display: block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 12px 16px; border-radius: 10px; box-shadow: 0 4px 10px rgba(15,23,42,0.3);">
-                        🍎 iPhone / Web Portal
+                      <a href="${pwaUrl}" style="display: block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 13px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(15,23,42,0.35); text-align: center;">
+                        📱 iPhone / Web Vendor Portal
                       </a>
                     </td>
                   </tr>
                 </table>
+                <div style="margin-top: 10px; font-size: 11px; color: #64748b; text-align: center;">
+                  Android Package: <a href="${apkUrl}" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">duragrit-vendor-v2.apk (Direct Download)</a> • Web: <a href="${pwaUrl}" style="color: #059669; font-weight: 700; text-decoration: underline;">Open Field Portal</a>
+                </div>
               </div>
 
               <!-- QUICK START STEPS -->
               <div style="background-color: #FAF9F6; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; font-size: 12px; color: #475569; line-height: 1.6;">
-                <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px;">Quick-Start Instructions:</strong>
-                1. Tap the green <strong>Android App</strong> or black <strong>iPhone / Web Portal</strong> button above on your smartphone.<br>
-                2. Tap the browser menu (⋮ on Chrome, Share on Safari) and select <strong>&ldquo;Add to Home Screen / Install App&rdquo;</strong> for instant 1-tap app access.<br>
-                3. Log in with your <strong>User ID</strong> and <strong>One-Time Passkey</strong> shown above.<br>
-                4. Link your <strong>UPI VPA or Bank Account</strong> to start scanning QR codes and receiving cashback!
+                <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px;">Vendor Quick-Start Instructions:</strong>
+                1. Tap <strong>Download Vendor App (.APK)</strong> on Android, or tap <strong>iPhone / Web Vendor Portal</strong> on iOS Safari.<br>
+                2. On Android, tap &ldquo;Download anyway&rdquo; and open the downloaded APK to install the DuraGrit Vendor Partner App.<br>
+                3. On iPhone Safari, tap the Share button and select <strong>&ldquo;Add to Home Screen&rdquo;</strong> for 1-tap full-screen access.<br>
+                4. Sign in with your <strong>User ID / Mobile</strong> and <strong>Passkey</strong> shown above.<br>
+                5. Link your UPI VPA or Bank Account to scan QR codes and receive instant payouts!
               </div>
             </td>
           </tr>

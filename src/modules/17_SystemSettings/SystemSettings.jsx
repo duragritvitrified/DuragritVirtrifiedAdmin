@@ -93,8 +93,8 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     : 'http://localhost:3002/';
 
   const apkDownloadUrl = typeof window !== 'undefined'
-    ? (isLocalHost ? 'http://localhost:3002/' : `${window.location.origin}/app/?app=vendor`)
-    : 'http://localhost:3002/';
+    ? (isLocalHost ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-vendor-v2.apk` : `${window.location.origin}/apk/duragrit-vendor-v2.apk`)
+    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk';
 
   const adminPwaUrl = typeof window !== 'undefined'
     ? (isLocalHost 
@@ -103,8 +103,8 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     : 'http://localhost:3001/';
 
   const adminApkDownloadUrl = typeof window !== 'undefined'
-    ? (isLocalHost ? 'http://localhost:3001/' : `${window.location.origin}/app/?app=admin`)
-    : 'http://localhost:3001/';
+    ? (isLocalHost ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-admin-command-v2.apk` : `${window.location.origin}/apk/duragrit-admin-command-v2.apk`)
+    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk';
 
   // SMTP Settings State
   const [config, setConfig] = useState(DEFAULT_SMTP_CONFIG);
@@ -1425,16 +1425,27 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   </div>
                 </div>
 
-                {/* Direct Launch & Install Button */}
+                {/* Download Vendor APK Package Button */}
+                <a
+                  href={apkDownloadUrl}
+                  download="duragrit-vendor-v2.apk"
+                  onClick={() => showToast('Downloading Official DuraGrit Vendor Partner App (.APK)...')}
+                  className="w-full py-3.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
+                >
+                  <Download className="w-4 h-4 text-white" />
+                  <span>Download Vendor Partner App (.APK)</span>
+                </a>
+
+                {/* Direct Launch Mobile Web / PWA Button */}
                 <a
                   href={mobilePwaUrl}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => showToast('Opening DuraGrit Partner Mobile App (1-Tap Home Screen Install)...')}
-                  className="w-full py-3.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
+                  className="w-full py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
                 >
                   <Smartphone className="w-4 h-4 text-white" />
-                  <span>Launch &amp; Install Android App (1-Tap)</span>
+                  <span>Launch Mobile Web / PWA Portal</span>
                 </a>
 
                 {/* Copy Direct APK Link */}
@@ -1450,7 +1461,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] rounded-lg border border-slate-200 flex items-center space-x-1 transition cursor-pointer"
                   >
                     {copiedLink === 'apk' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-500" />}
-                    <span>{copiedLink === 'apk' ? 'Copied' : 'Copy Link'}</span>
+                    <span>{copiedLink === 'apk' ? 'Copied' : 'Copy APK'}</span>
                   </button>
                 </div>
               </div>
@@ -1651,29 +1662,28 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                 </div>
 
                 <a
-                  href={adminPwaUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => showToast('Opening DuraGrit Executive Admin Mobile App (1-Tap Home Screen Install)...')}
+                  href={adminApkDownloadUrl}
+                  download="duragrit-admin-command-v2.apk"
+                  onClick={() => showToast('Downloading DuraGrit Executive Admin Mobile App (.APK)...')}
                   className="w-full py-3 bg-[#BA3A24] hover:bg-[#A02F17] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
                 >
-                  <Smartphone className="w-4 h-4 text-white" />
-                  <span>Launch &amp; Install Admin Android App</span>
+                  <Download className="w-4 h-4 text-white" />
+                  <span>Download Admin Android App (.APK)</span>
                 </a>
 
                 <div className="flex items-center space-x-2 bg-slate-900/90 rounded-xl p-2 border border-slate-700/80">
                   <input
                     type="text"
                     readOnly
-                    value={adminPwaUrl}
+                    value={adminApkDownloadUrl}
                     className="flex-1 bg-transparent text-[10px] font-mono text-slate-300 outline-none select-all"
                   />
                   <button
-                    onClick={() => handleCopyLink(adminPwaUrl, 'admin-apk')}
+                    onClick={() => handleCopyLink(adminApkDownloadUrl, 'admin-apk')}
                     className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] rounded-lg border border-slate-600 flex items-center space-x-1 transition cursor-pointer"
                   >
                     {copiedLink === 'admin-apk' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
-                    <span>{copiedLink === 'admin-apk' ? 'Copied' : 'Copy'}</span>
+                    <span>{copiedLink === 'admin-apk' ? 'Copied' : 'Copy APK'}</span>
                   </button>
                 </div>
               </div>

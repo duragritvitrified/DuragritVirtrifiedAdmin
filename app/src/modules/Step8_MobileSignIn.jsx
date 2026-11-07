@@ -496,7 +496,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           <button
             type="button"
             onClick={() => {
-              const next = portalMode === 'vendor' ? 'contractor' : portalMode === 'contractor' ? 'admin' : 'vendor';
+              const next = portalMode === 'vendor' ? 'contractor' : 'vendor';
               setPortalMode(next);
               setErrorMsg('');
             }}
@@ -506,9 +506,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
             <span>
               {portalMode === 'vendor'
                 ? 'VENDOR PORTAL'
-                : portalMode === 'contractor'
-                  ? 'CONTRACTOR PORTAL'
-                  : 'ADMIN PORTAL'}
+                : 'CONTRACTOR PORTAL'}
             </span>
           </button>
         </div>

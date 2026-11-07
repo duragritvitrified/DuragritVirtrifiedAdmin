@@ -261,16 +261,16 @@ export function Step13_WelcomeDossier({ onBack }) {
             )}
 
             <h4 className="text-sm font-black text-stone-900 leading-snug">
-              Download Companion Android APK
+              Download Vendor / Partner Android APK
             </h4>
             <a
-              href="/apk/duragrit-contractor-v2.apk"
-              download="duragrit-contractor-v2.apk"
-              onClick={() => showToast('Downloading Official DuraGrit Android APK...')}
+              href="/apk/duragrit-vendor-v2.apk"
+              download="duragrit-vendor-v2.apk"
+              onClick={() => showToast('Downloading Official DuraGrit Vendor Android APK...')}
               className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-white" />
-              <span>Download DuraGrit Android App (.APK)</span>
+              <span>Download DuraGrit Vendor Partner App (.APK)</span>
             </a>
           </div>
 

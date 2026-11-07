@@ -17,6 +17,16 @@ if (fs.existsSync(webDist) && fs.existsSync(appDist)) {
     fs.cpSync(appAssetsFolder, webAssetsFolder, { recursive: true });
     console.log('✓ Successfully mirrored @duragrit/app assets into web/dist/assets for root fallback!');
   }
+
+  // 3. Ensure apk directory is mirrored into web/dist/apk and web/dist/app/apk
+  const rootApkFolder = path.resolve(__dirname, '..', 'public', 'apk');
+  const webDistApk = path.join(webDist, 'apk');
+  const appDistApk = path.join(targetAppFolder, 'apk');
+  if (fs.existsSync(rootApkFolder)) {
+    fs.cpSync(rootApkFolder, webDistApk, { recursive: true });
+    fs.cpSync(rootApkFolder, appDistApk, { recursive: true });
+    console.log('✓ Successfully mirrored APK packages into web/dist/apk and web/dist/app/apk!');
+  }
 } else {
   console.log('Dist directories not found yet. Run builds first.');
 }

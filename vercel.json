@@ -4,24 +4,28 @@
   "buildCommand": "npm run build",
   "outputDirectory": "web/dist",
   "cleanUrls": true,
-  "redirects": [
-    {
-      "source": "/apk/duragrit-contractor-v2.apk",
-      "destination": "/app/?app=vendor",
-      "permanent": false
-    },
-    {
-      "source": "/apk/duragrit-admin-command-v2.apk",
-      "destination": "/app/?app=admin",
-      "permanent": false
-    },
-    {
-      "source": "/apk",
-      "destination": "/app/?app=vendor",
-      "permanent": false
-    },
+  "headers": [
     {
       "source": "/apk/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/apk",
       "destination": "/app/?app=vendor",
       "permanent": false
     }
