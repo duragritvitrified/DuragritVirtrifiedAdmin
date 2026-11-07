@@ -261,7 +261,7 @@ export const EMAIL_TEMPLATES = [
                   </tr>
                 </table>
                 <div style="margin-top: 10px; font-size: 11px; color: #64748b; text-align: center;">
-                  Android Package: <a href="${apkUrl}" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">duragrit-vendor-v2.apk (Direct Download)</a> • Web: <a href="${pwaUrl}" style="color: #059669; font-weight: 700; text-decoration: underline;">Open Field Portal</a>
+                  Android Package: <a href="${apkUrl}" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Download (.apk)</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • Web: <a href="${pwaUrl}" style="color: #059669; font-weight: 700; text-decoration: underline;">Open Field Portal</a>
                 </div>
               </div>
 

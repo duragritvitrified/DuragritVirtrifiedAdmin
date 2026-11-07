@@ -8,11 +8,14 @@ Write-Host "Using JAVA_HOME: $env:JAVA_HOME"
 Write-Host "Using ANDROID_HOME: $env:ANDROID_HOME"
 
 Set-Location "app/android"
-.\gradlew.bat assembleDebug --no-daemon
+# Clean previous builds
+.\gradlew.bat clean --no-daemon
+# Build signed release APK
+.\gradlew.bat assembleRelease --no-daemon
 
-if (Test-Path "app\build\outputs\apk\debug\app-debug.apk") {
-    $apk = Get-Item "app\build\outputs\apk\debug\app-debug.apk"
-    Write-Host "SUCCESS: APK built successfully! Size: $($apk.Length) bytes ($([math]::Round($apk.Length / 1MB, 2)) MB)"
+if (Test-Path "app\build\outputs\apk\release\app-release.apk") {
+    $apk = Get-Item "app\build\outputs\apk\release\app-release.apk"
+    Write-Host "SUCCESS: Release APK built! Size: $($apk.Length) bytes ($([math]::Round($apk.Length / 1MB, 2)) MB)"
 } else {
-    Write-Error "APK file not found after build."
+    Write-Error "Release APK not found after build."
 }

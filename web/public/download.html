@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Download DuraGrit Vendor Partner App — Official APK & Web Portal</title>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <meta name="theme-color" content="#0B0F19">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0B0F19;
+      color: #F8FAFC;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 16px 40px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow {
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(250, 163, 34, 0.18) 0%, rgba(200, 72, 38, 0.12) 40%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(40px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .card {
+      width: 100%;
+      background: linear-gradient(180deg, #12182B 0%, #0D1324 100%);
+      border: 1px solid rgba(250, 163, 34, 0.25);
+      border-radius: 24px;
+      padding: 28px 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .logo-img {
+      width: 200px;
+      max-width: 80%;
+      height: auto;
+      margin: 0 auto 16px;
+      display: block;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10B981;
+      color: #34D399;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10B981;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 900;
+      color: #FFFFFF;
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+    }
+    .sub {
+      font-size: 13px;
+      color: #94A3B8;
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+    .download-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+      color: #FFFFFF;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 16px 20px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .download-btn:active {
+      transform: scale(0.98);
+    }
+    .web-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: #1E293B;
+      color: #F8FAFC;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .meta-strip {
+      margin-top: 14px;
+      font-size: 11px;
+      color: #64748B;
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+    .instructions {
+      width: 100%;
+      margin-top: 20px;
+      background: #0E1424;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 20px 18px;
+      text-align: left;
+    }
+    .inst-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #FAA322;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 12px;
+      color: #CBD5E1;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .step:last-child { margin-bottom: 0; }
+    .step-num {
+      width: 20px;
+      height: 20px;
+      background: #1E293B;
+      color: #FAA322;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .toast {
+      margin-top: 14px;
+      font-size: 11px;
+      color: #34D399;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 8px 12px;
+      border-radius: 10px;
+      display: none;
+    }
+    footer {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #475569;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow"></div>
+
+  <div class="container">
+    <div class="card">
+      <img src="/logo-white.png" alt="DuraGrit Vitrified" class="logo-img">
+      
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Official Android Release v2.0
+      </div>
+
+      <h1>Vendor Partner Mobile App</h1>
+      <p class="sub">Instant UPI cashback scanner, digital warranty issuance, and tile carton authentication app for authorized dealers &amp; contractors.</p>
+
+      <a id="btn-apk" href="/apk/duragrit-vendor-v2.apk" download="duragrit-vendor-v2.apk" class="download-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Download Vendor App (.APK)</span>
+      </a>
+
+      <a href="/app/?app=vendor" class="web-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect>
+          <path d="M12 18h.01"></path>
+        </svg>
+        <span>Open Mobile Web Portal (iPhone &amp; Chrome)</span>
+      </a>
+
+      <div class="meta-strip">
+        <span>📦 Version: 2.0 (Stable)</span>
+        <span>🔒 Signed &amp; Verified</span>
+        <span>🛡️ 100% Secure</span>
+      </div>
+
+      <div id="toast" class="toast">
+        ✓ Download starting automatically... Check your phone notifications!
+      </div>
+    </div>
+
+    <!-- INSTALLATION WALKTHROUGH -->
+    <div class="instructions">
+      <div class="inst-title">
+        <span>📲</span> 3-Step Installation Guide (Android)
+      </div>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          Tap <strong>Download Vendor App (.APK)</strong> above. If Chrome displays <em>&ldquo;File might be harmful&rdquo;</em>, tap <strong>&ldquo;Download anyway&rdquo;</strong>.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          Once downloaded, tap the notification or open <strong>duragrit-vendor-v2.apk</strong> from your Downloads folder.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          Tap <strong>Install</strong>. If your phone asks for permission, tap <strong>Settings</strong> and toggle <strong>Allow from this source</strong>.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      DuraGrit Vitrified Pvt. Ltd. • Morbi, Gujarat<br>
+      Helpline: +91 7303967198 • Email: duragrit07@gmail.com
+    </footer>
+  </div>
+
+  <script>
+    // Auto initiate download after 800ms
+    window.addEventListener('DOMContentLoaded', () => {
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        setTimeout(() => {
+          const toast = document.getElementById('toast');
+          if (toast) toast.style.display = 'block';
+          const link = document.createElement('a');
+          link.href = '/apk/duragrit-vendor-v2.apk';
+          link.download = 'duragrit-vendor-v2.apk';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }, 800);
+      }
+    });
+  </script>
+</body>
+</html>
