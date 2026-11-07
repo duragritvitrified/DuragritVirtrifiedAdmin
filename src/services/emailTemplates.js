@@ -51,15 +51,15 @@ export const EMAIL_TEMPLATES = [
           
           <!-- BRAND HEADER -->
           <tr>
-            <td style="background: linear-gradient(135deg, #A62C11 0%, #C84826 100%); padding: 28px 32px; text-align: left;">
+            <td style="background: linear-gradient(135deg, #0B0F19 0%, #161F48 100%); padding: 24px 32px; border-bottom: 2px solid #FAA322; text-align: left;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td>
-                    <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">DURAGRIT VITRIFIED</div>
-                    <div style="font-size: 11px; color: #F9CEB8; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">Premium Vitrified Tiles &amp; Pavers • Partner Portal</div>
+                  <td valign="middle">
+                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">OFFICIAL PARTNER ACCOUNT ACTIVATION</div>
                   </td>
-                  <td align="right">
-                    <span style="display: inline-block; background-color: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; font-size: 10px; font-weight: 800; padding: 4px 10px; rounded-full; border-radius: 20px; text-transform: uppercase;">VERIFICATION</span>
+                  <td align="right" valign="middle">
+                    <span style="display: inline-block; background-color: rgba(250, 163, 34, 0.15); border: 1px solid #FAA322; color: #FAA322; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">EMAIL VERIFICATION</span>
                   </td>
                 </tr>
               </table>
@@ -124,12 +124,11 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td>
-                    <strong>DuraGrit Vitrified Pvt. Ltd.</strong><br>
-                    National Highway 8A, Sartanpar Road, Morbi - 363642, Gujarat, India<br>
-                    Support Desk: +91 7303967198 • duragrit07@gmail.com
+                    <strong>DuraGrit Vitrified Pvt. Ltd.</strong> • Sartanpar Road, Morbi, Gujarat<br>
+                    Helpline: +91 7303967198 • Email: duragrit07@gmail.com
                   </td>
                   <td align="right" valign="bottom" style="font-family: monospace; font-size: 10px; color: #94a3b8;">
-                    SPF: PASS • DKIM: 2048 • TLS 1.3
+                    Ref: ${verifyToken}
                   </td>
                 </tr>
               </table>
@@ -197,15 +196,15 @@ export const EMAIL_TEMPLATES = [
           
           <!-- BRAND HEADER -->
           <tr>
-            <td style="background: linear-gradient(135deg, #A62C11 0%, #C84826 100%); padding: 28px 32px; text-align: left;">
+            <td style="background: linear-gradient(135deg, #0B0F19 0%, #161F48 100%); padding: 24px 32px; border-bottom: 2px solid #FAA322; text-align: left;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td>
-                    <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">DURAGRIT VITRIFIED</div>
-                    <div style="font-size: 11px; color: #F9CEB8; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">Official Vendor Partner Activation Dossier</div>
+                  <td valign="middle">
+                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">OFFICIAL VENDOR PARTNER DOSSIER</div>
                   </td>
-                  <td align="right">
-                    <span style="display: inline-block; background-color: #10b981; color: #ffffff; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">APPROVED</span>
+                  <td align="right" valign="middle">
+                    <span style="display: inline-block; background-color: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">APPROVED &amp; ACTIVE</span>
                   </td>
                 </tr>
               </table>
@@ -246,16 +245,16 @@ export const EMAIL_TEMPLATES = [
 
               <!-- APP DOWNLOAD ACTION -->
               <div style="text-align: center; margin-bottom: 28px;">
-                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">Step 1: Download &amp; Install the DuraGrit Vendor Partner App</div>
+                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Step 1: Download &amp; Install the Official DuraGrit Vendor Partner App</div>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td width="50%" align="center" style="padding: 0 6px;">
-                      <a href="${apkUrl}" download="duragrit-vendor-v2.apk" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 13px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(5,150,105,0.35); text-align: center;">
+                      <a href="${apkUrl}" download="duragrit-vendor-v2.apk" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(5,150,105,0.35); text-align: center;">
                         🤖 Download Vendor App (.APK)
                       </a>
                     </td>
                     <td width="50%" align="center" style="padding: 0 6px;">
-                      <a href="${pwaUrl}" style="display: block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 13px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(15,23,42,0.35); text-align: center;">
+                      <a href="${pwaUrl}" style="display: block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(15,23,42,0.35); text-align: center;">
                         📱 iPhone / Web Vendor Portal
                       </a>
                     </td>
@@ -270,10 +269,11 @@ export const EMAIL_TEMPLATES = [
               <div style="background-color: #FAF9F6; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; font-size: 12px; color: #475569; line-height: 1.6;">
                 <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px;">Vendor Quick-Start Instructions:</strong>
                 1. Tap <strong>Download Vendor App (.APK)</strong> on Android, or tap <strong>iPhone / Web Vendor Portal</strong> on iOS Safari.<br>
-                2. On Android, tap &ldquo;Download anyway&rdquo; and open the downloaded APK to install the DuraGrit Vendor Partner App.<br>
-                3. On iPhone Safari, tap the Share button and select <strong>&ldquo;Add to Home Screen&rdquo;</strong> for 1-tap full-screen access.<br>
-                4. Sign in with your <strong>User ID / Mobile</strong> and <strong>Passkey</strong> shown above.<br>
-                5. Link your UPI VPA or Bank Account to scan QR codes and receive instant payouts!
+                2. On Android, if your phone prompts <em>&ldquo;File might be harmful&rdquo;</em>, tap <strong>&ldquo;Download anyway&rdquo;</strong> (this is normal for direct enterprise APK downloads).<br>
+                3. Tap the downloaded APK in your notifications or Downloads folder to install. If asked to allow installs from this source, tap <strong>Settings</strong> and enable <strong>Allow from this source</strong>.<br>
+                4. On iPhone Safari, tap the Share button and select <strong>&ldquo;Add to Home Screen&rdquo;</strong> for 1-tap full-screen access.<br>
+                5. Sign in with your <strong>Partner Login ID</strong> and <strong>One-Time Passkey</strong> shown above.<br>
+                6. Link your UPI VPA or Bank Account to scan QR codes and receive instant payouts!
               </div>
             </td>
           </tr>
@@ -288,7 +288,7 @@ export const EMAIL_TEMPLATES = [
                     Helpline: +91 7303967198 • Email: duragrit07@gmail.com
                   </td>
                   <td align="right" valign="bottom" style="font-family: monospace; font-size: 10px; color: #94a3b8;">
-                    Dossier v4.8 • ISO 9001:2015
+                    Partner ID: ${userId}
                   </td>
                 </tr>
               </table>
@@ -306,21 +306,21 @@ export const EMAIL_TEMPLATES = [
 
   {
     id: 'cashback',
-    name: 'Template 3 • Instant Cashback Credit & UPI Payout Receipt',
-    category: 'Payouts',
-    badge: 'FINANCIAL',
+    name: 'Template 3 • Instant Cashback Credit Receipt',
+    category: 'Finance',
+    badge: 'TRANSACTION',
     badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    subject: 'Cashback Credit Alert — ₹{{amount}} Credited via UPI (UTR: {{utrNumber}})',
-    description: 'Dispatched to the contractor as soon as the Admin approves a cashback claim or releases the UPI payout via the NPCI Gateway. Contains bank UTR number, QR carton serial, and credit confirmation.',
+    subject: '₹{{amount}} Credited via UPI — DuraGrit Vitrified Cashback Receipt',
+    description: 'Triggered when a contractor successfully scans a QR code and their payout is dispatched via NPCI UPI / IMPS gateway. Includes Bank UTR and carton serial tracking.',
     variables: [
       { tag: '{{recipientName}}', label: 'Contractor Name', sample: 'Suresh Patel' },
-      { tag: '{{userId}}', label: 'Contractor ID', sample: 'USR-1042' },
-      { tag: '{{amount}}', label: 'Disbursed Amount (₹)', sample: '500' },
-      { tag: '{{utrNumber}}', label: 'Bank UTR Reference', sample: '429388102941' },
-      { tag: '{{upiId}}', label: 'Contractor UPI VPA', sample: 'suresh.patel@okaxis' },
-      { tag: '{{cartonSerial}}', label: 'Carton Serial Hash', sample: 'DG-VTR-2026-B08-8492' },
-      { tag: '{{skuName}}', label: 'Tile SKU / Collection', sample: 'Duragrit Royal Onyx 600x1200mm' },
-      { tag: '{{scanTimestamp}}', label: 'Claim Scan Time', sample: '04 Nov 2026, 14:32 IST' }
+      { tag: '{{userId}}', label: 'Partner ID', sample: 'USR-1042' },
+      { tag: '{{amount}}', label: 'Cashback Amount (INR)', sample: '500' },
+      { tag: '{{utrNumber}}', label: 'Bank UPI UTR Number', sample: '429388102941' },
+      { tag: '{{upiId}}', label: 'Beneficiary UPI VPA', sample: 'suresh.patel@okaxis' },
+      { tag: '{{cartonSerial}}', label: 'Tile Carton Serial #', sample: 'DG-VTR-2026-B08-8492' },
+      { tag: '{{skuName}}', label: 'Tile Collection / SKU', sample: 'Duragrit Royal Onyx 600x1200mm' },
+      { tag: '{{scanTimestamp}}', label: 'Scan Date & Time', sample: '04 Nov 2026, 14:32 IST' }
     ],
     sampleData: {
       recipientName: 'Suresh Patel',
@@ -359,15 +359,15 @@ export const EMAIL_TEMPLATES = [
           
           <!-- BRAND HEADER -->
           <tr>
-            <td style="background: linear-gradient(135deg, #065f46 0%, #059669 100%); padding: 28px 32px; text-align: left;">
+            <td style="background: linear-gradient(135deg, #0B0F19 0%, #161F48 100%); padding: 24px 32px; border-bottom: 2px solid #FAA322; text-align: left;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td>
-                    <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">DURAGRIT VITRIFIED</div>
-                    <div style="font-size: 11px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">NPCI Fast Payout Gateway Receipt</div>
+                  <td valign="middle">
+                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">NPCI FAST PAYOUT GATEWAY RECEIPT</div>
                   </td>
-                  <td align="right">
-                    <span style="display: inline-block; background-color: rgba(255,255,255,0.2); color: #ffffff; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">PAID VIA UPI</span>
+                  <td align="right" valign="middle">
+                    <span style="display: inline-block; background-color: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">PAID VIA UPI</span>
                   </td>
                 </tr>
               </table>
@@ -430,11 +430,11 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td>
-                    <strong>DuraGrit Vitrified Pvt. Ltd.</strong> • Automated NPCI IMPS Gateway<br>
-                    Questions? Reach our Disbursal Desk: duragrit07@gmail.com
+                    <strong>DuraGrit Vitrified Pvt. Ltd.</strong> • Sartanpar Road, Morbi, Gujarat<br>
+                    Helpline: +91 7303967198 • Email: duragrit07@gmail.com
                   </td>
                   <td align="right" valign="bottom" style="font-family: monospace; font-size: 10px; color: #94a3b8;">
-                    UTR Verified • Tax Invoice #DG-2026
+                    UTR: ${utrNumber}
                   </td>
                 </tr>
               </table>
@@ -452,23 +452,23 @@ export const EMAIL_TEMPLATES = [
 
   {
     id: 'kyc',
-    name: 'Template 4 • KYC Regulatory Verification Approval',
+    name: 'Template 4 • Contractor KYC Approval Alert',
     category: 'Compliance',
     badge: 'SECURITY',
     badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
-    subject: 'KYC Compliance Approved — Your DuraGrit Contractor Benefits are Unlocked',
-    description: 'Dispatched when an administrator verifies the contractor’s Aadhaar, PAN card, or bank passbook documents in Vendor Management. Unlocks higher daily scan limits and instant payouts.',
+    subject: 'KYC Approved — DuraGrit Vitrified Tier 1 Payouts Activated',
+    description: 'Dispatched to contractors once their Aadhaar & PAN verification is verified by the admin panel. Unlocks higher daily scan limits and auto-instant withdrawals.',
     variables: [
-      { tag: '{{recipientName}}', label: 'Contractor Name', sample: 'Vikram Singh' },
-      { tag: '{{userId}}', label: 'Contractor ID', sample: 'USR-3120' },
+      { tag: '{{recipientName}}', label: 'Contractor Name', sample: 'Mahesh Sharma' },
+      { tag: '{{userId}}', label: 'Partner ID', sample: 'USR-2045' },
       { tag: '{{aadhaarMasked}}', label: 'Masked Aadhaar', sample: 'XXXX-XXXX-9182' },
       { tag: '{{panMasked}}', label: 'Masked PAN Card', sample: 'ABCDE****F' },
-      { tag: '{{tierName}}', label: 'Approved Contractor Tier', sample: 'Gold Applicator (Tier 1)' },
-      { tag: '{{dailyLimit}}', label: 'Daily Scan Limit', sample: '50 Cartons / day' }
+      { tag: '{{tierName}}', label: 'Unlocked Tier', sample: 'Gold Applicator (Tier 1)' },
+      { tag: '{{dailyLimit}}', label: 'Max Daily Scan Allowance', sample: '50 Cartons / day' }
     ],
     sampleData: {
-      recipientName: 'Vikram Singh',
-      userId: 'USR-3120',
+      recipientName: 'Mahesh Sharma',
+      userId: 'USR-2045',
       aadhaarMasked: 'XXXX-XXXX-9182',
       panMasked: 'ABCDE****F',
       tierName: 'Gold Applicator (Tier 1)',
@@ -477,7 +477,7 @@ export const EMAIL_TEMPLATES = [
     generateHtml: (data = {}) => {
       const {
         recipientName = 'Valued Partner',
-        userId = 'USR-3120',
+        userId = 'USR-2045',
         aadhaarMasked = 'XXXX-XXXX-9182',
         panMasked = 'ABCDE****F',
         tierName = 'Gold Applicator (Tier 1)',
@@ -499,15 +499,15 @@ export const EMAIL_TEMPLATES = [
           
           <!-- BRAND HEADER -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); padding: 28px 32px; text-align: left;">
+            <td style="background: linear-gradient(135deg, #0B0F19 0%, #161F48 100%); padding: 24px 32px; border-bottom: 2px solid #FAA322; text-align: left;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td>
-                    <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">DURAGRIT VITRIFIED</div>
-                    <div style="font-size: 11px; color: #93c5fd; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">Identity &amp; KYC Verification Cell</div>
+                  <td valign="middle">
+                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">IDENTITY &amp; KYC VERIFICATION CELL</div>
                   </td>
-                  <td align="right">
-                    <span style="display: inline-block; background-color: #10b981; color: #ffffff; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">VERIFIED</span>
+                  <td align="right" valign="middle">
+                    <span style="display: inline-block; background-color: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">KYC VERIFIED</span>
                   </td>
                 </tr>
               </table>
@@ -551,8 +551,8 @@ export const EMAIL_TEMPLATES = [
 
               <div style="background-color: #FEF2EE; border-left: 4px solid #C84826; padding: 14px 18px; border-radius: 0 8px 8px 0;">
                 <div style="font-size: 12px; font-weight: 700; color: #A62C11;">Unrestricted Payout Access Enabled</div>
-                <div style="font-size: 12px; color: #475569; margin-top: 4px; line-height: 1.5;">
-                  Your daily payout threshold is now unlocked with direct 2-step automated releases into your bank or UPI ID.
+                <div style="font-size: 12px; color: #475569; margin-top: 4px;">
+                  Your daily limits have been enhanced and automatic UPI cash disbursement is now enabled for all authorized tile carton scans.
                 </div>
               </div>
             </td>
@@ -564,11 +564,11 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td>
-                    <strong>DuraGrit Vitrified Pvt. Ltd.</strong> • Regulatory Compliance Cell<br>
-                    Morbi - 363642, Gujarat, India • duragrit07@gmail.com
+                    <strong>DuraGrit Vitrified Pvt. Ltd.</strong> • Sartanpar Road, Morbi, Gujarat<br>
+                    Helpline: +91 7303967198 • Email: duragrit07@gmail.com
                   </td>
                   <td align="right" valign="bottom" style="font-family: monospace; font-size: 10px; color: #94a3b8;">
-                    Audit ID: KYC-OK-2026
+                    Compliance ID: KYC-${userId}
                   </td>
                 </tr>
               </table>
@@ -585,28 +585,28 @@ export const EMAIL_TEMPLATES = [
   },
 
   {
-    id: 'smtp-test',
-    name: 'Template 5 • Live SMTP Gateway Diagnostic Dispatch',
-    category: 'Diagnostics',
-    badge: 'SYSTEM',
+    id: 'smtp_test',
+    name: 'Template 5 • Live SMTP Gateway Ping & Diagnostics',
+    category: 'System',
+    badge: 'DIAGNOSTIC',
     badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
-    subject: 'DuraGrit Vitrified — Live SMTP Gateway Test Dispatch (Gmail: duragrit07@gmail.com)',
-    description: 'Dispatched during administrator diagnostic testing from System Settings or Email Reports. Proves bidirectional end-to-end delivery from smtp.gmail.com to the recipient inbox.',
+    subject: 'Google SMTP Relay Diagnostic Ping — DuraGrit Vitrified Gateway Active',
+    description: 'Triggered when an admin tests SMTP relay configuration from System Settings or Email Reports. Confirms bidirectional TLS connectivity and delivery latency.',
     variables: [
-      { tag: '{{recipientEmail}}', label: 'Test Recipient', sample: 'duragrit07@gmail.com' },
-      { tag: '{{senderEmail}}', label: 'Outbound Gmail Address', sample: 'duragrit07@gmail.com' },
-      { tag: '{{smtpHost}}', label: 'SMTP Host', sample: 'smtp.gmail.com' },
-      { tag: '{{smtpPort}}', label: 'SMTP Port', sample: '587' },
-      { tag: '{{latency}}', label: 'Relay Latency', sample: '1420ms' },
-      { tag: '{{timestamp}}', label: 'Dispatch Timestamp', sample: '04 Nov 2026, 22:15 IST' }
+      { tag: '{{recipientEmail}}', label: 'Target Inbox', sample: 'admin@duragritvitrified.com' },
+      { tag: '{{senderEmail}}', label: 'Relay Sender Address', sample: 'duragrit07@gmail.com' },
+      { tag: '{{smtpHost}}', label: 'SMTP Server', sample: 'smtp.gmail.com' },
+      { tag: '{{smtpPort}}', label: 'Port', sample: '587' },
+      { tag: '{{latency}}', label: 'Round-Trip Latency', sample: '284ms' },
+      { tag: '{{timestamp}}', label: 'Diagnostic Timestamp', sample: '07 Nov 2026, 17:15 IST' }
     ],
     sampleData: {
       recipientEmail: 'duragrit07@gmail.com',
       senderEmail: 'duragrit07@gmail.com',
       smtpHost: 'smtp.gmail.com',
       smtpPort: '587',
-      latency: '1420ms',
-      timestamp: '04 Nov 2026, 22:15 IST'
+      latency: '284ms',
+      timestamp: '07 Nov 2026, 17:15 IST'
     },
     generateHtml: (data = {}) => {
       const {
@@ -614,8 +614,8 @@ export const EMAIL_TEMPLATES = [
         senderEmail = 'duragrit07@gmail.com',
         smtpHost = 'smtp.gmail.com',
         smtpPort = '587',
-        latency = '1420ms',
-        timestamp = new Date().toLocaleString('en-IN')
+        latency = '284ms',
+        timestamp = '07 Nov 2026, 17:15 IST'
       } = data;
 
       return `<!DOCTYPE html>
@@ -623,7 +623,7 @@ export const EMAIL_TEMPLATES = [
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SMTP Diagnostic Test — DuraGrit Vitrified</title>
+  <title>Live SMTP Diagnostic Ping — DuraGrit Vitrified</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F4F3EF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F4F3EF; padding: 30px 10px;">
@@ -633,15 +633,15 @@ export const EMAIL_TEMPLATES = [
           
           <!-- BRAND HEADER -->
           <tr>
-            <td style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 28px 32px; text-align: left;">
+            <td style="background: linear-gradient(135deg, #0B0F19 0%, #161F48 100%); padding: 24px 32px; border-bottom: 2px solid #FAA322; text-align: left;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td>
-                    <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">DURAGRIT VITRIFIED</div>
-                    <div style="font-size: 11px; color: #c4b5fd; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">SMTP Relay Diagnostic Telemetry</div>
+                  <td valign="middle">
+                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">SMTP RELAY DIAGNOSTIC TELEMETRY</div>
                   </td>
-                  <td align="right">
-                    <span style="display: inline-block; background-color: #10b981; color: #ffffff; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">250 2.0.0 OK</span>
+                  <td align="right" valign="middle">
+                    <span style="display: inline-block; background-color: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">250 2.0.0 OK</span>
                   </td>
                 </tr>
               </table>
@@ -727,4 +727,3 @@ export const EMAIL_TEMPLATES = [
 export function getTemplateById(id) {
   return EMAIL_TEMPLATES.find(t => t.id === id) || EMAIL_TEMPLATES[0];
 }
-

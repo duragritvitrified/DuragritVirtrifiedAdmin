@@ -46,3 +46,4 @@ Set-Content -Path "$licensesDir\android-sdk-preview-license" -Value "84831b94096
 & cmd /c "echo y | `"$sdkManager`" --sdk_root=`"$sdkDir`" `"platforms;android-34`" `"build-tools;34.0.0`""
 
 Write-Output "Android SDK setup complete!"
+

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Shield / Hexagonal Diamond Geometry -->
+    <path
+        android:fillColor="#141C44"
+        android:strokeColor="#FAA322"
+        android:strokeWidth="2.5"
+        android:strokeLineJoin="round"
+        android:pathData="M54,26 L78,39 L78,69 L54,82 L30,69 L30,39 Z" />
+
+    <!-- Inner Monolith Layer -->
+    <path
+        android:fillColor="#0B0F19"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineJoin="round"
+        android:pathData="M54,34 L70,43 L70,65 L54,74 L38,65 L38,43 Z" />
+
+    <!-- Shimmering Golden Core Accent -->
+    <path
+        android:fillColor="#FAA322"
+        android:pathData="M54,42 L64,48 L64,60 L54,66 L44,60 L44,48 Z" />
+
+    <!-- Center White Emblem Core Diamond -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,50 L58,54 L54,58 L50,54 Z" />
+</vector>
