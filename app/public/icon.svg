@@ -1,48 +1,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8B0000" />
-      <stop offset="100%" stop-color="#4A0000" />
+    <!-- Dark Ceramic Vitrified Gradient -->
+    <linearGradient id="ceramicGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19" />
+      <stop offset="50%" stop-color="#111736" />
+      <stop offset="100%" stop-color="#161F48" />
     </linearGradient>
+
+    <!-- Warm Terracotta & Amber Radial Glow -->
+    <radialGradient id="terracottaGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#C84826" stop-opacity="0.35" />
+      <stop offset="60%" stop-color="#FAA322" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#0B0F19" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Official Gold Accent Metallic Gradient -->
     <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="40%" stop-color="#FAA322" />
       <stop offset="100%" stop-color="#D97706" />
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.4"/>
+
+    <filter id="tileShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.55"/>
     </filter>
   </defs>
 
-  <!-- Background Rounded Shield -->
-  <rect width="512" height="512" rx="108" fill="url(#bgGrad)" />
-  
-  <!-- Outer Gold Hex Border -->
-  <path d="M 256 64 L 432 152 L 432 328 L 256 448 L 80 328 L 80 152 Z" 
-        fill="none" stroke="url(#goldGrad)" stroke-width="12" stroke-linejoin="round" opacity="0.85" filter="url(#shadow)" />
+  <!-- Ceramic Tile Body (Squircle) -->
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="url(#ceramicGrad)" stroke="url(#goldGrad)" stroke-width="6" filter="url(#tileShadow)" />
 
-  <!-- Inner Diamond Grid / Vitrified Tile Pattern -->
-  <g opacity="0.15" stroke="#FFFFFF" stroke-width="4">
-    <line x1="120" y1="120" x2="392" y2="392" />
-    <line x1="392" y1="120" x2="120" y2="392" />
-    <line x1="256" y1="80" x2="256" y2="432" />
-    <line x1="80" y1="256" x2="432" y2="256" />
+  <!-- Ambient Vitrified Kiln Radial Aura -->
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="url(#terracottaGlow)" />
+
+  <!-- Precision Ceramic Vitrified Grid Lines -->
+  <g opacity="0.08" stroke="#FFFFFF" stroke-width="1.5">
+    <line x1="64" y1="12" x2="64" y2="500" />
+    <line x1="128" y1="12" x2="128" y2="500" />
+    <line x1="192" y1="12" x2="192" y2="500" />
+    <line x1="256" y1="12" x2="256" y2="500" />
+    <line x1="320" y1="12" x2="320" y2="500" />
+    <line x1="384" y1="12" x2="384" y2="500" />
+    <line x1="448" y1="12" x2="448" y2="500" />
+
+    <line x1="12" y1="64" x2="500" y2="64" />
+    <line x1="12" y1="128" x2="500" y2="128" />
+    <line x1="12" y1="192" x2="500" y2="192" />
+    <line x1="12" y1="256" x2="500" y2="256" />
+    <line x1="12" y1="320" x2="500" y2="320" />
+    <line x1="12" y1="384" x2="500" y2="384" />
+    <line x1="12" y1="448" x2="500" y2="448" />
   </g>
 
-  <!-- Corporate Monogram DG -->
-  <g fill="url(#goldGrad)" filter="url(#shadow)">
-    <!-- Letter D -->
-    <path d="M 160 176 L 220 176 C 265 176, 290 205, 290 256 C 290 307, 265 336, 220 336 L 160 336 Z M 198 214 L 198 298 L 216 298 C 242 298, 252 284, 252 256 C 252 228, 242 214, 216 214 Z" />
-    
-    <!-- Letter G -->
-    <path d="M 336 176 C 295 176, 270 205, 270 256 C 270 307, 295 336, 340 336 C 375 336, 396 318, 400 286 L 340 286 L 340 252 L 436 252 L 436 332 C 412 355, 380 368, 340 368 C 275 368, 232 324, 232 256 C 232 188, 275 144, 340 144 C 378 144, 408 158, 430 180 L 404 206 C 388 190, 366 176, 336 176 Z" />
+  <!-- Official DG Ceramic Monogram Shield Emblem -->
+  <g transform="translate(156, 75) scale(0.95)" filter="url(#tileShadow)">
+    <!-- Outer Shield / Hexagonal Diamond Geometry -->
+    <polygon points="105,10 190,55 190,150 105,195 20,150 20,55" fill="#141C44" stroke="url(#goldGrad)" stroke-width="7" stroke-linejoin="round" />
+    <!-- Inner D & G Monogram Monolith -->
+    <path d="M 58 60 L 105 35 L 152 60 L 152 145 L 105 170 L 58 145 Z" fill="#0B0F19" stroke="#FFFFFF" stroke-width="4" />
+    <path d="M 80 80 L 105 68 L 130 80 L 130 125 L 105 137 L 80 125 Z" fill="url(#goldGrad)" opacity="0.9" />
+    <circle cx="105" cy="102" r="12" fill="#FFFFFF" />
   </g>
 
-  <!-- DuraGrit Bottom Subtitle -->
-  <text x="256" y="415" 
-        font-family="system-ui, -apple-system, sans-serif" 
-        font-size="28" 
-        font-weight="900" 
-        letter-spacing="6" 
-        text-anchor="middle" 
-        fill="#FFFFFF">DURAGRIT</text>
+  <!-- DuraGrit Vitrified Official Brand Typography -->
+  <text x="256" y="335" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="38" fill="#FFFFFF" letter-spacing="6">DURAGRIT</text>
+  <text x="256" y="380" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="22" fill="#FAA322" letter-spacing="9">VITRIFIED</text>
+
+  <!-- Tagline / Kiln Badge -->
+  <rect x="136" y="415" width="240" height="28" rx="14" fill="#0B0F19" stroke="url(#goldGrad)" stroke-width="1.5" />
+  <text x="256" y="434" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11" fill="#FAA322" letter-spacing="2">KILN OPERATING NETWORK</text>
 </svg>

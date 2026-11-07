@@ -29,6 +29,7 @@ import { EmailReports } from './modules/16_EmailReports/EmailReports';
 import { SystemSettings } from './modules/17_SystemSettings/SystemSettings';
 import { AppInstallReports } from './modules/18_AppInstallReports/AppInstallReports';
 import { VendorManagement } from './modules/7_VendorDirectory/VendorManagement';
+import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 
 export function App() {
   const { currentUser } = useAuth();
@@ -37,6 +38,7 @@ export function App() {
   const [deviceMode, setDeviceMode] = useState('desktop'); // 'desktop' | 'mobile'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Normalize tab aliases so all dashboard/sidebar links work seamlessly
   const handleSetActiveTab = (tab) => {
@@ -179,11 +181,29 @@ export function App() {
   };
 
   if (!currentUser?.isAuthenticated) {
-    return <AdminLogin onSuccessfulLogin={() => setActiveTab('dashboard')} />;
+    return (
+      <>
+        {showSplash && (
+          <OpeningSplashScreen
+            onComplete={() => setShowSplash(false)}
+            durationMs={1800}
+            portalLabel="Corporate Command ERP"
+          />
+        )}
+        <AdminLogin onSuccessfulLogin={() => setActiveTab('dashboard')} />
+      </>
+    );
   }
 
   return (
     <div className="h-screen bg-[#FAF9F6] flex flex-col font-sans antialiased text-slate-800 overflow-hidden">
+      {showSplash && (
+        <OpeningSplashScreen
+          onComplete={() => setShowSplash(false)}
+          durationMs={1800}
+          portalLabel="Corporate Command ERP"
+        />
+      )}
       
       {/* ── Email Verification Success / Failure Banner ── */}
       {verifyBanner && (

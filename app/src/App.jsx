@@ -9,6 +9,7 @@ import { Step11_MyCashbackRequests } from './modules/Step11_MyCashbackRequests';
 import { Step12_MobileModeration } from './modules/Step12_MobileModeration';
 import { AdminMobileApp } from './modules/AdminMobileApp';
 import { Step13_WelcomeDossier } from './modules/Step13_WelcomeDossier';
+import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 import {
   checkClientUpdateStatus,
   applyClientAppUpdate,
@@ -55,6 +56,9 @@ export function App() {
     if (!currentUser?.isAuthenticated) return 'signin';
     return 'dashboard';
   });
+
+  // App Opening Splash Animation (Official Logo + Background)
+  const [showSplash, setShowSplash] = useState(true);
 
   // OTA App Version & Update State
   const [updateStatus, setUpdateStatus] = useState(() => checkClientUpdateStatus());
@@ -159,6 +163,13 @@ export function App() {
   if (isAppAdmin) {
     return (
       <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#0B0F19] flex flex-col items-center justify-center p-0 sm:py-4 sm:px-2 selection:bg-[#BA3A24] selection:text-white font-sans overflow-hidden">
+        {showSplash && (
+          <OpeningSplashScreen
+            onComplete={() => setShowSplash(false)}
+            durationMs={1800}
+            portalLabel="Admin Command Portal"
+          />
+        )}
         <AdminMobileApp
           onSwitchToPartnerApp={() => {
             const host = window.location.hostname || 'localhost';
@@ -180,6 +191,13 @@ export function App() {
   // =========================================================================
   return (
     <div className="h-[100dvh] max-h-[100dvh] w-full bg-stone-900/60 flex flex-col items-center justify-center p-0 sm:py-4 selection:bg-[#C84826] selection:text-white font-serif overflow-hidden">
+      {showSplash && (
+        <OpeningSplashScreen
+          onComplete={() => setShowSplash(false)}
+          durationMs={1800}
+          portalLabel="Vendor Partner Portal"
+        />
+      )}
       <div className="w-full max-w-[440px] bg-[#FAF9F6] h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-[580px] rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl border-0 sm:border border-stone-200/90 flex flex-col relative">
         
         {/* Floating Toast Notification */}
