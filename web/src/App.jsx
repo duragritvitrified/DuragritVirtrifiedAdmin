@@ -50,6 +50,20 @@ export function App() {
   // Email Verification Toast
   const [verifyBanner, setVerifyBanner] = useState(null); // { success, name, userId }
 
+  // Smart Mobile / Standalone PWA Redirect Guard:
+  // If a vendor launches an installed PWA on mobile, immediately route to the Vendor App
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator?.standalone;
+    const isRoot = window.location.pathname === '/' || window.location.pathname === '';
+    const hasAdminSession = currentUser?.isAuthenticated && currentUser?.isAdmin;
+    const preferred = localStorage.getItem('duragrit_preferred_portal');
+
+    if (isRoot && !hasAdminSession && (isStandalone || preferred === 'vendor')) {
+      window.location.replace('/app/?app=vendor');
+    }
+  }, [currentUser]);
+
   // ── On mount: handle ?verify=TOKEN in URL (email verification link) ──────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

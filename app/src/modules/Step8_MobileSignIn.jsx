@@ -77,9 +77,14 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   }, []);
 
   const handleInstallClick = async () => {
+    try {
+      const manifestEl = document.getElementById('app-manifest') || document.querySelector('link[rel="manifest"]');
+      if (manifestEl) manifestEl.setAttribute('href', '/manifest-vendor.json');
+    } catch (_) {}
+
     if (!deferredPrompt) {
       alert(
-        '📲 To install DuraGrit App on your phone:\n\n' +
+        '📲 To install DuraGrit Vendor Partner App on your phone:\n\n' +
         '• Android Chrome: Tap the 3 dots (⋮) at top right → Select "Install app" or "Add to Home screen"\n' +
         '• Apple Safari: Tap the Share button at bottom → Select "Add to Home Screen"'
       );
@@ -89,7 +94,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice?.outcome === 'accepted') {
-        showToast('Installing DuraGrit App to Home Screen...');
+        showToast('Installing DuraGrit Vendor Partner App to Home Screen...');
       }
       setDeferredPrompt(null);
       setIsInstallable(false);

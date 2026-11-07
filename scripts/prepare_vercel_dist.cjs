@@ -27,6 +27,23 @@ if (fs.existsSync(webDist) && fs.existsSync(appDist)) {
     fs.cpSync(rootApkFolder, appDistApk, { recursive: true });
     console.log('✓ Successfully mirrored APK packages into web/dist/apk and web/dist/app/apk!');
   }
+
+  // 4. Ensure dedicated PWA manifests are mirrored into root and app subfolder
+  const publicDir = path.resolve(__dirname, '..', 'public');
+  ['manifest.json', 'manifest-vendor.json', 'manifest-admin.json'].forEach((file) => {
+    const srcFile = path.join(publicDir, file);
+    if (fs.existsSync(srcFile)) {
+      fs.copyFileSync(srcFile, path.join(webDist, file));
+      fs.copyFileSync(srcFile, path.join(targetAppFolder, file));
+    }
+  });
+
+  // Ensure /app/manifest.json is explicitly the dedicated Vendor Manifest
+  const vendorManifest = path.join(publicDir, 'manifest-vendor.json');
+  if (fs.existsSync(vendorManifest)) {
+    fs.copyFileSync(vendorManifest, path.join(targetAppFolder, 'manifest.json'));
+    console.log('✓ Successfully mirrored dedicated Vendor PWA Manifests into web/dist!');
+  }
 } else {
   console.log('Dist directories not found yet. Run builds first.');
 }

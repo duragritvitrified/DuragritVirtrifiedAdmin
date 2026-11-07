@@ -297,3 +297,4 @@ $logoWhite.Dispose()
 $logoColor.Dispose()
 
 Write-Output "ALL BRAND ASSETS GENERATED SUCCESSFULLY!"
+

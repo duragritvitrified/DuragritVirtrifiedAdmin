@@ -1,0 +1,41 @@
+{
+  "short_name": "Admin App",
+  "name": "DuraGrit Vitrified — Admin Command Mobile App",
+  "description": "DuraGrit Vitrified Corporate Command, Moderation & Telemetry Portal",
+  "start_url": "/app/?app=admin",
+  "scope": "/app/",
+  "id": "/app/?app=admin",
+  "display": "standalone",
+  "theme_color": "#0B0F19",
+  "background_color": "#0B0F19",
+  "orientation": "portrait",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Moderation Queue",
+      "short_name": "Moderation",
+      "description": "Admin Cashback Approval and NPCI Disbursement Queue",
+      "url": "/app/?app=admin",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

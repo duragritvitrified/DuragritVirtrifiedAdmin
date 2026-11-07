@@ -60,6 +60,18 @@ export function App() {
   // App Opening Splash Animation (Official Logo + Background)
   const [showSplash, setShowSplash] = useState(true);
 
+  // Sync Preferred Portal & PWA Manifest for Strict Separation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('duragrit_preferred_portal', isAppAdmin ? 'admin' : 'vendor');
+      const manifestEl = document.getElementById('app-manifest') || document.querySelector('link[rel="manifest"]');
+      if (manifestEl) {
+        manifestEl.setAttribute('href', isAppAdmin ? '/manifest-admin.json' : '/manifest-vendor.json');
+      }
+    } catch (_) {}
+  }, [isAppAdmin]);
+
   // OTA App Version & Update State
   const [updateStatus, setUpdateStatus] = useState(() => checkClientUpdateStatus());
   const [isUpdating, setIsUpdating] = useState(false);

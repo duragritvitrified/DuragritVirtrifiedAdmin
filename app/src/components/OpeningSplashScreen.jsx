@@ -180,3 +180,4 @@ export function OpeningSplashScreen({ onComplete, durationMs = 1800, portalLabel
     </div>
   );
 }
+

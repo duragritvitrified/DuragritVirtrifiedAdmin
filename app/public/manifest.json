@@ -1,14 +1,15 @@
 {
-  "short_name": "DuraGrit",
-  "name": "DuraGrit Vitrified — Official Field Operations & Retail Portal",
-  "description": "Enterprise QR Serialization, Kiln Operations, Cashback Escrow, and Retailer ERP Portal",
-  "start_url": "/",
-  "scope": "/",
+  "short_name": "Vendor App",
+  "name": "DuraGrit Vitrified — Vendor Partner Portal",
+  "description": "DuraGrit Vitrified Official Mobile Retail, QR Cashback Scanning & Field Contractor Portal",
+  "start_url": "/app/?app=vendor",
+  "scope": "/app/",
+  "id": "/app/?app=vendor",
   "display": "standalone",
   "theme_color": "#0B0F19",
   "background_color": "#0B0F19",
   "orientation": "portrait",
-  "categories": ["business", "productivity", "finance"],
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",
@@ -30,17 +31,10 @@
   ],
   "shortcuts": [
     {
-      "name": "QR Optical Scanner",
+      "name": "Vendor QR Scanner",
       "short_name": "Scan QR",
-      "description": "Quickly scan DuraGrit QR code for cashback rewards",
+      "description": "Scan DuraGrit Vitrified QR codes for instant cashback",
       "url": "/app/?app=vendor",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Approval Queue",
-      "short_name": "Moderation",
-      "description": "Admin Cashback Approval and NPCI Disbursement Queue",
-      "url": "/app/?app=admin",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]

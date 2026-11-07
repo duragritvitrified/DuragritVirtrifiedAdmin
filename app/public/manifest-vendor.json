@@ -1,0 +1,41 @@
+{
+  "short_name": "Vendor App",
+  "name": "DuraGrit Vitrified — Vendor Partner Portal",
+  "description": "DuraGrit Vitrified Official Mobile Retail, QR Cashback Scanning & Field Contractor Portal",
+  "start_url": "/app/?app=vendor",
+  "scope": "/app/",
+  "id": "/app/?app=vendor",
+  "display": "standalone",
+  "theme_color": "#0B0F19",
+  "background_color": "#0B0F19",
+  "orientation": "portrait",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Vendor QR Scanner",
+      "short_name": "Scan QR",
+      "description": "Scan DuraGrit Vitrified QR codes for instant cashback",
+      "url": "/app/?app=vendor",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

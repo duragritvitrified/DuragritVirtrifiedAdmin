@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ArrowRight,
   ShieldCheck,
+  Smartphone
 } from 'lucide-react';
 
 export const AdminLogin = ({ onSuccessfulLogin }) => {
@@ -33,10 +34,21 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
 
     setSubmitting(true);
     try {
+      // Auto-detect vendor credentials and guide to Vendor Portal
+      const cleanInput = email.trim().toLowerCase();
+      const isVendorFormat = cleanInput.startsWith('usr-') || (!cleanInput.includes('@') && cleanInput.length >= 10);
+      
       const res = await loginAsAdmin(email, password, '1234', rememberTerminal);
       if (res.success) {
         if (onSuccessfulLogin) onSuccessfulLogin();
       } else {
+        if (isVendorFormat) {
+          setLocalError('Vendor Partner credentials detected. Redirecting to Vendor Mobile Portal...');
+          setTimeout(() => {
+            window.location.href = '/app/?app=vendor';
+          }, 800);
+          return;
+        }
         setLocalError(res.message || 'Invalid administrator credentials.');
       }
     } catch (err) {
@@ -94,6 +106,30 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
         {/* Right Half: Form Pane with Rounded White Card matching PDF Page 1 */}
         <div className="p-4 sm:p-8 lg:p-16 flex items-center justify-center">
           <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-sm p-6 sm:p-10 space-y-6">
+            
+            {/* Dedicated Vendor / Contractor Mobile Portal Switcher Banner */}
+            <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl flex items-center justify-between shadow-2xs">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-xl bg-[#C84826] text-white shrink-0 shadow-xs">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-stone-900 block leading-tight">
+                    Vendor Partner Portal
+                  </span>
+                  <span className="text-[10px] text-stone-500 block mt-0.5">
+                    For Masons, Dealers &amp; Contractors
+                  </span>
+                </div>
+              </div>
+              <a
+                href="/app/?app=vendor"
+                className="px-3 py-1.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-[11px] font-bold rounded-xl transition shadow-xs active:scale-95 shrink-0 ml-2 font-sans"
+              >
+                Open Vendor App →
+              </a>
+            </div>
+
             <div className="space-y-2">
               <div className="inline-flex items-center space-x-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-semibold">
                 <Lock className="w-3.5 h-3.5 text-blue-600" />

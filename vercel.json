@@ -36,6 +36,22 @@
       "destination": "/api/$1"
     },
     {
+      "source": "/manifest-vendor.json",
+      "destination": "/manifest-vendor.json"
+    },
+    {
+      "source": "/manifest-admin.json",
+      "destination": "/manifest-admin.json"
+    },
+    {
+      "source": "/app/manifest(.*)",
+      "destination": "/manifest-vendor.json"
+    },
+    {
+      "source": "/app/apk/(.*)",
+      "destination": "/apk/$1"
+    },
+    {
       "source": "/app/(.*)",
       "destination": "/app/index.html"
     },
