@@ -214,8 +214,10 @@ export const sendOnboardingEmail = async ({
   pwaUrl
 }) => {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  const finalApkUrl = apkUrl || `${origin}/apk/duragrit-contractor-v2.apk`;
-  const finalPwaUrl = pwaUrl || 'http://localhost:3001';
+  const isLocalHost = origin.includes('localhost') || origin.includes('127.0.0.1');
+  const defaultVendorUrl = isLocalHost ? 'http://localhost:3002' : `${origin}/app/?app=vendor`;
+  const finalApkUrl = apkUrl || defaultVendorUrl;
+  const finalPwaUrl = pwaUrl || defaultVendorUrl;
   const cleanUserId = String(userId).startsWith('USR-') ? userId : `USR-${userId}`;
 
   const template = EMAIL_TEMPLATES.find((t) => t.id === 'onboarding');
@@ -508,8 +510,10 @@ export const sendVendorOnboardingCredentialsEmail = async ({
   pwaUrl
 }) => {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  const finalApkUrl = apkUrl || `${origin}/apk/duragrit-contractor-v2.apk`;
-  const finalPwaUrl = pwaUrl || 'http://localhost:3001';
+  const isLocalHost = origin.includes('localhost') || origin.includes('127.0.0.1');
+  const defaultVendorUrl = isLocalHost ? 'http://localhost:3002' : `${origin}/app/?app=vendor`;
+  const finalApkUrl = apkUrl || defaultVendorUrl;
+  const finalPwaUrl = pwaUrl || defaultVendorUrl;
   const loginId = mobile ? mobile.replace(/\D/g, '').slice(-10) : vendorId;
 
   const template = EMAIL_TEMPLATES.find(t => t.id === 'onboarding');

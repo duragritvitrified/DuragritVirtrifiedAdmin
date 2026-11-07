@@ -31,7 +31,9 @@ const IS_LOCAL_DEV =
 
 const DEV_SYNC_URL =
   typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.hostname}:3000/api/dev-sync`
+    ? (IS_LOCAL_DEV
+        ? `${window.location.protocol}//${window.location.hostname}:3000/api/dev-sync`
+        : '/api/dev-sync')
     : 'http://localhost:3000/api/dev-sync';
 
 const STORAGE_KEYS = {

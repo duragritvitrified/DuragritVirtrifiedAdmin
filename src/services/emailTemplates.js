@@ -246,17 +246,17 @@ export const EMAIL_TEMPLATES = [
 
               <!-- APP DOWNLOAD ACTION -->
               <div style="text-align: center; margin-bottom: 28px;">
-                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">Step 1: Install the Mobile Scanner App</div>
+                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">Step 1: Access & Install the Mobile Scanner App</div>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td width="50%" align="center" style="padding: 0 6px;">
                       <a href="${apkUrl}" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 12px 16px; border-radius: 10px; box-shadow: 0 4px 10px rgba(5,150,105,0.3);">
-                        🤖 Download Android APK
+                        🤖 Android App (Install / Open)
                       </a>
                     </td>
                     <td width="50%" align="center" style="padding: 0 6px;">
                       <a href="${pwaUrl}" style="display: block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 12px 16px; border-radius: 10px; box-shadow: 0 4px 10px rgba(15,23,42,0.3);">
-                        🍎 Open iPhone Safari PWA
+                        🍎 iPhone / Web Portal
                       </a>
                     </td>
                   </tr>
@@ -266,10 +266,10 @@ export const EMAIL_TEMPLATES = [
               <!-- QUICK START STEPS -->
               <div style="background-color: #FAF9F6; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; font-size: 12px; color: #475569; line-height: 1.6;">
                 <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px;">Quick-Start Instructions:</strong>
-                1. Open the downloaded APK on your Android device and tap <em>&ldquo;Install&rdquo;</em>.<br>
-                2. Log in with your <strong>User ID</strong> and <strong>One-Time Passkey</strong> shown above.<br>
-                3. You will be prompted to set your personal 4-digit security PIN.<br>
-                4. Link your <strong>UPI VPA or Bank Account</strong> to receive instant 2-step cashback payouts.
+                1. Tap the green <strong>Android App</strong> or black <strong>iPhone / Web Portal</strong> button above on your smartphone.<br>
+                2. Tap the browser menu (⋮ on Chrome, Share on Safari) and select <strong>&ldquo;Add to Home Screen / Install App&rdquo;</strong> for instant 1-tap app access.<br>
+                3. Log in with your <strong>User ID</strong> and <strong>One-Time Passkey</strong> shown above.<br>
+                4. Link your <strong>UPI VPA or Bank Account</strong> to start scanning QR codes and receiving cashback!
               </div>
             </td>
           </tr>

@@ -37,7 +37,8 @@ app/android/.gradle/
 app/android/build/
 app/android/app/build/
 app/android/capacitor-cordova-android-plugins/build/
-*.apk
+!web/public/apk/**
+!app/public/apk/**
 *.aab
 
 # Python virtual environments

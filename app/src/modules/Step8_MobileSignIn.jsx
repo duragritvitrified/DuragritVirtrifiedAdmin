@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import {
@@ -42,6 +42,62 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
     setTimeout(() => setToastMsg(''), 4000);
   };
 
+  // PWA Native Installation Handling
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true)
+    ) {
+      setIsInstalled(true);
+      return;
+    }
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+      showToast('🎉 DuraGrit Mobile App installed successfully!');
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      alert(
+        '📲 To install DuraGrit App on your phone:\n\n' +
+        '• Android Chrome: Tap the 3 dots (⋮) at top right → Select "Install app" or "Add to Home screen"\n' +
+        '• Apple Safari: Tap the Share button at bottom → Select "Add to Home Screen"'
+      );
+      return;
+    }
+    try {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice?.outcome === 'accepted') {
+        showToast('Installing DuraGrit App to Home Screen...');
+      }
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+    } catch (err) {
+      console.warn('Install prompt error:', err);
+    }
+  };
+
   // Live telemetry counters from database (0 when clean)
   const totalSerializedPcs = batches.reduce(
     (sum, b) => sum + Number(b.quantity || b.batchSize || b.totalTokens || b.tokens?.length || 0),
@@ -75,7 +131,10 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         cleanDigits === '9000000000';
 
       if (isAdminIdentifier) {
-        setErrorMsg('⛔ This portal is strictly for Vendors & Contractors. To access the Super Admin Operations Console, please open: http://localhost:3001/?app=admin');
+        const adminUrl = typeof window !== 'undefined' && !window.location.origin.includes('localhost')
+          ? `${window.location.origin}/app/?app=admin`
+          : 'http://localhost:3001/?app=admin';
+        setErrorMsg(`⛔ This portal is strictly for Vendors & Contractors. To access the Super Admin Operations Console, please open: ${adminUrl}`);
         setIsSubmitting(false);
         return;
       }
@@ -453,6 +512,33 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
             </span>
           </button>
         </div>
+
+        {/* 1-Tap Mobile App Install Banner */}
+        {!isInstalled && (
+          <div className="mb-3.5 bg-gradient-to-r from-emerald-950 via-stone-900 to-emerald-900 text-white rounded-2xl p-3 border border-emerald-500/30 shadow-sm flex items-center justify-between font-sans">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
+                <span className="text-base">📲</span>
+              </div>
+              <div className="min-w-0">
+                <div className="text-[11px] font-black tracking-tight text-white flex items-center gap-1.5">
+                  <span>Install DuraGrit App</span>
+                  <span className="text-[8px] bg-emerald-500 text-stone-950 font-black px-1.5 py-0.2 rounded-full uppercase">1-Tap</span>
+                </div>
+                <p className="text-[9.5px] text-emerald-200/90 truncate mt-0.5">
+                  Add to home screen for full-screen camera & QR scanning
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              className="ml-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow-xs transition shrink-0 cursor-pointer"
+            >
+              Install App
+            </button>
+          </div>
+        )}
 
         {/* Main Sign-In Card matching PDF Page 8 */}
         <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">
