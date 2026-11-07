@@ -350,6 +350,62 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     }
   };
 
+  // PWA Native Installation Handling for Admin Console
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true)
+    ) {
+      setIsInstalled(true);
+      return;
+    }
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+      showHapticHUD('Admin Console Installed', '📲', 'emerald');
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      alert(
+        '📲 To install DuraGrit Admin Console on your phone:\n\n' +
+        '• Android Chrome: Tap the 3 dots (⋮) at top right → Select "Install app" or "Add to Home screen"\n' +
+        '• Apple Safari: Tap the Share button at bottom → Select "Add to Home Screen"'
+      );
+      return;
+    }
+    try {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice?.outcome === 'accepted') {
+        showHapticHUD('Installing Admin Console to Home Screen...', '📲', 'emerald');
+      }
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+    } catch (err) {
+      console.warn('Install prompt error:', err);
+    }
+  };
+
   const toggleHaptic = () => {
     const next = !hapticEnabled;
     setHapticEnabled(next);
@@ -664,6 +720,33 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             </p>
           </div>
 
+          {/* 1-Tap Mobile Admin App Install Banner */}
+          {!isInstalled && (
+            <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white rounded-2xl p-3 border border-blue-500/40 shadow-lg shadow-blue-950/80 flex items-center justify-between font-sans relative z-10">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center shrink-0">
+                  <span className="text-base">📲</span>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-black tracking-tight text-white flex items-center gap-1.5">
+                    <span>Install Admin Console</span>
+                    <span className="text-[8px] bg-cyan-400 text-stone-950 font-black px-1.5 py-0.2 rounded-full uppercase">1-Tap</span>
+                  </div>
+                  <p className="text-[9.5px] text-blue-200/90 truncate mt-0.5">
+                    Add to home screen for fullscreen executive command &amp; offline sync
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="ml-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow-xs transition shrink-0 cursor-pointer"
+              >
+                Install App
+              </button>
+            </div>
+          )}
+
           {/* Login Error Notification */}
           {loginError && (
             <div className="bg-rose-950/70 border border-rose-500/60 text-rose-200 text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
@@ -923,6 +1006,17 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
         {/* Profile / Switch / Logout Icon Buttons */}
         <div className="flex items-center gap-1.5">
+          {!isInstalled && (
+            <button
+              onClick={handleInstallClick}
+              title="Install Admin App on Home Screen"
+              className="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-500 border border-blue-400/50 text-white text-[10px] font-bold flex items-center space-x-1 transition active:scale-95 cursor-pointer shadow-2xs"
+            >
+              <span>📲</span>
+              <span className="hidden xs:inline">Install</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               if (onSwitchToPartnerApp) onSwitchToPartnerApp();

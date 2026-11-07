@@ -93,8 +93,8 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     : 'http://localhost:3002/';
 
   const apkDownloadUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/apk/duragrit-contractor-v2.apk`
-    : '/apk/duragrit-contractor-v2.apk';
+    ? (isLocalHost ? 'http://localhost:3002/' : `${window.location.origin}/app/?app=vendor`)
+    : 'http://localhost:3002/';
 
   const adminPwaUrl = typeof window !== 'undefined'
     ? (isLocalHost 
@@ -103,8 +103,8 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     : 'http://localhost:3001/';
 
   const adminApkDownloadUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/apk/duragrit-admin-command-v2.apk`
-    : '/apk/duragrit-admin-command-v2.apk';
+    ? (isLocalHost ? 'http://localhost:3001/' : `${window.location.origin}/app/?app=admin`)
+    : 'http://localhost:3001/';
 
   // SMTP Settings State
   const [config, setConfig] = useState(DEFAULT_SMTP_CONFIG);
@@ -1251,15 +1251,16 @@ export function SystemSettings({ initialSubTab = 'general' }) {
               <div className="md:col-span-2 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <a
-                    href={adminApkDownloadUrl}
-                    download="duragrit-admin-command-v2.apk"
+                    href={adminPwaUrl}
+                    target="_blank"
+                    rel="noreferrer"
                     className="p-3.5 bg-gradient-to-r from-[#BA3A24] to-[#8F2310] hover:from-[#8F2310] hover:to-[#701A0B] text-white rounded-xl shadow-lg border border-[#BA3A24] transition-all flex items-center justify-between group cursor-pointer"
                   >
                     <div className="flex items-center space-x-2.5">
-                      <Download className="w-5 h-5 text-white/90 group-hover:translate-y-0.5 transition-transform" />
+                      <Smartphone className="w-5 h-5 text-white/90 group-hover:scale-110 transition-transform" />
                       <div>
-                        <div className="font-black text-xs uppercase tracking-wide">Download Admin APK</div>
-                        <div className="text-[10px] text-white/80 font-mono">v2.4.0 • Android (.apk)</div>
+                        <div className="font-black text-xs uppercase tracking-wide">🤖 Android App (Install / Open)</div>
+                        <div className="text-[10px] text-white/80 font-mono">1-Tap Home Screen Install</div>
                       </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform" />
@@ -1272,10 +1273,10 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     className="p-3.5 bg-[#1E293B] hover:bg-[#283548] text-white rounded-xl shadow border border-slate-700 transition-all flex items-center justify-between group cursor-pointer"
                   >
                     <div className="flex items-center space-x-2.5">
-                      <ExternalLink className="w-5 h-5 text-[#BA3A24] group-hover:rotate-12 transition-transform" />
+                      <ExternalLink className="w-5 h-5 text-cyan-400 group-hover:rotate-12 transition-transform" />
                       <div>
-                        <div className="font-black text-xs uppercase tracking-wide">Launch Mobile Admin Web</div>
-                        <div className="text-[10px] text-slate-300 font-mono">:3001 (Admin Mobile App)</div>
+                        <div className="font-black text-xs uppercase tracking-wide">🍎 iPhone / Safari PWA</div>
+                        <div className="text-[10px] text-slate-300 font-mono">{isLocalHost ? ':3001 (Admin Mobile App)' : 'Full Screen PWA'}</div>
                       </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
@@ -1424,15 +1425,16 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   </div>
                 </div>
 
-                {/* Direct File Download Button */}
+                {/* Direct Launch & Install Button */}
                 <a
-                  href="/apk/duragrit-contractor-v2.apk"
-                  download="duragrit-contractor-v4.8.2.apk"
-                  onClick={() => showToast('Downloading Official DuraGrit Android Companion APK (18.4 MB)...')}
+                  href={mobilePwaUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => showToast('Opening DuraGrit Partner Mobile App (1-Tap Home Screen Install)...')}
                   className="w-full py-3.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
                 >
-                  <Download className="w-4 h-4 text-white" />
-                  <span>Download Android App (.APK)</span>
+                  <Smartphone className="w-4 h-4 text-white" />
+                  <span>Launch &amp; Install Android App (1-Tap)</span>
                 </a>
 
                 {/* Copy Direct APK Link */}
@@ -1649,24 +1651,25 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                 </div>
 
                 <a
-                  href="/apk/duragrit-admin-command-v2.apk"
-                  download="duragrit-admin-command-v2.0.apk"
-                  onClick={() => showToast('Downloading Official DuraGrit Executive Admin Mobile APK (18.4 MB)...')}
+                  href={adminPwaUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => showToast('Opening DuraGrit Executive Admin Mobile App (1-Tap Home Screen Install)...')}
                   className="w-full py-3 bg-[#BA3A24] hover:bg-[#A02F17] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
                 >
-                  <Download className="w-4 h-4 text-white" />
-                  <span>Download Admin Mobile App (.APK)</span>
+                  <Smartphone className="w-4 h-4 text-white" />
+                  <span>Launch &amp; Install Admin Android App</span>
                 </a>
 
                 <div className="flex items-center space-x-2 bg-slate-900/90 rounded-xl p-2 border border-slate-700/80">
                   <input
                     type="text"
                     readOnly
-                    value={adminApkDownloadUrl}
+                    value={adminPwaUrl}
                     className="flex-1 bg-transparent text-[10px] font-mono text-slate-300 outline-none select-all"
                   />
                   <button
-                    onClick={() => handleCopyLink(adminApkDownloadUrl, 'admin-apk')}
+                    onClick={() => handleCopyLink(adminPwaUrl, 'admin-apk')}
                     className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] rounded-lg border border-slate-600 flex items-center space-x-1 transition cursor-pointer"
                   >
                     {copiedLink === 'admin-apk' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}

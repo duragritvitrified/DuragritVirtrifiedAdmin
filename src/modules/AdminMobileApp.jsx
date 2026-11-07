@@ -309,7 +309,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       gain.connect(ctx.destination);
       osc.start(now);
       osc.stop(now + 0.13);
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const playRejectBuzz = () => {
@@ -333,7 +333,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       gain.connect(ctx.destination);
       osc.start(now);
       osc.stop(now + 0.17);
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const playRejectChime = playRejectBuzz;
@@ -347,6 +347,62 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
     if (hapticEnabled && typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(25);
+    }
+  };
+
+  // PWA Native Installation Handling for Admin Console
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true)
+    ) {
+      setIsInstalled(true);
+      return;
+    }
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+      showHapticHUD('Admin Console Installed', '📲', 'emerald');
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      alert(
+        '📲 To install DuraGrit Admin Console on your phone:\n\n' +
+        '• Android Chrome: Tap the 3 dots (⋮) at top right → Select "Install app" or "Add to Home screen"\n' +
+        '• Apple Safari: Tap the Share button at bottom → Select "Add to Home Screen"'
+      );
+      return;
+    }
+    try {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice?.outcome === 'accepted') {
+        showHapticHUD('Installing Admin Console to Home Screen...', '📲', 'emerald');
+      }
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+    } catch (err) {
+      console.warn('Install prompt error:', err);
     }
   };
 
@@ -664,6 +720,33 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             </p>
           </div>
 
+          {/* 1-Tap Mobile Admin App Install Banner */}
+          {!isInstalled && (
+            <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white rounded-2xl p-3 border border-blue-500/40 shadow-lg shadow-blue-950/80 flex items-center justify-between font-sans relative z-10">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center shrink-0">
+                  <span className="text-base">📲</span>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-black tracking-tight text-white flex items-center gap-1.5">
+                    <span>Install Admin Console</span>
+                    <span className="text-[8px] bg-cyan-400 text-stone-950 font-black px-1.5 py-0.2 rounded-full uppercase">1-Tap</span>
+                  </div>
+                  <p className="text-[9.5px] text-blue-200/90 truncate mt-0.5">
+                    Add to home screen for fullscreen executive command &amp; offline sync
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="ml-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow-xs transition shrink-0 cursor-pointer"
+              >
+                Install App
+              </button>
+            </div>
+          )}
+
           {/* Login Error Notification */}
           {loginError && (
             <div className="bg-rose-950/70 border border-rose-500/60 text-rose-200 text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
@@ -723,6 +806,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
             <button
               type="submit"
+              onClick={handleAdminSignIn}
               disabled={isSubmittingLogin}
               className="w-full py-3 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/40 transition active:scale-[0.98] cursor-pointer flex items-center justify-center space-x-2 border border-blue-400/30"
             >
@@ -859,15 +943,13 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
       {/* Floating Haptic HUD Notification */}
       <div
-        className={`fixed top-14 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 transform ${
-          hudNotice.visible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
-        } flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full shadow-lg border backdrop-blur-md text-[10.5px] font-semibold ${
-          hudNotice.color === 'emerald'
+        className={`fixed top-14 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 transform ${hudNotice.visible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
+          } flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full shadow-lg border backdrop-blur-md text-[10.5px] font-semibold ${hudNotice.color === 'emerald'
             ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500/40'
             : hudNotice.color === 'rose'
-            ? 'bg-rose-900/90 text-rose-100 border-rose-500/40'
-            : 'bg-slate-900/90 text-white border-slate-700/60'
-        }`}
+              ? 'bg-rose-900/90 text-rose-100 border-rose-500/40'
+              : 'bg-slate-900/90 text-white border-slate-700/60'
+          }`}
       >
         <span>{hudNotice.icon}</span>
         <span className="tracking-tight">{hudNotice.text}</span>
@@ -924,6 +1006,17 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
         {/* Profile / Switch / Logout Icon Buttons */}
         <div className="flex items-center gap-1.5">
+          {!isInstalled && (
+            <button
+              onClick={handleInstallClick}
+              title="Install Admin App on Home Screen"
+              className="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-500 border border-blue-400/50 text-white text-[10px] font-bold flex items-center space-x-1 transition active:scale-95 cursor-pointer shadow-2xs"
+            >
+              <span>📲</span>
+              <span className="hidden xs:inline">Install</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               if (onSwitchToPartnerApp) onSwitchToPartnerApp();
@@ -1019,11 +1112,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             <button
               onClick={toggleHaptic}
               title="Toggle tactile haptic & audio chimes"
-              className={`flex items-center space-x-1 px-2 py-0.5 rounded text-[9px] font-semibold transition active:scale-95 cursor-pointer shadow-2xs border ${
-                hapticEnabled
+              className={`flex items-center space-x-1 px-2 py-0.5 rounded text-[9px] font-semibold transition active:scale-95 cursor-pointer shadow-2xs border ${hapticEnabled
                   ? 'bg-amber-50 text-amber-800 border-amber-300/80'
                   : 'bg-slate-100 text-slate-500 border-slate-200'
-              }`}
+                }`}
             >
               <span className="inline-block text-[8px]">{hapticEnabled ? '📳' : '🔇'}</span>
               <span>{hapticEnabled ? 'HAPTIC: ON' : 'HAPTIC: OFF'}</span>
@@ -1204,11 +1296,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                       setChartMetricMode('count');
                       showHapticHUD('Mode: Claims Count (#)');
                     }}
-                    className={`px-2 py-0.5 rounded-md font-bold transition cursor-pointer ${
-                      chartMetricMode === 'count'
+                    className={`px-2 py-0.5 rounded-md font-bold transition cursor-pointer ${chartMetricMode === 'count'
                         ? 'bg-white text-slate-900 shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     # Count
                   </button>
@@ -1217,11 +1308,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                       setChartMetricMode('amount');
                       showHapticHUD('Mode: Escrow Value (₹)');
                     }}
-                    className={`px-2 py-0.5 rounded-md font-bold transition cursor-pointer ${
-                      chartMetricMode === 'amount'
+                    className={`px-2 py-0.5 rounded-md font-bold transition cursor-pointer ${chartMetricMode === 'amount'
                         ? 'bg-white text-[#BA3A24] shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     ₹ Value
                   </button>
@@ -1470,11 +1560,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                       setChartActiveSlice(chartActiveSlice === 'approved' ? null : 'approved');
                       playApproveChime();
                     }}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                      chartActiveSlice === 'approved'
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer ${chartActiveSlice === 'approved'
                         ? 'bg-emerald-50/80 border-emerald-300 ring-2 ring-emerald-200/80 shadow-xs'
                         : 'bg-slate-50/70 hover:bg-slate-100/80 border-slate-200/80'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center space-x-2 min-w-0">
@@ -1510,11 +1599,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                       setChartActiveSlice(chartActiveSlice === 'pending' ? null : 'pending');
                       playRejectBuzz();
                     }}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                      chartActiveSlice === 'pending'
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer ${chartActiveSlice === 'pending'
                         ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-200/80 shadow-xs'
                         : 'bg-slate-50/70 hover:bg-slate-100/80 border-slate-200/80'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center space-x-2 min-w-0">
@@ -1550,11 +1638,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                       setChartActiveSlice(chartActiveSlice === 'rejected' ? null : 'rejected');
                       playRejectBuzz();
                     }}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                      chartActiveSlice === 'rejected'
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer ${chartActiveSlice === 'rejected'
                         ? 'bg-rose-50/80 border-rose-300 ring-2 ring-rose-200/80 shadow-xs'
                         : 'bg-slate-50/70 hover:bg-slate-100/80 border-slate-200/80'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center space-x-2 min-w-0">
@@ -1650,22 +1737,20 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
               <div className="flex items-center space-x-1.5 overflow-x-auto text-[10px] pb-0.5 scrollbar-none">
                 <button
                   onClick={() => setFilterTab('all')}
-                  className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition cursor-pointer ${
-                    filterTab === 'all'
+                  className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition cursor-pointer ${filterTab === 'all'
                       ? 'bg-[#1E252D] text-white shadow-xs'
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   All ({totalRequestsCount})
                 </button>
 
                 <button
                   onClick={() => setFilterTab('pending')}
-                  className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${
-                    filterTab === 'pending'
+                  className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${filterTab === 'pending'
                       ? 'bg-amber-600 text-white shadow-xs'
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                   <span>Pending ({pendingCount})</span>
@@ -1673,11 +1758,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
                 <button
                   onClick={() => setFilterTab('approved')}
-                  className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${
-                    filterTab === 'approved'
+                  className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${filterTab === 'approved'
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   <span>Approved ({approvedCount})</span>
@@ -1685,11 +1769,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
                 <button
                   onClick={() => setFilterTab('rejected')}
-                  className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${
-                    filterTab === 'rejected'
+                  className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${filterTab === 'rejected'
                       ? 'bg-rose-600 text-white shadow-xs'
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                   <span>Rejected ({rejectedCount})</span>
@@ -1749,18 +1832,16 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         </div>
 
                         <span
-                          className={`inline-flex items-center space-x-1 text-[9px] font-semibold px-2 py-0.5 rounded-full border ${
-                            isApproved
+                          className={`inline-flex items-center space-x-1 text-[9px] font-semibold px-2 py-0.5 rounded-full border ${isApproved
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : isRejected
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}
                         >
                           <span
-                            className={`w-1 h-1 rounded-full ${
-                              isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
-                            }`}
+                            className={`w-1 h-1 rounded-full ${isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                              }`}
                           ></span>
                           <span>{isApproved ? 'Approved & Settled' : isRejected ? 'Rejected / Flagged' : 'Pending Verification'}</span>
                         </span>
@@ -1949,17 +2030,15 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   <button
                     key={tab.id}
                     onClick={() => setFilterTab(tab.id)}
-                    className={`px-3 py-1.5 rounded-lg font-bold capitalize transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                      filterTab === tab.id
+                    className={`px-3 py-1.5 rounded-lg font-bold capitalize transition cursor-pointer flex items-center gap-1.5 shrink-0 ${filterTab === tab.id
                         ? 'bg-[#BA3A24] text-white shadow-xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                      }`}
                   >
                     <span>{tab.label}</span>
                     <span
-                      className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
-                        filterTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-                      }`}
+                      className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${filterTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                        }`}
                     >
                       {tab.count}
                     </span>
@@ -1982,12 +2061,12 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     {searchQuery
                       ? 'Try searching with a different keyword or clear search filter.'
                       : filterTab === 'rejected'
-                      ? 'No rejected or quarantined cashback claims in this queue.'
-                      : filterTab === 'pending'
-                      ? 'All pending cashback requests have been reviewed.'
-                      : filterTab === 'approved'
-                      ? 'No approved cashback claims in this queue.'
-                      : 'There are currently no cashback claims logged.'}
+                        ? 'No rejected or quarantined cashback claims in this queue.'
+                        : filterTab === 'pending'
+                          ? 'All pending cashback requests have been reviewed.'
+                          : filterTab === 'approved'
+                            ? 'No approved cashback claims in this queue.'
+                            : 'There are currently no cashback claims logged.'}
                   </p>
                   {searchQuery && (
                     <button
@@ -2354,11 +2433,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     <p className="text-[10px] text-slate-500">Continuous Auto-Push Deployment Engine</p>
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold ${
-                  adminUpdateStatus.hasUpdate
+                <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold ${adminUpdateStatus.hasUpdate
                     ? 'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse'
                     : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                }`}>
+                  }`}>
                   {adminUpdateStatus.hasUpdate ? 'Update Available' : 'Current & Synced'}
                 </span>
               </div>
@@ -2459,11 +2537,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('overview');
             showHapticHUD('Tab: Overview Dashboard');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${
-            activeTab === 'overview'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'overview'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
-          }`}
+            }`}
         >
           <div className="relative">
             <LayoutGrid className={`w-5 h-5 transition-transform ${activeTab === 'overview' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
@@ -2483,11 +2560,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('requests');
             showHapticHUD('Tab: Moderation Requests Queue');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${
-            activeTab === 'requests'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'requests'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
-          }`}
+            }`}
         >
           <div className="relative">
             <Layers className={`w-5 h-5 transition-transform ${activeTab === 'requests' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
@@ -2512,11 +2588,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('qrgen');
             showHapticHUD('Tab: QR Batch Engine');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${
-            activeTab === 'qrgen'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'qrgen'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
-          }`}
+            }`}
         >
           <div className="relative">
             <QrCode className={`w-5 h-5 transition-transform ${activeTab === 'qrgen' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
@@ -2536,11 +2611,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('audit');
             showHapticHUD('Tab: Escrow Audit Log');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${
-            activeTab === 'audit'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'audit'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
-          }`}
+            }`}
         >
           <div className="relative">
             <ShieldCheck className={`w-5 h-5 transition-transform ${activeTab === 'audit' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
@@ -2752,6 +2826,103 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                             navigator.clipboard.writeText(serial);
                             setCopiedToken(serial);
                             setTimeout(() => setCopiedToken(''), 1500);
+                          } catch (_) { }
+                        }}
+                        className="px-2 py-1 rounded bg-white border border-slate-200 text-slate-600 hover:text-[#BA3A24] text-[10px] font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                      >
+                        {isCopied ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-600">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Close Modal Button */}
+            <div className="pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setInspectedBatch(null)}
+                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer"
+              >
+                Close Inspector
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BATCH TOKENS INSPECTION MODAL */}
+      {inspectedBatch && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-sm max-h-[90vh] bg-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-slate-200 flex flex-col space-y-3 animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-2.5">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <QrCode className="w-4 h-4 text-[#BA3A24]" />
+                  <h3 className="text-sm font-black text-slate-900">Batch QR Serial Tokens</h3>
+                </div>
+                <span className="text-xs font-mono font-bold text-[#BA3A24] block mt-0.5">
+                  {inspectedBatch.batchId || inspectedBatch.id}
+                </span>
+                <p className="text-[10px] text-slate-500">
+                  {inspectedBatch.productName} • {inspectedBatch.quantity || inspectedBatch.tokens?.length || 0} tokens generated
+                </p>
+              </div>
+              <button
+                onClick={() => setInspectedBatch(null)}
+                className="p-1 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Token List */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[50vh]">
+              {(inspectedBatch.tokens || []).length === 0 ? (
+                <div className="text-center py-6 text-slate-400 text-xs font-mono">
+                  No individual tokens cached for this legacy batch.
+                </div>
+              ) : (
+                (inspectedBatch.tokens || []).map((t, idx) => {
+                  const serial = t.serialKey || t.serial || t.code || `TOKEN-${idx + 1}`;
+                  const isCopied = copiedToken === serial;
+
+                  return (
+                    <div
+                      key={serial + idx}
+                      className="p-2 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs"
+                    >
+                      <div className="min-w-0 flex-1 mr-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono text-slate-400">#{idx + 1}</span>
+                          <span className="font-mono font-bold text-slate-900 text-[10.5px] truncate block">
+                            {serial}
+                          </span>
+                        </div>
+                        <span className="text-[9.5px] text-emerald-700 font-mono font-semibold">
+                          Reward: ₹{t.cashbackAmount || inspectedBatch.cashbackAmount || 50}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            navigator.clipboard.writeText(serial);
+                            setCopiedToken(serial);
+                            setTimeout(() => setCopiedToken(''), 1500);
                           } catch (_) {}
                         }}
                         className="px-2 py-1 rounded bg-white border border-slate-200 text-slate-600 hover:text-[#BA3A24] text-[10px] font-bold flex items-center gap-1 cursor-pointer shrink-0"
@@ -2863,13 +3034,12 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 return (
                   <div
                     key={rel.id || rel.version || idx}
-                    className={`p-3.5 rounded-2xl border transition-all ${
-                      isCurrent
+                    className={`p-3.5 rounded-2xl border transition-all ${isCurrent
                         ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-300/40'
                         : isLatest
-                        ? 'bg-amber-50/50 border-amber-300'
-                        : 'bg-slate-50 border-slate-200'
-                    }`}
+                          ? 'bg-amber-50/50 border-amber-300'
+                          : 'bg-slate-50 border-slate-200'
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">

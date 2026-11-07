@@ -148,13 +148,14 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
             </button>
 
             <a
-              href="/apk/duragrit-contractor-v2.apk"
-              download="duragrit-contractor-v2.apk"
-              onClick={() => showToast('Downloading Official DuraGrit Contractor APK...')}
-              className="inline-flex items-center space-x-2 px-3.5 py-2 bg-[#FEF2EE] hover:bg-[#FDE5DC] text-[#A62C11] border border-[#F9CEB8] rounded-lg text-xs font-black shadow-xs transition"
+              href={typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3002/' : `${typeof window !== 'undefined' ? window.location.origin : ''}/app/?app=vendor`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => showToast('Opening DuraGrit Partner Mobile App...')}
+              className="inline-flex items-center space-x-2 px-3.5 py-2 bg-[#FEF2EE] hover:bg-[#FDE5DC] text-[#A62C11] border border-[#F9CEB8] rounded-lg text-xs font-black shadow-xs transition cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-[#C84826]" />
-              <span>Download APK</span>
+              <Smartphone className="w-3.5 h-3.5 text-[#C84826]" />
+              <span>Open Partner App</span>
             </a>
           </div>
         </section>
@@ -292,12 +293,13 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
                     <h3 className="text-base font-black text-slate-900">Launch DuraGrit Mobile Scanner</h3>
                     <div className="flex flex-wrap items-center justify-center gap-3">
                       <a
-                        href="/apk/duragrit-contractor-v2.apk"
-                        download="duragrit-contractor-v2.apk"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white font-bold text-xs rounded-xl shadow-sm"
+                        href={typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3002/' : `${typeof window !== 'undefined' ? window.location.origin : ''}/app/?app=vendor`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer"
                       >
-                        <Download className="w-4 h-4" />
-                        <span>Download Android APK</span>
+                        <Smartphone className="w-4 h-4" />
+                        <span>Open Partner App (Android / iOS)</span>
                       </a>
                       {onNavigateToFieldApp && (
                         <button
