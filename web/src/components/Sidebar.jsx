@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { getDeviceInstalls } from '../services/appInstallService';
@@ -27,11 +27,6 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
   const { logout } = useAuth();
   const { users = [], skus = [], vendors = [], claims = [] } = useData();
 
-  const handleNav = (tabId) => {
-    setActiveTab(tabId);
-    if (onCloseMobile) onCloseMobile();
-  };
-
   const pendingClaimsCount = claims.filter((c) => c.status === 'Pending').length;
   const activeInstallsCount = getDeviceInstalls ? getDeviceInstalls().length : 0;
 
@@ -40,16 +35,11 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
     { id: 'catalog', label: 'Tiles & SKU Catalog' },
   ];
 
-  const isProductSubActive = productSubItems.some((item) => item.id === activeTab);
-  const [productMenuOpen, setProductMenuOpen] = useState(true);
-
   const reportSubItems = [
     { id: 'reports-vendor', label: 'Vendor Sales & Cashback', badge: 'Live' },
     { id: 'reports', label: 'Executive BI Analytics' },
     { id: 'reports-financial', label: 'Financial & Tax Audit' },
   ];
-  const isReportSubActive = activeTab === 'reports' || reportSubItems.some((item) => item.id === activeTab);
-  const [reportMenuOpen, setReportMenuOpen] = useState(true);
 
   const settingsSubItems = [
     { id: 'settings', label: 'Overview & DB Sync' },
@@ -64,11 +54,56 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
     { id: 'email-reports', label: 'Dispatches & Logs', badge: 'Audit' },
   ];
 
+  const isProductSubActive = productSubItems.some((item) => item.id === activeTab);
+  const isReportSubActive = activeTab === 'reports' || reportSubItems.some((item) => item.id === activeTab);
   const isEmailSubActive = activeTab === 'email-reports' || activeTab === 'email-templates';
-  const [emailMenuOpen, setEmailMenuOpen] = useState(true);
-
   const isSettingsSubActive = activeTab === 'settings' || settingsSubItems.some((item) => item.id === activeTab);
-  const [settingsMenuOpen, setSettingsMenuOpen] = useState(true);
+
+  // Helper to identify which collapsible section contains the given tab
+  const getSectionForTab = (tab) => {
+    if (productSubItems.some((i) => i.id === tab)) return 'product';
+    if (tab === 'reports' || reportSubItems.some((i) => i.id === tab)) return 'report';
+    if (tab === 'email-reports' || tab === 'email-templates' || emailSubItems.some((i) => i.id === tab)) return 'email';
+    if (tab === 'settings' || settingsSubItems.some((i) => i.id === tab)) return 'settings';
+    return null;
+  };
+
+  // Accordion State: Only one section's subpages open at a time
+  const [openSection, setOpenSection] = useState(() => getSectionForTab(activeTab));
+
+  // Automatically keep only the active section open when activeTab changes
+  useEffect(() => {
+    const sec = getSectionForTab(activeTab);
+    if (sec) {
+      setOpenSection(sec);
+    }
+  }, [activeTab]);
+
+  const handleNav = (tabId) => {
+    setActiveTab(tabId);
+    const sec = getSectionForTab(tabId);
+    setOpenSection(sec); // Automatically minimises all subpages if opening a standalone section
+    if (onCloseMobile) onCloseMobile();
+  };
+
+  const toggleSection = (sectionKey, defaultTab) => {
+    if (openSection === sectionKey) {
+      // If clicking currently open section, minimise it
+      setOpenSection(null);
+    } else {
+      // Open this section and automatically minimise all other sections
+      setOpenSection(sectionKey);
+      if (defaultTab && getSectionForTab(activeTab) !== sectionKey) {
+        setActiveTab(defaultTab);
+        if (onCloseMobile) onCloseMobile();
+      }
+    }
+  };
+
+  const productMenuOpen = openSection === 'product';
+  const reportMenuOpen = openSection === 'report';
+  const emailMenuOpen = openSection === 'email';
+  const settingsMenuOpen = openSection === 'settings';
 
   const navBtnClass = (isActive) =>
     `w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs transition-all cursor-pointer ${
@@ -159,10 +194,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           }`}
         >
           <button
-            onClick={() => {
-              setProductMenuOpen(!productMenuOpen);
-              if (!isProductSubActive) handleNav('catalog');
-            }}
+            onClick={() => toggleSection('product', 'catalog')}
             className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
               isProductSubActive
                 ? 'text-[#A62C11] font-bold'
@@ -244,10 +276,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           }`}
         >
           <button
-            onClick={() => {
-              setReportMenuOpen(!reportMenuOpen);
-              if (!isReportSubActive) handleNav('reports-vendor');
-            }}
+            onClick={() => toggleSection('report', 'reports-vendor')}
             className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
               isReportSubActive
                 ? 'text-[#A62C11] font-bold'
@@ -340,12 +369,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
         {/* 7. Email Reports & Template Audit */}
         <div>
           <button
-            onClick={() => {
-              setEmailMenuOpen(!emailMenuOpen);
-              if (!isEmailSubActive) {
-                handleNav('email-templates');
-              }
-            }}
+            onClick={() => toggleSection('email', 'email-templates')}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs transition-all cursor-pointer ${
               isEmailSubActive
                 ? 'bg-[#FEF2EE] text-[#A62C11] font-bold border border-[#C84826]/30 shadow-xs'
@@ -415,12 +439,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
         {/* 8. System Settings & Mobile Download Console */}
         <div>
           <button
-            onClick={() => {
-              setSettingsMenuOpen(!settingsMenuOpen);
-              if (!isSettingsSubActive) {
-                handleNav('settings');
-              }
-            }}
+            onClick={() => toggleSection('settings', 'settings')}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs transition-all cursor-pointer ${
               isSettingsSubActive
                 ? 'bg-[#FEF2EE] text-[#A62C11] font-bold border border-[#C84826]/30 shadow-xs'

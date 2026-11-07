@@ -15,7 +15,7 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{userId}}', label: 'User / Partner ID', sample: 'USR-1082' },
       { tag: '{{mobile}}', label: 'Registered Mobile', sample: '+91 98112 40591' },
       { tag: '{{verifyToken}}', label: 'Security Auth Token', sample: 'DGVT-K8P9Q2-7X4L' },
-      { tag: '{{verifyLink}}', label: '1-Click Action URL', sample: 'http://localhost:3000/?verify=DGVT-K8P9Q2-7X4L' },
+      { tag: '{{verifyLink}}', label: '1-Click Action URL', sample: 'https://duragrit-virtrified-admin.vercel.app/?verify=DGVT-K8P9Q2-7X4L' },
       { tag: '{{expiryHours}}', label: 'Link Expiry Window', sample: '24' }
     ],
     sampleData: {
@@ -23,7 +23,7 @@ export const EMAIL_TEMPLATES = [
       userId: 'USR-1082',
       mobile: '+91 98112 40591',
       verifyToken: 'DGVT-K8P9Q2-7X4L',
-      verifyLink: 'http://localhost:3000/?verify=DGVT-K8P9Q2-7X4L',
+      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/?verify=DGVT-K8P9Q2-7X4L',
       expiryHours: '24'
     },
     generateHtml: (data = {}) => {
@@ -32,7 +32,7 @@ export const EMAIL_TEMPLATES = [
         userId = 'USR-1082',
         mobile = '+91 98112 40591',
         verifyToken = 'DGVT-K8P9Q2-7X4L',
-        verifyLink = 'http://localhost:3000/?verify=DGVT-K8P9Q2-7X4L',
+        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/?verify=DGVT-K8P9Q2-7X4L',
         expiryHours = '24'
       } = data;
 
@@ -159,8 +159,8 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{tempPassword}}', label: 'One-Time Temp Password', sample: 'Dura#8492' },
       { tag: '{{role}}', label: 'Assigned Partner Role', sample: 'Tile Contractor / Mason' },
       { tag: '{{hub}}', label: 'Regional Kiln Hub', sample: 'Morbi Central Kiln Hub' },
-      { tag: '{{apkUrl}}', label: 'Android APK Download Path', sample: '/apk/duragrit-contractor-v2.apk' },
-      { tag: '{{pwaUrl}}', label: 'iPhone Safari PWA URL', sample: 'http://localhost:3001' }
+      { tag: '{{apkUrl}}', label: 'Android APK / App URL', sample: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor' },
+      { tag: '{{pwaUrl}}', label: 'iPhone Safari PWA URL', sample: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor' }
     ],
     sampleData: {
       recipientName: 'Mahesh Sharma',
@@ -168,8 +168,8 @@ export const EMAIL_TEMPLATES = [
       tempPassword: 'Dura#8492',
       role: 'Tile Contractor / Mason',
       hub: 'Morbi Central Kiln Hub',
-      apkUrl: 'http://localhost:3000/apk/duragrit-contractor-v2.apk',
-      pwaUrl: 'http://localhost:3001'
+      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
+      pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
     },
     generateHtml: (data = {}) => {
       const {
@@ -178,8 +178,8 @@ export const EMAIL_TEMPLATES = [
         tempPassword = 'Dura#8492',
         role = 'Tile Contractor / Mason',
         hub = 'Morbi Central Kiln Hub',
-        apkUrl = 'http://localhost:3000/apk/duragrit-contractor-v2.apk',
-        pwaUrl = 'http://localhost:3001'
+        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
+        pwaUrl = 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
       } = data;
 
       return `<!DOCTYPE html>

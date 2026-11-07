@@ -14,6 +14,18 @@ try {
   localStorage.removeItem('duragrit_email_dispatches_v1');
 } catch (_) {}
 
+export const LIVE_PUBLIC_URL = 'https://duragrit-virtrified-admin.vercel.app';
+
+export const getEmailBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const host = window.location.hostname;
+    if (host && !host.includes('localhost') && host !== '127.0.0.1') {
+      return window.location.origin;
+    }
+  }
+  return LIVE_PUBLIC_URL;
+};
+
 // ─── Default SMTP Configuration ──────────────────────────────────────────────
 
 export const DEFAULT_SMTP_CONFIG = {
@@ -166,8 +178,8 @@ export const sendVerificationEmail = async ({
   map[`USER_${token}`] = rawId;
   saveTokenMap(map);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  const verifyLink = `${origin}/?verify=${token}`;
+  const baseUrl = getEmailBaseUrl();
+  const verifyLink = `${baseUrl}/?verify=${token}`;
 
   const template = EMAIL_TEMPLATES.find((t) => t.id === 'verification');
   const html = template
@@ -213,9 +225,8 @@ export const sendOnboardingEmail = async ({
   apkUrl,
   pwaUrl
 }) => {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  const isLocalHost = origin.includes('localhost') || origin.includes('127.0.0.1');
-  const defaultVendorUrl = isLocalHost ? 'http://localhost:3002' : `${origin}/app/?app=vendor`;
+  const baseUrl = getEmailBaseUrl();
+  const defaultVendorUrl = `${baseUrl}/app/?app=vendor`;
   const finalApkUrl = apkUrl || defaultVendorUrl;
   const finalPwaUrl = pwaUrl || defaultVendorUrl;
   const cleanUserId = String(userId).startsWith('USR-') ? userId : `USR-${userId}`;
@@ -464,8 +475,8 @@ export const sendVendorVerificationEmail = async ({
   map[`VENDOR_${token}`] = vendorId;
   saveTokenMap(map);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  const verifyLink = `${origin}/?verify=${token}`;
+  const baseUrl = getEmailBaseUrl();
+  const verifyLink = `${baseUrl}/?verify=${token}`;
 
   const template = EMAIL_TEMPLATES.find(t => t.id === 'verification');
   const html = template ? template.generateHtml({
@@ -509,9 +520,8 @@ export const sendVendorOnboardingCredentialsEmail = async ({
   apkUrl,
   pwaUrl
 }) => {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  const isLocalHost = origin.includes('localhost') || origin.includes('127.0.0.1');
-  const defaultVendorUrl = isLocalHost ? 'http://localhost:3002' : `${origin}/app/?app=vendor`;
+  const baseUrl = getEmailBaseUrl();
+  const defaultVendorUrl = `${baseUrl}/app/?app=vendor`;
   const finalApkUrl = apkUrl || defaultVendorUrl;
   const finalPwaUrl = pwaUrl || defaultVendorUrl;
   const loginId = mobile ? mobile.replace(/\D/g, '').slice(-10) : vendorId;

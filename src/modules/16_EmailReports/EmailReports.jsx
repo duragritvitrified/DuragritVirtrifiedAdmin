@@ -145,8 +145,8 @@ export function EmailReports({ onNavigateSettings, initialMainTab = 'templates' 
         role: testEmailData.role,
         tempPassword: 'Dura#' + Math.floor(1000 + Math.random() * 9000),
         hub: 'Morbi Central Kiln Hub',
-        apkUrl: (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) ? 'http://localhost:3002/' : `${window.location.origin}/app/?app=vendor`,
-        pwaUrl: (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) ? 'http://localhost:3002/' : `${window.location.origin}/app/?app=vendor`
+        apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
+        pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
       });
 
       const res = await sendLiveCustomEmail({
