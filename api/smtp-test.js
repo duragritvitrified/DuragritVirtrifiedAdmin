@@ -16,7 +16,16 @@ export default async function handler(req, res) {
 
   try {
     const payload = req.body || {};
-    const config = payload.config || payload;
+    const config = { ...(payload.config || payload || {}) };
+
+    // Fallback to server environment variables if client password is missing or placeholder
+    if (!config.smtpPassword || config.smtpPassword.includes('•••')) {
+      config.smtpPassword = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASSWORD || '';
+    }
+    if (!config.smtpUser) {
+      config.smtpUser = process.env.GMAIL_USER || process.env.SMTP_USER || config.senderEmail || 'duragrit07@gmail.com';
+    }
+
     const result = await testSmtpHandshake(config);
     return res.status(200).json(result);
   } catch (err) {

@@ -363,46 +363,50 @@ export const sendKycApprovalEmail = async ({
 // ─── Test Connection Verification ───────────────────────────────────────────
 
 export const testSmtpConnection = async (config) => {
+  const cleanConfig = {
+    ...config,
+    smtpPassword: (config?.smtpPassword || '').replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '')
+  };
+
   try {
     const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:3000';
     const url = `${origin}/api/smtp-test`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config })
+      body: JSON.stringify({ config: cleanConfig })
     });
-    if (res.ok) {
-      const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (res.ok && data) {
       return data;
     }
+    if (data) {
+      return data;
+    }
+    return {
+      success: false,
+      message: `HTTP ${res.status}: ${res.statusText}`
+    };
   } catch (err) {
     console.warn('Backend /api/smtp-test endpoint unreachable:', err);
+    return {
+      success: false,
+      message: err.message || 'Cannot reach SMTP backend server.'
+    };
   }
-
-  // Fallback diagnostic logic if backend endpoint unreachable
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (!config.senderEmail || !config.smtpHost) {
-        resolve({
-          success: false,
-          message: 'Sender Email and SMTP Host are required.'
-        });
-        return;
-      }
-
-      resolve({
-        success: true,
-        latency: Math.floor(180 + Math.random() * 120) + 'ms',
-        message: `Successfully connected to ${config.smtpHost}:${config.smtpPort} via ${config.encryption}. Ready for ${config.senderEmail}.`
-      });
-    }, 800);
-  });
 };
 
 // ─── Live Email Dispatch via Native SMTP Bridge ─────────────────────────────
 
-export const sendLiveCustomEmail = async ({ to, subject, html, text, templateKey = 'custom' }) => {
-  const smtp = getSmtpConfig();
+export const sendLiveCustomEmail = async ({
+  to,
+  subject,
+  html,
+  text,
+  templateKey = 'custom',
+  overrideConfig = null
+}) => {
+  const smtp = overrideConfig || getSmtpConfig();
   const startTime = Date.now();
   let apiRes = null;
 
@@ -423,12 +427,19 @@ export const sendLiveCustomEmail = async ({ to, subject, html, text, templateKey
     });
     if (res.ok) {
       apiRes = await res.json();
+    } else {
+      try {
+        apiRes = await res.json();
+      } catch (_) {
+        apiRes = { success: false, message: `Server error: HTTP ${res.status}` };
+      }
     }
   } catch (err) {
     console.warn('Live SMTP dispatch error:', err);
+    apiRes = { success: false, message: err.message || 'Network request failed' };
   }
 
-  const isSuccess = apiRes ? Boolean(apiRes.success) : true;
+  const isSuccess = Boolean(apiRes?.success);
   const latency = apiRes?.latency || `${Date.now() - startTime}ms`;
   const record = {
     id: uid(),

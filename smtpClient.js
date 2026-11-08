@@ -211,9 +211,14 @@ async function connectSmtp(config) {
  * Authenticate with SMTP server using AUTH LOGIN
  */
 async function authenticateSmtp(client, user, pass) {
-  // Strip spaces if user pasted 16-character Google App Password with spaces
-  const cleanPass = String(pass || '').replace(/\s+/g, '');
-  const cleanUser = String(user || '').trim();
+  // Strip spaces and hidden unicode characters if user pasted 16-character Google App Password
+  const cleanPass = String(pass || '')
+    .replace(/\s+/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
+  const cleanUser = String(user || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
 
   if (!cleanUser || !cleanPass) {
     throw new Error('SMTP Username and Password are required for authentication.');
@@ -239,7 +244,7 @@ async function authenticateSmtp(client, user, pass) {
     // Check for common Gmail 535 error
     if (res3.code === 535 || res3.text.includes('535')) {
       throw new Error(
-        `Gmail Authentication Failed (535-5.7.8): Username and Password not accepted. If you use 2-Step Verification, generate a 16-character App Password at: https://myaccount.google.com/apppasswords`
+        `Gmail Authentication Failed (535-5.7.8): Username and Password not accepted for [${cleanUser}]. Note: Google blocks standard Gmail account passwords on SMTP. You must generate a 16-character App Password at: https://myaccount.google.com/apppasswords while logged in as ${cleanUser}.`
       );
     }
     throw new Error(`Authentication failed (${res3.code}): ${res3.text}`);
@@ -251,11 +256,14 @@ async function authenticateSmtp(client, user, pass) {
 /**
  * Test SMTP connection & authentication
  */
-export async function testSmtpHandshake(config) {
-  const host = config.smtpHost || config.host || 'smtp.gmail.com';
-  const port = config.smtpPort || config.port || 587;
-  const user = config.smtpUser || config.user || config.senderEmail;
-  const pass = config.smtpPassword || config.pass || config.password;
+export async function testSmtpHandshake(config = {}) {
+  const host = config.smtpHost || config.host || process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = config.smtpPort || config.port || process.env.SMTP_PORT || 587;
+  const user = config.smtpUser || config.user || config.senderEmail || process.env.GMAIL_USER || process.env.SMTP_USER || 'duragrit07@gmail.com';
+  let pass = config.smtpPassword || config.pass || config.password;
+  if (!pass || pass.includes('•••')) {
+    pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASSWORD || '';
+  }
   const startTime = Date.now();
   let client;
   try {
@@ -296,14 +304,17 @@ export async function testSmtpHandshake(config) {
 /**
  * Send an email via native SMTP
  */
-export async function sendSmtpMail(config, { from, to, subject, html, text }) {
+export async function sendSmtpMail(config = {}, { from, to, subject, html, text }) {
   const startTime = Date.now();
   let client;
   try {
-    const host = config.smtpHost || config.host || 'smtp.gmail.com';
-    const port = config.smtpPort || config.port || 587;
-    const user = config.smtpUser || config.user || config.senderEmail;
-    const pass = config.smtpPassword || config.pass || config.password;
+    const host = config.smtpHost || config.host || process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = config.smtpPort || config.port || process.env.SMTP_PORT || 587;
+    const user = config.smtpUser || config.user || config.senderEmail || process.env.GMAIL_USER || process.env.SMTP_USER || 'duragrit07@gmail.com';
+    let pass = config.smtpPassword || config.pass || config.password;
+    if (!pass || pass.includes('•••')) {
+      pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASSWORD || '';
+    }
 
     client = await connectSmtp({ ...config, host, port });
 

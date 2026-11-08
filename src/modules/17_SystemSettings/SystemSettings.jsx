@@ -198,10 +198,18 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   };
 
   const handleTestConnection = async () => {
+    const cleanPassword = (config.smtpPassword || '').replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+    const activeConfig = {
+      ...config,
+      smtpPassword: cleanPassword
+    };
+    setConfig(activeConfig);
+    saveSmtpConfig(activeConfig);
+
     setIsTesting(true);
     setTestResult(null);
     try {
-      const res = await testSmtpConnection(config);
+      const res = await testSmtpConnection(activeConfig);
       setTestResult(res);
       if (res.success) {
         showToast(`Handshake Successful! SMTP latency: ${res.latency}`);
@@ -230,19 +238,30 @@ export function SystemSettings({ initialSubTab = 'general' }) {
       showToast('Please enter a valid recipient email address.');
       return;
     }
-    if (!config.smtpPassword) {
-      showToast('Please enter your Google App Password in the SMTP Password field first!');
+    const cleanPassword = (config.smtpPassword || '').replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+    if (!cleanPassword) {
+      showToast('Please enter your 16-character Google App Password in the SMTP Password field first!');
       return;
     }
+
+    const activeConfig = {
+      ...config,
+      smtpPassword: cleanPassword
+    };
+
+    // Auto-save configuration immediately so state & localStorage are always kept in sync
+    setConfig(activeConfig);
+    saveSmtpConfig(activeConfig);
+
     setIsSendingLiveEmail(true);
     setLiveSendResult(null);
     try {
       const template = EMAIL_TEMPLATES.find(t => t.id === 'smtp-test') || EMAIL_TEMPLATES[0];
       const htmlBody = template.generateHtml({
         recipientEmail: testRecipient,
-        senderEmail: config.senderEmail,
-        smtpHost: config.smtpHost,
-        smtpPort: config.smtpPort,
+        senderEmail: activeConfig.senderEmail,
+        smtpHost: activeConfig.smtpHost,
+        smtpPort: activeConfig.smtpPort,
         latency: '...',
         timestamp: new Date().toLocaleString('en-IN')
       });
@@ -251,8 +270,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
         to: testRecipient,
         subject: `DuraGrit Vitrified — Live SMTP Gateway Test Dispatch (${new Date().toLocaleTimeString('en-IN')})`,
         html: htmlBody,
-        text: `DuraGrit Vitrified SMTP Test. Delivered via ${config.smtpHost}:${config.smtpPort} from ${config.senderEmail} to ${testRecipient}.`,
-        templateKey: 'smtp-test'
+        text: `DuraGrit Vitrified SMTP Test. Delivered via ${activeConfig.smtpHost}:${activeConfig.smtpPort} from ${activeConfig.senderEmail} to ${testRecipient}.`,
+        templateKey: 'smtp-test',
+        overrideConfig: activeConfig
       });
 
       setLiveSendResult(res);
@@ -812,26 +832,57 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-1">
-                      SMTP Password
-                    </label>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                        SMTP Password / Google App Password *
+                      </label>
+                      {config.smtpPassword ? (
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                          config.smtpPassword.replace(/\s+/g, '').length === 16
+                            ? 'text-emerald-700 bg-emerald-50 border-emerald-300'
+                            : 'text-amber-700 bg-amber-50 border-amber-300'
+                        }`}>
+                          {config.smtpPassword.replace(/\s+/g, '').length === 16
+                            ? '✓ 16-char App Password'
+                            : `${config.smtpPassword.replace(/\s+/g, '').length} chars`}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                          Password Missing
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
-                        disabled={!isEditing}
-                        value={config.smtpPassword}
-                        onChange={(e) => setConfig({ ...config, smtpPassword: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-mono text-slate-800 pr-10 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
+                        value={config.smtpPassword || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const cleanVal = val.replace(/[\u200B-\u200D\uFEFF]/g, '');
+                          const updated = { ...config, smtpPassword: cleanVal };
+                          setConfig(updated);
+                          saveSmtpConfig({ ...updated, smtpPassword: cleanVal.replace(/\s+/g, '') });
+                        }}
+                        placeholder="e.g. abcd efgh ijkl mnop (16 letters)"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-xs text-slate-900 font-bold pr-16 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
+                      <div className="absolute right-2 top-2 flex items-center space-x-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="p-1 text-slate-400 hover:text-slate-700 rounded transition"
+                          title={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </div>
+                    {config.smtpPassword && config.smtpPassword.replace(/\s+/g, '').length !== 16 && (
+                      <p className="text-[10.5px] text-amber-800 bg-amber-50/90 border border-amber-200 rounded-lg p-2 leading-relaxed">
+                        ⚠️ <strong>Important:</strong> Google App Passwords are exactly 16 letters (e.g. <code className="font-mono font-bold">abcd efgh ijkl mnop</code>). If you typed your standard Google account login password, Google will block it with <strong>error 535-5.7.8</strong>.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -983,6 +1034,20 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <div className="text-[11px] font-mono leading-relaxed break-all">
                       {liveSendResult.record?.lastEvent || liveSendResult.apiRes?.message}
                     </div>
+                    {!liveSendResult.success && String(liveSendResult.record?.lastEvent || liveSendResult.apiRes?.message || '').includes('535') && (
+                      <div className="bg-white/90 p-3 rounded-lg border border-rose-300 text-[11px] text-rose-950 space-y-1.5 mt-2">
+                        <div className="font-bold uppercase tracking-wider text-[10px] text-rose-700 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                          <span>Google Authentication Fix Checklist (535-5.7.8):</span>
+                        </div>
+                        <ol className="list-decimal pl-4 space-y-1 font-sans text-[11px] text-slate-700">
+                          <li><strong>Account Match:</strong> Did you create the App Password in <code className="font-bold text-rose-700">{config.senderEmail || 'duragrit07@gmail.com'}</code>? If logged into another personal Gmail in your browser, Google created it for that other account.</li>
+                          <li><strong>2-Step Verification:</strong> 2-Step Verification must be turned ON under Google Account &rarr; Security.</li>
+                          <li><strong>Generate 16-Letter App Password:</strong> Visit <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="underline font-bold text-[#C84826]">myaccount.google.com/apppasswords</a>, generate a password for &ldquo;DuraGrit&rdquo;, and paste the 16 letters into the SMTP Password field above.</li>
+                          <li><strong>Regular Passwords Blocked:</strong> Regular Google account passwords will always be rejected by Google SMTP with error 535.</li>
+                        </ol>
+                      </div>
+                    )}
                     {liveSendResult.success && (
                       <div className="text-[10px] text-emerald-800 font-sans font-medium pt-1 border-t border-emerald-200/60">
                         Check the inbox of <strong>{testRecipient}</strong>. Logged in Email Reports.
