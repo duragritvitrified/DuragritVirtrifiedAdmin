@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
@@ -31,6 +31,50 @@ import {
   Database,
   AlertCircle
 } from 'lucide-react';
+
+
+function AnimatedNumber({ value, duration = 850, prefix = '', suffix = '', decimals = 0, formatFn }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const num = Number(value || 0);
+    if (isNaN(num) || num === 0) {
+      setDisplayValue(0);
+      return;
+    }
+
+    let start = 0;
+    const startTime = performance.now();
+
+    const updateCount = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Smooth cubic ease-out
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = start + (num - start) * ease;
+      setDisplayValue(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCount);
+      } else {
+        setDisplayValue(num);
+      }
+    };
+
+    const rafId = requestAnimationFrame(updateCount);
+    return () => cancelAnimationFrame(rafId);
+  }, [value, duration]);
+
+  if (formatFn) {
+    return <span>{formatFn(displayValue)}</span>;
+  }
+
+  const formatted = decimals > 0
+    ? displayValue.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+    : Math.round(displayValue).toLocaleString('en-IN');
+
+  return <span>{prefix}{formatted}{suffix}</span>;
+}
 
 function formatINRCompact(val) {
   const n = Number(val || 0);
@@ -392,8 +436,8 @@ export function Dashboard({ onNavigateTab }) {
       })()}
 
       {/* SECTION 1: WELCOME & GLOBAL CONTROLS BAR */}
-      <section className="bg-gradient-to-r from-[#231512] via-[#3B1810] to-[#A62C11] text-white rounded-2xl p-5 sm:p-6 shadow-md border border-[#A62C11]/40 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 relative overflow-hidden">
-        <div className="absolute -right-12 -top-12 w-64 h-64 bg-[#C84826]/25 rounded-full blur-3xl pointer-events-none"></div>
+      <section className="bg-gradient-to-r from-[#231512] via-[#3B1810] to-[#A62C11] text-white rounded-2xl p-5 sm:p-6 shadow-md border border-[#A62C11]/40 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 relative overflow-hidden anim-fade-down">
+        <div className="absolute -right-12 -top-12 w-64 h-64 bg-[#C84826]/30 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
 
         <div className="relative z-10">
           <div className="flex flex-wrap items-center gap-2">
@@ -458,17 +502,17 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 1: Total Users & Partners */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('users')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-[#C84826]/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-50"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Users &amp; Partners</div>
-            <div className="p-1.5 bg-[#FEF2EE] text-[#C84826] rounded-lg ring-1 ring-[#F9CEB8] group-hover:bg-[#C84826] group-hover:text-white transition-colors">
+            <div className="p-1.5 bg-[#FEF2EE] text-[#C84826] rounded-lg ring-1 ring-[#F9CEB8] group-hover:bg-[#C84826] group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-slate-900 tracking-tight font-mono">
-              {metrics.totalPartners.toLocaleString('en-IN')}
+              <AnimatedNumber value={metrics.totalPartners} />
             </div>
             <span className="text-[11px] font-bold text-[#A62C11] bg-[#FEF2EE] px-2 py-0.5 rounded-full border border-[#F9CEB8]">
               {metrics.totalUsers} Users • {metrics.totalVendors} Vendors
@@ -480,7 +524,7 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 2: Active Scanners */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('cashback')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-[#C84826]/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-100"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active QR Scanners</div>
@@ -490,7 +534,7 @@ export function Dashboard({ onNavigateTab }) {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-slate-900 tracking-tight font-mono">
-              {metrics.activeScanners.toLocaleString('en-IN')}
+              <AnimatedNumber value={metrics.activeScanners} />
             </div>
             <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
               Live App Users
@@ -502,17 +546,17 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 3: Dealers & Vendors */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('vendors')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-sky-600/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-150"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dealers &amp; Vendors</div>
-            <div className="p-1.5 bg-sky-50 text-sky-600 rounded-lg ring-1 ring-sky-100 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+            <div className="p-1.5 bg-sky-50 text-sky-600 rounded-lg ring-1 ring-sky-100 group-hover:bg-sky-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               <Store className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-slate-900 tracking-tight font-mono">
-              {(metrics.dealersCount + metrics.totalVendors).toLocaleString('en-IN')}
+              <AnimatedNumber value={metrics.dealersCount + metrics.totalVendors} />
             </div>
             <span className="text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">
               {metrics.dealersCount} Dealers • {metrics.totalVendors} Vendors
@@ -524,17 +568,17 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 4: Contractors & Masons */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('users')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-amber-600/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-200"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contractors &amp; Masons</div>
-            <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg ring-1 ring-amber-100 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+            <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg ring-1 ring-amber-100 group-hover:bg-amber-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               <HardHat className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-slate-900 tracking-tight font-mono">
-              {metrics.contractorsCount.toLocaleString('en-IN')}
+              <AnimatedNumber value={metrics.contractorsCount} />
             </div>
             <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
               Field Loyalty
@@ -546,7 +590,7 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 5: QR Code Redemptions */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('qr-batch')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-[#C84826]/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-250"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">QR Code Redemptions</div>
@@ -556,7 +600,7 @@ export function Dashboard({ onNavigateTab }) {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-slate-900 tracking-tight font-mono">
-              {metrics.totalScans.toLocaleString('en-IN')}
+              <AnimatedNumber value={metrics.totalScans} />
             </div>
             <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full font-mono">
               of {metrics.totalSerializedTokens.toLocaleString('en-IN')} QRs
@@ -570,17 +614,17 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 6: Gross Payout Disbursed */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('cashback')}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-emerald-600/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-300"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Gross Payout Disbursed</div>
-            <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg ring-1 ring-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg ring-1 ring-emerald-100 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-slate-900 tracking-tight font-mono">
-              {formatINRCompact(metrics.grossDisbursed)}
+              <AnimatedNumber value={metrics.grossDisbursed} formatFn={formatINRCompact} />
             </div>
             <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
               {metrics.disbursedCount} Settled
@@ -592,7 +636,7 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 7: Pending Approvals */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('cashback')}
-          className="bg-white p-4 rounded-xl border-l-4 border-l-[#C84826] border-y border-r border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border-l-4 border-l-[#C84826] border-y border-r border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-[#C84826]/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-350"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">Pending Approvals</div>
@@ -602,7 +646,7 @@ export function Dashboard({ onNavigateTab }) {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-[#C84826] tracking-tight font-mono">
-              {metrics.pendingActionsTotal} Items
+              <AnimatedNumber value={metrics.pendingActionsTotal} /> Items
             </div>
           </div>
           <div className="text-[11px] text-slate-500 mt-1 font-medium">
@@ -617,7 +661,7 @@ export function Dashboard({ onNavigateTab }) {
         {/* Card 8: Escrow Queue & Batch Pool */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('reports')}
-          className="bg-white p-4 rounded-xl border-l-4 border-l-emerald-600 border-y border-r border-slate-200/80 shadow-xs hover:shadow-md transition-all group cursor-pointer"
+          className="bg-white p-4 rounded-xl border-l-4 border-l-emerald-600 border-y border-r border-slate-200/80 shadow-xs hover:shadow-lg hover:shadow-emerald-600/10 hover:-translate-y-1 transition-all duration-300 group cursor-pointer anim-fade-up anim-delay-400"
         >
           <div className="flex items-start justify-between">
             <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">Active QR Reward Pool</div>
@@ -627,7 +671,7 @@ export function Dashboard({ onNavigateTab }) {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="text-2xl font-black text-emerald-700 tracking-tight font-mono">
-              {formatINRCompact(metrics.batchPoolValue)}
+              <AnimatedNumber value={metrics.batchPoolValue} formatFn={formatINRCompact} />
             </div>
             <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-mono">
               ₹{metrics.pendingEscrowVal.toFixed(0)} Queued
@@ -640,7 +684,7 @@ export function Dashboard({ onNavigateTab }) {
       {/* SECTION 3: PRIMARY ANALYTICS CHARTS */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Live Monthly Scan & Disbursement Bar Chart */}
-        <div className="lg:col-span-8 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between anim-fade-up anim-delay-350 hover:shadow-md transition-shadow duration-300">
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
               <div>
@@ -687,19 +731,19 @@ export function Dashboard({ onNavigateTab }) {
               <div className="bg-slate-50/90 border border-slate-100 p-3 rounded-xl">
                 <div className="text-[11px] font-semibold text-slate-400">Total Net Disbursed</div>
                 <div className="text-lg font-black text-slate-900 tracking-tight font-mono">
-                  ₹{metrics.grossDisbursed.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <AnimatedNumber value={metrics.grossDisbursed} prefix="₹" decimals={2} />
                 </div>
               </div>
               <div className="bg-slate-50/90 border border-slate-100 p-3 rounded-xl">
                 <div className="text-[11px] font-semibold text-slate-400">Pending &amp; Approved Queue</div>
                 <div className="text-lg font-black text-[#C84826] tracking-tight font-mono">
-                  ₹{metrics.pendingEscrowVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <AnimatedNumber value={metrics.pendingEscrowVal} prefix="₹" decimals={2} />
                 </div>
               </div>
               <div className="bg-slate-50/90 border border-slate-100 p-3 rounded-xl">
                 <div className="text-[11px] font-semibold text-slate-400">Est. Sec 194R TDS (10%)</div>
                 <div className="text-lg font-black text-slate-900 tracking-tight font-mono">
-                  ₹{metrics.tdsEstimated.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <AnimatedNumber value={metrics.tdsEstimated} prefix="₹" decimals={2} />
                 </div>
               </div>
             </div>
@@ -714,12 +758,12 @@ export function Dashboard({ onNavigateTab }) {
                   <div className="flex items-end space-x-1.5 h-32 w-full justify-center">
                     <div
                       style={{ height: `${bar.scanPct}%` }}
-                      className="w-4 bg-[#C84826] rounded-t-md transition-all"
+                      className="w-4 bg-[#C84826] rounded-t-md transition-all duration-700 ease-out anim-bar-grow hover:brightness-110 hover:w-5"
                       title={`${bar.label}: ${bar.scans} QR Scans`}
                     />
                     <div
                       style={{ height: `${bar.disbPct}%` }}
-                      className="w-4 bg-emerald-500 rounded-t-md transition-all"
+                      className="w-4 bg-emerald-500 rounded-t-md transition-all duration-700 ease-out anim-bar-grow hover:brightness-110 hover:w-5"
                       title={`${bar.label}: ₹${bar.disbursed.toFixed(2)} Disbursed`}
                     />
                   </div>
@@ -751,7 +795,7 @@ export function Dashboard({ onNavigateTab }) {
         </div>
 
         {/* Right: Module Activity Share */}
-        <div className="lg:col-span-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden anim-fade-up anim-delay-400 hover:shadow-md transition-shadow duration-300">
           <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-[#FEF2EE] rounded-full blur-2xl pointer-events-none"></div>
           <div>
             <div className="flex items-center justify-between">
@@ -785,7 +829,7 @@ export function Dashboard({ onNavigateTab }) {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-2xl font-black text-slate-900 tracking-tight font-mono">
-                  {metrics.share.totalOps}
+                  <AnimatedNumber value={metrics.share.totalOps} />
                 </span>
                 <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Records</span>
                 <span className="text-[10px] text-emerald-600 font-extrabold flex items-center mt-0.5 font-mono">
@@ -853,7 +897,7 @@ export function Dashboard({ onNavigateTab }) {
       </section>
 
       {/* SECTION 4: CORE PLATFORM SYSTEMS (4 Live Cards) */}
-      <section className="space-y-3">
+      <section className="space-y-3 anim-fade-up anim-delay-450">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-black text-slate-900 tracking-tight">Module Overview — Core Platform Systems</h3>
@@ -980,7 +1024,7 @@ export function Dashboard({ onNavigateTab }) {
       </section>
 
       {/* SECTION 5: RECENT ACTIVITIES & ATTENTION REQUIRED */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 anim-fade-up anim-delay-500">
         {/* Left: Live Telemetry Feed */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
@@ -1121,7 +1165,7 @@ export function Dashboard({ onNavigateTab }) {
       </section>
 
       {/* SECTION 6: RECENT TRANSACTIONS & VERIFICATION AUDIT TABLE */}
-      <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden anim-fade-up anim-delay-500 hover:shadow-md transition-shadow duration-300">
         <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100">
           <div>
             <h3 className="text-base font-extrabold text-slate-900">Recent Transactions &amp; Verification Audit</h3>
