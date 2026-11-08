@@ -94,7 +94,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     ? PROD_BASE
     : currentOrigin;
 
-  const apkDownloadUrl = `${publicBaseUrl}/apk/duragrit-vendor-v2.apk`;
+  const apkDownloadUrl = `${publicBaseUrl}/apk/duragrit-vendor-v4.8.2.apk`;
   const mobilePwaUrl = `${publicBaseUrl}/app/?app=vendor`;
   const adminApkDownloadUrl = `${publicBaseUrl}/apk/duragrit-admin-command-v2.apk`;
   const adminPwaUrl = `${publicBaseUrl}/app/?app=admin`;
