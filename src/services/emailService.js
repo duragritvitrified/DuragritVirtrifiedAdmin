@@ -442,6 +442,7 @@ export const sendLiveCustomEmail = async ({ to, subject, html, text, templateKey
     recipientEmail: to,
     recipientName: to.split('@')[0],
     subject,
+    html,
     status: isSuccess ? 'Delivered' : 'Failed',
     opens: 0,
     clicks: 0,

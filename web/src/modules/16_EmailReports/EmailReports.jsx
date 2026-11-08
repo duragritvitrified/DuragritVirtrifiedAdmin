@@ -916,37 +916,74 @@ export function EmailReports({ onNavigateSettings, initialMainTab = 'templates' 
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="bg-[#FAF9F6] p-4 rounded-xl border border-slate-200 space-y-1 font-mono">
-                <div><strong>To:</strong> {selectedEmail.recipientName} &lt;{selectedEmail.recipientEmail || selectedEmail.to}&gt;</div>
-                <div><strong>Subject:</strong> {selectedEmail.subject}</div>
-                <div><strong>Relay:</strong> {selectedEmail.relay}</div>
-              </div>
+            {(() => {
+              const previewHtml = selectedEmail.html || (() => {
+                const t = EMAIL_TEMPLATES.find(
+                  (tpl) => tpl.id === selectedEmail.templateKey || tpl.name === selectedEmail.template
+                );
+                if (t) {
+                  return t.generateHtml({
+                    recipientName: selectedEmail.recipientName || 'Valued Partner',
+                    recipientEmail: selectedEmail.recipientEmail || selectedEmail.to,
+                    userId: selectedEmail.userId || 'USR-1042',
+                    mobile: '+91 98112 40591',
+                    role: selectedEmail.role || 'Contractor',
+                    tempPassword: selectedEmail.tempPassword || selectedEmail.passkey || 'Dura#2026',
+                    hub: 'Morbi Central Kiln Hub',
+                    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+                    pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
+                  });
+                }
+                return null;
+              })();
 
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-                <h2 className="text-base font-black text-slate-900">
-                  Hello <span className="text-[#C84826]">{selectedEmail.recipientName}</span>,
-                </h2>
-                <p className="text-slate-600 leading-relaxed">
-                  Welcome to the DuraGrit Vitrified Partner Network. Your account credentials and mobile scanner access are active.
-                </p>
-                <div className="bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-3.5 flex items-center justify-between font-mono">
-                  <div>
-                    <span className="text-[10px] text-[#A62C11] font-bold block uppercase">User ID / Passkey</span>
-                    <span className="font-black text-slate-900 text-sm">
-                      {selectedEmail.userId} • {selectedEmail.passkey || selectedEmail.tempPassword || 'Active'}
-                    </span>
+              return (
+                <div className="p-6 overflow-y-auto space-y-4 text-xs">
+                  <div className="bg-[#FAF9F6] p-4 rounded-xl border border-slate-200 space-y-1 font-mono">
+                    <div><strong>To:</strong> {selectedEmail.recipientName} &lt;{selectedEmail.recipientEmail || selectedEmail.to}&gt;</div>
+                    <div><strong>Subject:</strong> {selectedEmail.subject}</div>
+                    <div><strong>Relay:</strong> {selectedEmail.relay || smtpConfig.smtpHost}</div>
                   </div>
-                  <button
-                    onClick={() => handleCopy(selectedEmail.passkey || selectedEmail.tempPassword || selectedEmail.userId)}
-                    className="px-2.5 py-1 bg-[#C84826] hover:bg-[#A62C11] text-white rounded text-[10px] font-bold flex items-center gap-1"
-                  >
-                    {copiedKey ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedKey ? 'Copied' : 'Copy'}</span>
-                  </button>
+
+                  {previewHtml ? (
+                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-100 p-2">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">
+                        RFC 5322 Responsive Email Frame
+                      </div>
+                      <iframe
+                        title="Rendered Email HTML"
+                        srcDoc={previewHtml}
+                        className="w-full min-h-[460px] border-0 bg-white rounded-lg shadow-xs"
+                        sandbox="allow-same-origin"
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+                      <h2 className="text-base font-black text-slate-900">
+                        Hello <span className="text-[#C84826]">{selectedEmail.recipientName || 'Partner'}</span>,
+                      </h2>
+                      <p className="text-slate-600 leading-relaxed">
+                        {selectedEmail.subject}
+                      </p>
+                      <div className="bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-3.5 flex items-center justify-between font-mono">
+                        <div>
+                          <span className="text-[10px] text-[#A62C11] font-bold block uppercase">Tracking ID & Status</span>
+                          <span className="font-black text-slate-900 text-sm">
+                            {selectedEmail.id} • {selectedEmail.status || 'Delivered'}
+                          </span>
+                        </div>
+                        {selectedEmail.userId && (
+                          <div className="text-right">
+                            <span className="text-[10px] text-[#A62C11] font-bold block uppercase">User ID</span>
+                            <span className="font-black text-slate-900 text-sm">{selectedEmail.userId}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         </div>
       )}
