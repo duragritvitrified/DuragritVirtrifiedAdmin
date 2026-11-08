@@ -226,7 +226,7 @@ export const sendOnboardingEmail = async ({
   pwaUrl
 }) => {
   const baseUrl = getEmailBaseUrl();
-  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk?v=2.4`;
+  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk`;
   const defaultVendorPwaUrl = `${baseUrl}/app/?app=vendor`;
   const finalApkUrl = apkUrl || defaultVendorApkUrl;
   const finalPwaUrl = pwaUrl || defaultVendorPwaUrl;
@@ -243,7 +243,7 @@ export const sendOnboardingEmail = async ({
         apkUrl: finalApkUrl,
         pwaUrl: finalPwaUrl
       })
-    : `<p>Welcome to DuraGrit! User ID: ${cleanUserId}, Temporary Password: ${tempPassword}. Download APK: ${finalApkUrl}</p>`;
+    : `<p>Welcome to DuraGrit! User ID: ${cleanUserId}, Temporary Password: ${tempPassword}. Download Vendor APK v4.8.2: ${finalApkUrl}</p>`;
 
   const to = recipientEmail || `${(mobile || 'partner').replace(/\D/g, '').slice(-10)}@duragrit.partner`;
   const subject = `Welcome to DuraGrit Vitrified — Your Vendor Partner Login Credentials & Mobile App Setup`;
@@ -252,7 +252,7 @@ export const sendOnboardingEmail = async ({
     to,
     subject,
     html,
-    text: `Welcome ${recipientName} to DuraGrit Vitrified! User ID: ${cleanUserId}, Password: ${tempPassword}. Download Vendor APK: ${finalApkUrl} or Web Portal: ${finalPwaUrl}`,
+    text: `Welcome ${recipientName} to DuraGrit Vitrified! User ID: ${cleanUserId}, Password: ${tempPassword}. Download Vendor APK v4.8.2: ${finalApkUrl} or Web Portal: ${finalPwaUrl}`,
     templateKey: 'onboarding'
   });
 
@@ -534,7 +534,7 @@ export const sendVendorOnboardingCredentialsEmail = async ({
   pwaUrl
 }) => {
   const baseUrl = getEmailBaseUrl();
-  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk?v=2.4`;
+  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk`;
   const defaultVendorPwaUrl = `${baseUrl}/app/?app=vendor`;
   const finalApkUrl = apkUrl || defaultVendorApkUrl;
   const finalPwaUrl = pwaUrl || defaultVendorPwaUrl;
@@ -549,7 +549,7 @@ export const sendVendorOnboardingCredentialsEmail = async ({
     hub: hub || 'Morbi Central Kiln Hub',
     apkUrl: finalApkUrl,
     pwaUrl: finalPwaUrl
-  }) : `<p>Welcome to DuraGrit! Mobile Login ID: ${loginId}, Passkey: ${passkey}. Download Vendor APK: ${finalApkUrl}</p>`;
+  }) : `<p>Welcome to DuraGrit! Mobile Login ID: ${loginId}, Passkey: ${passkey}. Download Vendor APK v4.8.2: ${finalApkUrl}</p>`;
 
   const to = recipientEmail || `${(mobile || 'partner').replace(/\D/g, '').slice(-10)}@duragrit.partner`;
   const subject = `Welcome to DuraGrit Vitrified — Your Vendor Partner Login Credentials & Mobile App Setup`;
@@ -558,7 +558,7 @@ export const sendVendorOnboardingCredentialsEmail = async ({
     to,
     subject,
     html,
-    text: `Namaste ${recipientName}! Your DuraGrit partner account is Approved. Login ID: ${loginId}, Passkey: ${passkey}. Download Vendor Partner APK at: ${finalApkUrl} or access Mobile Web Portal at: ${finalPwaUrl}`,
+    text: `Namaste ${recipientName}! Your DuraGrit partner account is Approved. Login ID: ${loginId}, Passkey: ${passkey}. Download Vendor Partner APK v4.8.2 at: ${finalApkUrl} or access Mobile Web Portal at: ${finalPwaUrl}`,
     templateKey: 'onboarding'
   });
 

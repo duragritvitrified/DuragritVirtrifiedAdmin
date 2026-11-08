@@ -158,7 +158,7 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{tempPassword}}', label: 'One-Time Temp Password', sample: 'Dura#8492' },
       { tag: '{{role}}', label: 'Assigned Partner Role', sample: 'Tile Contractor / Mason' },
       { tag: '{{hub}}', label: 'Regional Kiln Hub', sample: 'Morbi Central Kiln Hub' },
-      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4' },
+      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL (v4.8.2 Prod)', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk' },
       { tag: '{{pwaUrl}}', label: 'iPhone Safari Vendor Portal URL', sample: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor' }
     ],
     sampleData: {
@@ -167,7 +167,7 @@ export const EMAIL_TEMPLATES = [
       tempPassword: 'Dura#8492',
       role: 'Tile Contractor / Mason',
       hub: 'Morbi Central Kiln Hub',
-      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4',
+      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
       pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
     },
     generateHtml: (data = {}) => {
@@ -177,7 +177,7 @@ export const EMAIL_TEMPLATES = [
         tempPassword = 'Dura#8492',
         role = 'Tile Contractor / Mason',
         hub = 'Morbi Central Kiln Hub',
-        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4',
+        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
         pwaUrl = 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
       } = data;
 
@@ -246,12 +246,12 @@ export const EMAIL_TEMPLATES = [
               <!-- APP DOWNLOAD ACTION -->
               <div style="text-align: center; margin-bottom: 28px;">
                 <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Step 1: Download &amp; Install the Official DuraGrit Vendor Partner App</div>
-                <div style="font-size: 11px; color: #059669; font-weight: 700; margin-bottom: 12px;">Official Release v2.4 (4.10 MB) • Android Package Installer Verified</div>
+                <div style="font-size: 11px; color: #059669; font-weight: 700; margin-bottom: 12px;">Official Release v4.8.2 (Production Build) • Android Package Installer Verified</div>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td width="50%" align="center" style="padding: 0 6px;">
                       <a href="${apkUrl}" target="_blank" download="duragrit-vendor-v2.apk" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(5,150,105,0.35); text-align: center;">
-                        🤖 Download Vendor App (.APK)
+                        🤖 Download Vendor App v4.8.2 (.APK)
                       </a>
                     </td>
                     <td width="50%" align="center" style="padding: 0 6px;">
@@ -262,16 +262,16 @@ export const EMAIL_TEMPLATES = [
                   </tr>
                 </table>
                 <div style="margin-top: 10px; font-size: 11px; color: #64748b; text-align: center; line-height: 1.5;">
-                  Android Package: <a href="${apkUrl}" target="_blank" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Download (.apk)</a> • Mirror Link: <a href="https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2_(4).apk?v=2026.4" target="_blank" style="color: #059669; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2_(4).apk">Direct Mirror (.apk)</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" target="_blank" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • iPhone Safari: <a href="${pwaUrl}" target="_blank" style="color: #0284c7; font-weight: 700; text-decoration: underline;">Open Vendor Web App</a>
+                  Android Package: <a href="${apkUrl}" target="_blank" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Download v4.8.2 (.apk)</a> • Direct Link: <a href="https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk" target="_blank" style="color: #059669; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Production APK Link</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" target="_blank" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • iPhone Safari: <a href="${pwaUrl}" target="_blank" style="color: #0284c7; font-weight: 700; text-decoration: underline;">Open Vendor Web App</a>
                 </div>
               </div>
 
               <!-- QUICK START STEPS -->
               <div style="background-color: #FAF9F6; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; font-size: 12px; color: #475569; line-height: 1.6;">
                 <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px;">Vendor Quick-Start Instructions:</strong>
-                1. Tap <strong>Download Vendor App (.APK)</strong> on Android, or tap <strong>iPhone / Web Vendor Portal</strong> on iOS Safari.<br>
+                1. Tap <strong>Download Vendor App v4.8.2 (.APK)</strong> on Android, or tap <strong>iPhone / Web Vendor Portal</strong> on iOS Safari.<br>
                 2. On Android, if your phone prompts <em>&ldquo;File might be harmful&rdquo;</em>, tap <strong>&ldquo;Download anyway&rdquo;</strong> (this is standard for verified direct APK downloads).<br>
-                3. Once downloaded, tap the notification or open your Downloads folder to tap <strong>duragrit-vendor-v2.apk</strong> and choose <strong>Install</strong>.<br>
+                3. Once downloaded, tap the notification or open your Downloads folder to tap <strong>duragrit-vendor-v2.apk</strong> (v4.8.2 Production Build) and choose <strong>Install</strong>.<br>
                 4. On iPhone Safari, open the portal link, tap the Share icon at the bottom, and select <strong>&ldquo;Add to Home Screen&rdquo;</strong> for 1-tap full-screen Vendor App access.<br>
                 5. Sign in with your <strong>Partner Login ID</strong> and <strong>One-Time Passkey</strong> shown above.<br>
                 6. Link your UPI VPA to scan genuine DuraGrit QR codes and receive instant cashback payouts!
