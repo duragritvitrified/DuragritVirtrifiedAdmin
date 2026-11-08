@@ -26,6 +26,7 @@ import {
   Mail,
   Phone,
   AlertCircle,
+  CheckCircle2,
   ExternalLink,
 } from 'lucide-react';
 
@@ -305,12 +306,21 @@ export function UserManagement() {
   return (
     <div className="space-y-6 pb-12 font-sans select-none text-slate-800">
       {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed top-5 right-5 z-50 bg-[#C84826] text-white px-4 py-2.5 rounded-xl shadow-xl border border-stone-200/40 text-xs font-semibold flex items-center space-x-2 animate-fade-in">
-          <ShieldCheck className="w-4 h-4 text-white" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied/i.test(toastMsg);
+        return (
+          <div className={`fixed top-5 right-5 z-50 text-white px-4 py-2.5 rounded-xl shadow-xl border text-xs font-semibold flex items-center space-x-2 animate-fade-in ${
+            isError ? 'bg-rose-600 border-rose-400 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       {/* Top Breadcrumb & Live Sync Badge */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 pb-3">

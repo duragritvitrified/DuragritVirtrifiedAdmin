@@ -266,12 +266,21 @@ export function EmailReports({ onNavigateSettings, initialMainTab = 'templates' 
 
   return (
     <div className="flex-1 flex flex-col relative select-none">
-      {toastMsg && (
-        <div className="fixed top-20 right-6 z-50 bg-[#A62C11] text-white px-4 py-3 rounded-xl shadow-2xl border border-[#F9CEB8]/40 flex items-center space-x-2 animate-in fade-in slide-in-from-top-4 duration-200">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-xs font-semibold">{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied|timeout|unreachable/i.test(toastMsg);
+        return (
+          <div className={`fixed top-20 right-8 z-50 text-white px-4 py-3 rounded-xl shadow-2xl border flex items-center space-x-2.5 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200 select-none ${
+            isError ? 'bg-rose-600 border-rose-400/60 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400/60 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar pb-10">
         {/* HEADER */}

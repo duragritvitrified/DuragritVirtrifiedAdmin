@@ -7,6 +7,7 @@ import {
   Plus, Search, Download, Printer, ArrowLeft, RotateCcw,
   Package, QrCode, Wallet, TrendingUp, ShieldCheck, Check,
   Edit3, Trash2, Upload, AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 
 export function ProductCatalogMaster({ onNavigateQR }) {
@@ -298,12 +299,21 @@ export function ProductCatalogMaster({ onNavigateQR }) {
 
   return (
     <div className="space-y-6 select-none font-sans pb-10">
-      {toastMsg && (
-        <div className="fixed top-20 right-8 z-50 bg-[#1C1917] text-white px-4 py-3 rounded-xl shadow-2xl border border-stone-700 flex items-center space-x-3 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200">
-          <Check className="w-4 h-4 text-[#C84826] shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied|timeout|unreachable/i.test(toastMsg);
+        return (
+          <div className={`fixed top-20 right-8 z-50 text-white px-4 py-3 rounded-xl shadow-2xl border flex items-center space-x-2.5 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200 select-none ${
+            isError ? 'bg-rose-600 border-rose-400/60 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400/60 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       {viewMode === 'list' && (
         <>

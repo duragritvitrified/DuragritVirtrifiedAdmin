@@ -1816,7 +1816,10 @@ export function VendorManagement() {
   // ── RESEND EMAIL VERIFICATION (ONLY VENDOR CAN VERIFY VIA LINK) ────────────
   const handleResendVerificationEmail = async (vendor) => {
     if (!vendor.email) {
-      alert('Please add a valid email address to this partner first.');
+      setAlertToast({
+        type: 'error',
+        msg: 'Please add a valid email address to this partner first.',
+      });
       return;
     }
     const targetId = vendor.id || vendor.vendorId;
@@ -1852,7 +1855,10 @@ export function VendorManagement() {
   // ── SEND / RESEND CREDENTIALS & APK DOSSIER ────────────────────────────────
   const handleSendCredentialsDossier = async (vendor) => {
     if (!vendor.email) {
-      alert('Please add a valid email address to this partner first.');
+      setAlertToast({
+        type: 'error',
+        msg: 'Please add a valid email address to this partner first.',
+      });
       return;
     }
     await sendVendorOnboardingCredentialsEmail({
@@ -2018,27 +2024,23 @@ export function VendorManagement() {
       {/* Real-time Alert Toast Banner */}
       {alertToast && (
         <div
-          className={`p-3.5 rounded-xl border flex items-center justify-between shadow-sm animate-in fade-in transition-all ${
-            alertToast.type === 'success'
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-              : alertToast.type === 'warning'
-              ? 'bg-amber-50 border-amber-300 text-amber-900'
-              : 'bg-blue-50 border-blue-300 text-blue-900'
+          className={`p-3.5 rounded-xl border flex items-center justify-between shadow-md text-white animate-in fade-in transition-all ${
+            alertToast.type === 'error' || alertToast.type === 'warning' || /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied/i.test(alertToast.msg)
+              ? 'bg-rose-600 border-rose-400'
+              : 'bg-emerald-600 border-emerald-400'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            {alertToast.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            ) : alertToast.type === 'warning' ? (
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+            {alertToast.type === 'error' || alertToast.type === 'warning' || /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied/i.test(alertToast.msg) ? (
+              <AlertCircle className="w-5 h-5 text-white shrink-0" />
             ) : (
-              <Mail className="w-5 h-5 text-blue-600 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
             )}
-            <span className="text-xs font-bold">{alertToast.msg}</span>
+            <span className="text-xs font-bold leading-snug">{alertToast.msg}</span>
           </div>
           <button
             onClick={() => setAlertToast(null)}
-            className="text-stone-400 hover:text-stone-700 text-sm font-bold px-1.5 cursor-pointer"
+            className="text-white/80 hover:text-white text-sm font-bold px-1.5 cursor-pointer"
           >
             ✕
           </button>

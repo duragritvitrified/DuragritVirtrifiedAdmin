@@ -308,12 +308,21 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans select-none">
       {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed top-5 right-5 z-50 bg-[#A62C11] text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl border border-[#F9CEB8]/40 flex items-center space-x-2 animate-in slide-in-from-top-2 duration-200">
-          <Info className="w-4 h-4 text-[#F9CEB8] shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied/i.test(toastMsg);
+        return (
+          <div className={`fixed top-5 right-5 z-50 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl border flex items-center space-x-2 animate-in slide-in-from-top-2 duration-200 ${
+            isError ? 'bg-rose-600 border-rose-400/50 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400/50 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       {/* Top Banner / Module Header */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">

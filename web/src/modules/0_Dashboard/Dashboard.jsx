@@ -29,6 +29,7 @@ import {
   Package,
   Wallet,
   Database,
+  AlertCircle
 } from 'lucide-react';
 
 function formatINRCompact(val) {
@@ -374,12 +375,21 @@ export function Dashboard({ onNavigateTab }) {
   return (
     <div className="space-y-6 select-none font-sans pb-10">
       {/* Toast Alert */}
-      {toastMsg && (
-        <div className="fixed top-20 right-8 z-50 bg-[#A62C11] text-white px-4 py-3 rounded-xl shadow-2xl border border-white/20 flex items-center space-x-3 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#F9CEB8] shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied|timeout|unreachable/i.test(toastMsg);
+        return (
+          <div className={`fixed top-20 right-8 z-50 text-white px-4 py-3 rounded-xl shadow-2xl border flex items-center space-x-2.5 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200 select-none ${
+            isError ? 'bg-rose-600 border-rose-400/60 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400/60 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       {/* SECTION 1: WELCOME & GLOBAL CONTROLS BAR */}
       <section className="bg-gradient-to-r from-[#231512] via-[#3B1810] to-[#A62C11] text-white rounded-2xl p-5 sm:p-6 shadow-md border border-[#A62C11]/40 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 relative overflow-hidden">

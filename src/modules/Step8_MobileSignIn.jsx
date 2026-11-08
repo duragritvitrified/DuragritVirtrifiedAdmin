@@ -761,11 +761,16 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
       )}
 
       {/* Floating Toast */}
-      {toastMsg && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white text-xs px-4 py-2 rounded-xl shadow-lg border border-stone-700 font-sans">
-          {toastMsg}
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied|timeout|unreachable/i.test(toastMsg);
+        return (
+          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl border font-sans flex items-center space-x-2 ${
+            isError ? 'bg-rose-600 border-rose-400' : 'bg-emerald-600 border-emerald-400'
+          }`}>
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
     </div>
   );
 };

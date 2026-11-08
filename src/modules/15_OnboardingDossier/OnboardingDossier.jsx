@@ -234,12 +234,21 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
   return (
     <div className="flex-1 flex flex-col relative space-y-6">
       {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed top-20 right-6 z-50 bg-[#A62C11] text-white px-4 py-3 rounded-xl shadow-2xl border border-[#F9CEB8]/40 flex items-center space-x-2 text-xs font-semibold animate-in fade-in duration-200">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied/i.test(toastMsg);
+        return (
+          <div className={`fixed top-20 right-6 z-50 text-white px-4 py-3 rounded-xl shadow-2xl border flex items-center space-x-2 text-xs font-semibold animate-in fade-in duration-200 ${
+            isError ? 'bg-rose-600 border-rose-400 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       {/* ─── PAGE HEADER & EXECUTIVE ACTIONS ─────────────────────────────── */}
       <section className="flex flex-col xl:flex-row xl:items-center justify-between pb-4 gap-4 border-b border-slate-200">

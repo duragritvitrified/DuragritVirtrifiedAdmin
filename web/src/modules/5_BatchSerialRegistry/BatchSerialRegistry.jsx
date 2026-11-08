@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { jsPDF } from 'jspdf';
-import { QrCode, Search, Download, RefreshCw, Layers, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { QrCode, Search, Download, RefreshCw, Layers, ShieldCheck, CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
 export function BatchSerialRegistry() {
@@ -133,12 +135,21 @@ export function BatchSerialRegistry() {
 
   return (
     <div className="space-y-6 relative">
-      {toastMsg && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 text-xs font-semibold">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied|timeout|unreachable/i.test(toastMsg);
+        return (
+          <div className={`fixed top-20 right-8 z-50 text-white px-4 py-3 rounded-xl shadow-2xl border flex items-center space-x-2.5 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200 select-none ${
+            isError ? 'bg-rose-600 border-rose-400/60 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400/60 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

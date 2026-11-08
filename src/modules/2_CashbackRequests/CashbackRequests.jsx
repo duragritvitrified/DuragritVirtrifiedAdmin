@@ -4,7 +4,8 @@ import {
   Search, Download, Check, QrCode,
   RefreshCw, Eye, Sparkles,
   Zap, UploadCloud, Image as ImageIcon, X,
-  Building2
+  Building2,
+  AlertCircle
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
@@ -501,12 +502,21 @@ export function CashbackRequests() {
   return (
     <div className="space-y-6 select-none font-sans pb-10">
       {/* Global Toast */}
-      {toastMsg && (
-        <div className="fixed top-20 right-8 z-50 bg-[#A62C11] text-white px-5 py-3.5 rounded-xl shadow-2xl border border-white/20 flex items-center space-x-3 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200">
-          <Sparkles className="w-4 h-4 text-[#F9CEB8] shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toastMsg && (() => {
+        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied|timeout|unreachable/i.test(toastMsg);
+        return (
+          <div className={`fixed top-20 right-8 z-50 text-white px-4 py-3 rounded-xl shadow-2xl border flex items-center space-x-2.5 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200 select-none ${
+            isError ? 'bg-rose-600 border-rose-400/60 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400/60 shadow-emerald-950/30'
+          }`}>
+            {isError ? (
+              <AlertCircle className="w-4 h-4 text-white shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            )}
+            <span>{toastMsg}</span>
+          </div>
+        );
+      })()}
 
       {/* Breadcrumb & Screen Top Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-slate-200">
