@@ -69,17 +69,17 @@ export function Step13_WelcomeDossier({ onBack }) {
   }) || (vendors.length > 0 ? (myDigits === '8826021114' ? vendors.find(v => String(v.phone || v.mobile || '').includes('8826021114')) : null) || vendors[0] : null);
 
   const vendorCompanyName =
-    livePartner?.companyName ||
     currentUser?.companyName ||
-    livePartner?.name ||
     currentUser?.name ||
+    livePartner?.companyName ||
+    livePartner?.name ||
     (myDigits === '8826021114' ? 'DuraGrit Authorized Partner' : 'Verified Vendor Partner');
 
   const vendorId =
-    livePartner?.vendorId ||
-    livePartner?.id ||
     currentUser?.vendorId ||
     currentUser?.id ||
+    livePartner?.vendorId ||
+    livePartner?.id ||
     (myDigits === '8826021114' ? 'VND-101' : 'VND-101');
 
   const contactPerson =

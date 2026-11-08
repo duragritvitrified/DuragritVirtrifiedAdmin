@@ -161,27 +161,27 @@ export const PartnerOverviewDashboard = ({
   };
 
   const partner = {
-    id: matchedVendor?.vendorId || matchedVendor?.id || matchedUser?.userId || matchedUser?.id || currentUser?.vendorId || currentUser?.id || 'VND-101',
-    companyName: matchedVendor?.companyName || matchedVendor?.name || matchedUser?.companyName || currentUser?.companyName || currentUser?.name || 'DuraGrit Partner',
-    contactPerson: matchedVendor?.contactPerson || matchedUser?.name || currentUser?.name || 'Verified Partner',
-    name: matchedVendor?.contactPerson || matchedVendor?.companyName || matchedUser?.name || currentUser?.name || 'Verified Partner',
-    phone: matchedVendor?.phone || matchedVendor?.mobile || matchedUser?.mobile || currentUser?.mobile || '',
-    email: matchedVendor?.email || matchedUser?.email || currentUser?.email || '',
-    category: matchedVendor?.category || matchedVendor?.uiCategory || matchedUser?.role || currentUser?.role || 'Contractor',
-    role: matchedVendor?.category || matchedUser?.role || currentUser?.role || 'Contractor',
+    id: currentUser?.vendorId || currentUser?.id || matchedVendor?.vendorId || matchedVendor?.id || matchedUser?.userId || matchedUser?.id || 'VND-101',
+    companyName: currentUser?.companyName || currentUser?.name || matchedVendor?.companyName || matchedVendor?.name || matchedUser?.companyName || 'DuraGrit Authorized Partner',
+    contactPerson: currentUser?.contactPerson || currentUser?.name || matchedVendor?.contactPerson || matchedUser?.name || 'Verified Partner',
+    name: currentUser?.name || currentUser?.companyName || matchedVendor?.contactPerson || matchedVendor?.companyName || 'Verified Partner',
+    phone: currentUser?.phone || currentUser?.mobile || matchedVendor?.phone || matchedVendor?.mobile || '',
+    email: currentUser?.email || matchedVendor?.email || '',
+    category: currentUser?.category || currentUser?.role || matchedVendor?.category || 'Vendor Partner',
+    role: currentUser?.role || matchedVendor?.category || 'Vendor',
     city: matchedVendor?.city || matchedVendor?.location || matchedUser?.location || 'Morbi',
     state: matchedVendor?.state || 'Gujarat',
     location: matchedVendor?.city
       ? `${matchedVendor.city}, ${matchedVendor.state || 'Gujarat'}`
       : matchedVendor?.location || matchedUser?.location || 'Morbi, Gujarat',
-    status: matchedVendor?.status || matchedVendor?.accountStatus || matchedUser?.accountStatus || 'ACTIVE',
+    status: currentUser?.status || matchedVendor?.status || matchedVendor?.accountStatus || matchedUser?.accountStatus || 'ACTIVE',
     bankName: matchedVendor?.bankName || matchedUser?.bankName || '',
     accountNumber: matchedVendor?.accountNumber || matchedUser?.accountNo || '',
     ifsc: matchedVendor?.ifscCode || matchedVendor?.ifsc || matchedUser?.ifsc || '',
     upi: matchedVendor?.upi || matchedVendor?.upiId || matchedUser?.upi || '',
     tierLevel: matchedVendor?.tierLevel || matchedUser?.tierLevel || 'Gold Applicator (Tier 2)',
-    avatarUrl: matchedVendor?.avatarUrl || matchedVendor?.profileImage || matchedUser?.avatarUrl || currentUser?.avatarUrl || '',
-    profileImage: matchedVendor?.avatarUrl || matchedVendor?.profileImage || matchedUser?.avatarUrl || currentUser?.profileImage || '',
+    avatarUrl: currentUser?.avatarUrl || currentUser?.profileImage || matchedVendor?.avatarUrl || matchedVendor?.profileImage || matchedUser?.avatarUrl || '',
+    profileImage: currentUser?.avatarUrl || currentUser?.profileImage || matchedVendor?.avatarUrl || matchedVendor?.profileImage || matchedUser?.avatarUrl || '',
     activePurchaseOrders: matchedVendor?.activePurchaseOrders || 0,
     poValueLakhs: matchedVendor?.poValueLakhs || 0,
     releasedPayoutLakhs: matchedVendor?.releasedPayoutLakhs || 0,
@@ -377,40 +377,6 @@ export const PartnerOverviewDashboard = ({
       </div>
 
       <main className="p-3.5 space-y-3.5 flex-1 anim-slide-up">
-        {/* ===================================================================== */}
-        {/* OTA UPDATE CARD (If new version pushed by Admin)                     */}
-        {/* ===================================================================== */}
-        {updateStatus.hasUpdate && (
-          <section className="bg-gradient-to-r from-[#FEF2EE] via-[#FDE5DC] to-white rounded-2xl p-3 border-2 border-[#F9CEB8] shadow-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="p-1.5 bg-[#A6300F] text-white rounded-xl shadow-xs">
-                  <Rocket className="w-4 h-4 animate-pulse" />
-                </div>
-                <div>
-                  <span className="font-extrabold text-xs text-stone-900 block leading-tight">
-                    Update Ready: {updateStatus.latestVersion}
-                  </span>
-                  <span className="text-[10px] text-stone-600">
-                    {updateStatus.title || 'Official Code Push'}
-                  </span>
-                </div>
-              </div>
-              <span className="bg-[#A6300F] text-white text-[9px] font-mono font-black px-2 py-0.5 rounded-full uppercase">
-                OTA PUSH
-              </span>
-            </div>
-            <button
-              onClick={handleApplyUpdate}
-              disabled={isUpdating}
-              className="w-full py-2 bg-[#A6300F] hover:bg-[#8B230C] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-            >
-              <Rocket className="w-3.5 h-3.5 text-white" />
-              <span>{isUpdating ? 'Applying Updates...' : `Update Now to ${updateStatus.latestVersion}`}</span>
-            </button>
-          </section>
-        )}
-
         {/* ===================================================================== */}
         {/* 3. KPI HEADER (Vendor Scans, Payout Total, Approve, Paid, Pending)    */}
         {/* ===================================================================== */}

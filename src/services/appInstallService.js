@@ -12,6 +12,22 @@ export const CURRENT_BUILT_IN_BUILD = 154;
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
 // Standard release history
+export const isVersionHigher = (vNew, vOld) => {
+  const cleanNew = String(vNew || '').replace(/^v/i, '').trim();
+  const cleanOld = String(vOld || '').replace(/^v/i, '').trim();
+  if (!cleanNew || cleanNew === cleanOld) return false;
+  
+  const partsNew = cleanNew.split('.').map(Number);
+  const partsOld = cleanOld.split('.').map(Number);
+  for (let i = 0; i < Math.max(partsNew.length, partsOld.length); i++) {
+    const n = partsNew[i] || 0;
+    const o = partsOld[i] || 0;
+    if (n > o) return true;
+    if (n < o) return false;
+  }
+  return false;
+};
+
 export const DEFAULT_RELEASES = [
   {
     id: 'REL-2026-006',
@@ -102,7 +118,7 @@ export const getAppReleases = () => {
       return DEFAULT_RELEASES;
     }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    if (!Array.isArray(parsed) || parsed.length === 0 || Number(parsed[0]?.buildNumber || 0) < CURRENT_BUILT_IN_BUILD) {
       localStorage.setItem(RELEASES_KEY, JSON.stringify(DEFAULT_RELEASES));
       return DEFAULT_RELEASES;
     }
@@ -347,30 +363,31 @@ export const getClientDeviceUuid = () => {
 };
 
 export const getClientInstalledVersion = () => {
+  if (typeof window === 'undefined') return CURRENT_BUILT_IN_VERSION;
   const saved = localStorage.getItem(CLIENT_VERSION_KEY);
-  if (saved) return saved;
-  // This client bundle was built with CURRENT_BUILT_IN_VERSION
-  localStorage.setItem(CLIENT_VERSION_KEY, CURRENT_BUILT_IN_VERSION);
-  localStorage.setItem('duragrit_client_installed_build', String(CURRENT_BUILT_IN_BUILD));
-  return CURRENT_BUILT_IN_VERSION;
+  if (!saved || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
+    localStorage.setItem(CLIENT_VERSION_KEY, CURRENT_BUILT_IN_VERSION);
+    localStorage.setItem('duragrit_client_installed_build', String(CURRENT_BUILT_IN_BUILD));
+    return CURRENT_BUILT_IN_VERSION;
+  }
+  return saved;
 };
 
 // Check if current client has an OTA update available
 export const checkClientUpdateStatus = () => {
   const installedVer = getClientInstalledVersion();
   const latestRelease = getLatestRelease();
-  const normInstalled = String(installedVer || '').replace(/^v/i, '').trim();
-  const normLatest = String(latestRelease?.version || '').replace(/^v/i, '').trim();
 
-  const isApplied = localStorage.getItem('duragrit_ota_applied_' + (latestRelease?.version || '')) === 'true' ||
-                    localStorage.getItem('duragrit_ota_applied_v' + normLatest) === 'true' ||
-                    localStorage.getItem('duragrit_ota_applied_' + normLatest) === 'true';
+  // Strict check: An update ONLY exists if latestRelease is strictly HIGHER than installedVer
+  // AND strictly HIGHER than CURRENT_BUILT_IN_VERSION (v4.8.4)
+  const isHigherVer = isVersionHigher(latestRelease?.version, installedVer) && isVersionHigher(latestRelease?.version, CURRENT_BUILT_IN_VERSION);
+  const isHigherBuild = Number(latestRelease?.buildNumber || 0) > CURRENT_BUILT_IN_BUILD;
 
-  const hasUpdate = !isApplied && Boolean(normLatest && normLatest !== normInstalled);
+  const hasUpdate = Boolean(isHigherVer || isHigherBuild);
 
   return {
     hasUpdate,
-    installedVersion: installedVer,
+    installedVersion: installedVer || CURRENT_BUILT_IN_VERSION,
     latestRelease,
     latestVersion: latestRelease?.version || CURRENT_BUILT_IN_VERSION,
     isMandatory: Boolean(latestRelease?.isMandatory),
@@ -388,28 +405,24 @@ export const checkForLiveServerUpdate = async () => {
     const res = await fetch(`${origin}/api/version?t=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      const currentVer = getClientInstalledVersion();
-      const normServer = String(data.version || '').replace(/^v/i, '').trim();
-      const normClient = String(currentVer || '').replace(/^v/i, '').trim();
-      const cleanLatest = String(data.version).startsWith('v') ? data.version : `v${data.version}`;
+      const serverVer = data.version || '4.8.4';
+      const cleanServerVer = String(serverVer).startsWith('v') ? serverVer : `v${serverVer}`;
+      const serverBuild = Number(data.buildNumber) || 154;
 
-      const isAlreadyApplied = localStorage.getItem('duragrit_ota_applied_' + cleanLatest) === 'true' ||
-                               localStorage.getItem('duragrit_ota_applied_' + normServer) === 'true';
+      const isHigherVer = isVersionHigher(serverVer, CURRENT_BUILT_IN_VERSION);
+      const isHigherBuild = serverBuild > CURRENT_BUILT_IN_BUILD;
 
-      const serverBuild = Number(data.buildNumber) || 0;
-      const clientBuild = Number(localStorage.getItem('duragrit_client_installed_build')) || CURRENT_BUILT_IN_BUILD;
-
-      const hasUpdate = !isAlreadyApplied && (serverBuild > clientBuild || (normServer !== normClient && normServer !== '4.8.4'));
+      const hasUpdate = Boolean(isHigherVer || isHigherBuild);
 
       return {
         hasUpdate,
-        latestVersion: cleanLatest,
-        buildNumber: data.buildNumber || CURRENT_BUILT_IN_BUILD,
-        changelog: data.changelog || 'Mobile responsive layout and real-time vendor sync updates.',
+        latestVersion: cleanServerVer,
+        buildNumber: serverBuild,
+        changelog: data.changelog || 'Latest security & performance patches.',
         apkUrl: data.apkUrl,
         pwaUrl: data.pwaUrl,
-        installedVersion: currentVer,
-        title: `Official Release ${cleanLatest}`
+        installedVersion: CURRENT_BUILT_IN_VERSION,
+        title: `Official Release ${cleanServerVer}`
       };
     }
   } catch (e) {

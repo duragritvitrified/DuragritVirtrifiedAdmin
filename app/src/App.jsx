@@ -377,7 +377,8 @@ export function App() {
                 alt="DuraGrit"
                 className="h-6 sm:h-7 w-auto max-w-[130px] sm:max-w-[160px] object-contain shrink-0"
                 onError={(e) => {
-                  e.target.style.display = 'none';
+                  e.target.onerror = null;
+                  e.target.src = '/logo.png';
                 }}
               />
             </div>
