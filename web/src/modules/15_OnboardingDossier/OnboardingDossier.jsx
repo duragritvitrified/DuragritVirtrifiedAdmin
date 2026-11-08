@@ -73,9 +73,9 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
 
   const vendorApkUrl = typeof window !== 'undefined'
     ? (isLocalHost
-        ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-vendor-v2.apk`
-        : `${window.location.origin}/apk/duragrit-vendor-v2.apk`)
-    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk';
+        ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-vendor-v4.8.2.apk`
+        : `${window.location.origin}/apk/duragrit-vendor-v4.8.2.apk`)
+    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk';
 
   const adminPwaUrl = typeof window !== 'undefined'
     ? (isLocalHost
@@ -282,7 +282,7 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
 
           <a
             href={vendorApkUrl}
-            download="duragrit-vendor-v2.apk"
+            download="duragrit-vendor-v4.8.2.apk"
             onClick={() => showToast('Starting download for Vendor Mobile App APK...')}
             className="inline-flex items-center space-x-2 px-3.5 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
           >
@@ -463,8 +463,8 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
                 <div className="space-y-2 pt-1">
                   <a
                     href={vendorApkUrl}
-                    download="duragrit-vendor-v2.apk"
-                    onClick={() => showToast('Downloading Official Vendor Mobile App APK (duragrit-vendor-v2.apk)...')}
+                    download="duragrit-vendor-v4.8.2.apk"
+                    onClick={() => showToast('Downloading Official Vendor Mobile App APK (duragrit-vendor-v4.8.2.apk)...')}
                     className="w-full py-3 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-98"
                   >
                     <Download className="w-4 h-4 text-white" />
@@ -930,7 +930,7 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <a
                       href={vendorApkUrl}
-                      download="duragrit-vendor-v2.apk"
+                      download="duragrit-vendor-v4.8.2.apk"
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer"
                     >
                       <Download className="w-4 h-4" />

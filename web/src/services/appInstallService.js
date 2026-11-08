@@ -110,7 +110,7 @@ export const getAppVersionInfo = () => {
     releaseDate: latest.releaseDate || '04 Nov 2026',
     title: latest.title || 'Official Production Release',
     changelog: latest.changelog || 'Latest security & performance patches.',
-    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
     packageId: 'com.duragrit.contractor',
     size: latest.downloadSize || '18.4 MB'
   };

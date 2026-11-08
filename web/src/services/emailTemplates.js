@@ -158,7 +158,7 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{tempPassword}}', label: 'One-Time Temp Password', sample: 'Dura#8492' },
       { tag: '{{role}}', label: 'Assigned Partner Role', sample: 'Tile Contractor / Mason' },
       { tag: '{{hub}}', label: 'Regional Kiln Hub', sample: 'Morbi Central Kiln Hub' },
-      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL (v4.8.2 Prod)', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk' },
+      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL (v4.8.2 Prod)', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk' },
       { tag: '{{pwaUrl}}', label: 'iPhone Safari Vendor Portal URL', sample: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor' }
     ],
     sampleData: {
@@ -167,7 +167,7 @@ export const EMAIL_TEMPLATES = [
       tempPassword: 'Dura#8492',
       role: 'Tile Contractor / Mason',
       hub: 'Morbi Central Kiln Hub',
-      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
       pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
     },
     generateHtml: (data = {}) => {
@@ -177,7 +177,7 @@ export const EMAIL_TEMPLATES = [
         tempPassword = 'Dura#8492',
         role = 'Tile Contractor / Mason',
         hub = 'Morbi Central Kiln Hub',
-        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
         pwaUrl = 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
       } = data;
 

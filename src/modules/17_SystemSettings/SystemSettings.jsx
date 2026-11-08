@@ -1495,7 +1495,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                 {/* Download Vendor APK Package Button */}
                 <a
                   href={apkDownloadUrl}
-                  download="duragrit-vendor-v2.apk"
+                  download="duragrit-vendor-v4.8.2.apk"
                   onClick={() => showToast('Downloading Official DuraGrit Vendor Partner App (.APK)...')}
                   className="w-full py-3.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
                 >
