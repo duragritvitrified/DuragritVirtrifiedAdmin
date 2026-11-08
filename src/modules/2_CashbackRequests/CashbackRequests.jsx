@@ -228,15 +228,47 @@ export function CashbackRequests() {
         proofImageUrl: c.proofImageUrl || c.proofImage || c.proofUrl || null,
         paymentProofUrl: c.paymentProofUrl || c.paymentScreenshot || null,
         remarks: c.remarks || c.flagReason || '',
-        disbursedAtFormatted: c.disbursedAt
-          ? new Date(c.disbursedAt).toLocaleString('en-IN', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            : '',
+        // Approved / Rejected timestamps
+        approvedAtFormatted: (() => {
+          const raw = c.approvedAt || (isApprovedAwaiting || isDisbursed ? (c.updatedAt || c.submittedAt) : null);
+          if (!raw) return '';
+          try {
+            return new Date(raw).toLocaleString('en-IN', {
+              day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+            });
+          } catch (_) { return String(raw); }
+        })(),
+        approvedRelativeTime: (() => {
+          const raw = c.approvedAt || (isApprovedAwaiting || isDisbursed ? (c.updatedAt || c.submittedAt) : null);
+          return raw ? formatRelativeTime(raw) : '';
+        })(),
+        rejectedAtFormatted: (() => {
+          const raw = c.rejectedAt || (isRejected ? (c.updatedAt || c.submittedAt) : null);
+          if (!raw) return '';
+          try {
+            return new Date(raw).toLocaleString('en-IN', {
+              day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+            });
+          } catch (_) { return String(raw); }
+        })(),
+        rejectedRelativeTime: (() => {
+          const raw = c.rejectedAt || (isRejected ? (c.updatedAt || c.submittedAt) : null);
+          return raw ? formatRelativeTime(raw) : '';
+        })(),
+        // Disbursed / Release timestamps
+        disbursedAtFormatted: (() => {
+          const raw = c.disbursedAt || (isDisbursed ? (c.updatedAt || c.submittedAt) : null);
+          if (!raw) return '';
+          try {
+            return new Date(raw).toLocaleString('en-IN', {
+              day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+            });
+          } catch (_) { return String(raw); }
+        })(),
+        disbursedRelativeTime: (() => {
+          const raw = c.disbursedAt || (isDisbursed ? (c.updatedAt || c.submittedAt) : null);
+          return raw ? formatRelativeTime(raw) : '';
+        })(),
       };
     });
   }, [claims, vendors, users]);
@@ -463,11 +495,13 @@ export function CashbackRequests() {
         'Disbursed Amount (INR)',
         'Payout Method',
         'Destination',
+        'Scan Timestamp',
+        'Approval / Reject Date & Time',
+        'Disbursed Date & Time',
         'Status',
         'Payout Status',
         'UTR / RRN',
         'Remarks',
-        'Disbursed At',
       ];
       const rows = claimsList.map((c) => [
         c.id,
@@ -482,11 +516,13 @@ export function CashbackRequests() {
         c.disbursedAmount || 0,
         c.paymentMode,
         `"${c.payoutDest}"`,
+        `"${c.scanTimestamp || 'N/A'}"`,
+        `"${c.approvedAtFormatted || c.rejectedAtFormatted || 'Pending'}"`,
+        `"${c.disbursedAtFormatted || 'N/A'}"`,
         c.status,
         c.payoutStatus,
         `"${c.npciRrn || 'N/A'}"`,
         `"${(c.remarks || '').replace(/"/g, '""')}"`,
-        `"${c.disbursedAtFormatted || 'N/A'}"`,
       ]);
       const csvContent = 'data:text/csv;charset=utf-8,' + [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
       const encodedUri = encodeURI(csvContent);
@@ -812,7 +848,7 @@ export function CashbackRequests() {
       {/* CASHBACK REQUESTS DATA TABLE */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1250px] text-left text-xs border-collapse">
+          <table className="w-full min-w-[1680px] text-left text-xs border-collapse">
             <thead className="bg-slate-50/90 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-500">
               <tr>
                 {activeTab === 'pending' && (
@@ -832,6 +868,18 @@ export function CashbackRequests() {
                 <th className="py-3.5 px-3 min-w-[120px]">Cashback Claim</th>
                 <th className="py-3.5 px-4 min-w-[180px]">Payout Method &amp; Dest</th>
                 <th className="py-3.5 px-4 min-w-[165px]">Scan Timestamp</th>
+                <th className="py-3.5 px-4 min-w-[200px] bg-slate-100/70 border-x border-slate-200/60 font-black text-slate-700">
+                  <div className="flex items-center space-x-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Approval / Reject Date &amp; Time</span>
+                  </div>
+                </th>
+                <th className="py-3.5 px-4 min-w-[200px] bg-slate-100/70 border-r border-slate-200/60 font-black text-slate-700">
+                  <div className="flex items-center space-x-1.5">
+                    <Zap className="w-3.5 h-3.5 text-[#C84826]" />
+                    <span>Disbursed Date &amp; Time</span>
+                  </div>
+                </th>
                 <th className="py-3.5 px-4 min-w-[150px]">Status / Settlement</th>
                 <th className="py-3.5 px-4 text-right min-w-[180px]">Actions</th>
               </tr>
@@ -839,7 +887,7 @@ export function CashbackRequests() {
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {filteredClaims.length === 0 ? (
                 <tr>
-                  <td colSpan={activeTab === 'pending' ? 10 : 9} className="py-14 text-center text-slate-400">
+                  <td colSpan={activeTab === 'pending' ? 12 : 11} className="py-14 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-2 max-w-md mx-auto">
                       <div className="w-12 h-12 rounded-2xl bg-[#FEF2EE] border border-[#F9CEB8] flex items-center justify-center text-[#C84826]">
                         <QrCode className="w-6 h-6" />
@@ -984,7 +1032,78 @@ export function CashbackRequests() {
                         <div className="text-[10px] text-slate-400 font-sans mt-0.5">• {claim.relativeTime}</div>
                       </td>
 
-                      {/* Status / Settlement */}
+                                            {/* 1. Approval / Reject Date & Time */}
+                      <td className="py-3 px-4 whitespace-nowrap border-x border-slate-100 bg-slate-50/40">
+                        {claim.isApprovedAwaiting || (claim.isDisbursed && claim.approvedAtFormatted) ? (
+                          <div className="space-y-0.5">
+                            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black uppercase font-mono bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span>Approved</span>
+                            </div>
+                            <div className="font-mono text-xs font-bold text-slate-800">
+                              {claim.approvedAtFormatted}
+                            </div>
+                            {claim.approvedRelativeTime && (
+                              <div className="text-[10px] text-slate-400 font-sans">• {claim.approvedRelativeTime}</div>
+                            )}
+                          </div>
+                        ) : claim.isRejected ? (
+                          <div className="space-y-0.5">
+                            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black uppercase font-mono bg-rose-50 text-rose-800 border border-rose-200">
+                              <XCircle className="w-3 h-3 text-rose-600 shrink-0" />
+                              <span>Rejected</span>
+                            </div>
+                            <div className="font-mono text-xs font-bold text-rose-900">
+                              {claim.rejectedAtFormatted || claim.scanTimestamp}
+                            </div>
+                            {claim.rejectedRelativeTime && (
+                              <div className="text-[10px] text-slate-400 font-sans">• {claim.rejectedRelativeTime}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-1.5">
+                            <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span className="text-[11px] font-sans font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80">
+                              Pending Check
+                            </span>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* 2. Disbursed / Release Date & Time */}
+                      <td className="py-3 px-4 whitespace-nowrap border-r border-slate-100 bg-slate-50/40">
+                        {claim.isDisbursed ? (
+                          <div className="space-y-0.5">
+                            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black uppercase font-mono bg-emerald-100 text-emerald-900 border border-emerald-300">
+                              <Zap className="w-3 h-3 text-emerald-700 fill-emerald-700 shrink-0" />
+                              <span>Disbursed</span>
+                            </div>
+                            <div className="font-mono text-xs font-bold text-slate-900">
+                              {claim.disbursedAtFormatted || claim.approvedAtFormatted || claim.scanTimestamp}
+                            </div>
+                            {claim.disbursedRelativeTime && (
+                              <div className="text-[10px] text-slate-400 font-sans">• {claim.disbursedRelativeTime}</div>
+                            )}
+                          </div>
+                        ) : claim.isApprovedAwaiting ? (
+                          <div className="flex items-center space-x-1.5">
+                            <span className="text-[11px] font-sans font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+                              <span>Awaiting Release</span>
+                            </span>
+                          </div>
+                        ) : claim.isRejected ? (
+                          <span className="text-[11px] font-sans text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60">
+                            — (Quarantined)
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-sans text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60">
+                            — (Pending Check)
+                          </span>
+                        )}
+                      </td>
+
+{/* Status / Settlement */}
                       <td className="py-3 px-4 whitespace-nowrap">
                         {claim.status === 'Pending' ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
@@ -1436,8 +1555,20 @@ export function CashbackRequests() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">Disbursed Timestamp:</span>
+                  <span className="text-slate-500">Scan Timestamp:</span>
                   <span className="font-mono text-slate-700">
+                    {viewReceiptClaim.scanTimestamp}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Approval Timestamp:</span>
+                  <span className="font-mono font-bold text-emerald-700">
+                    {viewReceiptClaim.approvedAtFormatted || 'Approved Prior to Release'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Disbursed Timestamp:</span>
+                  <span className="font-mono font-bold text-slate-900">
                     {viewReceiptClaim.disbursedAtFormatted || viewReceiptClaim.scanTimestamp}
                   </span>
                 </div>

@@ -331,7 +331,10 @@ const mapClaimFromDb = (row) => {
     utr: row.npci_rrn || meta.transactionId || '',
     remarks: meta.remarks || row.flag_reason || '',
     flagReason: row.flag_reason || meta.remarks || '',
-    disbursedAt: row.disbursed_at || meta.disbursedAt || null,
+    disbursedAt: row.disbursed_at || meta.disbursedAt || (status === 'Disbursed' ? (row.updated_at || null) : null),
+    approvedAt: meta.approvedAt || row.approved_at || (status === 'Approved' || status === 'Disbursed' ? (row.updated_at || row.timestamp) : null),
+    rejectedAt: meta.rejectedAt || row.rejected_at || (status === 'Rejected' || status === 'Flagged' ? (row.updated_at || row.timestamp) : null),
+    decisionAt: meta.approvedAt || meta.rejectedAt || row.approved_at || row.rejected_at || (status !== 'Pending' ? (row.updated_at || row.timestamp) : null),
     submittedAt: row.timestamp || meta.submittedAt || new Date().toISOString(),
     date: meta.date || new Date(row.timestamp || Date.now()).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : (meta.updatedAt || 0),
@@ -1598,6 +1601,7 @@ export const DataProvider = ({ children }) => {
   // Step 1 Approval (Pending -> Approved / Completed Tab awaiting Release)
   const approveClaimStep1 = useCallback(async (claimId) => {
     const nowTs = Date.now();
+    const approvedIso = new Date().toISOString();
     let targetClaim = null;
 
     setClaims((prev) => {
@@ -1607,7 +1611,8 @@ export const DataProvider = ({ children }) => {
             ...c,
             status: 'Approved',
             payoutStatus: 'Pending Release',
-            approvedAt: new Date().toISOString(),
+            approvedAt: approvedIso,
+            decisionAt: approvedIso,
             updatedAt: nowTs,
           };
           return targetClaim;
@@ -1620,8 +1625,8 @@ export const DataProvider = ({ children }) => {
 
     if (SB_ONLINE && targetClaim) {
       const q = targetClaim.supabaseId
-        ? supabase.from('cashback_requests').update({ status: 'Approved', updated_at: new Date().toISOString() }).eq('id', targetClaim.supabaseId)
-        : supabase.from('cashback_requests').update({ status: 'Approved', updated_at: new Date().toISOString() }).eq('request_id', targetClaim.requestId || targetClaim.id);
+        ? supabase.from('cashback_requests').update({ status: 'Approved', updated_at: approvedIso }).eq('id', targetClaim.supabaseId)
+        : supabase.from('cashback_requests').update({ status: 'Approved', updated_at: approvedIso }).eq('request_id', targetClaim.requestId || targetClaim.id);
       const { error } = await q;
       if (error) handleSbError('approveClaimStep1', error);
     }
@@ -1656,6 +1661,7 @@ export const DataProvider = ({ children }) => {
             utr: finalTxnId,
             remarks,
             paymentProofUrl: paymentProofUrl || c.paymentProofUrl || null,
+            approvedAt: c.approvedAt || c.decisionAt || new Date(nowTs - 60000).toISOString(),
             disbursedAt: disbursedIso,
             updatedAt: nowTs,
           };
@@ -1792,12 +1798,22 @@ export const DataProvider = ({ children }) => {
 
   const rejectClaim = useCallback(async (claimId, reason = 'Rejected during Admin Verification') => {
     const nowTs = Date.now();
+    const rejectedIso = new Date().toISOString();
     const existing = claims.find((c) => c.id === claimId || c.requestId === claimId || c.supabaseId === claimId);
 
     setClaims((prev) => {
       const updated = prev.map((c) =>
         c.id === claimId || c.requestId === claimId || c.supabaseId === claimId
-          ? { ...c, status: 'Rejected', payoutStatus: 'Rejected', flagReason: reason, remarks: reason, updatedAt: nowTs }
+          ? {
+              ...c,
+              status: 'Rejected',
+              payoutStatus: 'Rejected',
+              flagReason: reason,
+              remarks: reason,
+              rejectedAt: rejectedIso,
+              decisionAt: rejectedIso,
+              updatedAt: nowTs,
+            }
           : c
       );
       pushDevSync({ claims: updated });
