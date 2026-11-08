@@ -17,8 +17,7 @@ import {
   Settings,
   Smartphone,
   Truck,
-  Workflow,
-  Eye,
+Eye,
   FileText,
   X,
 } from 'lucide-react';
@@ -508,24 +507,6 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           </div>
           <span className="text-[10px] bg-stone-100 text-stone-600 font-bold px-1.5 py-0.5 rounded font-mono">
             {activeInstallsCount} Live
-          </span>
-        </button>
-
-        {/* 10. 14-Step Supply Chain Master Workflow */}
-        <button
-          onClick={() => handleNav('master-workflow')}
-          className={navBtnClass(activeTab === 'master-workflow')}
-        >
-          <div className="flex items-center space-x-3">
-            <Workflow
-              className={`w-4 h-4 ${
-                activeTab === 'master-workflow' ? 'text-[#C84826]' : 'text-stone-400'
-              }`}
-            />
-            <span>10. Master Pipeline</span>
-          </div>
-          <span className="text-[10px] bg-amber-50 text-amber-700 font-bold px-1.5 py-0.5 rounded">
-            14 Steps
           </span>
         </button>
       </nav>
