@@ -76,6 +76,70 @@ const loadStorage = (key, fallback = []) => {
   }
 };
 
+export const BASE_REGISTERED_VENDORS = [
+  {
+    id: 'VND-101',
+    vendorId: 'VND-101',
+    companyName: 'DuraGrit Authorized Partner',
+    contactPerson: 'Vendor Partner',
+    phone: '8826021114',
+    mobile: '8826021114',
+    email: 'duragrit07@gmail.com',
+    passkey: 'Dura#4905',
+    tempPassword: 'Dura#4905',
+    status: 'ACTIVE',
+    accountStatus: 'Active',
+    category: 'Tile Contractor / Applicator',
+    location: 'Morbi Central Hub, Gujarat',
+    active: true,
+  },
+  {
+    id: 'VEN-001',
+    vendorId: 'VEN-001',
+    companyName: 'Reliance Polymers Ltd (Hazira Complex)',
+    contactPerson: 'Suresh Mehta',
+    phone: '9825011223',
+    mobile: '9825011223',
+    email: 'hazira.dispatch@reliance.com',
+    passkey: '1234',
+    status: 'ACTIVE',
+    accountStatus: 'Active',
+    category: 'Raw materials',
+    location: 'Hazira, Surat, Gujarat',
+    active: true,
+  },
+  {
+    id: 'VEN-002',
+    vendorId: 'VEN-002',
+    companyName: 'Gujarat Silicates & Additives Pvt Ltd',
+    contactPerson: 'Ketan Patel',
+    phone: '9909944556',
+    mobile: '9909944556',
+    email: 'dispatch@gujaratsilicates.in',
+    passkey: '1234',
+    status: 'ACTIVE',
+    accountStatus: 'Active',
+    category: 'Chemicals',
+    location: 'Morbi Industrial Estate, Gujarat',
+    active: true,
+  },
+  {
+    id: 'VEN-003',
+    vendorId: 'VEN-003',
+    companyName: 'Morbi Multi-Wall Bags & Packaging LLP',
+    contactPerson: 'Pravin Bhai',
+    phone: '9824288990',
+    mobile: '9824288990',
+    email: 'orders@morbibags.com',
+    passkey: '1234',
+    status: 'ACTIVE',
+    accountStatus: 'Active',
+    category: 'Packaging',
+    location: 'Morbi-Wankaner Highway, Gujarat',
+    active: true,
+  }
+];
+
 const normalizeMobile = (m) => String(m || '').replace(/\D/g, '').slice(-10);
 
 const toDbProductCategory = (cat) => {
@@ -389,7 +453,12 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
 export const DataProvider = ({ children }) => {
   const [skus, setSkus] = useState(() => loadStorage(STORAGE_KEYS.SKUS, []));
   const [users, setUsers] = useState(() => loadStorage(STORAGE_KEYS.USERS, []));
-  const [vendors, setVendors] = useState(() => loadStorage(STORAGE_KEYS.VENDORS, []));
+  const [vendors, setVendors] = useState(() => {
+    const list = loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS);
+    const has101 = list.some((v) => String(v.phone || v.mobile || '').includes('8826021114'));
+    if (!has101) return [...BASE_REGISTERED_VENDORS, ...list];
+    return list;
+  });
   const [batches, setBatches] = useState(() => loadStorage(STORAGE_KEYS.BATCHES, []));
   const [claims, setClaims] = useState(() => loadStorage(STORAGE_KEYS.CLAIMS, []));
   const deletedKeysRef = useRef(new Set(loadStorage(STORAGE_KEYS.DELETED, [])));
@@ -489,6 +558,22 @@ export const DataProvider = ({ children }) => {
         if (vendRes.status === 'fulfilled' && !vendRes.value.error) {
           sbConnected = true;
           sbVendors = (vendRes.value.data || []).map(mapVendorFromDb);
+        }
+
+        // Cross-platform SYNC_VENDORS_REGISTRY from Supabase
+        const syncRow = (claimRes.value?.data || []).find((c) => c.request_id === 'SYNC_VENDORS_REGISTRY');
+        if (syncRow?.flag_reason) {
+          try {
+            const parsed = JSON.parse(syncRow.flag_reason);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              sbVendors = mergeCollections(
+                sbVendors,
+                parsed,
+                (v) => String(v.vendorId || v.id || '').toUpperCase(),
+                deletedSet
+              );
+            }
+          } catch (_) {}
         }
 
         const tokenRows = tokRes.status === 'fulfilled' && !tokRes.value.error ? (tokRes.value.data || []) : [];
@@ -1127,6 +1212,40 @@ export const DataProvider = ({ children }) => {
   // ==================================================================
   // 4. VENDOR DIRECTORY CRUD — Admin <-> Vendor Portal <-> Supabase
   // ==================================================================
+  const syncVendorsToSupabase = useCallback(async (vendorList) => {
+    if (!SB_ONLINE || !Array.isArray(vendorList)) return;
+    try {
+      const { data: existing } = await supabase
+        .from('cashback_requests')
+        .select('id')
+        .eq('request_id', 'SYNC_VENDORS_REGISTRY')
+        .maybeSingle();
+
+      if (existing?.id) {
+        await supabase
+          .from('cashback_requests')
+          .update({
+            flag_reason: JSON.stringify(vendorList),
+            timestamp: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('cashback_requests')
+          .insert({
+            request_id: 'SYNC_VENDORS_REGISTRY',
+            qr_serial: 'DURAGRIT_VENDORS_STORE_V1',
+            claim_value: 1,
+            status: 'Approved',
+            flag_reason: JSON.stringify(vendorList),
+            payout_method: 'UPI'
+          });
+      }
+    } catch (e) {
+      console.warn('Sync vendors to Supabase failed:', e);
+    }
+  }, []);
+
   const addVendor = useCallback(async (vendorData) => {
     const nowTs = Date.now();
     const vendorId = String(vendorData.vendorId || vendorData.id || `VND-${String(vendors.length + 101).padStart(3, '0')}`).toUpperCase();
@@ -1198,11 +1317,12 @@ export const DataProvider = ({ children }) => {
       const filtered = prev.filter((v) => v.vendorId !== vendorId && v.id !== vendorId);
       const updated = [newVendor, ...filtered];
       pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
+      syncVendorsToSupabase(updated);
       return updated;
     });
 
     return newVendor;
-  }, [vendors.length, handleSbError, pushDevSync]);
+  }, [vendors.length, handleSbError, pushDevSync, syncVendorsToSupabase]);
 
   const updateVendor = useCallback(async (vendorId, updates) => {
     const nowTs = Date.now();
@@ -1229,6 +1349,7 @@ export const DataProvider = ({ children }) => {
         return v;
       });
       pushDevSync({ vendors: updated });
+      syncVendorsToSupabase(updated);
       return updated;
     });
 
@@ -1250,7 +1371,7 @@ export const DataProvider = ({ children }) => {
     }
 
     return { success: true, vendor: targetVendor };
-  }, [handleSbError, pushDevSync]);
+  }, [handleSbError, pushDevSync, syncVendorsToSupabase]);
 
   const toggleVendorStatus = useCallback(async (vendorId) => {
     const target = vendors.find((v) => v.id === vendorId || v.vendorId === vendorId);
@@ -1268,6 +1389,7 @@ export const DataProvider = ({ children }) => {
     setVendors((prev) => {
       const updated = prev.filter((v) => v.id !== vendorId && v.vendorId !== vendorId);
       pushDevSync({ vendors: updated });
+      syncVendorsToSupabase(updated);
       return updated;
     });
 
@@ -1276,7 +1398,7 @@ export const DataProvider = ({ children }) => {
       if (error) handleSbError('deleteVendor', error);
     }
     return { success: true };
-  }, [markDeletedKey, pushDevSync, handleSbError]);
+  }, [markDeletedKey, pushDevSync, handleSbError, syncVendorsToSupabase]);
 
   const releaseVendorPayout = useCallback(async (vendorId, releaseAmountLakhs, releaseNote = '', paymentMode = 'NPCI RTGS Escrow', customUtr = '') => {
     const amount = parseFloat(releaseAmountLakhs);

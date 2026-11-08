@@ -110,7 +110,7 @@ export const getAppVersionInfo = () => {
     releaseDate: latest.releaseDate || '04 Nov 2026',
     title: latest.title || 'Official Production Release',
     changelog: latest.changelog || 'Latest security & performance patches.',
-    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
+    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
     packageId: 'com.duragrit.contractor',
     size: latest.downloadSize || '18.4 MB'
   };
@@ -332,15 +332,51 @@ export const checkClientUpdateStatus = () => {
   };
 };
 
+// Check for live server updates via /api/version
+export const checkForLiveServerUpdate = async () => {
+  try {
+    const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+      ? window.location.origin
+      : 'https://duragrit-virtrified-admin.vercel.app';
+    const res = await fetch(`${origin}/api/version?t=${Date.now()}`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const currentVer = getClientInstalledVersion();
+      const hasUpdate = Boolean(data.version && data.version !== currentVer);
+      return {
+        hasUpdate,
+        latestVersion: data.version,
+        buildNumber: data.buildNumber,
+        changelog: data.changelog,
+        apkUrl: data.apkUrl,
+        pwaUrl: data.pwaUrl,
+        installedVersion: currentVer,
+        title: `Official Release ${data.version}`
+      };
+    }
+  } catch (e) {
+    console.warn('Check live update error:', e);
+  }
+  return checkClientUpdateStatus();
+};
+
 // Apply OTA update on mobile app: updates client version, informs database, and syncs
-export const applyClientAppUpdate = (targetVersion) => {
+export const applyClientAppUpdate = async (targetVersion) => {
   const latestRelease = getLatestRelease();
   const ver = targetVersion || latestRelease.version;
 
   // 1. Update local device version
   localStorage.setItem(CLIENT_VERSION_KEY, ver);
 
-  // 2. Update device fleet registry
+  // 2. Clear browser caches / service workers so latest code is loaded
+  if (typeof window !== 'undefined' && 'caches' in window) {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    } catch (_) {}
+  }
+
+  // 3. Update device fleet registry
   const uuid = getClientDeviceUuid();
   const installs = getDeviceInstalls();
 
@@ -351,7 +387,7 @@ export const applyClientAppUpdate = (targetVersion) => {
       return {
         ...item,
         appVersion: ver,
-        appBuildNumber: latestRelease.buildNumber || 148,
+        appBuildNumber: latestRelease.buildNumber || 152,
         isLatestVersion: true,
         hasPendingUpdate: false,
         pendingVersion: null,
@@ -367,7 +403,7 @@ export const applyClientAppUpdate = (targetVersion) => {
     saveDeviceInstalls(updatedInstalls);
   }
 
-  // 3. Trigger events for reactive UI updates
+  // 4. Trigger events for reactive UI updates
   try {
     window.dispatchEvent(new CustomEvent('duragrit:ota-update-applied', {
       detail: { version: ver, release: latestRelease }

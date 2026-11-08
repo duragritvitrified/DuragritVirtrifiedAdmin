@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { supabase } from '../services/supabaseClient';
 import {
   ShieldCheck,
   Building2,
@@ -145,7 +146,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
       }
 
       // 2. Intelligent Unified Authentication (Searches Vendors & Users seamlessly)
-      const matchedVendor = vendors.find((v) => {
+      let matchedVendor = vendors.find((v) => {
         const vid = String(v.vendorId || v.id || '').toLowerCase();
         const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
         const vEmail = String(v.email || '').toLowerCase();
@@ -155,6 +156,32 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           (vEmail && vEmail === cleanLower)
         );
       });
+
+      // If not yet in local state, fetch live synced vendors from Supabase
+      if (!matchedVendor) {
+        try {
+          const { data: syncRow } = await supabase
+            .from('cashback_requests')
+            .select('flag_reason')
+            .eq('request_id', 'SYNC_VENDORS_REGISTRY')
+            .maybeSingle();
+          if (syncRow?.flag_reason) {
+            const remoteVendors = JSON.parse(syncRow.flag_reason);
+            if (Array.isArray(remoteVendors)) {
+              matchedVendor = remoteVendors.find((v) => {
+                const vid = String(v.vendorId || v.id || '').toLowerCase();
+                const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+                const vEmail = String(v.email || '').toLowerCase();
+                return (
+                  vid === cleanLower ||
+                  (cleanDigits.length === 10 && vDigits === cleanDigits) ||
+                  (vEmail && vEmail === cleanLower)
+                );
+              });
+            }
+          }
+        } catch (_) {}
+      }
 
       const matchedUserInUsers = users.find((u) => {
         const uid = String(u.id || u.userId || '').toLowerCase();
@@ -169,7 +196,24 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
 
       // Built-in verified vendor baseline (fallback if offline)
       const fallbackVendor =
-        cleanLower === 'ven-001' || cleanLower === 'vnd-001' || cleanDigits === '9825011223'
+        cleanDigits === '8826021114' || cleanLower === 'vnd-101'
+          ? {
+              id: 'VND-101',
+              vendorId: 'VND-101',
+              companyName: 'DuraGrit Authorized Partner',
+              contactPerson: 'Vendor Partner',
+              phone: '8826021114',
+              mobile: '8826021114',
+              email: 'duragrit07@gmail.com',
+              location: 'Morbi Central Hub, Gujarat',
+              status: 'ACTIVE',
+              passkey: 'Dura#4905',
+              tempPassword: 'Dura#4905',
+              role: 'Vendor',
+              category: 'Tile Contractor / Applicator',
+              active: true
+            }
+          : cleanLower === 'ven-001' || cleanLower === 'vnd-001' || cleanDigits === '9825011223'
           ? {
               id: 'VEN-001',
               vendorId: 'VEN-001',
@@ -529,6 +573,34 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
             </button>
           </div>
         )}
+
+        {/* Live Sync & Update Control Bar */}
+        <div className="mb-3 flex items-center justify-between bg-stone-100/90 rounded-2xl px-3 py-2 border border-stone-200/90 text-xs font-sans">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[10.5px] font-bold text-stone-700">DuraGrit v4.8.2 Live Sync</span>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              showToast('🔄 Syncing vendor database & checking updates...');
+              try {
+                if (typeof window !== 'undefined' && 'caches' in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map((k) => caches.delete(k)));
+                }
+              } catch (_) {}
+              if (refreshAllData) await refreshAllData();
+              setTimeout(() => {
+                showToast('✓ Updated & synchronized with Admin Database!');
+                window.location.reload(true);
+              }, 400);
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-stone-50 active:scale-95 text-[#C84826] font-black text-[10px] rounded-lg border border-stone-200 shadow-2xs transition cursor-pointer"
+          >
+            <span>⚡ Sync &amp; Update App</span>
+          </button>
+        </div>
 
         {/* Main Sign-In Card matching PDF Page 8 */}
         <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">

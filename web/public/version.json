@@ -1,0 +1,7 @@
+{
+  "version": "4.8.2",
+  "buildNumber": 152,
+  "apkUrl": "https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk",
+  "pwaUrl": "https://duragrit-virtrified-admin.vercel.app/app/?app=vendor",
+  "changelog": "Vendor database live sync, seamless login, and OTA update engine enabled."
+}

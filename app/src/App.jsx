@@ -12,6 +12,7 @@ import { Step13_WelcomeDossier } from './modules/Step13_WelcomeDossier';
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 import {
   checkClientUpdateStatus,
+  checkForLiveServerUpdate,
   applyClientAppUpdate,
   getClientInstalledVersion,
   getLatestRelease,
@@ -127,17 +128,30 @@ export function App() {
   // Telemetry Sync & OTA Push Listeners
   useEffect(() => {
     syncMobileClientDevice(currentUser);
-    setUpdateStatus(checkClientUpdateStatus());
+    
+    // Check local status and also poll live server endpoint
+    checkForLiveServerUpdate().then((status) => {
+      if (status) setUpdateStatus(status);
+    });
 
     const handleSync = () => {
-      setUpdateStatus(checkClientUpdateStatus());
+      checkForLiveServerUpdate().then((status) => {
+        if (status) setUpdateStatus(status);
+      });
     };
 
     window.addEventListener('storage', handleSync);
     window.addEventListener('duragrit:ota-release-pushed', handleSync);
     window.addEventListener('duragrit:ota-update-applied', handleSync);
 
+    const interval = setInterval(() => {
+      checkForLiveServerUpdate().then((status) => {
+        if (status?.hasUpdate) setUpdateStatus(status);
+      });
+    }, 20000);
+
     return () => {
+      clearInterval(interval);
       window.removeEventListener('storage', handleSync);
       window.removeEventListener('duragrit:ota-release-pushed', handleSync);
       window.removeEventListener('duragrit:ota-update-applied', handleSync);
@@ -152,29 +166,28 @@ export function App() {
 
     setTimeout(() => {
       setUpdateProgress(45);
-      setUpdateStatusMessage(`Downloading bundle ${updateStatus.latestVersion} (18.6 MB)...`);
+      setUpdateStatusMessage(`Downloading bundle ${updateStatus.latestVersion || 'v4.8.2'}...`);
 
       setTimeout(() => {
         setUpdateProgress(75);
         setUpdateStatusMessage('Validating cryptographic integrity & HMAC signature...');
 
-        setTimeout(() => {
+        setTimeout(async () => {
           setUpdateProgress(95);
           setUpdateStatusMessage('Applying patch files & refreshing local schemas...');
 
-          setTimeout(() => {
-            const res = applyClientAppUpdate(updateStatus.latestVersion);
-            setUpdateProgress(100);
-            setUpdateStatusMessage(`✓ Successfully updated to ${res.version}!`);
-            setUpdateStatus(checkClientUpdateStatus());
-            setIsUpdating(false);
+          const res = await applyClientAppUpdate(updateStatus.latestVersion);
+          setUpdateProgress(100);
+          setUpdateStatusMessage(`✓ Successfully updated to ${res.version}!`);
+          setIsUpdating(false);
 
+          setTimeout(() => {
+            setShowUpdateModal(false);
+            setToastMsg(`App successfully updated to ${res.version}! Reloading latest work...`);
             setTimeout(() => {
-              setShowUpdateModal(false);
-              setToastMsg(`App successfully updated to ${res.version}! All new features are now active.`);
-              setTimeout(() => setToastMsg(''), 4000);
-            }, 1000);
-          }, 450);
+              window.location.reload(true);
+            }, 800);
+          }, 800);
         }, 500);
       }, 500);
     }, 400);
