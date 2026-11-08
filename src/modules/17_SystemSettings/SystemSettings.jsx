@@ -83,28 +83,21 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   const [copiedLink, setCopiedLink] = useState('');
   const [guidePlatform, setGuidePlatform] = useState('both'); // 'both' | 'android' | 'ios'
 
+  const PROD_BASE = 'https://duragrit-virtrified-admin.vercel.app';
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : PROD_BASE;
   const isLocalHost = typeof window !== 'undefined' && 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-  const mobilePwaUrl = typeof window !== 'undefined'
-    ? (isLocalHost 
-        ? `${window.location.protocol}//${window.location.hostname}:3002/` 
-        : `${window.location.origin}/app/?app=vendor`)
-    : 'http://localhost:3002/';
+  // Both on localhost and production, mobile device QR scanning and copy URLs must resolve to
+  // the live reachable domain so smartphone camera scans never fail on 'localhost' loopback.
+  const publicBaseUrl = (isLocalHost || !currentOrigin || currentOrigin.includes('localhost'))
+    ? PROD_BASE
+    : currentOrigin;
 
-  const apkDownloadUrl = typeof window !== 'undefined'
-    ? (isLocalHost ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-vendor-v2.apk` : `${window.location.origin}/apk/duragrit-vendor-v2.apk`)
-    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk';
-
-  const adminPwaUrl = typeof window !== 'undefined'
-    ? (isLocalHost 
-        ? `${window.location.protocol}//${window.location.hostname}:3001/` 
-        : `${window.location.origin}/app/?app=admin`)
-    : 'http://localhost:3001/';
-
-  const adminApkDownloadUrl = typeof window !== 'undefined'
-    ? (isLocalHost ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-admin-command-v2.apk` : `${window.location.origin}/apk/duragrit-admin-command-v2.apk`)
-    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk';
+  const apkDownloadUrl = `${publicBaseUrl}/apk/duragrit-vendor-v2.apk`;
+  const mobilePwaUrl = `${publicBaseUrl}/app/?app=vendor`;
+  const adminApkDownloadUrl = `${publicBaseUrl}/apk/duragrit-admin-command-v2.apk`;
+  const adminPwaUrl = `${publicBaseUrl}/app/?app=admin`;
 
   // SMTP Settings State
   const [config, setConfig] = useState(DEFAULT_SMTP_CONFIG);
@@ -1718,19 +1711,19 @@ export function SystemSettings({ initialSubTab = 'general' }) {
               </div>
             </div>
 
-            {/* Dual Download & Launch Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+            {/* Dual Download & Launch Actions with Dedicated QR Codes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10">
               {/* Option A: Download Admin APK */}
-              <div className="bg-slate-800/70 border border-slate-700 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+              <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-col justify-between space-y-3.5 shadow-md">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
                       <Smartphone className="w-4 h-4 text-emerald-400" />
                       <span>Admin Android APK Package</span>
                     </span>
-                    <span className="text-[9px] font-mono text-slate-400">18.4 MB</span>
+                    <span className="text-[9px] font-mono text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">OFFICIAL APK</span>
                   </div>
-                  <p className="text-[11px] text-slate-300">
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
                     Direct installation package for Android phones. High-speed moderation queue with background offline synchronization.
                   </p>
                 </div>
@@ -1745,6 +1738,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   <span>Download Admin Android App (.APK)</span>
                 </a>
 
+                {/* Copy Direct Admin APK Link */}
                 <div className="flex items-center space-x-2 bg-slate-900/90 rounded-xl p-2 border border-slate-700/80">
                   <input
                     type="text"
@@ -1760,19 +1754,42 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <span>{copiedLink === 'admin-apk' ? 'Copied' : 'Copy APK'}</span>
                   </button>
                 </div>
+
+                {/* Dedicated QR Code Quick Scan for Admin Android APK */}
+                <div className="pt-3 border-t border-slate-700/60 flex items-center space-x-3.5 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50">
+                  {adminApkQrDataUrl ? (
+                    <img
+                      src={adminApkQrDataUrl}
+                      alt="Scan to Download Admin APK"
+                      className="w-16 h-16 rounded-xl border-2 border-[#BA3A24] p-1 bg-white shadow-md shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-slate-800 flex items-center justify-center shrink-0">
+                      <QrCode className="w-6 h-6 text-slate-500" />
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-extrabold text-white block text-xs">
+                      Scan with Android Camera
+                    </span>
+                    <p className="text-[10.5px] text-slate-400 mt-0.5 leading-tight">
+                      Point camera to download <strong className="text-white font-mono">Admin APK</strong> directly to your phone.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Option B: Launch Admin PWA */}
-              <div className="bg-slate-800/70 border border-slate-700 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+              <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-col justify-between space-y-3.5 shadow-md">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
                       <Compass className="w-4 h-4 text-sky-400" />
                       <span>Admin Safari / Chrome PWA</span>
                     </span>
-                    <span className="text-[9px] font-mono text-emerald-400 font-bold">INSTANT LAUNCH</span>
+                    <span className="text-[9px] font-mono text-sky-400 font-bold bg-sky-950/80 px-2 py-0.5 rounded border border-sky-500/30">INSTANT PWA</span>
                   </div>
-                  <p className="text-[11px] text-slate-300">
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
                     Runs standalone in Apple Safari &amp; Google Chrome. Add to Home Screen in 5 seconds without APK installation.
                   </p>
                 </div>
@@ -1786,6 +1803,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   <span>Launch Admin Mobile App (PWA Portal)</span>
                 </button>
 
+                {/* Copy Direct Admin PWA Link */}
                 <div className="flex items-center space-x-2 bg-slate-900/90 rounded-xl p-2 border border-slate-700/80">
                   <input
                     type="text"
@@ -1801,38 +1819,43 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <span>{copiedLink === 'admin-pwa' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
+
+                {/* Dedicated QR Code Quick Scan for Admin iOS / Chrome PWA */}
+                <div className="pt-3 border-t border-slate-700/60 flex items-center space-x-3.5 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50">
+                  {adminPwaQrDataUrl ? (
+                    <img
+                      src={adminPwaQrDataUrl}
+                      alt="Scan for Admin PWA"
+                      className="w-16 h-16 rounded-xl border-2 border-sky-400 p-1 bg-white shadow-md shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-slate-800 flex items-center justify-center shrink-0">
+                      <QrCode className="w-6 h-6 text-slate-500" />
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-extrabold text-white block text-xs">
+                      Scan with iPhone / Chrome
+                    </span>
+                    <p className="text-[10.5px] text-slate-400 mt-0.5 leading-tight">
+                      Point camera to launch <strong className="text-white font-mono">Admin PWA Console</strong> in browser.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Quick QR Code for Admin App */}
-            <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10 bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800">
-              <div className="flex items-center space-x-3.5">
-                {adminPwaQrDataUrl ? (
-                  <img
-                    src={adminPwaQrDataUrl}
-                    alt="Scan for Admin Mobile App"
-                    className="w-20 h-20 rounded-xl border-2 border-[#BA3A24] p-1 bg-white shadow-md shrink-0"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-xl bg-slate-800 flex items-center justify-center shrink-0">
-                    <QrCode className="w-8 h-8 text-slate-500" />
-                  </div>
-                )}
-                <div>
-                  <span className="font-extrabold text-white block text-xs">
-                    Scan with Smartphone Camera to Open Admin Console
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Open your smartphone camera or Lens to immediately launch the Admin Mobile App. Use your Admin credentials (<strong className="text-white font-mono">{adminCreds.email}</strong>) to log in.
-                  </p>
-                </div>
-              </div>
-
-              <div className="shrink-0">
-                <span className="text-[10px] font-mono text-amber-300 bg-amber-950/60 border border-amber-600/40 px-2.5 py-1 rounded-xl block text-center">
-                  🔐 SSO Master Credentials Linked
+            {/* SSO Master Credentials Confirmation Bar */}
+            <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+              <div className="flex items-center space-x-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-[11px] text-slate-300">
+                  Admin Sign-in: Use master email (<strong className="text-white font-mono">{adminCreds.email}</strong>) and password to authenticate.
                 </span>
               </div>
+              <span className="text-[10px] font-mono text-amber-300 bg-amber-950/60 border border-amber-600/40 px-2.5 py-1 rounded-xl shrink-0 text-center">
+                🔐 SSO Master Credentials Linked
+              </span>
             </div>
           </div>
 
