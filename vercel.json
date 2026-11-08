@@ -23,7 +23,7 @@
       ]
     },
     {
-      "source": "/(sw(.*).js)",
+      "source": "/sw.js",
       "headers": [
         {
           "key": "Cache-Control",
@@ -36,7 +36,46 @@
       ]
     },
     {
-      "source": "/(manifest(.*).json)",
+      "source": "/sw-vendor.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/app/sw-vendor.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/manifest-vendor.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
       "headers": [
         {
           "key": "Cache-Control",
@@ -82,7 +121,11 @@
       "destination": "/manifest-admin.json"
     },
     {
-      "source": "/app/manifest(.*)",
+      "source": "/app/manifest.json",
+      "destination": "/manifest-vendor.json"
+    },
+    {
+      "source": "/app/manifest-vendor.json",
       "destination": "/manifest-vendor.json"
     },
     {
