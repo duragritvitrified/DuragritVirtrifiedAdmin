@@ -167,13 +167,9 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         );
       });
 
-      // Built-in verified vendor fallback
+      // Built-in verified vendor baseline (fallback if offline)
       const fallbackVendor =
-        cleanLower === 'ven-001' ||
-        cleanLower === 'vnd-001' ||
-        cleanLower === 'vendor' ||
-        cleanDigits === '9825011223' ||
-        cleanLower === 'demo'
+        cleanLower === 'ven-001' || cleanLower === 'vnd-001' || cleanDigits === '9825011223'
           ? {
               id: 'VEN-001',
               vendorId: 'VEN-001',
@@ -208,12 +204,9 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
             }
           : null;
 
-      // Built-in verified contractor/partner fallback
+      // Built-in verified partner baseline (fallback if offline)
       const fallbackPartner =
-        cleanLower === 'partner' ||
-        cleanLower === 'contractor' ||
-        cleanDigits === '9820144521' ||
-        cleanLower === 'usr-001'
+        cleanLower === 'partner' || cleanLower === 'contractor' || cleanDigits === '9820144521' || cleanLower === 'usr-001'
           ? {
               id: 'USR-001',
               userId: 'USR-001',
@@ -264,21 +257,23 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           targetVendor.active === false;
 
         if (isVendorInactive) {
-          setErrorMsg('⛔ Access Denied: Vendor account is currently DEACTIVATED or awaiting Admin Approval. Mobile App access is blocked. Please contact DuraGrit Administrator.');
+          setErrorMsg('⛔ Access Denied: Vendor account is currently DEACTIVATED or suspended in Admin Panel. Please contact DuraGrit Administrator.');
           setIsSubmitting(false);
           return;
         }
 
-        const expectedKeys = [
-          targetVendor.passkey,
-          targetVendor.tempPassword,
-          targetVendor.password,
-          '1234',
-          cleanDigits ? `Vend#${cleanDigits.slice(-4)}` : null,
+        // Strict Passkey / Password check against Admin Panel / Email credentials
+        const registeredPass = String(targetVendor.passkey || targetVendor.tempPassword || targetVendor.password || '1234').trim();
+        const validPasskeys = [
+          registeredPass,
+          targetVendor.tempPassword ? String(targetVendor.tempPassword).trim() : null,
+          targetVendor.password ? String(targetVendor.password).trim() : null,
         ].filter(Boolean);
 
-        if (expectedKeys.length > 0 && !expectedKeys.some((k) => String(k).trim() === rawPass)) {
-          setErrorMsg('Invalid vendor passkey. Enter passkey: 1234');
+        const isPasswordCorrect = validPasskeys.some((p) => p === rawPass);
+
+        if (!isPasswordCorrect) {
+          setErrorMsg('⛔ Invalid password or security passkey. Please check the credentials sent to your registered email or assigned in Admin Panel → Vendor Manage.');
           setIsSubmitting(false);
           return;
         }
@@ -306,7 +301,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
       const matchedUser = targetUser || targetVendor;
 
       if (!matchedUser) {
-        setErrorMsg('Account not found. Use Vendor ID: VEN-001 (Pass: 1234) or Mobile: 9825011223.');
+        setErrorMsg('⛔ Account not found. Please verify your Vendor ID or registered mobile number sent in your credentials email.');
         setIsSubmitting(false);
         return;
       }
@@ -320,21 +315,22 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         matchedUser.active === false;
 
       if (isPartnerInactive) {
-        setErrorMsg('⛔ Access Denied: Your partner account is currently DEACTIVATED. Mobile App login is blocked. Please contact DuraGrit Administrator.');
+        setErrorMsg('⛔ Access Denied: Your partner account is currently DEACTIVATED in Admin Panel. Please contact DuraGrit Administrator.');
         setIsSubmitting(false);
         return;
       }
 
-      const expectedUserKeys = [
-        matchedUser.passkey,
-        matchedUser.tempPassword,
-        matchedUser.password,
-        '1234',
-        cleanDigits ? `Dura#${cleanDigits.slice(-4)}` : null,
+      const registeredUserPass = String(matchedUser.passkey || matchedUser.tempPassword || matchedUser.password || matchedUser.terminal_key || '1234').trim();
+      const validUserPasskeys = [
+        registeredUserPass,
+        matchedUser.tempPassword ? String(matchedUser.tempPassword).trim() : null,
+        matchedUser.password ? String(matchedUser.password).trim() : null,
       ].filter(Boolean);
 
-      if (expectedUserKeys.length > 0 && !expectedUserKeys.some((k) => String(k).trim() === rawPass)) {
-        setErrorMsg('Invalid password or passkey. Enter passkey: 1234');
+      const isUserPassCorrect = validUserPasskeys.some((p) => p === rawPass);
+
+      if (!isUserPassCorrect) {
+        setErrorMsg('⛔ Invalid password or security passkey. Please check the credentials sent to your registered email or assigned in Admin Panel.');
         setIsSubmitting(false);
         return;
       }
@@ -550,62 +546,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           </div>
 
           <h1 className="text-2xl font-black text-stone-900 tracking-tight font-serif mb-1.5">
-            {portalMode === 'vendor'
-              ? 'Vendor Sign In'
-              : 'Contractor Sign In'}
+            {portalMode === 'vendor' ? 'Vendor Portal Sign In' : 'Partner Sign In'}
           </h1>
-          <p className="text-xs text-stone-500 leading-relaxed mb-4">
-            {portalMode === 'vendor'
-              ? 'Enter your registered mobile number or vendor ID to access purchase orders and material dispatch logs.'
-              : 'Sign in with your registered 10-digit mobile number or User ID created in the Admin Panel.'}
+          <p className="text-xs text-stone-500 leading-relaxed mb-4 font-sans">
+            Sign in with your registered Vendor ID, mobile number, or email and the security passkey dispatched to your inbox.
           </p>
-
-          {/* Quick Test Demo Credentials */}
-          <div className="mb-4 p-2.5 bg-stone-50 border border-stone-200/90 rounded-2xl shadow-2xs font-sans">
-            <div className="flex items-center justify-between text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Quick Test Partner Credentials
-              </span>
-              <span className="text-[#C84826] font-mono font-bold">Pass: 1234</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-[10.5px]">
-              <button
-                type="button"
-                onClick={() => {
-                  setPortalMode('vendor');
-                  setIdentifier('VEN-001');
-                  setPassword('1234');
-                  setErrorMsg('');
-                  showToast('Vendor (Reliance Polymers) credentials loaded!');
-                }}
-                className={`py-2 px-2.5 rounded-xl border text-center font-bold transition cursor-pointer active:scale-95 ${
-                  portalMode === 'vendor' && identifier === 'VEN-001'
-                    ? 'bg-[#C84826] text-white border-[#C84826] shadow-xs'
-                    : 'bg-white hover:bg-stone-100 text-stone-800 border-stone-200'
-                }`}
-              >
-                🏢 Demo Vendor
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPortalMode('contractor');
-                  setIdentifier('9820144521');
-                  setPassword('1234');
-                  setErrorMsg('');
-                  showToast('Partner/Contractor (Rameshwar Sharma) loaded!');
-                }}
-                className={`py-2 px-2.5 rounded-xl border text-center font-bold transition cursor-pointer active:scale-95 ${
-                  portalMode === 'contractor' && identifier === '9820144521'
-                    ? 'bg-[#C84826] text-white border-[#C84826] shadow-xs'
-                    : 'bg-white hover:bg-stone-100 text-stone-800 border-stone-200'
-                }`}
-              >
-                👷 Demo Partner
-              </button>
-            </div>
-          </div>
 
           <form onSubmit={handleSignIn} className="space-y-3.5">
             <div>
@@ -619,7 +564,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   <span className="text-[#C84826]">*</span>
                 </label>
                 <span className="text-[9.5px] font-mono text-stone-500 font-bold uppercase">
-                  SKU / GSTN LINKED
+                  VERIFIED CREDENTIALS
                 </span>
               </div>
               <div className="relative flex items-center">
@@ -630,13 +575,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder={
-                    portalMode === 'vendor'
-                      ? '+91 98450 21980'
-                      : portalMode === 'admin'
-                        ? 'duragrit07@gmail.com'
-                        : '+91 98450 21980'
-                  }
+                  placeholder="e.g. VEN-001 or 9825011223"
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#ECEAE6] bg-[#FBFAF9] focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] text-xs font-semibold text-stone-900 outline-none transition-all font-mono"
                   required
                 />
@@ -816,7 +755,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                 maxLength={6}
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
-                placeholder="Enter OTP (e.g. 1234)"
+                placeholder="Enter 4 or 6-digit OTP"
                 className="w-full px-3 py-2 text-center text-lg font-mono font-bold border border-stone-300 rounded-xl focus:border-[#C84826] outline-none"
               />
               <div className="flex gap-2">

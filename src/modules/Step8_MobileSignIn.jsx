@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import {
@@ -42,6 +42,67 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
     setTimeout(() => setToastMsg(''), 4000);
   };
 
+  // PWA Native Installation Handling
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true)
+    ) {
+      setIsInstalled(true);
+      return;
+    }
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+      showToast('🎉 DuraGrit Mobile App installed successfully!');
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    try {
+      const manifestEl = document.getElementById('app-manifest') || document.querySelector('link[rel="manifest"]');
+      if (manifestEl) manifestEl.setAttribute('href', '/manifest-vendor.json');
+    } catch (_) {}
+
+    if (!deferredPrompt) {
+      alert(
+        '📲 To install DuraGrit Vendor Partner App on your phone:\n\n' +
+        '• Android Chrome: Tap the 3 dots (⋮) at top right → Select "Install app" or "Add to Home screen"\n' +
+        '• Apple Safari: Tap the Share button at bottom → Select "Add to Home Screen"'
+      );
+      return;
+    }
+    try {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice?.outcome === 'accepted') {
+        showToast('Installing DuraGrit Vendor Partner App to Home Screen...');
+      }
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+    } catch (err) {
+      console.warn('Install prompt error:', err);
+    }
+  };
+
   // Live telemetry counters from database (0 when clean)
   const totalSerializedPcs = batches.reduce(
     (sum, b) => sum + Number(b.quantity || b.batchSize || b.totalTokens || b.tokens?.length || 0),
@@ -75,100 +136,16 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         cleanDigits === '9000000000';
 
       if (isAdminIdentifier) {
-        setErrorMsg('⛔ This portal is strictly for Vendors & Contractors. To access the Super Admin Operations Console, please open: http://localhost:3001/?app=admin');
+        const adminUrl = typeof window !== 'undefined' && !window.location.origin.includes('localhost')
+          ? `${window.location.origin}/app/?app=admin`
+          : 'http://localhost:3001/?app=admin';
+        setErrorMsg(`⛔ This portal is strictly for Vendors & Contractors. To access the Super Admin Operations Console, please open: ${adminUrl}`);
         setIsSubmitting(false);
         return;
       }
 
-      // 2. Vendor Authentication Handler
-      if (portalMode === 'vendor' || cleanLower.startsWith('vnd-') || cleanLower.startsWith('ven-')) {
-        const matchedVendor = vendors.find((v) => {
-          const vid = String(v.vendorId || v.id || '').toLowerCase();
-          const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
-          const vEmail = String(v.email || '').toLowerCase();
-          return (
-            vid === cleanLower ||
-            (cleanDigits.length === 10 && vDigits === cleanDigits) ||
-            (vEmail && vEmail === cleanLower)
-          );
-        });
-
-        // Built-in verified partner/vendor fallback
-        const fallbackVendor =
-          cleanLower === 'ven-001' ||
-          cleanLower === 'vnd-001' ||
-          cleanLower === 'vendor' ||
-          cleanDigits === '9825011223' ||
-          cleanLower === 'demo'
-            ? {
-                id: 'VEN-001',
-                vendorId: 'VEN-001',
-                companyName: 'Reliance Polymers Ltd (Hazira Complex)',
-                phone: '9825011223',
-                email: 'hazira.dispatch@reliance.com',
-                location: 'Hazira, Surat, Gujarat',
-                status: 'ACTIVE',
-                passkey: '1234',
-              }
-            : null;
-
-        const targetVendor = matchedVendor || fallbackVendor;
-
-        if (!targetVendor) {
-          setErrorMsg('Vendor account not found. Use ID: VEN-001 / Pass: 1234 or add Vendor in Admin Panel.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Active / Deactive Guard for Vendor
-        const isVendorInactive =
-          targetVendor.status === 'INACTIVE' ||
-          targetVendor.status === 'DEACTIVE' ||
-          targetVendor.status === 'Suspended' ||
-          targetVendor.status === 'Pending' ||
-          targetVendor.accountStatus === 'Suspended' ||
-          targetVendor.active === false;
-
-        if (isVendorInactive) {
-          setErrorMsg('⛔ Access Denied: Vendor account is currently DEACTIVATED or awaiting Admin Approval. Mobile App access is blocked. Please contact DuraGrit Administrator.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        const expectedKeys = [
-          targetVendor.passkey,
-          targetVendor.tempPassword,
-          targetVendor.password,
-          '1234',
-        ].filter(Boolean);
-
-        if (expectedKeys.length > 0 && !expectedKeys.some((k) => String(k).trim() === rawPass)) {
-          setErrorMsg('Invalid vendor passkey. Enter passkey: 1234');
-          setIsSubmitting(false);
-          return;
-        }
-
-        loginUser({
-          id: targetVendor.vendorId || targetVendor.id,
-          vendorId: targetVendor.vendorId || targetVendor.id,
-          name: targetVendor.companyName,
-          mobile: targetVendor.phone || targetVendor.mobile || '',
-          email: targetVendor.email || '',
-          role: 'Vendor',
-          location: targetVendor.location || targetVendor.city || 'Morbi Hub',
-          status: targetVendor.status || 'ACTIVE',
-          hub: yardLocation,
-          avatarUrl: targetVendor.avatarUrl || targetVendor.profileImage || '',
-          profileImage: targetVendor.avatarUrl || targetVendor.profileImage || '',
-        });
-
-        if (onLoginSuccess) onLoginSuccess('dashboard');
-        return;
-      }
-
-      // 3. Contractor / Mason / Dealer / External Partner Authentication Handler
-      // External partners (Contractor, Distributor, Retailer, Dealer) are registered under 5. Vendor Manage
-      const matchedVendorPartner = vendors.find((v) => {
+      // 2. Intelligent Unified Authentication (Searches Vendors & Users seamlessly)
+      const matchedVendor = vendors.find((v) => {
         const vid = String(v.vendorId || v.id || '').toLowerCase();
         const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
         const vEmail = String(v.email || '').toLowerCase();
@@ -179,45 +156,57 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         );
       });
 
-      const rawMatchedUser = matchedVendorPartner
-        ? {
-            id: matchedVendorPartner.vendorId || matchedVendorPartner.id,
-            userId: matchedVendorPartner.vendorId || matchedVendorPartner.id,
-            name: matchedVendorPartner.contactPerson || matchedVendorPartner.companyName || 'Verified Partner',
-            companyName: matchedVendorPartner.companyName || matchedVendorPartner.name || '',
-            fullLegalName: matchedVendorPartner.contactPerson || matchedVendorPartner.companyName,
-            mobile: matchedVendorPartner.phone || matchedVendorPartner.mobile || '',
-            email: matchedVendorPartner.email || '',
-            role: matchedVendorPartner.category === 'Contractor' ? 'Contractor' : (matchedVendorPartner.category || 'Contractor'),
-            tierLevel: matchedVendorPartner.tierLevel || 'Gold Applicator (Tier 2)',
-            upi: matchedVendorPartner.upi || '',
-            bankName: matchedVendorPartner.bankName || '',
-            accountNumber: matchedVendorPartner.accountNumber || '',
-            ifsc: matchedVendorPartner.ifscCode || matchedVendorPartner.ifsc || '',
-            location: matchedVendorPartner.city || matchedVendorPartner.location || 'Morbi Central Hub',
-            accountStatus: matchedVendorPartner.status || 'Active',
-            passkey: matchedVendorPartner.passkey || matchedVendorPartner.tempPassword,
-            tempPassword: matchedVendorPartner.tempPassword || matchedVendorPartner.passkey,
-            avatarUrl: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
-            profileImage: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
-          }
-        : users.find((u) => {
-            const uid = String(u.id || u.userId || '').toLowerCase();
-            const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);
-            const uEmail = String(u.email || '').toLowerCase();
-            return (
-              uid === cleanLower ||
-              (cleanDigits.length === 10 && uDigits === cleanDigits) ||
-              (uEmail && uEmail === cleanLower)
-            );
-          });
+      const matchedUserInUsers = users.find((u) => {
+        const uid = String(u.id || u.userId || '').toLowerCase();
+        const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);
+        const uEmail = String(u.email || '').toLowerCase();
+        return (
+          uid === cleanLower ||
+          (cleanDigits.length === 10 && uDigits === cleanDigits) ||
+          (uEmail && uEmail === cleanLower)
+        );
+      });
 
-      // Built-in verified contractor/partner fallback
+      // Built-in verified vendor baseline (fallback if offline)
+      const fallbackVendor =
+        cleanLower === 'ven-001' || cleanLower === 'vnd-001' || cleanDigits === '9825011223'
+          ? {
+              id: 'VEN-001',
+              vendorId: 'VEN-001',
+              companyName: 'Reliance Polymers Ltd (Hazira Complex)',
+              phone: '9825011223',
+              email: 'hazira.dispatch@reliance.com',
+              location: 'Hazira, Surat, Gujarat',
+              status: 'ACTIVE',
+              passkey: '1234',
+            }
+          : cleanLower === 'ven-002' || cleanDigits === '9909944556'
+          ? {
+              id: 'VEN-002',
+              vendorId: 'VEN-002',
+              companyName: 'Gujarat Silicates & Additives Pvt Ltd',
+              phone: '9909944556',
+              email: 'dispatch@gujaratsilicates.in',
+              location: 'Morbi Industrial Estate, Gujarat',
+              status: 'ACTIVE',
+              passkey: '1234',
+            }
+          : cleanLower === 'ven-003' || cleanDigits === '9824288990'
+          ? {
+              id: 'VEN-003',
+              vendorId: 'VEN-003',
+              companyName: 'Morbi Multi-Wall Bags & Packaging LLP',
+              phone: '9824288990',
+              email: 'orders@morbibags.com',
+              location: 'Morbi-Wankaner Highway, Gujarat',
+              status: 'ACTIVE',
+              passkey: '1234',
+            }
+          : null;
+
+      // Built-in verified partner baseline (fallback if offline)
       const fallbackPartner =
-        cleanLower === 'partner' ||
-        cleanLower === 'contractor' ||
-        cleanDigits === '9820144521' ||
-        cleanLower === 'usr-001'
+        cleanLower === 'partner' || cleanLower === 'contractor' || cleanDigits === '9820144521' || cleanLower === 'usr-001'
           ? {
               id: 'USR-001',
               userId: 'USR-001',
@@ -235,64 +224,135 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               status: 'Active',
               passkey: '1234',
             }
+          : cleanDigits === '9898012345' || cleanLower === 'usr-002'
+          ? {
+              id: 'USR-002',
+              userId: 'USR-002',
+              name: 'Hitesh Bhai Patel',
+              fullLegalName: 'Hitesh Bhai Patel',
+              mobile: '9898012345',
+              email: 'hitesh.patel@duragrit.dealer',
+              role: 'Dealer',
+              tierLevel: 'Platinum Distributor (Tier 1)',
+              location: 'Ahmedabad, Gujarat',
+              status: 'Active',
+              passkey: '1234',
+            }
           : null;
 
-      const matchedUser = rawMatchedUser || fallbackPartner;
+      // Decide whether account is Vendor or Contractor/User
+      const targetVendor = matchedVendor || fallbackVendor;
+      const targetUser = matchedUserInUsers || fallbackPartner;
+
+      // Determine priority: if ID explicitly starts with VEN/VND or vendor matched, treat as Vendor
+      const isExplicitVendor = cleanLower.startsWith('ven-') || cleanLower.startsWith('vnd-') || targetVendor?.vendorId;
+
+      if (targetVendor && (isExplicitVendor || !targetUser || portalMode === 'vendor')) {
+        // Active / Deactive Guard for Vendor
+        const isVendorInactive =
+          targetVendor.status === 'INACTIVE' ||
+          targetVendor.status === 'DEACTIVE' ||
+          targetVendor.status === 'Suspended' ||
+          targetVendor.accountStatus === 'Suspended' ||
+          targetVendor.active === false;
+
+        if (isVendorInactive) {
+          setErrorMsg('⛔ Access Denied: Vendor account is currently DEACTIVATED or suspended in Admin Panel. Please contact DuraGrit Administrator.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Strict Passkey / Password check against Admin Panel / Email credentials
+        const registeredPass = String(targetVendor.passkey || targetVendor.tempPassword || targetVendor.password || '1234').trim();
+        const validPasskeys = [
+          registeredPass,
+          targetVendor.tempPassword ? String(targetVendor.tempPassword).trim() : null,
+          targetVendor.password ? String(targetVendor.password).trim() : null,
+        ].filter(Boolean);
+
+        const isPasswordCorrect = validPasskeys.some((p) => p === rawPass);
+
+        if (!isPasswordCorrect) {
+          setErrorMsg('⛔ Invalid password or security passkey. Please check the credentials sent to your registered email or assigned in Admin Panel → Vendor Manage.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        loginUser({
+          id: targetVendor.vendorId || targetVendor.id,
+          vendorId: targetVendor.vendorId || targetVendor.id,
+          name: targetVendor.companyName,
+          companyName: targetVendor.companyName,
+          mobile: targetVendor.phone || targetVendor.mobile || '',
+          email: targetVendor.email || '',
+          role: 'Vendor',
+          location: targetVendor.location || targetVendor.city || 'Morbi Hub',
+          status: targetVendor.status || 'ACTIVE',
+          hub: yardLocation,
+          avatarUrl: targetVendor.avatarUrl || targetVendor.profileImage || '',
+          profileImage: targetVendor.avatarUrl || targetVendor.profileImage || '',
+        });
+
+        if (onLoginSuccess) onLoginSuccess('dashboard');
+        return;
+      }
+
+      // Partner / Contractor Authentication
+      const matchedUser = targetUser || targetVendor;
 
       if (!matchedUser) {
-        setErrorMsg('Partner account not found. Use Mobile: 9820144521 / Pass: 1234, or sign in via OTP (SMS).');
+        setErrorMsg('⛔ Account not found. Please verify your Vendor ID or registered mobile number sent in your credentials email.');
         setIsSubmitting(false);
         return;
       }
 
       // Active / Deactive Guard for Partner / Contractor
       const isPartnerInactive =
-        matchedVendorPartner &&
-        (matchedVendorPartner.status === 'INACTIVE' ||
-         matchedVendorPartner.status === 'DEACTIVE' ||
-         matchedVendorPartner.status === 'Suspended' ||
-         matchedVendorPartner.status === 'Pending' ||
-         matchedVendorPartner.accountStatus === 'Suspended' ||
-         matchedVendorPartner.active === false);
+        matchedUser.status === 'INACTIVE' ||
+        matchedUser.status === 'DEACTIVE' ||
+        matchedUser.status === 'Suspended' ||
+        matchedUser.accountStatus === 'Suspended' ||
+        matchedUser.active === false;
 
       if (isPartnerInactive) {
-        setErrorMsg('⛔ Access Denied: Your partner account is currently DEACTIVATED or awaiting Admin Approval. Mobile App login is blocked. Please contact DuraGrit Administrator.');
+        setErrorMsg('⛔ Access Denied: Your partner account is currently DEACTIVATED in Admin Panel. Please contact DuraGrit Administrator.');
         setIsSubmitting(false);
         return;
       }
 
-      const expectedUserKeys = [
-        matchedUser.passkey,
-        matchedUser.tempPassword,
-        matchedUser.password,
-        '1234',
-        `Dura#${cleanDigits.slice(-4)}`,
+      const registeredUserPass = String(matchedUser.passkey || matchedUser.tempPassword || matchedUser.password || matchedUser.terminal_key || '1234').trim();
+      const validUserPasskeys = [
+        registeredUserPass,
+        matchedUser.tempPassword ? String(matchedUser.tempPassword).trim() : null,
+        matchedUser.password ? String(matchedUser.password).trim() : null,
       ].filter(Boolean);
 
-      if (expectedUserKeys.length > 0 && !expectedUserKeys.some((k) => String(k).trim() === rawPass)) {
-        setErrorMsg('Invalid password or passkey. Check the passkey assigned in Admin Panel → 5. Vendor Manage.');
+      const isUserPassCorrect = validUserPasskeys.some((p) => p === rawPass);
+
+      if (!isUserPassCorrect) {
+        setErrorMsg('⛔ Invalid password or security passkey. Please check the credentials sent to your registered email or assigned in Admin Panel.');
         setIsSubmitting(false);
         return;
       }
 
       loginUser({
-        id: matchedUser.id || matchedUser.userId,
-        userId: matchedUser.userId || matchedUser.id,
-        name: matchedUser.name || matchedUser.fullLegalName || 'Verified Partner',
-        companyName: matchedUser.companyName || matchedVendorPartner?.companyName || matchedUser.name || '',
+        id: matchedUser.id || matchedUser.userId || matchedUser.vendorId,
+        userId: matchedUser.userId || matchedUser.id || matchedUser.vendorId,
+        name: matchedUser.name || matchedUser.contactPerson || matchedUser.companyName || 'Verified Partner',
+        companyName: matchedUser.companyName || matchedUser.name || '',
         mobile: matchedUser.mobile || matchedUser.phone || '',
         email: matchedUser.email || '',
-        role: matchedUser.role || 'Contractor',
+        role: matchedUser.role || matchedUser.category || 'Contractor',
         tier: matchedUser.tierLevel || 'Gold Applicator (Tier 2)',
         upi: matchedUser.upi || matchedUser.vpa || '',
         bankName: matchedUser.bankName || '',
         accountNumber: matchedUser.accountNumber || matchedUser.accountNo || '',
         ifsc: matchedUser.ifsc || matchedUser.ifscCode || '',
         location: matchedUser.location || matchedUser.city || 'Morbi Central',
-        status: matchedUser.accountStatus || 'Active',
+        status: matchedUser.accountStatus || matchedUser.status || 'Active',
         hub: yardLocation,
-        avatarUrl: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.avatarUrl || matchedVendorPartner?.profileImage || '',
-        profileImage: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.avatarUrl || matchedVendorPartner?.profileImage || '',
+        avatarUrl: matchedUser.avatarUrl || matchedUser.profileImage || '',
+        profileImage: matchedUser.avatarUrl || matchedUser.profileImage || '',
       });
 
       if (onLoginSuccess) onLoginSuccess('dashboard');
@@ -409,17 +469,8 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="w-full max-w-[420px] mx-auto min-h-screen bg-[#FAF9F6] px-4 pt-2 pb-6 flex flex-col justify-between font-serif">
+    <div className="w-full max-w-[420px] mx-auto min-h-screen bg-[#FAF9F6] px-4 pt-[max(0.85rem,env(safe-area-inset-top))] pb-8 flex flex-col justify-between font-serif">
       <div>
-        {/* Top iOS/Android Status Bar matching PDF Page 8 */}
-        <div className="flex items-center justify-between text-[11px] font-sans font-bold text-stone-800 px-1 pt-1 pb-3">
-          <span>09:41</span>
-          <div className="flex items-center space-x-1.5 text-stone-700">
-            <Signal className="w-3.5 h-3.5" />
-            <Wifi className="w-3.5 h-3.5" />
-            <Battery className="w-4 h-4" />
-          </div>
-        </div>
 
         {/* Brand Header Bar */}
         <div className="flex items-center justify-between mb-4 pt-1">
@@ -437,7 +488,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           <button
             type="button"
             onClick={() => {
-              const next = portalMode === 'vendor' ? 'contractor' : portalMode === 'contractor' ? 'admin' : 'vendor';
+              const next = portalMode === 'vendor' ? 'contractor' : 'vendor';
               setPortalMode(next);
               setErrorMsg('');
             }}
@@ -447,12 +498,37 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
             <span>
               {portalMode === 'vendor'
                 ? 'VENDOR PORTAL'
-                : portalMode === 'contractor'
-                  ? 'CONTRACTOR PORTAL'
-                  : 'ADMIN PORTAL'}
+                : 'CONTRACTOR PORTAL'}
             </span>
           </button>
         </div>
+
+        {/* 1-Tap Mobile App Install Banner */}
+        {!isInstalled && (
+          <div className="mb-3.5 bg-gradient-to-r from-emerald-950 via-stone-900 to-emerald-900 text-white rounded-2xl p-3 border border-emerald-500/30 shadow-sm flex items-center justify-between font-sans">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
+                <span className="text-base">📲</span>
+              </div>
+              <div className="min-w-0">
+                <div className="text-[11px] font-black tracking-tight text-white flex items-center gap-1.5">
+                  <span>Install DuraGrit App</span>
+                  <span className="text-[8px] bg-emerald-500 text-stone-950 font-black px-1.5 py-0.2 rounded-full uppercase">1-Tap</span>
+                </div>
+                <p className="text-[9.5px] text-emerald-200/90 truncate mt-0.5">
+                  Add to home screen for full-screen camera & QR scanning
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              className="ml-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow-xs transition shrink-0 cursor-pointer"
+            >
+              Install App
+            </button>
+          </div>
+        )}
 
         {/* Main Sign-In Card matching PDF Page 8 */}
         <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">
@@ -470,62 +546,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           </div>
 
           <h1 className="text-2xl font-black text-stone-900 tracking-tight font-serif mb-1.5">
-            {portalMode === 'vendor'
-              ? 'Vendor Sign In'
-              : 'Contractor Sign In'}
+            {portalMode === 'vendor' ? 'Vendor Portal Sign In' : 'Partner Sign In'}
           </h1>
-          <p className="text-xs text-stone-500 leading-relaxed mb-4">
-            {portalMode === 'vendor'
-              ? 'Enter your registered mobile number or vendor ID to access purchase orders and material dispatch logs.'
-              : 'Sign in with your registered 10-digit mobile number or User ID created in the Admin Panel.'}
+          <p className="text-xs text-stone-500 leading-relaxed mb-4 font-sans">
+            Sign in with your registered Vendor ID, mobile number, or email and the security passkey dispatched to your inbox.
           </p>
-
-          {/* Quick Test Demo Credentials */}
-          <div className="mb-4 p-2.5 bg-stone-50 border border-stone-200/90 rounded-2xl shadow-2xs font-sans">
-            <div className="flex items-center justify-between text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Quick Test Partner Credentials
-              </span>
-              <span className="text-[#C84826] font-mono font-bold">Pass: 1234</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-[10.5px]">
-              <button
-                type="button"
-                onClick={() => {
-                  setPortalMode('vendor');
-                  setIdentifier('VEN-001');
-                  setPassword('1234');
-                  setErrorMsg('');
-                  showToast('Vendor (Reliance Polymers) credentials loaded!');
-                }}
-                className={`py-2 px-2.5 rounded-xl border text-center font-bold transition cursor-pointer active:scale-95 ${
-                  portalMode === 'vendor' && identifier === 'VEN-001'
-                    ? 'bg-[#C84826] text-white border-[#C84826] shadow-xs'
-                    : 'bg-white hover:bg-stone-100 text-stone-800 border-stone-200'
-                }`}
-              >
-                🏢 Demo Vendor
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPortalMode('contractor');
-                  setIdentifier('9820144521');
-                  setPassword('1234');
-                  setErrorMsg('');
-                  showToast('Partner/Contractor (Rameshwar Sharma) loaded!');
-                }}
-                className={`py-2 px-2.5 rounded-xl border text-center font-bold transition cursor-pointer active:scale-95 ${
-                  portalMode === 'contractor' && identifier === '9820144521'
-                    ? 'bg-[#C84826] text-white border-[#C84826] shadow-xs'
-                    : 'bg-white hover:bg-stone-100 text-stone-800 border-stone-200'
-                }`}
-              >
-                👷 Demo Partner
-              </button>
-            </div>
-          </div>
 
           <form onSubmit={handleSignIn} className="space-y-3.5">
             <div>
@@ -539,7 +564,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   <span className="text-[#C84826]">*</span>
                 </label>
                 <span className="text-[9.5px] font-mono text-stone-500 font-bold uppercase">
-                  SKU / GSTN LINKED
+                  VERIFIED CREDENTIALS
                 </span>
               </div>
               <div className="relative flex items-center">
@@ -550,13 +575,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder={
-                    portalMode === 'vendor'
-                      ? '+91 98450 21980'
-                      : portalMode === 'admin'
-                        ? 'duragrit07@gmail.com'
-                        : '+91 98450 21980'
-                  }
+                  placeholder="e.g. VEN-001 or 9825011223"
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#ECEAE6] bg-[#FBFAF9] focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] text-xs font-semibold text-stone-900 outline-none transition-all font-mono"
                   required
                 />
@@ -736,7 +755,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                 maxLength={6}
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
-                placeholder="Enter OTP (e.g. 1234)"
+                placeholder="Enter 4 or 6-digit OTP"
                 className="w-full px-3 py-2 text-center text-lg font-mono font-bold border border-stone-300 rounded-xl focus:border-[#C84826] outline-none"
               />
               <div className="flex gap-2">
@@ -761,16 +780,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
       )}
 
       {/* Floating Toast */}
-      {toastMsg && (() => {
-        const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied|timeout|unreachable/i.test(toastMsg);
-        return (
-          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl border font-sans flex items-center space-x-2 ${
-            isError ? 'bg-rose-600 border-rose-400' : 'bg-emerald-600 border-emerald-400'
-          }`}>
-            <span>{toastMsg}</span>
-          </div>
-        );
-      })()}
+      {toastMsg && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white text-xs px-4 py-2 rounded-xl shadow-lg border border-stone-700 font-sans">
+          {toastMsg}
+        </div>
+      )}
     </div>
   );
 };

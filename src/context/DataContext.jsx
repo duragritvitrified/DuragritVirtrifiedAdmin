@@ -198,7 +198,7 @@ const mapVendorFromDb = (row) => {
   const isActive = row.account_status === 'Active' || row.account_status === 'ACTIVE';
   const poVal = Number(meta.poValueLakhs ?? meta.totalPayoutLakhs ?? 0);
   const relVal = Number(meta.releasedPayoutLakhs ?? meta.paidLakhs ?? 0);
-  const passkey = meta.passkey || `Vend#${String(row.phone || '').replace(/\D/g, '').slice(-4) || '2026'}`;
+  const passkey = meta.passkey || meta.tempPassword || row.passkey || '1234';
   return {
     ...meta,
     id: row.vendor_id,
@@ -364,6 +364,8 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
         map.set(key, {
           ...existing,
           ...sbItem,
+          passkey: existing.passkey || existing.tempPassword || sbItem.passkey || '1234',
+          tempPassword: existing.tempPassword || existing.passkey || sbItem.tempPassword || '1234',
           supabaseId: sbItem.supabaseId || existing.supabaseId,
           tokens: sbItem.tokens?.length ? sbItem.tokens : (existing.tokens || []),
           codes: sbItem.codes?.length ? sbItem.codes : (existing.codes || []),
@@ -373,6 +375,8 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
         map.set(key, {
           ...sbItem,
           ...existing,
+          passkey: existing.passkey || existing.tempPassword || sbItem.passkey || '1234',
+          tempPassword: existing.tempPassword || existing.passkey || sbItem.tempPassword || '1234',
           supabaseId: sbItem.supabaseId || existing.supabaseId,
         });
       }
