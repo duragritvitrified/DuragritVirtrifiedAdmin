@@ -347,25 +347,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           </span>
         </button>
 
-        {/* 6. Onboarding & APK Dossier */}
-        <button
-          onClick={() => handleNav('onboarding')}
-          className={navBtnClass(activeTab === 'onboarding')}
-        >
-          <div className="flex items-center space-x-3">
-            <Mail
-              className={`w-4 h-4 ${
-                activeTab === 'onboarding' ? 'text-[#C84826]' : 'text-stone-400'
-              }`}
-            />
-            <span>6. Onboarding &amp; APK</span>
-          </div>
-          <span className="text-[10px] bg-[#FEF2EE] text-[#C84826] font-bold px-1.5 py-0.5 rounded">
-            Gateway
-          </span>
-        </button>
-
-        {/* 7. Email Reports & Template Audit */}
+        {/* 6. Email Reports & Template Audit (formerly 7, renumbered after hiding Onboarding & APK) */}
         <div>
           <button
             onClick={() => toggleSection('email', 'email-templates')}
@@ -381,7 +363,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
                   isEmailSubActive ? 'text-[#C84826]' : 'text-stone-400'
                 }`}
               />
-              <span>7. Email Reports</span>
+              <span>6. Email Reports</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded">
@@ -435,7 +417,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           )}
         </div>
 
-        {/* 8. System Settings & Mobile Download Console */}
+        {/* 7. System Settings & Mobile Download Console (formerly 8) */}
         <div>
           <button
             onClick={() => toggleSection('settings', 'settings')}
@@ -451,7 +433,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
                   isSettingsSubActive ? 'text-[#C84826]' : 'text-stone-400'
                 }`}
               />
-              <span>8. System Settings</span>
+              <span>7. System Settings</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] bg-[#FEF2EE] text-[#C84826] font-bold px-1.5 py-0.5 rounded">
