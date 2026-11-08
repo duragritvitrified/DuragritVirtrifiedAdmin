@@ -17,6 +17,8 @@
     "build": "npm run build --workspace=@duragrit/web && npm run build --workspace=@duragrit/app && node scripts/prepare_vercel_dist.cjs",
     "build:web": "npm run build --workspace=@duragrit/web",
     "build:app": "npm run build --workspace=@duragrit/app",
+    "build:apk:admin": "powershell -ExecutionPolicy Bypass -File scripts/build_admin_apk.ps1",
+    "build:apk:vendor": "powershell -ExecutionPolicy Bypass -File scripts/build_apk.ps1",
     "sync:app": "npm run sync --workspace=@duragrit/app",
     "test:logic": "node tests/test_phase3_logic.js"
   },

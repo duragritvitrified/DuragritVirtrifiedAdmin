@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">DuraGrit Vitrified</string>
-    <string name="title_activity_main">DuraGrit Vitrified</string>
-    <string name="package_name">com.duragrit.vitrified.portal</string>
-    <string name="custom_url_scheme">com.duragrit.vitrified.portal</string>
+    <string name="app_name">DuraGrit Admin</string>
+    <string name="title_activity_main">DuraGrit Admin Console</string>
+    <string name="package_name">com.duragrit.vitrified.admin</string>
+    <string name="custom_url_scheme">com.duragrit.vitrified.admin</string>
 </resources>

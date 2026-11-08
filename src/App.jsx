@@ -39,18 +39,38 @@ export function App() {
   const { currentUser, logout } = useAuth();
   const { claims = [], vendors = [] } = useData();
 
-  // Strict Port & URL Separation:
-  // Port 3001 -> DuraGrit Admin Mobile App (strictly)
-  // Port 3002 -> DuraGrit Vendor Mobile App (strictly)
-  // Or URL query param fallback ?app=admin / ?app=vendor
+  // Strict Port, Build-Flag, Native App ID & URL Separation:
+  // Priority 1: Injected build flag (dedicated Admin Mobile APK vs Vendor APK)
+  // Priority 2: Capacitor App ID (com.duragrit.vitrified.admin)
+  // Priority 3: Local Port (3001 Admin, 3002 Vendor)
+  // Priority 4: Query param (?app=admin / ?mode=admin)
+  // Priority 5: LocalStorage preferred portal
   const isAppAdmin = typeof window !== 'undefined' && (() => {
+    if (window.DURAGRIT_APP_TYPE === 'admin') return true;
+    if (window.DURAGRIT_APP_TYPE === 'vendor') return false;
+
+    const metaMode = document.querySelector('meta[name="duragrit-app-type"]')?.getAttribute('content') ||
+                     document.querySelector('meta[name="duragrit-app-mode"]')?.getAttribute('content');
+    if (metaMode === 'admin') return true;
+    if (metaMode === 'vendor') return false;
+
+    if (window.Capacitor?.appId?.includes('admin')) return true;
+
     const port = String(window.location.port || '');
     if (port === '3001') return true;
     if (port === '3002') return false;
+
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app') || params.get('mode');
     if (app === 'admin') return true;
     if (app === 'vendor') return false;
+
+    try {
+      const preferred = localStorage.getItem('duragrit_preferred_portal');
+      if (preferred === 'admin') return true;
+      if (preferred === 'vendor') return false;
+    } catch (_) {}
+
     return false;
   })();
 

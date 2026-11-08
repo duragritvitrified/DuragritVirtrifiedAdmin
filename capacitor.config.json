@@ -1,6 +1,6 @@
 {
-  "appId": "com.duragrit.vitrified.portal",
-  "appName": "DuraGrit Vitrified",
+  "appId": "com.duragrit.vitrified.admin",
+  "appName": "DuraGrit Admin",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

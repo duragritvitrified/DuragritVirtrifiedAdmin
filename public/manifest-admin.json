@@ -17,13 +17,13 @@
       "sizes": "any"
     },
     {
-      "src": "/icon-192.png",
+      "src": "/icon-admin-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-admin-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
@@ -35,7 +35,7 @@
       "short_name": "Moderation",
       "description": "Admin Cashback Approval and NPCI Disbursement Queue",
       "url": "/app/?app=admin",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-admin-192.png", "sizes": "192x192" }]
     }
   ]
 }
