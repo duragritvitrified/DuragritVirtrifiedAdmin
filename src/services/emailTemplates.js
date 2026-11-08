@@ -158,7 +158,7 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{tempPassword}}', label: 'One-Time Temp Password', sample: 'Dura#8492' },
       { tag: '{{role}}', label: 'Assigned Partner Role', sample: 'Tile Contractor / Mason' },
       { tag: '{{hub}}', label: 'Regional Kiln Hub', sample: 'Morbi Central Kiln Hub' },
-      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk' },
+      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4' },
       { tag: '{{pwaUrl}}', label: 'iPhone Safari Vendor Portal URL', sample: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor' }
     ],
     sampleData: {
@@ -167,7 +167,7 @@ export const EMAIL_TEMPLATES = [
       tempPassword: 'Dura#8492',
       role: 'Tile Contractor / Mason',
       hub: 'Morbi Central Kiln Hub',
-      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4',
       pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
     },
     generateHtml: (data = {}) => {
@@ -177,7 +177,7 @@ export const EMAIL_TEMPLATES = [
         tempPassword = 'Dura#8492',
         role = 'Tile Contractor / Mason',
         hub = 'Morbi Central Kiln Hub',
-        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4',
         pwaUrl = 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
       } = data;
 
@@ -245,7 +245,8 @@ export const EMAIL_TEMPLATES = [
 
               <!-- APP DOWNLOAD ACTION -->
               <div style="text-align: center; margin-bottom: 28px;">
-                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Step 1: Download &amp; Install the Official DuraGrit Vendor Partner App</div>
+                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Step 1: Download &amp; Install the Official DuraGrit Vendor Partner App</div>
+                <div style="font-size: 11px; color: #059669; font-weight: 700; margin-bottom: 12px;">Official Release v2.4 (4.10 MB) • Android Package Installer Verified</div>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td width="50%" align="center" style="padding: 0 6px;">
@@ -260,8 +261,8 @@ export const EMAIL_TEMPLATES = [
                     </td>
                   </tr>
                 </table>
-                <div style="margin-top: 10px; font-size: 11px; color: #64748b; text-align: center;">
-                  Android Package: <a href="${apkUrl}" target="_blank" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Download (.apk)</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" target="_blank" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • iPhone Safari: <a href="${pwaUrl}" target="_blank" style="color: #059669; font-weight: 700; text-decoration: underline;">Open Vendor Web App</a>
+                <div style="margin-top: 10px; font-size: 11px; color: #64748b; text-align: center; line-height: 1.5;">
+                  Android Package: <a href="${apkUrl}" target="_blank" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Download (.apk)</a> • Mirror Link: <a href="https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2_(4).apk" target="_blank" style="color: #059669; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Mirror (.apk)</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" target="_blank" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • iPhone Safari: <a href="${pwaUrl}" target="_blank" style="color: #0284c7; font-weight: 700; text-decoration: underline;">Open Vendor Web App</a>
                 </div>
               </div>
 

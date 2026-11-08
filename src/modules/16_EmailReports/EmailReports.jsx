@@ -145,7 +145,7 @@ export function EmailReports({ onNavigateSettings, initialMainTab = 'templates' 
         role: testEmailData.role,
         tempPassword: 'Dura#' + Math.floor(1000 + Math.random() * 9000),
         hub: 'Morbi Central Kiln Hub',
-        apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk` : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+        apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk?v=2.4` : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4',
         pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
       });
 
@@ -939,7 +939,7 @@ export function EmailReports({ onNavigateSettings, initialMainTab = 'templates' 
                     role: selectedEmail.role || 'Contractor',
                     tempPassword: selectedEmail.tempPassword || selectedEmail.passkey || 'Dura#2026',
                     hub: 'Morbi Central Kiln Hub',
-                    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+                    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk?v=2.4',
                     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
                   });
                 }

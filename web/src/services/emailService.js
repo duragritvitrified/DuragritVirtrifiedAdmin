@@ -226,7 +226,7 @@ export const sendOnboardingEmail = async ({
   pwaUrl
 }) => {
   const baseUrl = getEmailBaseUrl();
-  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk`;
+  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk?v=2.4`;
   const defaultVendorPwaUrl = `${baseUrl}/app/?app=vendor`;
   const finalApkUrl = apkUrl || defaultVendorApkUrl;
   const finalPwaUrl = pwaUrl || defaultVendorPwaUrl;
@@ -523,7 +523,7 @@ export const sendVendorOnboardingCredentialsEmail = async ({
   pwaUrl
 }) => {
   const baseUrl = getEmailBaseUrl();
-  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk`;
+  const defaultVendorApkUrl = `${baseUrl}/apk/duragrit-vendor-v2.apk?v=2.4`;
   const defaultVendorPwaUrl = `${baseUrl}/app/?app=vendor`;
   const finalApkUrl = apkUrl || defaultVendorApkUrl;
   const finalPwaUrl = pwaUrl || defaultVendorPwaUrl;

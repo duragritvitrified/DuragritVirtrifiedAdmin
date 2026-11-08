@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/apk/(.*)",
+      "source": "/apk/duragrit-vendor-(.*)",
       "headers": [
         {
           "key": "Content-Type",
@@ -15,6 +15,36 @@
         {
           "key": "Content-Disposition",
           "value": "attachment; filename=\"duragrit-vendor-v2.apk\""
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/apk/duragrit-admin-(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"duragrit-admin-v2.apk\""
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/apk/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
         },
         {
           "key": "Cache-Control",
