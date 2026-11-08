@@ -190,7 +190,7 @@ export function App() {
         {showSplash && (
           <OpeningSplashScreen
             onComplete={handleSplashComplete}
-            durationMs={1200}
+            durationMs={900}
             portalLabel="Admin Command Portal"
           />
         )}
@@ -218,7 +218,7 @@ export function App() {
       {showSplash && (
         <OpeningSplashScreen
           onComplete={handleSplashComplete}
-          durationMs={1200}
+          durationMs={900}
           portalLabel="Vendor Partner Portal"
         />
       )}
@@ -236,7 +236,7 @@ export function App() {
         {/* TOP OTA UPDATE NOTIFICATION BANNER (When Admin pushes new version)    */}
         {/* ===================================================================== */}
         {updateStatus.hasUpdate && (
-          <div className="bg-gradient-to-r from-[#A62C11] via-[#C84826] to-[#8B230C] text-white px-3.5 py-2.5 shadow-md flex items-center justify-between text-xs border-b border-white/20 shrink-0 font-sans sticky top-0 z-50">
+          <div className="bg-gradient-to-r from-[#A62C11] via-[#C84826] to-[#8B230C] text-white px-3.5 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 shadow-md flex items-center justify-between text-xs border-b border-white/20 shrink-0 font-sans sticky top-0 z-50">
             <div className="flex items-center space-x-2.5 overflow-hidden pr-1">
               <div className="p-1.5 rounded-lg bg-white/20 text-white shrink-0">
                 <Rocket className="w-4 h-4 text-white animate-bounce" />
@@ -266,44 +266,39 @@ export function App() {
           </div>
         )}
 
-        {/* Top App Control Bar (Always pinned at top, never hides on scroll) */}
+        {/* Top App Control Bar (Always pinned at top, robust responsive flex, never wraps) */}
         {currentScreen !== 'signin' && (
-          <header className="bg-[#1C1917] px-4 py-2.5 text-white flex items-center justify-between text-xs border-b border-stone-800 shrink-0 font-sans sticky top-0 z-40 shadow-xs">
-            <div className="flex items-center space-x-2.5">
+          <header className="bg-[#1C1917] px-3.5 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2 text-white flex items-center justify-between text-xs border-b border-stone-800 shrink-0 font-sans sticky top-0 z-40 shadow-xs">
+            <div className="flex items-center space-x-2 min-w-0 flex-1 mr-2">
               <img
                 src="/logo-white.png"
                 alt="DuraGrit Vitrified"
-                className="h-6 w-auto object-contain shrink-0"
+                className="h-6 w-auto max-w-[120px] object-contain shrink-0"
                 onError={(e) => {
                   e.target.style.display = 'none';
                 }}
               />
-              <div>
-                <span className="font-extrabold tracking-wider text-white block leading-tight text-[11px] uppercase">
+              <div className="min-w-0 flex-1">
+                <span className="font-extrabold tracking-wider text-white block leading-tight text-[11px] uppercase truncate">
                   DURAGRIT VITRIFIED
                 </span>
-                <div className="flex items-center space-x-1.5 mt-0.5">
-                  <span className="text-[9px] text-[#F9CEB8] font-bold">
-                    Vendor Partner App
+                <div className="flex items-center space-x-1.5 mt-0.5 text-[9px] text-stone-400 truncate">
+                  <span className="text-[#F9CEB8] font-bold truncate shrink-0">
+                    Vendor Partner
                   </span>
                   <span className="text-stone-600">•</span>
-                  <span className="text-[8.5px] font-mono font-bold text-stone-300">
+                  <span className="text-[8.5px] font-mono font-bold text-stone-300 shrink-0">
                     {updateStatus.installedVersion}
                   </span>
-                  {updateStatus.hasUpdate ? (
-                    <span className="text-[8px] font-black text-amber-400 bg-amber-950/60 px-1 py-0.2 rounded border border-amber-500/30">
-                      Update Ready
-                    </span>
-                  ) : (
-                    <span className="text-[8px] font-bold text-emerald-400 bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-500/30">
-                      Up to date ✓
-                    </span>
-                  )}
+                  <span className="text-stone-600">•</span>
+                  <span className="text-[8px] font-bold text-emerald-400 bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-500/30 shrink-0">
+                    Sync ✓
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={() => {
                   logout();

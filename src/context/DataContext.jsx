@@ -46,10 +46,10 @@ const STORAGE_KEYS = {
   DELETED: 'duragrit_deleted_keys_v7',
 };
 
-// Known legacy seed identifiers from initial SQL template — purged automatically
-const LEGACY_SEED_SKUS = new Set(['DG-ADH-01', 'DG-ADH-02', 'DG-PRM-03', 'DG-WPF-04']);
-const LEGACY_SEED_VENDORS = new Set(['VEN-001', 'VEN-002', 'VEN-003']);
-const LEGACY_SEED_MOBILES = new Set(['9820144521', '9898012345', '9712345678']);
+// Legacy seed filters disabled — all Supabase records are preserved and synchronized
+const LEGACY_SEED_SKUS = new Set();
+const LEGACY_SEED_VENDORS = new Set();
+const LEGACY_SEED_MOBILES = new Set();
 
 // One-time cleanup of all older seeded localStorage keys
 try {
@@ -423,16 +423,9 @@ export const DataProvider = ({ children }) => {
     pushDevSync({ deletedKeys: arr });
   }, [pushDevSync]);
 
-  // Attempt to purge legacy initial SQL seeds from Supabase automatically
+  // Preserve all Supabase records — never delete production vendors, skus or profiles
   const purgeLegacySeedsFromSupabase = useCallback(async () => {
-    if (!SB_ONLINE) return;
-    try {
-      await Promise.allSettled([
-        supabase.from('products').delete().in('sku_code', Array.from(LEGACY_SEED_SKUS)),
-        supabase.from('vendors').delete().in('vendor_id', Array.from(LEGACY_SEED_VENDORS)),
-        supabase.from('profiles').delete().in('mobile', Array.from(LEGACY_SEED_MOBILES)),
-      ]);
-    } catch (_) {}
+    return;
   }, []);
 
   // Master bidirectional sync loader (Supabase + Cross-Port Sync Bridge)
@@ -479,24 +472,19 @@ export const DataProvider = ({ children }) => {
 
         if (prodRes.status === 'fulfilled' && !prodRes.value.error) {
           sbConnected = true;
-          sbSkus = (prodRes.value.data || [])
-            .filter((r) => !LEGACY_SEED_SKUS.has(String(r.sku_code || '').toUpperCase()) || userCreatedSkus.has(String(r.sku_code || '').toUpperCase()))
-            .map(mapProductFromDb);
+          sbSkus = (prodRes.value.data || []).map(mapProductFromDb);
         }
 
         if (profRes.status === 'fulfilled' && !profRes.value.error) {
           sbConnected = true;
           sbUsers = (profRes.value.data || [])
             .filter((r) => r.role !== 'Admin')
-            .filter((r) => !LEGACY_SEED_MOBILES.has(normalizeMobile(r.mobile)) || userCreatedMobiles.has(normalizeMobile(r.mobile)))
             .map(mapProfileFromDb);
         }
 
         if (vendRes.status === 'fulfilled' && !vendRes.value.error) {
           sbConnected = true;
-          sbVendors = (vendRes.value.data || [])
-            .filter((r) => !LEGACY_SEED_VENDORS.has(String(r.vendor_id || '').toUpperCase()) || userCreatedVendors.has(String(r.vendor_id || '').toUpperCase()))
-            .map(mapVendorFromDb);
+          sbVendors = (vendRes.value.data || []).map(mapVendorFromDb);
         }
 
         const tokenRows = tokRes.status === 'fulfilled' && !tokRes.value.error ? (tokRes.value.data || []) : [];

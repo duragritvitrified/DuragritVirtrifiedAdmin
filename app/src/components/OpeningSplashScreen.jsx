@@ -12,9 +12,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
  * - Immediate 1-tap dismiss on screen tap (TAP TO SKIP)
  * - Hard 1.5s fallback auto-dismiss guarantee
  */
-export function OpeningSplashScreen({ onComplete, durationMs = 1200, portalLabel = 'Retail Network' }) {
+export function OpeningSplashScreen({ onComplete, durationMs = 900, portalLabel = 'Retail Network' }) {
   const [phase, setPhase] = useState('entering'); // 'entering' -> 'active' -> 'fading' -> 'hidden'
-  const [progress, setProgress] = useState(25);
+  const [progress, setProgress] = useState(35);
   const [statusText, setStatusText] = useState('Connecting to Morbi Kiln Hub...');
 
   const onCompleteRef = useRef(onComplete);
@@ -47,33 +47,33 @@ export function OpeningSplashScreen({ onComplete, durationMs = 1200, portalLabel
     // Phase 1: Logo enter
     const tEnter = setTimeout(() => {
       setPhase('active');
-    }, 60);
+    }, 40);
 
     // Progress bar updates
     const tProg1 = setTimeout(() => {
-      setProgress(60);
+      setProgress(75);
       setStatusText('Syncing security tokens & credentials...');
-    }, 280);
+    }, 200);
 
     const tProg2 = setTimeout(() => {
       setProgress(100);
       setStatusText('Morbi Central Kiln Hub verified ✓');
-    }, 600);
+    }, 450);
 
     // Phase 2: Fade out
     const tFade = setTimeout(() => {
       setPhase('fading');
-    }, Math.max(700, durationMs - 300));
+    }, Math.max(550, durationMs - 250));
 
     // Phase 3: Complete & unmount
     const tEnd = setTimeout(() => {
       finishSplash();
     }, durationMs);
 
-    // Absolute Hard Fallback: Force finish within 1500ms max under all conditions
+    // Absolute Hard Fallback: Force finish within 1000ms max under all conditions
     const tSafety = setTimeout(() => {
       finishSplash();
-    }, 1500);
+    }, 1000);
 
     return () => {
       clearTimeout(tEnter);

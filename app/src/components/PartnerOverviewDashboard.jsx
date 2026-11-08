@@ -337,9 +337,9 @@ export const PartnerOverviewDashboard = ({
       {/* PARTNER GREETING & STATUS STRIP (Sticky under top bar, never hides)   */}
       {/* ===================================================================== */}
       <div className="w-full bg-white px-4 py-3 border-b border-[#ECEAE6] flex items-center justify-between shadow-2xs sticky top-0 z-30 shrink-0">
-        <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-1.5">
           {/* Vendor Profile Image from Admin with Branded Fallback */}
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#FEF2EE] to-white border-2 border-[#F9CEB8] flex items-center justify-center shadow-xs shrink-0 overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FEF2EE] to-white border-2 border-[#F9CEB8] flex items-center justify-center shadow-xs shrink-0 overflow-hidden">
             <img
               src={vendorAvatarSrc}
               alt={displayName}
@@ -351,48 +351,43 @@ export const PartnerOverviewDashboard = ({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 className="text-sm font-extrabold text-stone-900 leading-tight truncate">
+            <div className="flex items-center gap-1 min-w-0">
+              <h1 className="text-xs font-black text-stone-900 leading-tight truncate">
                 {partner.companyName || partner.contactPerson}
               </h1>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
             </div>
-            <div className="text-[10.5px] text-stone-500 font-medium flex items-center flex-wrap gap-1.5 mt-0.5">
-              <span className="font-semibold text-stone-700 truncate max-w-[120px]">
-                {partner.contactPerson || partner.name}
-              </span>
-              <span className="text-stone-300">•</span>
-              
-              {/* Vendor ID added in the middle of name and location */}
-              <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] font-black text-[#A6300F] bg-[#FEF2EE] px-1.5 py-0.5 rounded border border-[#F9CEB8] shrink-0">
-                <span className="text-[8px] uppercase tracking-wider text-stone-400 font-sans font-bold">ID:</span>
+            <div className="text-[10px] text-stone-500 font-medium flex items-center gap-1 mt-0.5 min-w-0 truncate">
+              <span className="inline-flex items-center gap-0.5 font-mono text-[9px] font-black text-[#A6300F] bg-[#FEF2EE] px-1 py-0.2 rounded border border-[#F9CEB8] shrink-0">
                 {partner.id}
               </span>
               <span className="text-stone-300">•</span>
-
-              <span className="flex items-center gap-0.5 text-stone-600 shrink-0">
-                <MapPin className="w-3 h-3 text-[#A6300F] shrink-0" />
-                <span className="truncate max-w-[110px]">{partner.location}</span>
+              <span className="truncate max-w-[85px] text-stone-600">
+                {partner.contactPerson || partner.name}
+              </span>
+              <span className="text-stone-300">•</span>
+              <span className="truncate max-w-[80px] text-stone-500">
+                {partner.city || 'Morbi'}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
             onClick={handleRefresh}
-            className="p-1.5 rounded-xl bg-[#F4F3F0] hover:bg-stone-200 text-stone-600 transition cursor-pointer"
+            className="p-1.5 rounded-lg bg-[#F4F3F0] hover:bg-stone-200 text-stone-600 transition cursor-pointer active:scale-95"
             title="Sync Live Balances"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#A6300F]' : ''}`} />
           </button>
-          <div className="text-right">
-            <span className="inline-flex items-center gap-1 text-[9.5px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+          <div className="text-right shrink-0">
+            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {partner.status}
+              {partner.status || 'ACTIVE'}
             </span>
-            <span className="block text-[9px] font-mono text-stone-400 mt-0.5">
+            <span className="block text-[8.5px] font-mono text-stone-400 mt-0.2 truncate max-w-[70px]">
               {partner.category}
             </span>
           </div>

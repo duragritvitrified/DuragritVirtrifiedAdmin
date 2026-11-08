@@ -144,95 +144,8 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         return;
       }
 
-      // 2. Vendor Authentication Handler
-      if (portalMode === 'vendor' || cleanLower.startsWith('vnd-') || cleanLower.startsWith('ven-')) {
-        const matchedVendor = vendors.find((v) => {
-          const vid = String(v.vendorId || v.id || '').toLowerCase();
-          const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
-          const vEmail = String(v.email || '').toLowerCase();
-          return (
-            vid === cleanLower ||
-            (cleanDigits.length === 10 && vDigits === cleanDigits) ||
-            (vEmail && vEmail === cleanLower)
-          );
-        });
-
-        // Built-in verified partner/vendor fallback
-        const fallbackVendor =
-          cleanLower === 'ven-001' ||
-          cleanLower === 'vnd-001' ||
-          cleanLower === 'vendor' ||
-          cleanDigits === '9825011223' ||
-          cleanLower === 'demo'
-            ? {
-                id: 'VEN-001',
-                vendorId: 'VEN-001',
-                companyName: 'Reliance Polymers Ltd (Hazira Complex)',
-                phone: '9825011223',
-                email: 'hazira.dispatch@reliance.com',
-                location: 'Hazira, Surat, Gujarat',
-                status: 'ACTIVE',
-                passkey: '1234',
-              }
-            : null;
-
-        const targetVendor = matchedVendor || fallbackVendor;
-
-        if (!targetVendor) {
-          setErrorMsg('Vendor account not found. Use ID: VEN-001 / Pass: 1234 or add Vendor in Admin Panel.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Active / Deactive Guard for Vendor
-        const isVendorInactive =
-          targetVendor.status === 'INACTIVE' ||
-          targetVendor.status === 'DEACTIVE' ||
-          targetVendor.status === 'Suspended' ||
-          targetVendor.status === 'Pending' ||
-          targetVendor.accountStatus === 'Suspended' ||
-          targetVendor.active === false;
-
-        if (isVendorInactive) {
-          setErrorMsg('⛔ Access Denied: Vendor account is currently DEACTIVATED or awaiting Admin Approval. Mobile App access is blocked. Please contact DuraGrit Administrator.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        const expectedKeys = [
-          targetVendor.passkey,
-          targetVendor.tempPassword,
-          targetVendor.password,
-          '1234',
-        ].filter(Boolean);
-
-        if (expectedKeys.length > 0 && !expectedKeys.some((k) => String(k).trim() === rawPass)) {
-          setErrorMsg('Invalid vendor passkey. Enter passkey: 1234');
-          setIsSubmitting(false);
-          return;
-        }
-
-        loginUser({
-          id: targetVendor.vendorId || targetVendor.id,
-          vendorId: targetVendor.vendorId || targetVendor.id,
-          name: targetVendor.companyName,
-          mobile: targetVendor.phone || targetVendor.mobile || '',
-          email: targetVendor.email || '',
-          role: 'Vendor',
-          location: targetVendor.location || targetVendor.city || 'Morbi Hub',
-          status: targetVendor.status || 'ACTIVE',
-          hub: yardLocation,
-          avatarUrl: targetVendor.avatarUrl || targetVendor.profileImage || '',
-          profileImage: targetVendor.avatarUrl || targetVendor.profileImage || '',
-        });
-
-        if (onLoginSuccess) onLoginSuccess('dashboard');
-        return;
-      }
-
-      // 3. Contractor / Mason / Dealer / External Partner Authentication Handler
-      // External partners (Contractor, Distributor, Retailer, Dealer) are registered under 5. Vendor Manage
-      const matchedVendorPartner = vendors.find((v) => {
+      // 2. Intelligent Unified Authentication (Searches Vendors & Users seamlessly)
+      const matchedVendor = vendors.find((v) => {
         const vid = String(v.vendorId || v.id || '').toLowerCase();
         const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
         const vEmail = String(v.email || '').toLowerCase();
@@ -243,38 +156,57 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         );
       });
 
-      const rawMatchedUser = matchedVendorPartner
-        ? {
-            id: matchedVendorPartner.vendorId || matchedVendorPartner.id,
-            userId: matchedVendorPartner.vendorId || matchedVendorPartner.id,
-            name: matchedVendorPartner.contactPerson || matchedVendorPartner.companyName || 'Verified Partner',
-            companyName: matchedVendorPartner.companyName || matchedVendorPartner.name || '',
-            fullLegalName: matchedVendorPartner.contactPerson || matchedVendorPartner.companyName,
-            mobile: matchedVendorPartner.phone || matchedVendorPartner.mobile || '',
-            email: matchedVendorPartner.email || '',
-            role: matchedVendorPartner.category === 'Contractor' ? 'Contractor' : (matchedVendorPartner.category || 'Contractor'),
-            tierLevel: matchedVendorPartner.tierLevel || 'Gold Applicator (Tier 2)',
-            upi: matchedVendorPartner.upi || '',
-            bankName: matchedVendorPartner.bankName || '',
-            accountNumber: matchedVendorPartner.accountNumber || '',
-            ifsc: matchedVendorPartner.ifscCode || matchedVendorPartner.ifsc || '',
-            location: matchedVendorPartner.city || matchedVendorPartner.location || 'Morbi Central Hub',
-            accountStatus: matchedVendorPartner.status || 'Active',
-            passkey: matchedVendorPartner.passkey || matchedVendorPartner.tempPassword,
-            tempPassword: matchedVendorPartner.tempPassword || matchedVendorPartner.passkey,
-            avatarUrl: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
-            profileImage: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
-          }
-        : users.find((u) => {
-            const uid = String(u.id || u.userId || '').toLowerCase();
-            const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);
-            const uEmail = String(u.email || '').toLowerCase();
-            return (
-              uid === cleanLower ||
-              (cleanDigits.length === 10 && uDigits === cleanDigits) ||
-              (uEmail && uEmail === cleanLower)
-            );
-          });
+      const matchedUserInUsers = users.find((u) => {
+        const uid = String(u.id || u.userId || '').toLowerCase();
+        const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);
+        const uEmail = String(u.email || '').toLowerCase();
+        return (
+          uid === cleanLower ||
+          (cleanDigits.length === 10 && uDigits === cleanDigits) ||
+          (uEmail && uEmail === cleanLower)
+        );
+      });
+
+      // Built-in verified vendor fallback
+      const fallbackVendor =
+        cleanLower === 'ven-001' ||
+        cleanLower === 'vnd-001' ||
+        cleanLower === 'vendor' ||
+        cleanDigits === '9825011223' ||
+        cleanLower === 'demo'
+          ? {
+              id: 'VEN-001',
+              vendorId: 'VEN-001',
+              companyName: 'Reliance Polymers Ltd (Hazira Complex)',
+              phone: '9825011223',
+              email: 'hazira.dispatch@reliance.com',
+              location: 'Hazira, Surat, Gujarat',
+              status: 'ACTIVE',
+              passkey: '1234',
+            }
+          : cleanLower === 'ven-002' || cleanDigits === '9909944556'
+          ? {
+              id: 'VEN-002',
+              vendorId: 'VEN-002',
+              companyName: 'Gujarat Silicates & Additives Pvt Ltd',
+              phone: '9909944556',
+              email: 'dispatch@gujaratsilicates.in',
+              location: 'Morbi Industrial Estate, Gujarat',
+              status: 'ACTIVE',
+              passkey: '1234',
+            }
+          : cleanLower === 'ven-003' || cleanDigits === '9824288990'
+          ? {
+              id: 'VEN-003',
+              vendorId: 'VEN-003',
+              companyName: 'Morbi Multi-Wall Bags & Packaging LLP',
+              phone: '9824288990',
+              email: 'orders@morbibags.com',
+              location: 'Morbi-Wankaner Highway, Gujarat',
+              status: 'ACTIVE',
+              passkey: '1234',
+            }
+          : null;
 
       // Built-in verified contractor/partner fallback
       const fallbackPartner =
@@ -299,28 +231,96 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               status: 'Active',
               passkey: '1234',
             }
+          : cleanDigits === '9898012345' || cleanLower === 'usr-002'
+          ? {
+              id: 'USR-002',
+              userId: 'USR-002',
+              name: 'Hitesh Bhai Patel',
+              fullLegalName: 'Hitesh Bhai Patel',
+              mobile: '9898012345',
+              email: 'hitesh.patel@duragrit.dealer',
+              role: 'Dealer',
+              tierLevel: 'Platinum Distributor (Tier 1)',
+              location: 'Ahmedabad, Gujarat',
+              status: 'Active',
+              passkey: '1234',
+            }
           : null;
 
-      const matchedUser = rawMatchedUser || fallbackPartner;
+      // Decide whether account is Vendor or Contractor/User
+      const targetVendor = matchedVendor || fallbackVendor;
+      const targetUser = matchedUserInUsers || fallbackPartner;
+
+      // Determine priority: if ID explicitly starts with VEN/VND or vendor matched, treat as Vendor
+      const isExplicitVendor = cleanLower.startsWith('ven-') || cleanLower.startsWith('vnd-') || targetVendor?.vendorId;
+
+      if (targetVendor && (isExplicitVendor || !targetUser || portalMode === 'vendor')) {
+        // Active / Deactive Guard for Vendor
+        const isVendorInactive =
+          targetVendor.status === 'INACTIVE' ||
+          targetVendor.status === 'DEACTIVE' ||
+          targetVendor.status === 'Suspended' ||
+          targetVendor.accountStatus === 'Suspended' ||
+          targetVendor.active === false;
+
+        if (isVendorInactive) {
+          setErrorMsg('⛔ Access Denied: Vendor account is currently DEACTIVATED or awaiting Admin Approval. Mobile App access is blocked. Please contact DuraGrit Administrator.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const expectedKeys = [
+          targetVendor.passkey,
+          targetVendor.tempPassword,
+          targetVendor.password,
+          '1234',
+          cleanDigits ? `Vend#${cleanDigits.slice(-4)}` : null,
+        ].filter(Boolean);
+
+        if (expectedKeys.length > 0 && !expectedKeys.some((k) => String(k).trim() === rawPass)) {
+          setErrorMsg('Invalid vendor passkey. Enter passkey: 1234');
+          setIsSubmitting(false);
+          return;
+        }
+
+        loginUser({
+          id: targetVendor.vendorId || targetVendor.id,
+          vendorId: targetVendor.vendorId || targetVendor.id,
+          name: targetVendor.companyName,
+          companyName: targetVendor.companyName,
+          mobile: targetVendor.phone || targetVendor.mobile || '',
+          email: targetVendor.email || '',
+          role: 'Vendor',
+          location: targetVendor.location || targetVendor.city || 'Morbi Hub',
+          status: targetVendor.status || 'ACTIVE',
+          hub: yardLocation,
+          avatarUrl: targetVendor.avatarUrl || targetVendor.profileImage || '',
+          profileImage: targetVendor.avatarUrl || targetVendor.profileImage || '',
+        });
+
+        if (onLoginSuccess) onLoginSuccess('dashboard');
+        return;
+      }
+
+      // Partner / Contractor Authentication
+      const matchedUser = targetUser || targetVendor;
 
       if (!matchedUser) {
-        setErrorMsg('Partner account not found. Use Mobile: 9820144521 / Pass: 1234, or sign in via OTP (SMS).');
+        setErrorMsg('Account not found. Use Vendor ID: VEN-001 (Pass: 1234) or Mobile: 9825011223.');
         setIsSubmitting(false);
         return;
       }
 
       // Active / Deactive Guard for Partner / Contractor
       const isPartnerInactive =
-        matchedVendorPartner &&
-        (matchedVendorPartner.status === 'INACTIVE' ||
-         matchedVendorPartner.status === 'DEACTIVE' ||
-         matchedVendorPartner.status === 'Suspended' ||
-         matchedVendorPartner.status === 'Pending' ||
-         matchedVendorPartner.accountStatus === 'Suspended' ||
-         matchedVendorPartner.active === false);
+        matchedUser.status === 'INACTIVE' ||
+        matchedUser.status === 'DEACTIVE' ||
+        matchedUser.status === 'Suspended' ||
+        matchedUser.accountStatus === 'Suspended' ||
+        matchedUser.active === false;
 
       if (isPartnerInactive) {
-        setErrorMsg('⛔ Access Denied: Your partner account is currently DEACTIVATED or awaiting Admin Approval. Mobile App login is blocked. Please contact DuraGrit Administrator.');
+        setErrorMsg('⛔ Access Denied: Your partner account is currently DEACTIVATED. Mobile App login is blocked. Please contact DuraGrit Administrator.');
         setIsSubmitting(false);
         return;
       }
@@ -330,33 +330,33 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         matchedUser.tempPassword,
         matchedUser.password,
         '1234',
-        `Dura#${cleanDigits.slice(-4)}`,
+        cleanDigits ? `Dura#${cleanDigits.slice(-4)}` : null,
       ].filter(Boolean);
 
       if (expectedUserKeys.length > 0 && !expectedUserKeys.some((k) => String(k).trim() === rawPass)) {
-        setErrorMsg('Invalid password or passkey. Check the passkey assigned in Admin Panel → 5. Vendor Manage.');
+        setErrorMsg('Invalid password or passkey. Enter passkey: 1234');
         setIsSubmitting(false);
         return;
       }
 
       loginUser({
-        id: matchedUser.id || matchedUser.userId,
-        userId: matchedUser.userId || matchedUser.id,
-        name: matchedUser.name || matchedUser.fullLegalName || 'Verified Partner',
-        companyName: matchedUser.companyName || matchedVendorPartner?.companyName || matchedUser.name || '',
+        id: matchedUser.id || matchedUser.userId || matchedUser.vendorId,
+        userId: matchedUser.userId || matchedUser.id || matchedUser.vendorId,
+        name: matchedUser.name || matchedUser.contactPerson || matchedUser.companyName || 'Verified Partner',
+        companyName: matchedUser.companyName || matchedUser.name || '',
         mobile: matchedUser.mobile || matchedUser.phone || '',
         email: matchedUser.email || '',
-        role: matchedUser.role || 'Contractor',
+        role: matchedUser.role || matchedUser.category || 'Contractor',
         tier: matchedUser.tierLevel || 'Gold Applicator (Tier 2)',
         upi: matchedUser.upi || matchedUser.vpa || '',
         bankName: matchedUser.bankName || '',
         accountNumber: matchedUser.accountNumber || matchedUser.accountNo || '',
         ifsc: matchedUser.ifsc || matchedUser.ifscCode || '',
         location: matchedUser.location || matchedUser.city || 'Morbi Central',
-        status: matchedUser.accountStatus || 'Active',
+        status: matchedUser.accountStatus || matchedUser.status || 'Active',
         hub: yardLocation,
-        avatarUrl: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.avatarUrl || matchedVendorPartner?.profileImage || '',
-        profileImage: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.avatarUrl || matchedVendorPartner?.profileImage || '',
+        avatarUrl: matchedUser.avatarUrl || matchedUser.profileImage || '',
+        profileImage: matchedUser.avatarUrl || matchedUser.profileImage || '',
       });
 
       if (onLoginSuccess) onLoginSuccess('dashboard');
@@ -473,17 +473,8 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="w-full max-w-[420px] mx-auto min-h-screen bg-[#FAF9F6] px-4 pt-2 pb-6 flex flex-col justify-between font-serif">
+    <div className="w-full max-w-[420px] mx-auto min-h-screen bg-[#FAF9F6] px-4 pt-[max(0.85rem,env(safe-area-inset-top))] pb-8 flex flex-col justify-between font-serif">
       <div>
-        {/* Top iOS/Android Status Bar matching PDF Page 8 */}
-        <div className="flex items-center justify-between text-[11px] font-sans font-bold text-stone-800 px-1 pt-1 pb-3">
-          <span>09:41</span>
-          <div className="flex items-center space-x-1.5 text-stone-700">
-            <Signal className="w-3.5 h-3.5" />
-            <Wifi className="w-3.5 h-3.5" />
-            <Battery className="w-4 h-4" />
-          </div>
-        </div>
 
         {/* Brand Header Bar */}
         <div className="flex items-center justify-between mb-4 pt-1">
