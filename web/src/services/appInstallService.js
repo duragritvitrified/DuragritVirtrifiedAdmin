@@ -6,6 +6,9 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
+export const CURRENT_BUILT_IN_VERSION = 'v4.8.4';
+export const CURRENT_BUILT_IN_BUILD = 154;
+
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
 // Standard release history
@@ -102,6 +105,14 @@ export const getAppReleases = () => {
     if (!Array.isArray(parsed) || parsed.length === 0) {
       localStorage.setItem(RELEASES_KEY, JSON.stringify(DEFAULT_RELEASES));
       return DEFAULT_RELEASES;
+    }
+    // Reconcile: promote code release if newer than cached
+    const codeLatest = DEFAULT_RELEASES[0];
+    const cachedLatest = parsed[0];
+    if (codeLatest && Number(codeLatest.buildNumber) > Number(cachedLatest?.buildNumber || 0)) {
+      const merged = [codeLatest, ...parsed.filter(p => p.version !== codeLatest.version)];
+      localStorage.setItem(RELEASES_KEY, JSON.stringify(merged));
+      return merged;
     }
     return parsed;
   } catch (e) {
@@ -338,9 +349,10 @@ export const getClientDeviceUuid = () => {
 export const getClientInstalledVersion = () => {
   const saved = localStorage.getItem(CLIENT_VERSION_KEY);
   if (saved) return saved;
-  // Fall back to v4.8.2 baseline so un-updated clients detect v4.8.3 immediately
-  const defaultVer = 'v4.8.2';
-  return defaultVer;
+  // This client bundle was built with CURRENT_BUILT_IN_VERSION
+  localStorage.setItem(CLIENT_VERSION_KEY, CURRENT_BUILT_IN_VERSION);
+  localStorage.setItem('duragrit_client_installed_build', String(CURRENT_BUILT_IN_BUILD));
+  return CURRENT_BUILT_IN_VERSION;
 };
 
 // Check if current client has an OTA update available
@@ -349,13 +361,18 @@ export const checkClientUpdateStatus = () => {
   const latestRelease = getLatestRelease();
   const normInstalled = String(installedVer || '').replace(/^v/i, '').trim();
   const normLatest = String(latestRelease?.version || '').replace(/^v/i, '').trim();
-  const hasUpdate = Boolean(normLatest && normLatest !== normInstalled);
+
+  const isApplied = localStorage.getItem('duragrit_ota_applied_' + (latestRelease?.version || '')) === 'true' ||
+                    localStorage.getItem('duragrit_ota_applied_v' + normLatest) === 'true' ||
+                    localStorage.getItem('duragrit_ota_applied_' + normLatest) === 'true';
+
+  const hasUpdate = !isApplied && Boolean(normLatest && normLatest !== normInstalled);
 
   return {
     hasUpdate,
     installedVersion: installedVer,
     latestRelease,
-    latestVersion: latestRelease?.version || 'v4.8.3',
+    latestVersion: latestRelease?.version || CURRENT_BUILT_IN_VERSION,
     isMandatory: Boolean(latestRelease?.isMandatory),
     changelog: latestRelease?.changelog || '',
     title: latestRelease?.title || ''
@@ -374,12 +391,20 @@ export const checkForLiveServerUpdate = async () => {
       const currentVer = getClientInstalledVersion();
       const normServer = String(data.version || '').replace(/^v/i, '').trim();
       const normClient = String(currentVer || '').replace(/^v/i, '').trim();
-      const hasUpdate = Boolean(normServer && normServer !== normClient);
       const cleanLatest = String(data.version).startsWith('v') ? data.version : `v${data.version}`;
+
+      const isAlreadyApplied = localStorage.getItem('duragrit_ota_applied_' + cleanLatest) === 'true' ||
+                               localStorage.getItem('duragrit_ota_applied_' + normServer) === 'true';
+
+      const serverBuild = Number(data.buildNumber) || 0;
+      const clientBuild = Number(localStorage.getItem('duragrit_client_installed_build')) || CURRENT_BUILT_IN_BUILD;
+
+      const hasUpdate = !isAlreadyApplied && (serverBuild > clientBuild || (normServer !== normClient && normServer !== '4.8.4'));
+
       return {
         hasUpdate,
         latestVersion: cleanLatest,
-        buildNumber: data.buildNumber || 153,
+        buildNumber: data.buildNumber || CURRENT_BUILT_IN_BUILD,
         changelog: data.changelog || 'Mobile responsive layout and real-time vendor sync updates.',
         apkUrl: data.apkUrl,
         pwaUrl: data.pwaUrl,
@@ -396,21 +421,48 @@ export const checkForLiveServerUpdate = async () => {
 // Apply OTA update on mobile app: updates client version, informs database, and syncs
 export const applyClientAppUpdate = async (targetVersion) => {
   const latestRelease = getLatestRelease();
-  const rawVer = targetVersion || latestRelease?.version || 'v4.8.3';
+  const rawVer = targetVersion || latestRelease?.version || CURRENT_BUILT_IN_VERSION;
   const ver = String(rawVer).startsWith('v') ? String(rawVer) : `v${rawVer}`;
+  const normVer = ver.replace(/^v/i, '');
+  const targetBuild = Number(latestRelease?.buildNumber) || CURRENT_BUILT_IN_BUILD;
 
-  // 1. Update local device version
+  // 1. Permanently record installed version so update never loops!
   localStorage.setItem(CLIENT_VERSION_KEY, ver);
+  localStorage.setItem('duragrit_client_installed_build', String(targetBuild));
+  localStorage.setItem('duragrit_ota_applied_' + ver, 'true');
+  localStorage.setItem('duragrit_ota_applied_' + normVer, 'true');
+  localStorage.setItem('duragrit_ota_dismissed_' + ver, 'true');
+  localStorage.setItem('duragrit_ota_dismissed_' + normVer, 'true');
+  try {
+    sessionStorage.setItem('duragrit_ota_dismissed_' + ver, 'true');
+    sessionStorage.setItem('duragrit_ota_dismissed_' + normVer, 'true');
+  } catch (_) {}
 
-  // 2. Clear browser caches / service workers so latest code is loaded
+  // 2. Mark release as LIVE in RELEASES_KEY
+  try {
+    const releases = getAppReleases();
+    const updated = releases.map((r) => ({
+      ...r,
+      status: (r.version === ver || r.version?.replace(/^v/i, '') === normVer) ? 'LIVE' : 'ARCHIVED'
+    }));
+    saveAppReleases(updated);
+  } catch (_) {}
+
+  // 3. Clear browser caches / service workers
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
       const keys = await caches.keys();
       await Promise.all(keys.map((k) => caches.delete(k)));
     } catch (_) {}
   }
+  if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(r => r.unregister()));
+    } catch (_) {}
+  }
 
-  // 3. Update device fleet registry
+  // 4. Update device fleet registry
   const uuid = getClientDeviceUuid();
   const installs = getDeviceInstalls();
 
@@ -421,7 +473,7 @@ export const applyClientAppUpdate = async (targetVersion) => {
       return {
         ...item,
         appVersion: ver,
-        appBuildNumber: latestRelease.buildNumber || 152,
+        appBuildNumber: targetBuild,
         isLatestVersion: true,
         hasPendingUpdate: false,
         pendingVersion: null,
@@ -437,7 +489,7 @@ export const applyClientAppUpdate = async (targetVersion) => {
     saveDeviceInstalls(updatedInstalls);
   }
 
-  // 4. Trigger events for reactive UI updates
+  // 5. Trigger events for reactive UI updates
   try {
     window.dispatchEvent(new CustomEvent('duragrit:ota-update-applied', {
       detail: { version: ver, release: latestRelease }

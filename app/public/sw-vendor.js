@@ -5,10 +5,8 @@
  * NEVER falls back to Admin ERP (/index.html).
  */
 
-const VENDOR_CACHE_NAME = 'duragrit-vendor-portal-v2.5';
+const VENDOR_CACHE_NAME = 'duragrit-vendor-portal-v4.8.4-live';
 const VENDOR_STATIC_ASSETS = [
-  '/app/',
-  '/app/index.html',
   '/manifest-vendor.json',
   '/icon.svg',
   '/icon-192.png',
@@ -66,7 +64,15 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          networkResponse.type === 'basic' &&
+          event.request.mode !== 'navigate' &&
+          !url.pathname.endsWith('.html') &&
+          !url.pathname.endsWith('/app/') &&
+          url.pathname !== '/app'
+        ) {
           const responseToCache = networkResponse.clone();
           caches.open(VENDOR_CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -95,3 +101,4 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+

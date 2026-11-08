@@ -149,7 +149,10 @@ export function App() {
     checkForLiveServerUpdate().then((status) => {
       if (status) {
         setUpdateStatus(status);
-        if (status.hasUpdate && !sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion)) {
+        const isApplied = localStorage.getItem('duragrit_ota_applied_' + status.latestVersion) === 'true';
+        const isDismissed = sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true' ||
+                            localStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true';
+        if (status.hasUpdate && !isApplied && !isDismissed) {
           setShowUpdateModal(true);
         }
       }
@@ -159,7 +162,10 @@ export function App() {
       checkForLiveServerUpdate().then((status) => {
         if (status) {
           setUpdateStatus(status);
-          if (status.hasUpdate) {
+          const isApplied = localStorage.getItem('duragrit_ota_applied_' + status.latestVersion) === 'true';
+          const isDismissed = sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true' ||
+                              localStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true';
+          if (status.hasUpdate && !isApplied && !isDismissed) {
             setShowUpdateModal(true);
           }
         }
@@ -174,12 +180,17 @@ export function App() {
       checkForLiveServerUpdate().then((status) => {
         if (status?.hasUpdate) {
           setUpdateStatus(status);
-          if (!sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion)) {
+          const isApplied = localStorage.getItem('duragrit_ota_applied_' + status.latestVersion) === 'true';
+          const isDismissed = sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true' ||
+                              localStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true';
+          if (!isApplied && !isDismissed) {
             setShowUpdateModal(true);
           }
+        } else {
+          setUpdateStatus(prev => ({ ...prev, hasUpdate: false }));
         }
       });
-    }, 15000);
+    }, 30000);
 
     return () => {
       clearInterval(interval);
@@ -197,7 +208,7 @@ export function App() {
 
     setTimeout(() => {
       setUpdateProgress(45);
-      setUpdateStatusMessage(`Downloading update bundle ${updateStatus.latestVersion || 'v4.8.3'}...`);
+      setUpdateStatusMessage(`Downloading update bundle ${updateStatus.latestVersion || 'v4.8.4'}...`);
 
       setTimeout(() => {
         setUpdateProgress(75);
@@ -211,18 +222,25 @@ export function App() {
           setUpdateProgress(100);
           setUpdateStatusMessage(`✓ Successfully updated to ${res.version}!`);
           setIsUpdating(false);
+          setUpdateStatus((prev) => ({ ...prev, hasUpdate: false }));
+          setShowUpdateModal(false);
 
-          if (updateStatus.latestVersion) {
-            sessionStorage.removeItem('duragrit_ota_dismissed_' + updateStatus.latestVersion);
+          if (res?.version) {
+            localStorage.setItem('duragrit_ota_applied_' + res.version, 'true');
+            localStorage.setItem('duragrit_ota_dismissed_' + res.version, 'true');
+            try {
+              sessionStorage.setItem('duragrit_ota_dismissed_' + res.version, 'true');
+            } catch (_) {}
           }
 
           setTimeout(() => {
-            setShowUpdateModal(false);
             setToastMsg(`App successfully updated to ${res.version}! Reloading latest work...`);
             setTimeout(() => {
-              window.location.reload(true);
-            }, 600);
-          }, 600);
+              const url = new URL(window.location.href);
+              url.searchParams.set('v', String(Date.now()));
+              window.location.replace(url.toString());
+            }, 500);
+          }, 400);
         }, 400);
       }, 400);
     }, 350);
@@ -571,6 +589,7 @@ export function App() {
                         setShowUpdateModal(false);
                         if (updateStatus.latestVersion) {
                           sessionStorage.setItem('duragrit_ota_dismissed_' + updateStatus.latestVersion, 'true');
+                          localStorage.setItem('duragrit_ota_dismissed_' + updateStatus.latestVersion, 'true');
                         }
                       }}
                       className="w-full py-2 text-stone-400 hover:text-stone-200 text-xs font-semibold transition cursor-pointer"

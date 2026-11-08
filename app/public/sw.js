@@ -3,10 +3,8 @@
  * Provides offline fallback, static asset caching, and resilient network-first caching.
  */
 
-const CACHE_NAME = 'duragrit-portal-v2.4';
+const CACHE_NAME = 'duragrit-portal-v4.8.4-live';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icon.svg',
   '/icon-192.png',
@@ -58,8 +56,15 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        // Cache successful local GET requests
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        // Cache successful non-HTML local GET requests
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          networkResponse.type === 'basic' &&
+          event.request.mode !== 'navigate' &&
+          !url.pathname.endsWith('.html') &&
+          url.pathname !== '/'
+        ) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

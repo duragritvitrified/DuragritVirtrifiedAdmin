@@ -87,6 +87,8 @@ export const BASE_REGISTERED_VENDORS = [
     email: 'duragrit07@gmail.com',
     passkey: 'Dura#4905',
     tempPassword: 'Dura#4905',
+    password: 'Dura#4905',
+    pass: 'Dura#4905',
     status: 'ACTIVE',
     accountStatus: 'Active',
     category: 'Tile Contractor / Applicator',
@@ -602,8 +604,8 @@ export const DataProvider = ({ children }) => {
         deletedSet
       );
       const nextVendors = mergeCollections(
-        sbVendors,
-        bridge?.vendors ?? loadStorage(STORAGE_KEYS.VENDORS, []),
+        mergeCollections(BASE_REGISTERED_VENDORS, sbVendors, (v) => String(v.vendorId || v.id || '').toUpperCase(), deletedSet),
+        bridge?.vendors ?? loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS),
         (v) => String(v.vendorId || v.id || '').toUpperCase(),
         deletedSet
       );
