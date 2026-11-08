@@ -30,7 +30,7 @@ if (fs.existsSync(webDist) && fs.existsSync(appDist)) {
 
   // 4. Ensure dedicated PWA manifests and Service Workers are mirrored into root and app subfolder
   const publicDir = path.resolve(__dirname, '..', 'public');
-  ['manifest.json', 'manifest-vendor.json', 'manifest-admin.json', 'download.html', 'sw.js', 'sw-vendor.js', 'icon-admin-512.png', 'icon-admin-192.png', 'icon.svg', 'icon-512.png', 'icon-192.png'].forEach((file) => {
+  ['manifest.json', 'manifest-vendor.json', 'manifest-admin.json', 'download.html', 'version.json', 'sw.js', 'sw-vendor.js', 'icon-admin-512.png', 'icon-admin-192.png', 'icon.svg', 'icon-512.png', 'icon-192.png'].forEach((file) => {
     const srcFile = path.join(publicDir, file);
     if (fs.existsSync(srcFile)) {
       fs.copyFileSync(srcFile, path.join(webDist, file));

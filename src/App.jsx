@@ -387,7 +387,7 @@ export function App() {
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {/* Version Number */}
               <span className="text-[9.5px] sm:text-[10.5px] font-mono font-bold text-stone-300 bg-white/10 px-2 py-0.5 rounded-full border border-stone-700/80 shrink-0">
-                {updateStatus.installedVersion || 'v4.8.4'}
+                {updateStatus.installedVersion || 'v4.8.5'}
               </span>
 
               {/* Sync Status Badge */}

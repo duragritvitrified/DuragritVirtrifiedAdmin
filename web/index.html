@@ -17,6 +17,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..800;1,6..72,400..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <title>DuraGrit Vitrified — Stronger Bonds. Lasting Trust. | Corporate ERP</title>
+    <script>
+      (function() {
+        var APP_VER = 'v4.8.5';
+        try {
+          var last = localStorage.getItem('duragrit_web_pwa_version');
+          if (last !== APP_VER) {
+            localStorage.setItem('duragrit_web_pwa_version', APP_VER);
+            if ('caches' in window) {
+              caches.keys().then(function(keys) {
+                keys.forEach(function(k) {
+                  if (k.indexOf('v4.8.5') === -1) {
+                    caches.delete(k);
+                  }
+                });
+              });
+            }
+          }
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body class="bg-[#FAF9F6] text-stone-900 font-sans antialiased selection:bg-[#C84826] selection:text-white">
     <div id="root"></div>

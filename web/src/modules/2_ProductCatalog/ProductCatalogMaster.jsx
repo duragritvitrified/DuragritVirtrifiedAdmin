@@ -7,7 +7,7 @@ import {
   Plus, Search, Download, Printer, ArrowLeft, RotateCcw,
   Package, QrCode, Wallet, TrendingUp, ShieldCheck, Check,
   Edit3, Trash2, Upload, AlertCircle,
-  CheckCircle2
+  CheckCircle2, AlertTriangle, X
 } from 'lucide-react';
 
 export function ProductCatalogMaster({ onNavigateQR }) {
@@ -15,6 +15,8 @@ export function ProductCatalogMaster({ onNavigateQR }) {
 
   const [viewMode, setViewMode] = useState('list');
   const [editingSku, setEditingSku] = useState(null);
+  const [skuToDelete, setSkuToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -169,9 +171,22 @@ export function ProductCatalogMaster({ onNavigateQR }) {
     setViewMode('list');
   };
 
-  const handleDeleteSku = async (sku) => {
-    await deleteSKU(sku.id || sku.skuCode);
-    showToast(`Deleted SKU ${sku.skuCode} from Catalog & Supabase.`);
+  const handleConfirmDelete = async () => {
+    if (!skuToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteSKU(skuToDelete.id || skuToDelete.skuCode);
+      showToast(`Deleted SKU ${skuToDelete.skuCode} from Catalog & Supabase.`);
+      setSkuToDelete(null);
+    } catch (err) {
+      showToast(`Failed to delete SKU: ${err?.message || 'Error occurred'}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setSkuToDelete(null);
   };
 
   const handleExportCatalog = () => {
@@ -607,7 +622,7 @@ export function ProductCatalogMaster({ onNavigateQR }) {
                                 <QrCode className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => handleDeleteSku(prod)}
+                                onClick={() => setSkuToDelete(prod)}
                                 title="Delete SKU"
                                 className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                               >
@@ -1033,6 +1048,113 @@ export function ProductCatalogMaster({ onNavigateQR }) {
                 <p className="text-[11px] leading-relaxed font-medium">
                   Once saved, open <strong>QR Batch Generator</strong> to create serialized QR tokens for this SKU that Contractors and Dealers can scan in the Mobile App.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* DELETE PRODUCT CONFIRMATION MODAL ("Are you sure?" Alert Pop-up)     */}
+      {/* ===================================================================== */}
+      {skuToDelete && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={handleCancelDelete}
+        >
+          <div 
+            className="bg-white rounded-3xl max-w-md w-full border border-stone-200 shadow-2xl overflow-hidden font-sans relative animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Danger Gradient Stripe */}
+            <div className="h-2 w-full bg-gradient-to-r from-rose-600 via-red-500 to-amber-500"></div>
+
+            <div className="p-6 space-y-4">
+              {/* Header with Danger Warning Icon */}
+              <div className="flex items-start space-x-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0 shadow-xs">
+                  <Trash2 className="w-6 h-6 text-rose-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base sm:text-lg font-black text-stone-900 font-serif leading-snug">
+                      Delete Product SKU?
+                    </h3>
+                    <button
+                      onClick={handleCancelDelete}
+                      className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition cursor-pointer"
+                      title="Cancel & Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Are you sure you want to delete this product from the catalog?
+                  </p>
+                </div>
+              </div>
+
+              {/* Product SKU Details Card Preview */}
+              <div className="bg-[#FAF9F6] rounded-2xl p-3.5 border border-[#ECEAE6] space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">SKU Code</span>
+                  <span className="font-mono font-black text-xs text-[#8B0000] bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                    {skuToDelete.skuCode}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block">Product Name</span>
+                  <span className="font-bold text-stone-900 text-xs sm:text-sm block leading-tight mt-0.5">
+                    {skuToDelete.name}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-stone-200/70 text-[11px]">
+                  <div>
+                    <span className="text-stone-400 text-[10px] block font-medium">Category:</span>
+                    <span className="font-semibold text-stone-700 truncate block">{skuToDelete.category || 'Adhesive'}</span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 text-[10px] block font-medium">Pack Weight:</span>
+                    <span className="font-semibold text-stone-700">{skuToDelete.packWeight || '20 kg'}</span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 text-[10px] block font-medium">Retail MRP:</span>
+                    <span className="font-mono font-bold text-stone-900">₹ {skuToDelete.mrp || 0}</span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 text-[10px] block font-medium">QR Cashback:</span>
+                    <span className="font-mono font-bold text-emerald-700">₹ {skuToDelete.cashbackReward || 0} / scan</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warning Notice */}
+              <div className="flex items-start space-x-2 text-[11px] text-amber-800 bg-amber-50/80 border border-amber-200/80 rounded-xl p-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  This will remove the product SKU permanently from the Catalog Master and Supabase database.
+                </span>
+              </div>
+
+              {/* Action Buttons: Yes, Delete vs No, Cancel */}
+              <div className="flex items-center justify-end space-x-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCancelDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-white hover:bg-stone-100 text-stone-700 text-xs font-bold rounded-xl border border-stone-300 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  No, Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-white" />
+                  <span>{isDeleting ? 'Deleting...' : 'Yes, Delete Product'}</span>
+                </button>
               </div>
             </div>
           </div>

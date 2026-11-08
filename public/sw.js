@@ -1,9 +1,9 @@
 /**
- * DuraGrit Vitrified - Progressive Web App Service Worker (v2.4)
+ * DuraGrit Vitrified - Progressive Web App Service Worker (v4.8.5)
  * Provides offline fallback, static asset caching, and resilient network-first caching.
  */
 
-const CACHE_NAME = 'duragrit-portal-v4.8.4-live';
+const CACHE_NAME = 'duragrit-portal-v4.8.5-live';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/icon.svg',
@@ -15,7 +15,7 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Pre-caching static assets');
+      console.log('[ServiceWorker v4.8.5] Pre-caching static assets');
       return cache.addAll(STATIC_ASSETS).catch((err) => {
         console.warn('[ServiceWorker] Some assets skipped during pre-cache:', err);
       });
@@ -41,27 +41,53 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event - Network-first with cache fallback
+// Message Listener for explicit skip waiting / reload from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Fetch Event - Network-first with fresh navigation guarantee
 self.addEventListener('fetch', (event) => {
-  // Only intercept GET requests
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  // Bypass chrome-extension and Supabase realtime websockets
-  if (url.protocol.startsWith('chrome-extension') || url.pathname.includes('/realtime/v1/')) {
+  // Bypass chrome-extension, APK downloads, and Supabase realtime websockets
+  if (
+    url.protocol.startsWith('chrome-extension') ||
+    url.pathname.includes('/realtime/v1/') ||
+    url.pathname.includes('/apk/') ||
+    url.pathname.endsWith('.apk')
+  ) {
+    return;
+  }
+
+  // Pure network-first for navigation (HTML) requests
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(async () => {
+          const cachedResponse = await caches.match('/index.html');
+          if (cachedResponse) return cachedResponse;
+          return new Response('Network error and asset not cached', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: new Headers({ 'Content-Type': 'text/plain' })
+          });
+        })
+    );
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        // Cache successful non-HTML local GET requests
         if (
           networkResponse &&
           networkResponse.status === 200 &&
           networkResponse.type === 'basic' &&
-          event.request.mode !== 'navigate' &&
           !url.pathname.endsWith('.html') &&
           url.pathname !== '/'
         ) {
@@ -73,15 +99,9 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(async () => {
-        // Fallback to cache if network fails
         const cachedResponse = await caches.match(event.request);
         if (cachedResponse) {
           return cachedResponse;
-        }
-
-        // Return offline root shell for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
         }
 
         return new Response('Network error and asset not cached', {

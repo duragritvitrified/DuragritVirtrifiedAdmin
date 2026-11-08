@@ -63,14 +63,17 @@ Write-Host "SUCCESS: Vendor Release APK Compiled! Size: $($apkItem.Length) bytes
 Write-Host "[5/5] Mirroring Vendor APK to public download targets..."
 $vendorTargets = @(
     "$root\public\apk\duragrit-vendor-v2.apk",
+    "$root\public\apk\duragrit-vendor-v4.8.5.apk",
     "$root\public\apk\duragrit-vendor-v4.8.4.apk",
     "$root\public\apk\duragrit-vendor-v4.8.3.apk",
     "$root\public\apk\duragrit-vendor-v4.8.2.apk",
     "$root\web\public\apk\duragrit-vendor-v2.apk",
+    "$root\web\public\apk\duragrit-vendor-v4.8.5.apk",
     "$root\web\public\apk\duragrit-vendor-v4.8.4.apk",
     "$root\web\public\apk\duragrit-vendor-v4.8.3.apk",
     "$root\web\public\apk\duragrit-vendor-v4.8.2.apk",
     "$root\web\dist\apk\duragrit-vendor-v2.apk",
+    "$root\web\dist\apk\duragrit-vendor-v4.8.5.apk",
     "$root\web\dist\apk\duragrit-vendor-v4.8.4.apk",
     "$root\web\dist\apk\duragrit-vendor-v4.8.3.apk",
     "$root\web\dist\apk\duragrit-vendor-v4.8.2.apk"
