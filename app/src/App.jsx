@@ -347,45 +347,42 @@ export function App() {
           </div>
         )}
 
-        {/* Top App Control Bar (Always pinned at top, robust responsive flex, never wraps) */}
+        {/* Top App Control Bar (Pinned at top, clean, uncluttered & 100% responsive) */}
         {currentScreen !== 'signin' && (
           <header className="bg-[#1C1917] px-3.5 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2 text-white flex items-center justify-between text-xs border-b border-stone-800 shrink-0 font-sans sticky top-0 z-40 shadow-xs">
-            <div className="flex items-center space-x-2 min-w-0 flex-1 mr-2">
+            {/* Left: Branded Logo only (Text removed per user request) */}
+            <div className="flex items-center min-w-0">
               <img
                 src="/logo-white.png"
-                alt="DuraGrit Vitrified"
-                className="h-6 w-auto max-w-[120px] object-contain shrink-0"
+                alt="DuraGrit"
+                className="h-6 sm:h-7 w-auto max-w-[130px] sm:max-w-[160px] object-contain shrink-0"
                 onError={(e) => {
                   e.target.style.display = 'none';
                 }}
               />
-              <div className="min-w-0 flex-1">
-                <span className="font-extrabold tracking-wider text-white block leading-tight text-[11px] uppercase truncate">
-                  DURAGRIT VITRIFIED
-                </span>
-                <div className="flex items-center space-x-1.5 mt-0.5 text-[9px] text-stone-400 truncate">
-                  <span className="text-[#F9CEB8] font-bold truncate shrink-0">
-                    Vendor Partner
-                  </span>
-                  <span className="text-stone-600">•</span>
-                  <span className="text-[8.5px] font-mono font-bold text-stone-300 shrink-0">
-                    {updateStatus.installedVersion}
-                  </span>
-                  <span className="text-stone-600">•</span>
-                  <span className="text-[8px] font-bold text-emerald-400 bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-500/30 shrink-0">
-                    Sync ✓
-                  </span>
-                </div>
-              </div>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0">
+            {/* Right: Version Number, Sync Status Badge, and Logout Button */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Version Number */}
+              <span className="text-[9.5px] sm:text-[10.5px] font-mono font-bold text-stone-300 bg-white/10 px-2 py-0.5 rounded-full border border-stone-700/80 shrink-0">
+                {updateStatus.installedVersion || 'v4.8.4'}
+              </span>
+
+              {/* Sync Status Badge */}
+              <span className="inline-flex items-center gap-1 text-[8.5px] sm:text-[9px] font-bold text-emerald-400 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-500/40 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Sync ✓</span>
+              </span>
+
+              {/* Logout Button */}
               <button
+                type="button"
                 onClick={() => {
                   logout();
                   setCurrentScreen('signin');
                 }}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-red-500/20 text-stone-300 hover:text-red-300 transition cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-red-500/25 text-stone-300 hover:text-red-300 transition cursor-pointer active:scale-95 flex items-center justify-center shrink-0 border border-stone-700/60"
                 title="Sign Out"
               >
                 <LogOut className="w-4 h-4" />

@@ -334,12 +334,12 @@ export const PartnerOverviewDashboard = ({
       )}
 
       {/* ===================================================================== */}
-      {/* PARTNER GREETING & STATUS STRIP (Sticky under top bar, never hides)   */}
+      {/* PARTNER PROFILE STRIP (Clean, Uncluttered & Fully Responsive)        */}
       {/* ===================================================================== */}
-      <div className="w-full bg-white px-4 py-3 border-b border-[#ECEAE6] flex items-center justify-between shadow-2xs sticky top-0 z-30 shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-1.5">
-          {/* Vendor Profile Image from Admin with Branded Fallback */}
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FEF2EE] to-white border-2 border-[#F9CEB8] flex items-center justify-center shadow-xs shrink-0 overflow-hidden">
+      <div className="w-full bg-white px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-[#ECEAE6] flex items-center justify-between shadow-2xs sticky top-0 z-30 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 mr-2">
+          {/* 1. User Profile Icon */}
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-[#FEF2EE] to-white border-2 border-[#F9CEB8] flex items-center justify-center shadow-xs shrink-0 overflow-hidden">
             <img
               src={vendorAvatarSrc}
               alt={displayName}
@@ -350,47 +350,29 @@ export const PartnerOverviewDashboard = ({
               }}
             />
           </div>
+
+          {/* 2. Vendor Name & 3. Vendor ID */}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 min-w-0">
-              <h1 className="text-xs font-black text-stone-900 leading-tight truncate">
-                {partner.companyName || partner.contactPerson}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h1 className="text-xs sm:text-[13px] font-black text-stone-900 leading-tight truncate">
+                {partner.companyName || partner.contactPerson || 'Vendor Partner'}
               </h1>
-              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
-            <div className="text-[10px] text-stone-500 font-medium flex items-center gap-1 mt-0.5 min-w-0 truncate">
-              <span className="inline-flex items-center gap-0.5 font-mono text-[9px] font-black text-[#A6300F] bg-[#FEF2EE] px-1 py-0.2 rounded border border-[#F9CEB8] shrink-0">
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="inline-flex items-center font-mono text-[9px] sm:text-[9.5px] font-black text-[#A6300F] bg-[#FEF2EE] px-1.5 py-0.5 rounded border border-[#F9CEB8] shrink-0 tracking-wider">
                 {partner.id}
-              </span>
-              <span className="text-stone-300">•</span>
-              <span className="truncate max-w-[85px] text-stone-600">
-                {partner.contactPerson || partner.name}
-              </span>
-              <span className="text-stone-300">•</span>
-              <span className="truncate max-w-[80px] text-stone-500">
-                {partner.city || 'Morbi'}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="p-1.5 rounded-lg bg-[#F4F3F0] hover:bg-stone-200 text-stone-600 transition cursor-pointer active:scale-95"
-            title="Sync Live Balances"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#A6300F]' : ''}`} />
-          </button>
-          <div className="text-right shrink-0">
-            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {partner.status || 'ACTIVE'}
-            </span>
-            <span className="block text-[8.5px] font-mono text-stone-400 mt-0.2 truncate max-w-[70px]">
-              {partner.category}
-            </span>
-          </div>
+        {/* 4. Active Badge Only (Contractor Title & Sync Icon Removed per request) */}
+        <div className="flex items-center shrink-0">
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/90 px-2 sm:px-2.5 py-1 rounded-full shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span>{partner.status || 'Active'}</span>
+          </span>
         </div>
       </div>
 
