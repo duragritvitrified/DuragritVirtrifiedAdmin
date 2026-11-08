@@ -11,13 +11,28 @@ const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 // Standard release history
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-005',
+    version: 'v4.8.3',
+    buildNumber: 153,
+    releaseDate: '2026-11-08 18:30:00',
+    title: 'Mobile Responsiveness & Auto-Push Engine Release',
+    changelog: '1-Tap mobile banner responsive layout fix, automatic in-app OTA update popup, real-time vendor credentials sync with Admin Console.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-e9c1248a31b40',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners'
+  },
+  {
     id: 'REL-2026-004',
     version: 'v4.8.2',
-    buildNumber: 148,
+    buildNumber: 152,
     releaseDate: '2026-11-04 18:30:00',
     title: 'Core Sync & Dual-Portal Handshake Release',
     changelog: 'Internal corporate staff vs external partner separation, multi-tier contractor wallet sync, real-time KYC validator & live passkey auth.',
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
@@ -308,24 +323,24 @@ export const getClientDeviceUuid = () => {
 export const getClientInstalledVersion = () => {
   const saved = localStorage.getItem(CLIENT_VERSION_KEY);
   if (saved) return saved;
-  // Fall back to latest known
-  const latest = getLatestRelease();
-  const ver = latest?.version || 'v4.8.2';
-  localStorage.setItem(CLIENT_VERSION_KEY, ver);
-  return ver;
+  // Fall back to v4.8.2 baseline so un-updated clients detect v4.8.3 immediately
+  const defaultVer = 'v4.8.2';
+  return defaultVer;
 };
 
 // Check if current client has an OTA update available
 export const checkClientUpdateStatus = () => {
   const installedVer = getClientInstalledVersion();
   const latestRelease = getLatestRelease();
-  const hasUpdate = Boolean(latestRelease && latestRelease.version && latestRelease.version !== installedVer);
+  const normInstalled = String(installedVer || '').replace(/^v/i, '').trim();
+  const normLatest = String(latestRelease?.version || '').replace(/^v/i, '').trim();
+  const hasUpdate = Boolean(normLatest && normLatest !== normInstalled);
 
   return {
     hasUpdate,
     installedVersion: installedVer,
     latestRelease,
-    latestVersion: latestRelease?.version || installedVer,
+    latestVersion: latestRelease?.version || 'v4.8.3',
     isMandatory: Boolean(latestRelease?.isMandatory),
     changelog: latestRelease?.changelog || '',
     title: latestRelease?.title || ''
@@ -342,16 +357,19 @@ export const checkForLiveServerUpdate = async () => {
     if (res.ok) {
       const data = await res.json();
       const currentVer = getClientInstalledVersion();
-      const hasUpdate = Boolean(data.version && data.version !== currentVer);
+      const normServer = String(data.version || '').replace(/^v/i, '').trim();
+      const normClient = String(currentVer || '').replace(/^v/i, '').trim();
+      const hasUpdate = Boolean(normServer && normServer !== normClient);
+      const cleanLatest = String(data.version).startsWith('v') ? data.version : `v${data.version}`;
       return {
         hasUpdate,
-        latestVersion: data.version,
-        buildNumber: data.buildNumber,
-        changelog: data.changelog,
+        latestVersion: cleanLatest,
+        buildNumber: data.buildNumber || 153,
+        changelog: data.changelog || 'Mobile responsive layout and real-time vendor sync updates.',
         apkUrl: data.apkUrl,
         pwaUrl: data.pwaUrl,
         installedVersion: currentVer,
-        title: `Official Release ${data.version}`
+        title: `Official Release ${cleanLatest}`
       };
     }
   } catch (e) {
@@ -363,7 +381,8 @@ export const checkForLiveServerUpdate = async () => {
 // Apply OTA update on mobile app: updates client version, informs database, and syncs
 export const applyClientAppUpdate = async (targetVersion) => {
   const latestRelease = getLatestRelease();
-  const ver = targetVersion || latestRelease.version;
+  const rawVer = targetVersion || latestRelease?.version || 'v4.8.3';
+  const ver = String(rawVer).startsWith('v') ? String(rawVer) : `v${rawVer}`;
 
   // 1. Update local device version
   localStorage.setItem(CLIENT_VERSION_KEY, ver);

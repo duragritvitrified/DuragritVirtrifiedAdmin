@@ -52,7 +52,9 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
     if (
       typeof window !== 'undefined' &&
       (window.matchMedia('(display-mode: standalone)').matches ||
-        window.navigator.standalone === true)
+        window.navigator.standalone === true ||
+        Boolean(window.Capacitor?.isNativePlatform?.()) ||
+        Boolean(window.AndroidBridge))
     ) {
       setIsInstalled(true);
       return;
@@ -516,13 +518,13 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
     <div className="w-full max-w-[420px] mx-auto min-h-screen bg-[#FAF9F6] px-4 pt-[max(0.85rem,env(safe-area-inset-top))] pb-8 flex flex-col justify-between font-serif">
       <div>
 
-        {/* Brand Header Bar */}
-        <div className="flex items-center justify-between mb-4 pt-1">
-          <div className="flex items-center gap-3">
+        {/* Brand Header Bar - Anti-wrap Mobile Responsive */}
+        <div className="flex items-center justify-between mb-3.5 pt-1 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <img
               src="/logo.png"
               alt="DuraGrit Vitrified"
-              className="h-10 w-auto object-contain"
+              className="h-7 sm:h-9 max-w-[130px] sm:max-w-[160px] w-auto object-contain shrink-0"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
@@ -536,10 +538,10 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               setPortalMode(next);
               setErrorMsg('');
             }}
-            className="flex items-center gap-1.5 bg-[#E9E8E5] hover:bg-[#E0DED9] text-stone-800 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border border-[#DFDDD8] transition cursor-pointer font-sans"
+            className="flex items-center gap-1.5 bg-[#E9E8E5] hover:bg-[#E0DED9] active:scale-95 text-stone-800 text-[9.5px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-full border border-[#DFDDD8] transition cursor-pointer font-sans shrink-0 whitespace-nowrap"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-            <span>
+            <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
+            <span className="whitespace-nowrap">
               {portalMode === 'vendor'
                 ? 'VENDOR PORTAL'
                 : 'CONTRACTOR PORTAL'}
@@ -547,43 +549,51 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           </button>
         </div>
 
-        {/* 1-Tap Mobile App Install Banner */}
+        {/* 1-Tap Mobile App Install Banner - 100% Mobile Responsive */}
         {!isInstalled && (
-          <div className="mb-3.5 bg-gradient-to-r from-emerald-950 via-stone-900 to-emerald-900 text-white rounded-2xl p-3 border border-emerald-500/30 shadow-sm flex items-center justify-between font-sans">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
-                <span className="text-base">📲</span>
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] font-black tracking-tight text-white flex items-center gap-1.5">
-                  <span>Install DuraGrit App</span>
-                  <span className="text-[8px] bg-emerald-500 text-stone-950 font-black px-1.5 py-0.2 rounded-full uppercase">1-Tap</span>
+          <div className="mb-3 bg-gradient-to-r from-stone-950 via-emerald-950 to-stone-900 text-white rounded-2xl p-2.5 sm:p-3 border border-emerald-500/40 shadow-sm font-sans">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                  <span className="text-base">📲</span>
                 </div>
-                <p className="text-[9.5px] text-emerald-200/90 truncate mt-0.5">
-                  Add to home screen for full-screen camera & QR scanning
-                </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 overflow-hidden">
+                    <span className="text-[11.5px] font-black tracking-tight text-white whitespace-nowrap truncate">
+                      Install DuraGrit App
+                    </span>
+                    <span className="text-[8px] bg-emerald-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full uppercase shrink-0 font-mono tracking-wider">
+                      1-Tap
+                    </span>
+                  </div>
+                  <p className="text-[9.5px] text-emerald-200/80 truncate mt-0.5">
+                    Fast camera &amp; offline QR verification
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="px-2.5 sm:px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow transition shrink-0 whitespace-nowrap cursor-pointer"
+              >
+                Install App
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleInstallClick}
-              className="ml-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow-xs transition shrink-0 cursor-pointer"
-            >
-              Install App
-            </button>
           </div>
         )}
 
         {/* Live Sync & Update Control Bar */}
         <div className="mb-3 flex items-center justify-between bg-stone-100/90 rounded-2xl px-3 py-2 border border-stone-200/90 text-xs font-sans">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-[10.5px] font-bold text-stone-700">DuraGrit v4.8.2 Live Sync</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-stone-700 truncate">
+              DuraGrit v4.8.3 Live Sync
+            </span>
           </div>
           <button
             type="button"
             onClick={async () => {
-              showToast('🔄 Syncing vendor database & checking updates...');
+              showToast('🔄 Checking for live software updates...');
               try {
                 if (typeof window !== 'undefined' && 'caches' in window) {
                   const keys = await caches.keys();
@@ -591,12 +601,14 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                 }
               } catch (_) {}
               if (refreshAllData) await refreshAllData();
+              try {
+                window.dispatchEvent(new CustomEvent('duragrit:ota-release-pushed'));
+              } catch (_) {}
               setTimeout(() => {
-                showToast('✓ Updated & synchronized with Admin Database!');
-                window.location.reload(true);
+                showToast('✓ Synchronized with Admin Database!');
               }, 400);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-stone-50 active:scale-95 text-[#C84826] font-black text-[10px] rounded-lg border border-stone-200 shadow-2xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-stone-50 active:scale-95 text-[#C84826] font-black text-[10px] rounded-lg border border-stone-200 shadow-2xs transition cursor-pointer shrink-0 whitespace-nowrap"
           >
             <span>⚡ Sync &amp; Update App</span>
           </button>

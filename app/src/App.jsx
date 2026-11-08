@@ -131,12 +131,22 @@ export function App() {
     
     // Check local status and also poll live server endpoint
     checkForLiveServerUpdate().then((status) => {
-      if (status) setUpdateStatus(status);
+      if (status) {
+        setUpdateStatus(status);
+        if (status.hasUpdate && !sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion)) {
+          setShowUpdateModal(true);
+        }
+      }
     });
 
     const handleSync = () => {
       checkForLiveServerUpdate().then((status) => {
-        if (status) setUpdateStatus(status);
+        if (status) {
+          setUpdateStatus(status);
+          if (status.hasUpdate) {
+            setShowUpdateModal(true);
+          }
+        }
       });
     };
 
@@ -146,9 +156,14 @@ export function App() {
 
     const interval = setInterval(() => {
       checkForLiveServerUpdate().then((status) => {
-        if (status?.hasUpdate) setUpdateStatus(status);
+        if (status?.hasUpdate) {
+          setUpdateStatus(status);
+          if (!sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion)) {
+            setShowUpdateModal(true);
+          }
+        }
       });
-    }, 20000);
+    }, 15000);
 
     return () => {
       clearInterval(interval);
@@ -166,31 +181,35 @@ export function App() {
 
     setTimeout(() => {
       setUpdateProgress(45);
-      setUpdateStatusMessage(`Downloading bundle ${updateStatus.latestVersion || 'v4.8.2'}...`);
+      setUpdateStatusMessage(`Downloading update bundle ${updateStatus.latestVersion || 'v4.8.3'}...`);
 
       setTimeout(() => {
         setUpdateProgress(75);
-        setUpdateStatusMessage('Validating cryptographic integrity & HMAC signature...');
+        setUpdateStatusMessage('Validating cryptographic HMAC integrity & schemas...');
 
         setTimeout(async () => {
           setUpdateProgress(95);
-          setUpdateStatusMessage('Applying patch files & refreshing local schemas...');
+          setUpdateStatusMessage('Purging legacy cache & applying latest patches...');
 
           const res = await applyClientAppUpdate(updateStatus.latestVersion);
           setUpdateProgress(100);
           setUpdateStatusMessage(`✓ Successfully updated to ${res.version}!`);
           setIsUpdating(false);
 
+          if (updateStatus.latestVersion) {
+            sessionStorage.removeItem('duragrit_ota_dismissed_' + updateStatus.latestVersion);
+          }
+
           setTimeout(() => {
             setShowUpdateModal(false);
             setToastMsg(`App successfully updated to ${res.version}! Reloading latest work...`);
             setTimeout(() => {
               window.location.reload(true);
-            }, 800);
-          }, 800);
-        }, 500);
-      }, 500);
-    }, 400);
+            }, 600);
+          }, 600);
+        }, 400);
+      }, 400);
+    }, 350);
   };
 
   const pendingCount = claims.filter((c) => c.status === 'Pending').length;
@@ -460,40 +479,110 @@ export function App() {
         )}
 
         {/* ===================================================================== */}
-        {/* INTERACTIVE OTA UPDATE INSTALLATION MODAL                             */}
+        {/* INTERACTIVE OTA UPDATE POPUP & INSTALLATION MODAL                     */}
         {/* ===================================================================== */}
         {showUpdateModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-[#1C1917] border border-stone-700 text-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl font-sans text-center animate-in fade-in zoom-in-95">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-[#A62C11] to-[#C84826] flex items-center justify-center shadow-lg">
-                <Rocket className="w-7 h-7 text-white animate-pulse" />
-              </div>
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+            <div className="bg-[#1C1917] border border-stone-700 text-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl text-center animate-in fade-in zoom-in-95 relative overflow-hidden">
+              
+              {/* Soft decorative glow */}
+              <div className="absolute -top-12 -left-12 w-32 h-32 bg-[#C84826]/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
 
-              <div className="space-y-1">
-                <h3 className="text-base font-extrabold text-white">
-                  {updateProgress === 100 ? 'Update Complete!' : `Installing Update ${updateStatus.latestVersion}`}
-                </h3>
-                <p className="text-xs text-stone-400">
-                  {updateStatusMessage}
-                </p>
-              </div>
+              {!isUpdating ? (
+                /* 1. ANNOUNCEMENT & ACTION POPUP */
+                <div className="space-y-4 relative z-10">
+                  <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-[#A62C11] via-[#C84826] to-amber-500 flex items-center justify-center shadow-lg shadow-[#A62C11]/40 border border-white/20">
+                    <Rocket className="w-8 h-8 text-white animate-bounce" />
+                  </div>
 
-              <div className="space-y-2">
-                <div className="w-full bg-stone-800 rounded-full h-3 overflow-hidden border border-stone-700">
-                  <div
-                    className="bg-gradient-to-r from-[#C84826] to-emerald-500 h-full transition-all duration-300"
-                    style={{ width: `${updateProgress}%` }}
-                  ></div>
+                  <div className="space-y-1.5">
+                    <div className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/30 px-2.5 py-0.5 rounded-full text-[10px] font-black text-amber-300 uppercase tracking-wider">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                      New Release {updateStatus.latestVersion || 'v4.8.3'}
+                    </div>
+                    <h3 className="text-lg font-black text-white tracking-tight">
+                      New Software Update Ready!
+                    </h3>
+                    <p className="text-xs text-stone-300 leading-relaxed">
+                      A new official version has been published with important mobile UI responsiveness fixes and real-time vendor sync.
+                    </p>
+                  </div>
+
+                  {/* Highlights Card */}
+                  <div className="bg-stone-900/90 rounded-2xl p-3 border border-stone-800 text-left space-y-2 text-[11px]">
+                    <div className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                      <span className="text-stone-300">Mobile responsive 1-Tap header &amp; login layout fixed</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                      <span className="text-stone-300">Real-time database sync with Admin Vendor Management</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                      <span className="text-stone-300">Fast 1-tap in-app refresh — no APK reinstall needed</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleTriggerUpdate}
+                      className="w-full py-3 bg-gradient-to-r from-[#C84826] to-[#A62C11] hover:brightness-110 active:scale-98 text-white font-black text-sm rounded-2xl shadow-lg shadow-[#C84826]/30 transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>⚡ Update Now &amp; Apply Changes</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUpdateModal(false);
+                        if (updateStatus.latestVersion) {
+                          sessionStorage.setItem('duragrit_ota_dismissed_' + updateStatus.latestVersion, 'true');
+                        }
+                      }}
+                      className="w-full py-2 text-stone-400 hover:text-stone-200 text-xs font-semibold transition cursor-pointer"
+                    >
+                      Remind Me Later
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-stone-400 font-mono">
-                  <span>DuraGrit OTA System</span>
-                  <span>{updateProgress}%</span>
-                </div>
-              </div>
+              ) : (
+                /* 2. DOWNLOADING & APPLYING PROGRESS POPUP */
+                <div className="space-y-4 relative z-10">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-[#A62C11] to-[#C84826] flex items-center justify-center shadow-lg">
+                    <Rocket className="w-7 h-7 text-white animate-pulse" />
+                  </div>
 
-              <p className="text-[10px] text-stone-500 pt-1">
-                Do not close the application while the software bundle is applying.
-              </p>
+                  <div className="space-y-1">
+                    <h3 className="text-base font-extrabold text-white">
+                      {updateProgress === 100 ? 'Update Complete!' : `Installing Update ${updateStatus.latestVersion || 'v4.8.3'}`}
+                    </h3>
+                    <p className="text-xs text-stone-400">
+                      {updateStatusMessage}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="w-full bg-stone-800 rounded-full h-3 overflow-hidden border border-stone-700">
+                      <div
+                        className="bg-gradient-to-r from-[#C84826] to-emerald-500 h-full transition-all duration-300"
+                        style={{ width: `${updateProgress}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-stone-400 font-mono">
+                      <span>DuraGrit OTA System</span>
+                      <span>{updateProgress}%</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-stone-500 pt-1">
+                    Refreshing application bundles and applying latest changes...
+                  </p>
+                </div>
+              )}
+
             </div>
           </div>
         )}

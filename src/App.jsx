@@ -1,348 +1,593 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
-import { TopStatusBar } from './components/TopStatusBar';
-import { Navbar } from './components/Navbar';
-import { Sidebar } from './components/Sidebar';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { processVerificationToken, sendOnboardingEmail } from './services/emailService';
-
-// Enterprise ERP Modules
-import { Dashboard } from './modules/0_Dashboard/Dashboard';
-import { AdminLogin } from './modules/1_AdminLogin/AdminLogin';
-import { MasterWorkflowIndex } from './modules/0_MasterWorkflowIndex/MasterWorkflowIndex';
-import { UserManagement } from './modules/1_UserManagement/UserManagement';
-import { CashbackRequests } from './modules/2_CashbackRequests/CashbackRequests';
-import { ReportsAnalytics } from './modules/3_ReportsAnalytics/ReportsAnalytics';
-import { VendorSalesReport } from './modules/3_ReportsAnalytics/VendorSalesReport';
-import { FinancialReports } from './modules/14_FinancialReports/FinancialReports';
-import { ProductCatalogMaster } from './modules/2_ProductCatalog/ProductCatalogMaster';
-import { QRBatchGeneratorMaster } from './modules/4_QRBatchGenerator/QRBatchGeneratorMaster';
-import { BatchSerialRegistry } from './modules/5_BatchSerialRegistry/BatchSerialRegistry';
-import { DistributorDispatch } from './modules/6_DistributorDispatch/DistributorDispatch';
-import { DealerCartonInward } from './modules/7_DealerCartonInward/DealerCartonInward';
-import { ContractorRedemption } from './modules/8_ContractorRedemption/ContractorRedemption';
-import { AntiFraudEscrow } from './modules/9_AntiFraudEscrow/AntiFraudEscrow';
-import { ExecutiveSettlement } from './modules/10_ExecutiveSettlement/ExecutiveSettlement';
-import { MobileFieldApp } from './modules/11_MobileFieldApp/MobileFieldApp';
-import { OnboardingDossier } from './modules/15_OnboardingDossier/OnboardingDossier';
-import { EmailReports } from './modules/16_EmailReports/EmailReports';
-import { SystemSettings } from './modules/17_SystemSettings/SystemSettings';
-import { AppInstallReports } from './modules/18_AppInstallReports/AppInstallReports';
-import { VendorManagement } from './modules/7_VendorDirectory/VendorManagement';
+import { useData } from './context/DataContext';
+import { Step8_MobileSignIn } from './modules/Step8_MobileSignIn';
+import { Step9_ContractorDashboard } from './modules/Step9_ContractorDashboard';
+import { Step9_VendorDashboard } from './modules/Step9_VendorDashboard';
+import { Step10_QRScanUpload } from './modules/Step10_QRScanUpload';
+import { Step11_MyCashbackRequests } from './modules/Step11_MyCashbackRequests';
+import { Step12_MobileModeration } from './modules/Step12_MobileModeration';
+import { AdminMobileApp } from './modules/AdminMobileApp';
+import { Step13_WelcomeDossier } from './modules/Step13_WelcomeDossier';
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
+import {
+  checkClientUpdateStatus,
+  checkForLiveServerUpdate,
+  applyClientAppUpdate,
+  getClientInstalledVersion,
+  getLatestRelease,
+  syncMobileClientDevice
+} from './services/appInstallService';
+import {
+  QrCode,
+  LayoutGrid,
+  ClipboardList,
+  Package,
+  User,
+  ShieldCheck,
+  CheckCircle2,
+  LogOut,
+  Settings,
+  Rocket,
+  Sparkles,
+  ArrowRight,
+  X
+} from 'lucide-react';
 
 export function App() {
-  const { currentUser } = useAuth();
-  
-  // Navigation State
-  const [deviceMode, setDeviceMode] = useState('desktop'); // 'desktop' | 'mobile'
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const { currentUser, logout } = useAuth();
+  const { claims = [], vendors = [] } = useData();
+
+  // Strict Port & URL Separation:
+  // Port 3001 -> DuraGrit Admin Mobile App (strictly)
+  // Port 3002 -> DuraGrit Vendor Mobile App (strictly)
+  // Or URL query param fallback ?app=admin / ?app=vendor
+  const isAppAdmin = typeof window !== 'undefined' && (() => {
+    const port = String(window.location.port || '');
+    if (port === '3001') return true;
+    if (port === '3002') return false;
+    const params = new URLSearchParams(window.location.search);
+    const app = params.get('app') || params.get('mode');
+    if (app === 'admin') return true;
+    if (app === 'vendor') return false;
+    return false;
+  })();
+
+  const [currentScreen, setCurrentScreen] = useState(() => {
+    if (!currentUser?.isAuthenticated) return 'signin';
+    return 'dashboard';
+  });
+
+  // App Opening Splash Animation (Official Logo + Background)
   const [showSplash, setShowSplash] = useState(() => {
     try {
-      if (sessionStorage.getItem('duragrit_web_splash_shown')) return false;
+      if (sessionStorage.getItem('duragrit_mobile_splash_shown')) return false;
     } catch (_) {}
     return true;
   });
 
   const handleSplashComplete = React.useCallback(() => {
     try {
-      sessionStorage.setItem('duragrit_web_splash_shown', 'true');
+      sessionStorage.setItem('duragrit_mobile_splash_shown', 'true');
     } catch (_) {}
     setShowSplash(false);
   }, []);
 
-  // Normalize tab aliases so all dashboard/sidebar links work seamlessly
-  const handleSetActiveTab = (tab) => {
-    if (tab === 'qr-batch') setActiveTab('qr-generator');
-    else if (tab === 'vendors') setActiveTab('vendor-manage');
-    else setActiveTab(tab);
-  };
-
-  // Email Verification Toast
-  const [verifyBanner, setVerifyBanner] = useState(null); // { success, name, userId }
-
-  // Smart Mobile / Standalone PWA Redirect Guard:
-  // If a vendor launches an installed PWA on mobile, immediately route to the Vendor App
+  // Sync Preferred Portal & PWA Manifest for Strict Separation
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator?.standalone;
-    const isRoot = window.location.pathname === '/' || window.location.pathname === '';
-    const hasAdminSession = currentUser?.isAuthenticated && currentUser?.isAdmin;
-    const preferred = localStorage.getItem('duragrit_preferred_portal');
+    try {
+      localStorage.setItem('duragrit_preferred_portal', isAppAdmin ? 'admin' : 'vendor');
+      const manifestEl = document.getElementById('app-manifest') || document.querySelector('link[rel="manifest"]');
+      if (manifestEl) {
+        manifestEl.setAttribute('href', isAppAdmin ? '/manifest-admin.json' : '/manifest-vendor.json');
+      }
+    } catch (_) {}
+  }, [isAppAdmin]);
 
-    if (isRoot && !hasAdminSession && (isStandalone || preferred === 'vendor')) {
-      window.location.replace('/app/?app=vendor');
+  // OTA App Version & Update State
+  const [updateStatus, setUpdateStatus] = useState(() => checkClientUpdateStatus());
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateStatusMessage, setUpdateStatusMessage] = useState('');
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+
+  useEffect(() => {
+    if (!currentUser?.isAuthenticated) {
+      setCurrentScreen('signin');
     }
   }, [currentUser]);
 
-  // ── On mount: handle ?verify=TOKEN in URL (email verification link) ──────
+  // Live Partner Session Invalidation when Admin Deactivates
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('verify');
-    if (!token) return;
+    if (currentUser?.isAuthenticated && !currentUser?.isAdmin) {
+      const vid = String(currentUser.id || currentUser.vendorId || currentUser.userId || '').toLowerCase();
+      const vPhone = String(currentUser.mobile || currentUser.phone || '').replace(/\D/g, '').slice(-10);
+      const liveVendor = vendors.find((v) => {
+        const id = String(v.vendorId || v.id || '').toLowerCase();
+        const p = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+        return id === vid || (vPhone && p === vPhone);
+      });
+      if (liveVendor) {
+        const isInactive =
+          liveVendor.status === 'INACTIVE' ||
+          liveVendor.status === 'DEACTIVE' ||
+          liveVendor.status === 'Suspended' ||
+          liveVendor.accountStatus === 'Suspended' ||
+          liveVendor.active === false;
 
-    const result = processVerificationToken(token);
-
-    if (result.success) {
-      if (result.isVendor) {
-        setVerifyBanner({
-          success: true,
-          name: result.name || 'Partner',
-          userId: result.id,
-          message: `✅ Partner Email Verified! Welcome ${result.name} (${result.id}) — Login credentials & APK dossier dispatched to your inbox.`
-        });
-      } else {
-        const user = result.user;
-        setVerifyBanner({
-          success: true,
-          name: user?.name || result.name || 'User',
-          userId: user ? (String(user.id).startsWith('USR-') ? user.id : `USR-${user.id}`) : `USR-${result.userId || result.id}`,
-          message: `✅ Email Verified! Welcome ${result.name || user?.name} — Login credentials & APK setup guide sent to your inbox.`
-        });
+        if (isInactive) {
+          logout();
+          setToastMsg('Your partner account has been deactivated by DuraGrit Administrator.');
+        }
       }
-    } else {
-      setVerifyBanner({ success: false, name: '', userId: '' });
     }
+  }, [currentUser, vendors, logout]);
 
-    // Clean URL (remove ?verify= param without reload)
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, '', cleanUrl);
+  // Telemetry Sync & OTA Push Listeners
+  useEffect(() => {
+    syncMobileClientDevice(currentUser);
+    
+    // Check local status and also poll live server endpoint
+    checkForLiveServerUpdate().then((status) => {
+      if (status) {
+        setUpdateStatus(status);
+        if (status.hasUpdate && !sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion)) {
+          setShowUpdateModal(true);
+        }
+      }
+    });
 
-    // Auto-dismiss banner after 9 seconds
-    setTimeout(() => setVerifyBanner(null), 9000);
-  }, []);
+    const handleSync = () => {
+      checkForLiveServerUpdate().then((status) => {
+        if (status) {
+          setUpdateStatus(status);
+          if (status.hasUpdate) {
+            setShowUpdateModal(true);
+          }
+        }
+      });
+    };
 
-  // Direct Step Navigator from Master Workflow
-  const handleNavigateStep = (stepNum) => {
-    switch (stepNum) {
-      case 0:
-        setActiveTab('dashboard');
-        break;
-      case 2:
-        setActiveTab('catalog');
-        break;
-      case 4:
-        setActiveTab('qr-generator');
-        break;
-      case 5:
-        setActiveTab('users');
-        break;
-      case 6:
-        setActiveTab('cashback');
-        break;
-      case 7:
-        setActiveTab('reports');
-        break;
-      case 8:
-        setActiveTab('catalog');
-        break;
-      case 9:
-        setActiveTab('batch-registry');
-        break;
-      case 10:
-        setActiveTab('dispatch');
-        break;
-      case 11:
-        setActiveTab('inward');
-        break;
-      case 12:
-        setActiveTab('redemption');
-        break;
-      case 13:
-        setActiveTab('escrow');
-        break;
-      case 14:
-        setActiveTab('settlement');
-        break;
-      case 16:
-        setActiveTab('email-reports');
-        break;
-      case 17:
-        setActiveTab('settings');
-        break;
-      case 18:
-        setActiveTab('app-installs');
-        break;
-      default:
-        setActiveTab('master-workflow');
-        break;
-    }
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('duragrit:ota-release-pushed', handleSync);
+    window.addEventListener('duragrit:ota-update-applied', handleSync);
+
+    const interval = setInterval(() => {
+      checkForLiveServerUpdate().then((status) => {
+        if (status?.hasUpdate) {
+          setUpdateStatus(status);
+          if (!sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion)) {
+            setShowUpdateModal(true);
+          }
+        }
+      });
+    }, 15000);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('duragrit:ota-release-pushed', handleSync);
+      window.removeEventListener('duragrit:ota-update-applied', handleSync);
+    };
+  }, [currentUser]);
+
+  const handleTriggerUpdate = () => {
+    setShowUpdateModal(true);
+    setIsUpdating(true);
+    setUpdateProgress(15);
+    setUpdateStatusMessage('Connecting to Morbi Release CDN...');
+
+    setTimeout(() => {
+      setUpdateProgress(45);
+      setUpdateStatusMessage(`Downloading update bundle ${updateStatus.latestVersion || 'v4.8.3'}...`);
+
+      setTimeout(() => {
+        setUpdateProgress(75);
+        setUpdateStatusMessage('Validating cryptographic HMAC integrity & schemas...');
+
+        setTimeout(async () => {
+          setUpdateProgress(95);
+          setUpdateStatusMessage('Purging legacy cache & applying latest patches...');
+
+          const res = await applyClientAppUpdate(updateStatus.latestVersion);
+          setUpdateProgress(100);
+          setUpdateStatusMessage(`✓ Successfully updated to ${res.version}!`);
+          setIsUpdating(false);
+
+          if (updateStatus.latestVersion) {
+            sessionStorage.removeItem('duragrit_ota_dismissed_' + updateStatus.latestVersion);
+          }
+
+          setTimeout(() => {
+            setShowUpdateModal(false);
+            setToastMsg(`App successfully updated to ${res.version}! Reloading latest work...`);
+            setTimeout(() => {
+              window.location.reload(true);
+            }, 600);
+          }, 600);
+        }, 400);
+      }, 400);
+    }, 350);
   };
 
-  const getFooterStepLabel = () => {
-    switch (activeTab) {
-      case 'dashboard': return 'Executive Overview & Live Supabase Sync';
-      case 'master-workflow': return '14-Step Supply Chain Pipeline';
-      case 'users': return 'Step 05 of 14: User & Partner Management';
-      case 'cashback': return 'Step 06 of 14: 2-Step Cashback Disbursal';
-      case 'reports': return 'Step 07 of 14: Reports & Analytics';
-      case 'reports-vendor': return 'Step 07 of 14: Vendor Sales & Cashback Performance';
-      case 'reports-financial': return 'Step 07 of 14: Financial & Statutory Tax Ledger';
-      case 'catalog': return 'Step 02 of 14: Product Catalog & SKU Management';
-      case 'qr-generator':
-      case 'qr-batch': return 'Step 04 of 14: QR Code Batch Generator';
-      case 'batch-registry': return 'Step 09 of 14: Batch Serial Registry';
-      case 'dispatch': return 'Step 10 of 14: Distributor Dispatch';
-      case 'inward': return 'Step 11 of 14: Dealer Carton Inward';
-      case 'redemption': return 'Step 12 of 14: Contractor QR Redemption';
-      case 'escrow': return 'Step 13 of 14: Anti-Fraud Escrow';
-      case 'settlement': return 'Step 14 of 14: Executive Settlement';
-      case 'onboarding': return 'Partner Credentials & APK Dossier';
-      case 'email-reports': return 'Email Delivery & SMTP Audit Logs';
-      case 'email-templates': return 'Official HTML Email Templates Showcase & Audit';
-      case 'settings':
-      case 'settings-app-download':
-      case 'settings-smtp':
-      case 'settings-security':
-      case 'settings-sms':
-        return activeTab === 'settings-app-download'
-          ? 'Mobile Companion App APK & iPhone PWA Downloads'
-          : 'System Settings & Supabase Sync Console';
-      case 'app-installs': return 'Mobile App Installs & Device Telemetry Audit';
-      case 'vendor-manage':
-      case 'vendors': return 'Step 07 of 14: Vendor Supply Chain Directory';
-      default: return 'Step 11 of 14';
-    }
-  };
+  const pendingCount = claims.filter((c) => c.status === 'Pending').length;
+  const isVendor = currentUser?.role === 'Vendor' || currentUser?.role === 'vendor' || !currentUser?.role || currentUser?.role === 'Contractor';
 
-  if (!currentUser?.isAuthenticated) {
+  // If URL has ?app=admin or running on Port 3001, render strictly the dedicated Admin Mobile App!
+  if (isAppAdmin) {
     return (
-      <>
+      <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#0B0F19] flex flex-col items-center justify-center p-0 sm:py-4 sm:px-2 selection:bg-[#BA3A24] selection:text-white font-sans overflow-hidden">
         {showSplash && (
           <OpeningSplashScreen
             onComplete={handleSplashComplete}
-            durationMs={1200}
-            portalLabel="Corporate Command ERP"
+            durationMs={900}
+            portalLabel="Admin Command Portal"
           />
         )}
-        <AdminLogin onSuccessfulLogin={() => setActiveTab('dashboard')} />
-      </>
+        <AdminMobileApp
+          onSwitchToPartnerApp={() => {
+            const host = window.location.hostname || 'localhost';
+            const protocol = window.location.protocol || 'http:';
+            if (host === 'localhost' || host === '127.0.0.1') {
+              window.location.href = `${protocol}//${host}:3002/`;
+            } else {
+              const pathname = window.location.pathname.endsWith('/') ? window.location.pathname : `${window.location.pathname}/`;
+              window.location.href = `${pathname}?app=vendor`;
+            }
+          }}
+        />
+      </div>
     );
   }
 
+  // =========================================================================
+  // VENDOR MOBILE APP (Dedicated Partner / Vendor Mobile Portal)
+  // =========================================================================
   return (
-    <div className="h-screen bg-[#FAF9F6] flex flex-col font-sans antialiased text-slate-800 overflow-hidden">
+    <div className="h-[100dvh] max-h-[100dvh] w-full bg-stone-900/60 flex flex-col items-center justify-center p-0 sm:py-4 selection:bg-[#C84826] selection:text-white font-serif overflow-hidden">
       {showSplash && (
         <OpeningSplashScreen
           onComplete={handleSplashComplete}
-          durationMs={1200}
-          portalLabel="Corporate Command ERP"
+          durationMs={900}
+          portalLabel="Vendor Partner Portal"
         />
       )}
-      
-      {/* ── Email Verification Success / Failure Banner ── */}
-      {verifyBanner && (
-        <div className={`flex items-center justify-between px-5 py-2.5 text-sm font-semibold z-50 ${
-          verifyBanner.success
-            ? 'bg-emerald-600 text-white'
-            : 'bg-rose-600 text-white'
-        }`}>
-          <span>
-            {verifyBanner.message || (verifyBanner.success
-              ? `✅ Email Verified! Welcome ${verifyBanner.name} (${verifyBanner.userId})`
-              : '⛔ Invalid or expired verification link. Please contact DuraGrit Admin to resend the verification email.')}
-          </span>
-          <button onClick={() => setVerifyBanner(null)} className="ml-4 text-white/80 hover:text-white font-bold text-base cursor-pointer">✕</button>
+      <div className="w-full max-w-[440px] bg-[#FAF9F6] h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-[580px] rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl border-0 sm:border border-stone-200/90 flex flex-col relative">
+        
+        {/* Floating Toast Notification */}
+        {toastMsg && (
+          <div className="fixed top-4 inset-x-4 z-50 max-w-sm mx-auto bg-[#A62C11] text-white px-4 py-2.5 rounded-xl shadow-2xl border border-white/20 flex items-center space-x-2 text-xs font-semibold font-sans animate-in fade-in slide-in-from-top-4">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{toastMsg}</span>
+          </div>
+        )}
+
+        {/* ===================================================================== */}
+        {/* TOP OTA UPDATE NOTIFICATION BANNER (When Admin pushes new version)    */}
+        {/* ===================================================================== */}
+        {updateStatus.hasUpdate && (
+          <div className="bg-gradient-to-r from-[#A62C11] via-[#C84826] to-[#8B230C] text-white px-3.5 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 shadow-md flex items-center justify-between text-xs border-b border-white/20 shrink-0 font-sans sticky top-0 z-50">
+            <div className="flex items-center space-x-2.5 overflow-hidden pr-1">
+              <div className="p-1.5 rounded-lg bg-white/20 text-white shrink-0">
+                <Rocket className="w-4 h-4 text-white animate-bounce" />
+              </div>
+              <div className="overflow-hidden">
+                <div className="flex items-center space-x-1.5">
+                  <span className="font-black text-[11px] tracking-tight">
+                    Update Available: {updateStatus.latestVersion}
+                  </span>
+                  <span className="text-[8.5px] bg-amber-400 text-stone-900 font-black px-1.5 py-0.2 rounded font-mono">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-[9.5px] text-white/90 truncate leading-tight mt-0.5">
+                  {updateStatus.changelog || 'Latest features & optimizations ready.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleTriggerUpdate}
+              disabled={isUpdating}
+              className="px-3 py-1.5 bg-white hover:bg-amber-100 text-[#A62C11] font-black text-[10.5px] rounded-lg shadow-sm transition active:scale-95 cursor-pointer shrink-0 ml-2"
+            >
+              {isUpdating ? 'Updating...' : 'Update Now'}
+            </button>
+          </div>
+        )}
+
+        {/* Top App Control Bar (Always pinned at top, robust responsive flex, never wraps) */}
+        {currentScreen !== 'signin' && (
+          <header className="bg-[#1C1917] px-3.5 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2 text-white flex items-center justify-between text-xs border-b border-stone-800 shrink-0 font-sans sticky top-0 z-40 shadow-xs">
+            <div className="flex items-center space-x-2 min-w-0 flex-1 mr-2">
+              <img
+                src="/logo-white.png"
+                alt="DuraGrit Vitrified"
+                className="h-6 w-auto max-w-[120px] object-contain shrink-0"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+              <div className="min-w-0 flex-1">
+                <span className="font-extrabold tracking-wider text-white block leading-tight text-[11px] uppercase truncate">
+                  DURAGRIT VITRIFIED
+                </span>
+                <div className="flex items-center space-x-1.5 mt-0.5 text-[9px] text-stone-400 truncate">
+                  <span className="text-[#F9CEB8] font-bold truncate shrink-0">
+                    Vendor Partner
+                  </span>
+                  <span className="text-stone-600">•</span>
+                  <span className="text-[8.5px] font-mono font-bold text-stone-300 shrink-0">
+                    {updateStatus.installedVersion}
+                  </span>
+                  <span className="text-stone-600">•</span>
+                  <span className="text-[8px] font-bold text-emerald-400 bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-500/30 shrink-0">
+                    Sync ✓
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                onClick={() => {
+                  logout();
+                  setCurrentScreen('signin');
+                }}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-red-500/20 text-stone-300 hover:text-red-300 transition cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </header>
+        )}
+
+        {/* Active Screen View (Scrolls independently between pinned header and footer) */}
+        <div className="flex-1 overflow-y-auto min-h-0 relative">
+          {currentScreen === 'signin' && (
+            <Step8_MobileSignIn
+              onLoginSuccess={() => {
+                setCurrentScreen('dashboard');
+              }}
+            />
+          )}
+
+          {currentScreen === 'dashboard' && (
+            isVendor ? (
+              <Step9_VendorDashboard
+                vendorId={currentUser?.vendorId || currentUser?.id}
+                onNavigateScan={() => setCurrentScreen('scan')}
+                onNavigateRequests={() => setCurrentScreen('requests')}
+                onNavigateDossier={() => setCurrentScreen('dossier')}
+                onLogout={() => {
+                  logout();
+                  setCurrentScreen('signin');
+                }}
+              />
+            ) : (
+              <Step9_ContractorDashboard
+                onNavigateScan={() => setCurrentScreen('scan')}
+                onNavigateRequests={() => setCurrentScreen('requests')}
+                onNavigateDossier={() => setCurrentScreen('dossier')}
+                onLogout={() => {
+                  logout();
+                  setCurrentScreen('signin');
+                }}
+              />
+            )
+          )}
+
+          {currentScreen === 'dossier' && (
+            <Step13_WelcomeDossier
+              onBack={() => setCurrentScreen('dashboard')}
+            />
+          )}
+
+          {currentScreen === 'scan' && (
+            <Step10_QRScanUpload
+              onBack={() => setCurrentScreen('dashboard')}
+              onClaimCreated={() => setCurrentScreen('requests')}
+            />
+          )}
+
+          {currentScreen === 'requests' && (
+            <Step11_MyCashbackRequests
+              onBack={() => setCurrentScreen('dashboard')}
+              onNavigateScan={() => setCurrentScreen('scan')}
+            />
+          )}
         </div>
-      )}
 
-      {/* Main Brand Header matching PDF Pages 2-7, 13, 14 */}
-      <Navbar 
-        currentMode={deviceMode} 
-        setMode={setDeviceMode} 
-        currentTab={activeTab}
-        setActiveTab={handleSetActiveTab}
-        onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
-      />
+        {/* Unified Bottom Navigation Bar (Permanently pinned at bottom, never hides on scroll) */}
+        {currentScreen !== 'signin' && (
+          <nav className="shrink-0 sticky bottom-0 inset-x-0 bg-white/98 backdrop-blur-md border-t border-[#ECEAE6] px-3 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] flex items-center justify-around z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] font-sans">
+            <button
+              onClick={() => setCurrentScreen('dashboard')}
+              className={`flex flex-col items-center gap-0.5 transition-all cursor-pointer ${
+                currentScreen === 'dashboard' ? 'text-[#A6300F] font-bold' : 'text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              <LayoutGrid className="w-5 h-5" />
+              <span className="text-[10px] tracking-tight">Overview</span>
+            </button>
 
-      {/* Main Viewport Container */}
-      {deviceMode === 'desktop' ? (
-        <div className="flex-1 flex overflow-hidden relative">
-          {/* Left Sidebar Navigation */}
-          <Sidebar
-            activeTab={activeTab}
-            setActiveTab={handleSetActiveTab}
-            isMobileOpen={isMobileSidebarOpen}
-            onCloseMobile={() => setIsMobileSidebarOpen(false)}
-          />
+            <button
+              onClick={() => setCurrentScreen('requests')}
+              className={`flex flex-col items-center gap-0.5 transition-all cursor-pointer ${
+                currentScreen === 'requests' ? 'text-[#A6300F] font-bold' : 'text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              <ClipboardList className="w-5 h-5" />
+              <span className="text-[10px] tracking-tight">Registry</span>
+            </button>
 
-          {/* ERP Module Main Viewport */}
-          <main className="flex-1 bg-[#FAF9F6] overflow-y-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3.5 sm:py-5 md:py-6 max-w-full">
-            <ErrorBoundary name="ERP Viewport">
-              {activeTab === 'dashboard' && (
-                <Dashboard onNavigateTab={handleSetActiveTab} />
-              )}
-              {activeTab === 'users' && <UserManagement />}
-              {activeTab === 'catalog' && (
-                <ProductCatalogMaster onNavigateQR={() => setActiveTab('qr-generator')} />
-              )}
-              {(activeTab === 'qr-generator' || activeTab === 'qr-batch') && (
-                <QRBatchGeneratorMaster onNavigateCatalog={() => setActiveTab('catalog')} />
-              )}
-              {activeTab === 'cashback' && <CashbackRequests />}
-              {activeTab === 'reports' && <ReportsAnalytics />}
-              {activeTab === 'reports-vendor' && <VendorSalesReport />}
-              {activeTab === 'reports-financial' && <FinancialReports />}
-              {(activeTab === 'vendor-manage' || activeTab === 'vendors') && <VendorManagement />}
-              {activeTab === 'onboarding' && (
-                <OnboardingDossier onNavigateToFieldApp={() => setDeviceMode('mobile')} />
-              )}
-              {(activeTab === 'email-reports' || activeTab === 'email-templates') && (
-                <EmailReports
-                  initialMainTab={activeTab === 'email-templates' ? 'templates' : 'logs'}
-                  onNavigateSettings={() => setActiveTab('settings-smtp')}
+            {/* Tab 3: Central Elevated Round QR Scan Tab (Always Available) */}
+            <button
+              onClick={() => setCurrentScreen('scan')}
+              className="flex flex-col items-center justify-center -mt-6 cursor-pointer group shrink-0"
+              title="Scan QR Code"
+            >
+              <div
+                className={`w-13 h-13 rounded-full text-white flex items-center justify-center shadow-lg transition-all border-3 border-white active:scale-95 ${
+                  currentScreen === 'scan'
+                    ? 'bg-[#7E1D05] ring-3 ring-[#C84826] scale-105 shadow-xl'
+                    : 'bg-[#A6300F] hover:bg-[#8B230C] group-hover:scale-105'
+                }`}
+              >
+                <QrCode className="w-6 h-6 text-white" />
+              </div>
+              <span
+                className={`text-[9.5px] font-bold mt-0.5 tracking-tight ${
+                  currentScreen === 'scan' ? 'text-[#A6300F]' : 'text-stone-600'
+                }`}
+              >
+                Scan QR
+              </span>
+            </button>
+
+            {/* Tab 4: Orders */}
+            <button
+              onClick={() => setCurrentScreen('requests')}
+              className={`flex flex-col items-center gap-0.5 relative transition-all cursor-pointer text-stone-400 hover:text-stone-700`}
+            >
+              <Package className="w-5 h-5" />
+              <span className="text-[10px] tracking-tight">Orders</span>
+            </button>
+
+            {/* Tab 5: Account / Dossier & Settings */}
+            <button
+              onClick={() => setCurrentScreen('dossier')}
+              className={`flex flex-col items-center gap-0.5 transition-all cursor-pointer ${
+                currentScreen === 'dossier' ? 'text-[#A6300F] font-bold' : 'text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              {currentUser?.avatarUrl || currentUser?.profileImage ? (
+                <img
+                  src={currentUser.avatarUrl || currentUser.profileImage}
+                  alt="Account"
+                  className="w-5 h-5 rounded-full object-cover border border-stone-300"
                 />
+              ) : (
+                <User className="w-5 h-5" />
               )}
-              {(activeTab === 'settings' || activeTab.startsWith('settings-')) && (
-                <SystemSettings
-                  initialSubTab={
-                    activeTab === 'settings-app-download'
-                      ? 'mobile-downloads'
-                      : activeTab === 'settings-smtp'
-                      ? 'email-smtp'
-                      : activeTab === 'settings-security'
-                      ? 'security'
-                      : activeTab === 'settings-sms'
-                      ? 'sms-otp'
-                      : 'general'
-                  }
-                />
-              )}
-              {activeTab === 'app-installs' && <AppInstallReports />}
-              {activeTab === 'master-workflow' && (
-                <MasterWorkflowIndex onNavigateStep={handleNavigateStep} />
-              )}
-              {activeTab === 'batch-registry' && <BatchSerialRegistry />}
-              {activeTab === 'dispatch' && <DistributorDispatch />}
-              {activeTab === 'inward' && <DealerCartonInward />}
-              {activeTab === 'redemption' && <ContractorRedemption />}
-              {activeTab === 'escrow' && <AntiFraudEscrow />}
-              {activeTab === 'settlement' && <ExecutiveSettlement />}
-            </ErrorBoundary>
-          </main>
-        </div>
-      ) : (
-        /* Mobile Field App (PWA & APK Preview) - Adapted for Laptop Screen */
-        <div className="flex-1 flex overflow-hidden min-h-0">
-          <MobileFieldApp onSwitchToDesktop={() => setDeviceMode('desktop')} />
-        </div>
-      )}
+              <span className="text-[10px] tracking-tight">Account</span>
+            </button>
+          </nav>
+        )}
 
-      {/* Pinned Enterprise Status Footer Bar (Permanently visible, never hides on scroll) */}
-      <footer className="h-7 bg-[#1C1917] border-t border-stone-800 text-stone-300 text-[10px] px-3 sm:px-6 flex items-center justify-between shrink-0 select-none font-mono z-20">
-        <div className="flex items-center space-x-2 truncate">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-          <span className="text-white font-semibold truncate">{getFooterStepLabel()}</span>
-          <span className="text-stone-500 hidden sm:inline">•</span>
-          <span className="text-stone-400 hidden sm:inline">DuraGrit National Kiln Network</span>
-        </div>
-        <div className="flex items-center space-x-3 text-stone-400 shrink-0 text-[9.5px]">
-          <span className="hidden md:inline">DB: Supabase PostgreSQL</span>
-          <span>SLA: 99.98%</span>
-          <span className="text-emerald-400 font-bold hidden sm:inline">ONLINE</span>
-        </div>
-      </footer>
+        {/* ===================================================================== */}
+        {/* INTERACTIVE OTA UPDATE POPUP & INSTALLATION MODAL                     */}
+        {/* ===================================================================== */}
+        {showUpdateModal && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+            <div className="bg-[#1C1917] border border-stone-700 text-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl text-center animate-in fade-in zoom-in-95 relative overflow-hidden">
+              
+              {/* Soft decorative glow */}
+              <div className="absolute -top-12 -left-12 w-32 h-32 bg-[#C84826]/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+              {!isUpdating ? (
+                /* 1. ANNOUNCEMENT & ACTION POPUP */
+                <div className="space-y-4 relative z-10">
+                  <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-[#A62C11] via-[#C84826] to-amber-500 flex items-center justify-center shadow-lg shadow-[#A62C11]/40 border border-white/20">
+                    <Rocket className="w-8 h-8 text-white animate-bounce" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/30 px-2.5 py-0.5 rounded-full text-[10px] font-black text-amber-300 uppercase tracking-wider">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                      New Release {updateStatus.latestVersion || 'v4.8.3'}
+                    </div>
+                    <h3 className="text-lg font-black text-white tracking-tight">
+                      New Software Update Ready!
+                    </h3>
+                    <p className="text-xs text-stone-300 leading-relaxed">
+                      A new official version has been published with important mobile UI responsiveness fixes and real-time vendor sync.
+                    </p>
+                  </div>
+
+                  {/* Highlights Card */}
+                  <div className="bg-stone-900/90 rounded-2xl p-3 border border-stone-800 text-left space-y-2 text-[11px]">
+                    <div className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                      <span className="text-stone-300">Mobile responsive 1-Tap header &amp; login layout fixed</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                      <span className="text-stone-300">Real-time database sync with Admin Vendor Management</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                      <span className="text-stone-300">Fast 1-tap in-app refresh — no APK reinstall needed</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleTriggerUpdate}
+                      className="w-full py-3 bg-gradient-to-r from-[#C84826] to-[#A62C11] hover:brightness-110 active:scale-98 text-white font-black text-sm rounded-2xl shadow-lg shadow-[#C84826]/30 transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>⚡ Update Now &amp; Apply Changes</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUpdateModal(false);
+                        if (updateStatus.latestVersion) {
+                          sessionStorage.setItem('duragrit_ota_dismissed_' + updateStatus.latestVersion, 'true');
+                        }
+                      }}
+                      className="w-full py-2 text-stone-400 hover:text-stone-200 text-xs font-semibold transition cursor-pointer"
+                    >
+                      Remind Me Later
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* 2. DOWNLOADING & APPLYING PROGRESS POPUP */
+                <div className="space-y-4 relative z-10">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-[#A62C11] to-[#C84826] flex items-center justify-center shadow-lg">
+                    <Rocket className="w-7 h-7 text-white animate-pulse" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-base font-extrabold text-white">
+                      {updateProgress === 100 ? 'Update Complete!' : `Installing Update ${updateStatus.latestVersion || 'v4.8.3'}`}
+                    </h3>
+                    <p className="text-xs text-stone-400">
+                      {updateStatusMessage}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="w-full bg-stone-800 rounded-full h-3 overflow-hidden border border-stone-700">
+                      <div
+                        className="bg-gradient-to-r from-[#C84826] to-emerald-500 h-full transition-all duration-300"
+                        style={{ width: `${updateProgress}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-stone-400 font-mono">
+                      <span>DuraGrit OTA System</span>
+                      <span>{updateProgress}%</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-stone-500 pt-1">
+                    Refreshing application bundles and applying latest changes...
+                  </p>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

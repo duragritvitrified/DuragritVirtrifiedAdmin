@@ -720,30 +720,36 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             </p>
           </div>
 
-          {/* 1-Tap Mobile Admin App Install Banner */}
+          {/* 1-Tap Mobile Admin App Install Banner - 100% Mobile Responsive */}
           {!isInstalled && (
-            <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white rounded-2xl p-3 border border-blue-500/40 shadow-lg shadow-blue-950/80 flex items-center justify-between font-sans relative z-10">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center shrink-0">
-                  <span className="text-base">📲</span>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-black tracking-tight text-white flex items-center gap-1.5">
-                    <span>Install Admin Console</span>
-                    <span className="text-[8px] bg-cyan-400 text-stone-950 font-black px-1.5 py-0.2 rounded-full uppercase">1-Tap</span>
+            <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white rounded-2xl p-2.5 sm:p-3 border border-blue-500/40 shadow-lg shadow-blue-950/80 font-sans relative z-10">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center shrink-0">
+                    <span className="text-base">📲</span>
                   </div>
-                  <p className="text-[9.5px] text-blue-200/90 truncate mt-0.5">
-                    Add to home screen for fullscreen executive command &amp; offline sync
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <span className="text-[11.5px] font-black tracking-tight text-white whitespace-nowrap truncate">
+                        Install Admin Console
+                      </span>
+                      <span className="text-[8px] bg-cyan-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full uppercase shrink-0 font-mono tracking-wider">
+                        1-Tap
+                      </span>
+                    </div>
+                    <p className="text-[9.5px] text-blue-200/90 truncate mt-0.5">
+                      Fullscreen executive command &amp; offline sync
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleInstallClick}
+                  className="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow transition shrink-0 whitespace-nowrap cursor-pointer"
+                >
+                  Install App
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleInstallClick}
-                className="ml-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow-xs transition shrink-0 cursor-pointer"
-              >
-                Install App
-              </button>
             </div>
           )}
 
