@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * OpeningSplashScreen
@@ -8,40 +8,72 @@ import React, { useState, useEffect } from 'react';
  * - Ambient warm terracotta & golden kiln radial glow
  * - Official DuraGrit Vitrified logo entrance with scale-up, drop-shadow & golden shimmer sweep
  * - Refined brand subtitles & live kiln connection progress indicator
- * - Smooth auto-fade transition after 1.8s (or immediate skip on tap)
+ * - Resilient, un-cancellable animation timer (immune to parent re-renders)
+ * - Immediate 1-tap dismiss on screen tap (TAP TO SKIP)
+ * - Hard 1.5s fallback auto-dismiss guarantee
  */
-export function OpeningSplashScreen({ onComplete, durationMs = 1800, portalLabel = 'Retail Network' }) {
+export function OpeningSplashScreen({ onComplete, durationMs = 1200, portalLabel = 'Retail Network' }) {
   const [phase, setPhase] = useState('entering'); // 'entering' -> 'active' -> 'fading' -> 'hidden'
-  const [progress, setProgress] = useState(15);
+  const [progress, setProgress] = useState(25);
   const [statusText, setStatusText] = useState('Connecting to Morbi Kiln Hub...');
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const hasFinishedRef = useRef(false);
+
+  const finishSplash = useCallback(() => {
+    if (hasFinishedRef.current) return;
+    hasFinishedRef.current = true;
+    setPhase('hidden');
+    if (typeof onCompleteRef.current === 'function') {
+      try {
+        onCompleteRef.current();
+      } catch (err) {
+        console.warn('[SplashScreen] onComplete error:', err);
+      }
+    }
+  }, []);
+
+  const handleSkip = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    finishSplash();
+  };
 
   useEffect(() => {
     // Phase 1: Logo enter
     const tEnter = setTimeout(() => {
       setPhase('active');
-    }, 100);
+    }, 60);
 
     // Progress bar updates
     const tProg1 = setTimeout(() => {
-      setProgress(55);
+      setProgress(60);
       setStatusText('Syncing security tokens & credentials...');
-    }, 600);
+    }, 280);
 
     const tProg2 = setTimeout(() => {
-      setProgress(95);
+      setProgress(100);
       setStatusText('Morbi Central Kiln Hub verified ✓');
-    }, 1200);
+    }, 600);
 
     // Phase 2: Fade out
     const tFade = setTimeout(() => {
       setPhase('fading');
-    }, durationMs - 400);
+    }, Math.max(700, durationMs - 300));
 
     // Phase 3: Complete & unmount
     const tEnd = setTimeout(() => {
-      setPhase('hidden');
-      if (onComplete) onComplete();
+      finishSplash();
     }, durationMs);
+
+    // Absolute Hard Fallback: Force finish within 1500ms max under all conditions
+    const tSafety = setTimeout(() => {
+      finishSplash();
+    }, 1500);
 
     return () => {
       clearTimeout(tEnter);
@@ -49,16 +81,9 @@ export function OpeningSplashScreen({ onComplete, durationMs = 1800, portalLabel
       clearTimeout(tProg2);
       clearTimeout(tFade);
       clearTimeout(tEnd);
+      clearTimeout(tSafety);
     };
-  }, [durationMs, onComplete]);
-
-  const handleSkip = () => {
-    setPhase('fading');
-    setTimeout(() => {
-      setPhase('hidden');
-      if (onComplete) onComplete();
-    }, 250);
-  };
+  }, [durationMs, finishSplash]);
 
   if (phase === 'hidden') return null;
 

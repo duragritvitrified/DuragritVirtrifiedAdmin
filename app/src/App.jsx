@@ -58,7 +58,19 @@ export function App() {
   });
 
   // App Opening Splash Animation (Official Logo + Background)
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      if (sessionStorage.getItem('duragrit_mobile_splash_shown')) return false;
+    } catch (_) {}
+    return true;
+  });
+
+  const handleSplashComplete = React.useCallback(() => {
+    try {
+      sessionStorage.setItem('duragrit_mobile_splash_shown', 'true');
+    } catch (_) {}
+    setShowSplash(false);
+  }, []);
 
   // Sync Preferred Portal & PWA Manifest for Strict Separation
   useEffect(() => {
@@ -177,8 +189,8 @@ export function App() {
       <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#0B0F19] flex flex-col items-center justify-center p-0 sm:py-4 sm:px-2 selection:bg-[#BA3A24] selection:text-white font-sans overflow-hidden">
         {showSplash && (
           <OpeningSplashScreen
-            onComplete={() => setShowSplash(false)}
-            durationMs={1800}
+            onComplete={handleSplashComplete}
+            durationMs={1200}
             portalLabel="Admin Command Portal"
           />
         )}
@@ -205,8 +217,8 @@ export function App() {
     <div className="h-[100dvh] max-h-[100dvh] w-full bg-stone-900/60 flex flex-col items-center justify-center p-0 sm:py-4 selection:bg-[#C84826] selection:text-white font-serif overflow-hidden">
       {showSplash && (
         <OpeningSplashScreen
-          onComplete={() => setShowSplash(false)}
-          durationMs={1800}
+          onComplete={handleSplashComplete}
+          durationMs={1200}
           portalLabel="Vendor Partner Portal"
         />
       )}

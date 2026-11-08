@@ -38,7 +38,19 @@ export function App() {
   const [deviceMode, setDeviceMode] = useState('desktop'); // 'desktop' | 'mobile'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      if (sessionStorage.getItem('duragrit_web_splash_shown')) return false;
+    } catch (_) {}
+    return true;
+  });
+
+  const handleSplashComplete = React.useCallback(() => {
+    try {
+      sessionStorage.setItem('duragrit_web_splash_shown', 'true');
+    } catch (_) {}
+    setShowSplash(false);
+  }, []);
 
   // Normalize tab aliases so all dashboard/sidebar links work seamlessly
   const handleSetActiveTab = (tab) => {
@@ -199,8 +211,8 @@ export function App() {
       <>
         {showSplash && (
           <OpeningSplashScreen
-            onComplete={() => setShowSplash(false)}
-            durationMs={1800}
+            onComplete={handleSplashComplete}
+            durationMs={1200}
             portalLabel="Corporate Command ERP"
           />
         )}
@@ -213,8 +225,8 @@ export function App() {
     <div className="h-screen bg-[#FAF9F6] flex flex-col font-sans antialiased text-slate-800 overflow-hidden">
       {showSplash && (
         <OpeningSplashScreen
-          onComplete={() => setShowSplash(false)}
-          durationMs={1800}
+          onComplete={handleSplashComplete}
+          durationMs={1200}
           portalLabel="Corporate Command ERP"
         />
       )}
