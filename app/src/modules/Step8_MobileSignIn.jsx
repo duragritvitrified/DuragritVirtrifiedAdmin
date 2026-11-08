@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabaseClient';
+import { PartnerVerificationPortal } from '../components/PartnerVerificationPortal';
 import {
   ShieldCheck,
   Building2,
@@ -37,6 +38,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   const [otpCode, setOtpCode] = useState('');
   const [otpSentPhone, setOtpSentPhone] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
+  const [showManualVerifyModal, setShowManualVerifyModal] = useState(false);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -759,6 +761,18 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               <span>{otpLoading ? 'Dispatching OTP...' : 'Login via OTP (SMS)'}</span>
             </button>
 
+            {/* Direct 8-Digit Email Verification Link */}
+            <div className="pt-0.5 pb-1 text-center">
+              <button
+                type="button"
+                onClick={() => setShowManualVerifyModal(true)}
+                className="text-[11px] text-[#C84826] hover:text-[#A6300F] font-bold font-sans inline-flex items-center gap-1.5 cursor-pointer hover:underline"
+              >
+                <span>✉️ Verify Email with 8-Digit Code</span>
+                <span className="text-[8.5px] bg-[#C84826]/10 text-[#C84826] px-1.5 py-0.2 rounded font-mono font-black">PORTAL</span>
+              </button>
+            </div>
+
             <div className="flex items-center justify-center gap-1.5 text-[10.5px] text-emerald-800 font-sans font-medium pt-0.5">
               <span>🔒</span>
               <span>Secured with Hardware Token &amp; E-Way Match</span>
@@ -861,6 +875,19 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Dedicated Partner Verification Portal Modal */}
+      {showManualVerifyModal && (
+        <PartnerVerificationPortal
+          onClose={() => setShowManualVerifyModal(false)}
+          onVerified={(vendor) => {
+            showToast(`✓ Email Verified! Welcome ${vendor?.companyName || 'Partner'}.`);
+            if (vendor?.phone || vendor?.mobile) {
+              setIdentifier(vendor.phone || vendor.mobile);
+            }
+          }}
+        />
       )}
 
       {/* Floating Toast */}

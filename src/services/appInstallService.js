@@ -11,13 +11,28 @@ const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 // Standard release history
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-006',
+    version: 'v4.8.4',
+    buildNumber: 154,
+    releaseDate: '2026-11-08 19:30:00',
+    title: 'Partner Email Verification & 8-Digit Unique Code Engine',
+    changelog: 'Dedicated email verification portal, 8-digit unique code activation, real-time Supabase vendor sync & Admin Vendor Management status integration.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-f0b48a19d20c3',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners'
+  },
+  {
     id: 'REL-2026-005',
     version: 'v4.8.3',
     buildNumber: 153,
     releaseDate: '2026-11-08 18:30:00',
     title: 'Mobile Responsiveness & Auto-Push Engine Release',
     changelog: '1-Tap mobile banner responsive layout fix, automatic in-app OTA update popup, real-time vendor credentials sync with Admin Console.',
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',

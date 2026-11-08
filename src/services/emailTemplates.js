@@ -14,27 +14,32 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{recipientName}}', label: 'Partner Full Name', sample: 'Rajesh Kumar' },
       { tag: '{{userId}}', label: 'User / Partner ID', sample: 'USR-1082' },
       { tag: '{{mobile}}', label: 'Registered Mobile', sample: '+91 98112 40591' },
-      { tag: '{{verifyToken}}', label: 'Security Auth Token', sample: 'DGVT-K8P9Q2-7X4L' },
-      { tag: '{{verifyLink}}', label: '1-Click Action URL', sample: 'https://duragrit-virtrified-admin.vercel.app/?verify=DGVT-K8P9Q2-7X4L' },
+      { tag: '{{verifyCode}}', label: '8-Digit Unique Verification Code', sample: '88264905' },
+      { tag: '{{verifyToken}}', label: 'Security Auth Token', sample: 'DGVT-88264905' },
+      { tag: '{{verifyLink}}', label: '1-Click Verification Portal Link', sample: 'https://duragrit-virtrified-admin.vercel.app/?page=verify&code=88264905' },
       { tag: '{{expiryHours}}', label: 'Link Expiry Window', sample: '24' }
     ],
     sampleData: {
       recipientName: 'Rajesh Kumar',
-      userId: 'USR-1082',
-      mobile: '+91 98112 40591',
-      verifyToken: 'DGVT-K8P9Q2-7X4L',
-      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/?verify=DGVT-K8P9Q2-7X4L',
+      userId: 'VND-101',
+      mobile: '+91 88260 21114',
+      verifyCode: '88264905',
+      verifyToken: 'DGVT-88264905',
+      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/?page=verify&code=88264905',
       expiryHours: '24'
     },
     generateHtml: (data = {}) => {
       const {
         recipientName = 'Valued Partner',
-        userId = 'USR-1082',
-        mobile = '+91 98112 40591',
-        verifyToken = 'DGVT-K8P9Q2-7X4L',
-        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/?verify=DGVT-K8P9Q2-7X4L',
+        userId = 'VND-101',
+        mobile = '+91 88260 21114',
+        verifyCode = '88264905',
+        verifyToken = 'DGVT-88264905',
+        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/?page=verify&code=88264905',
         expiryHours = '24'
       } = data;
+
+      const displayCode = verifyCode || verifyToken || '88264905';
 
       return `<!DOCTYPE html>
 <html lang="en">
@@ -72,7 +77,7 @@ export const EMAIL_TEMPLATES = [
               <h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px 0;">Verify Your Email Address</h1>
               <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 20px 0;">
                 Dear <strong>${recipientName}</strong>,<br>
-                Thank you for registering with the <strong>DuraGrit Vitrified Contractor &amp; Partner Network</strong>. To complete your activation and enable high-speed cashback scanner features, please verify your email address.
+                Thank you for registering with the <strong>DuraGrit Vitrified Contractor &amp; Partner Network</strong>. To complete your activation and enable high-speed cashback scanner features, please verify your email address using the unique 8-digit verification code below.
               </p>
 
               <!-- USER DETAILS STRIP -->
@@ -81,7 +86,7 @@ export const EMAIL_TEMPLATES = [
                   <td style="padding: 16px 20px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                       <tr>
-                        <td width="50%" style="font-size: 12px; color: #64748b; padding-bottom: 6px;">Assigned User ID:</td>
+                        <td width="50%" style="font-size: 12px; color: #64748b; padding-bottom: 6px;">Assigned Partner ID:</td>
                         <td width="50%" align="right" style="font-size: 13px; font-weight: 700; color: #0f172a; font-family: monospace; padding-bottom: 6px;">${userId}</td>
                       </tr>
                       <tr>
@@ -93,29 +98,46 @@ export const EMAIL_TEMPLATES = [
                 </tr>
               </table>
 
-              <!-- CTA BUTTON -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 28px 0;">
+              <!-- UNIQUE 8-DIGIT VERIFICATION CODE CALLOUT -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0 16px 0;">
                 <tr>
                   <td align="center">
-                    <a href="${verifyLink}" target="_blank" style="display: inline-block; background-color: #C84826; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 800; padding: 14px 36px; border-radius: 12px; box-shadow: 0 4px 12px rgba(200, 72, 38, 0.35); letter-spacing: 0.2px;">
-                      ✓ Verify Email &amp; Activate Account
+                    <div style="background: linear-gradient(135deg, #FFF7ED 0%, #FEF2EE 100%); border: 2px dashed #C84826; border-radius: 16px; padding: 22px 20px; text-align: center; max-width: 480px;">
+                      <div style="font-size: 11px; font-weight: 800; color: #A62C11; text-transform: uppercase; letter-spacing: 2px;">YOUR UNIQUE 8-DIGIT VERIFICATION CODE</div>
+                      <div style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #0f172a; font-family: 'Courier New', Courier, monospace; margin: 12px 0; background-color: #ffffff; padding: 12px 24px; border-radius: 12px; border: 2px solid #fed7aa; display: inline-block; box-shadow: 0 4px 12px rgba(200, 72, 38, 0.08);">
+                        ${displayCode}
+                      </div>
+                      <div style="font-size: 12px; color: #64748b; line-height: 1.5; margin-top: 6px;">
+                        Copy this unique 8-digit code and click the button below to paste and verify on the portal.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA BUTTON -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0 24px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${verifyLink}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #C84826 0%, #A62C11 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 800; padding: 15px 40px; border-radius: 12px; box-shadow: 0 4px 16px rgba(200, 72, 38, 0.35); letter-spacing: 0.3px;">
+                      ✓ Open Verification Portal &amp; Enter Code
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <!-- SECURITY TOKEN CALLOUT -->
-              <div style="background-color: #FEF2EE; border-left: 4px solid #C84826; padding: 14px 18px; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
-                <div style="font-size: 11px; font-weight: 700; color: #A62C11; text-transform: uppercase;">Manual Verification Token</div>
-                <div style="font-size: 14px; font-family: monospace; font-weight: 800; color: #0f172a; margin-top: 4px; letter-spacing: 1px;">${verifyToken}</div>
-                <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Valid for ${expiryHours} hours. If the button above does not work, copy and paste this link into your browser:</div>
-                <div style="font-size: 11px; word-break: break-all; color: #C84826; font-family: monospace; margin-top: 4px;">${verifyLink}</div>
+              <!-- DIRECT VERIFICATION URL CALLOUT -->
+              <div style="background-color: #FAF9F6; border: 1px solid #e2e8f0; padding: 14px 18px; border-radius: 10px; margin-bottom: 24px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Direct Verification Portal Link</div>
+                <div style="font-size: 11px; word-break: break-all; color: #C84826; font-family: monospace; font-weight: 700; margin-top: 5px;">${verifyLink}</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Valid for ${expiryHours} hours • Official DuraGrit Partner Desk</div>
               </div>
 
               <p style="font-size: 12px; line-height: 1.5; color: #94a3b8; margin: 0;">
                 If you did not register for a DuraGrit Vitrified account, you can safely ignore this email. No action will be taken.
               </p>
             </td>
+          </tr>
           </tr>
 
           <!-- FOOTER -->

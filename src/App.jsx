@@ -10,6 +10,7 @@ import { Step12_MobileModeration } from './modules/Step12_MobileModeration';
 import { AdminMobileApp } from './modules/AdminMobileApp';
 import { Step13_WelcomeDossier } from './modules/Step13_WelcomeDossier';
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
+import { PartnerVerificationPortal } from './components/PartnerVerificationPortal';
 import {
   checkClientUpdateStatus,
   checkForLiveServerUpdate,
@@ -92,6 +93,21 @@ export function App() {
   const [updateStatusMessage, setUpdateStatusMessage] = useState('');
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+
+  // Email Verification Portal State
+  const [showVerifyPortal, setShowVerifyPortal] = useState(false);
+  const [initialVerifyCode, setInitialVerifyCode] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    const code = params.get('code');
+    const token = params.get('verify');
+    if (page === 'verify' || code || token) {
+      setInitialVerifyCode(code || token || '');
+      setShowVerifyPortal(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!currentUser?.isAuthenticated) {
@@ -262,6 +278,21 @@ export function App() {
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{toastMsg}</span>
           </div>
+        )}
+
+        {/* Dedicated Partner Email Verification Portal (When ?page=verify or ?code= is triggered) */}
+        {showVerifyPortal && (
+          <PartnerVerificationPortal
+            initialCode={initialVerifyCode}
+            onClose={() => {
+              setShowVerifyPortal(false);
+              const cleanUrl = window.location.pathname;
+              window.history.replaceState({}, '', cleanUrl);
+            }}
+            onVerified={(vendor) => {
+              setToastMsg(`✓ Account verified! Welcome ${vendor?.companyName || 'Partner'}.`);
+            }}
+          />
         )}
 
         {/* ===================================================================== */}

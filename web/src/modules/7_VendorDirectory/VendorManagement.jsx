@@ -1833,6 +1833,7 @@ export function VendorManagement() {
         role: vendor.category,
       });
       await updateVendor(targetId, {
+        verificationCode: res.code,
         verificationToken: res.token,
         verifyLink: res.verifyLink,
         verificationSentAt: new Date().toISOString(),
@@ -1840,7 +1841,7 @@ export function VendorManagement() {
       });
       setAlertToast({
         type: 'info',
-        msg: `📧 Verification email sent to ${vendor.email}! Only the vendor can verify by clicking the verification link in their email.`,
+        msg: `📧 Verification email sent to ${vendor.email}! 8-digit code: ${res.code}. Partner can paste this code on the verification portal to activate their account.`,
       });
     } catch (err) {
       setAlertToast({
@@ -1950,13 +1951,14 @@ export function VendorManagement() {
             role: created.category,
           });
           await updateVendor(created.vendorId || created.id, {
+            verificationCode: res.code,
             verificationToken: res.token,
             verifyLink: res.verifyLink,
             verificationSentAt: new Date().toISOString(),
           });
           setAlertToast({
             type: 'info',
-            msg: `📧 Partner registered! Email verification link sent to ${data.email}. Once verified, approve to dispatch APK credentials.`,
+            msg: `📧 Partner registered! Email verification link & 8-digit code (${res.code}) sent to ${data.email}. Once verified, approve to dispatch APK credentials.`,
           });
         } catch (_) {
           setAlertToast({
@@ -2214,11 +2216,16 @@ export function VendorManagement() {
                       <td className="py-3 px-4">
                         <div className="flex flex-col gap-1.5">
                           {vendor.emailVerified === 'Verified' ? (
-                            <div className="space-y-0.5">
+                            <div className="space-y-1">
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-300 w-fit">
                                 <Check className="w-3 h-3 text-emerald-600" />
                                 <span>Verified by Partner</span>
                               </span>
+                              {(vendor.verifiedWithCode || vendor.verificationCode) && (
+                                <div className="text-[9.5px] font-mono font-bold text-emerald-800 bg-emerald-100/70 border border-emerald-200/90 px-1.5 py-0.5 rounded w-fit">
+                                  Code: {vendor.verifiedWithCode || vendor.verificationCode}
+                                </div>
+                              )}
                               {vendor.emailVerifiedAt && (
                                 <div className="text-[9px] text-emerald-700 font-mono">
                                   {new Date(vendor.emailVerifiedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -2231,6 +2238,11 @@ export function VendorManagement() {
                                 <Clock className="w-3 h-3 text-amber-600" />
                                 <span>Pending Verification</span>
                               </span>
+                              {vendor.verificationCode && (
+                                <div className="text-[9.5px] font-mono text-stone-600 bg-amber-50/80 px-1.5 py-0.5 rounded border border-amber-200/70 w-fit">
+                                  Code: <span className="font-bold text-stone-900">{vendor.verificationCode}</span>
+                                </div>
+                              )}
 
                               {vendor.email ? (
                                 <button

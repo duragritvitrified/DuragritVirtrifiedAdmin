@@ -11,12 +11,12 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.8.3',
-    buildNumber: 153,
+    version: '4.8.4',
+    buildNumber: 154,
     timestamp: buildTime,
-    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
+    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.4.apk',
     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
-    changelog: 'Mobile responsive layout fixes (1-Tap badge alignment), real-time vendor credentials sync, and auto OTA update popups.'
+    changelog: 'Dedicated partner email verification portal with 8-digit unique code, database sync & vendor management integration.'
   });
 }
 

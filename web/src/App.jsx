@@ -30,6 +30,7 @@ import { SystemSettings } from './modules/17_SystemSettings/SystemSettings';
 import { AppInstallReports } from './modules/18_AppInstallReports/AppInstallReports';
 import { VendorManagement } from './modules/7_VendorDirectory/VendorManagement';
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
+import { PartnerVerificationPortal } from './components/PartnerVerificationPortal';
 
 export function App() {
   const { currentUser } = useAuth();
@@ -59,8 +60,10 @@ export function App() {
     else setActiveTab(tab);
   };
 
-  // Email Verification Toast
+  // Email Verification Toast & Dedicated Portal
   const [verifyBanner, setVerifyBanner] = useState(null); // { success, name, userId }
+  const [showVerifyPortal, setShowVerifyPortal] = useState(false);
+  const [initialVerifyCode, setInitialVerifyCode] = useState('');
 
   // Smart Mobile / Standalone PWA Redirect Guard:
   // If a vendor launches an installed PWA on mobile, immediately route to the Vendor App
@@ -76,41 +79,18 @@ export function App() {
     }
   }, [currentUser]);
 
-  // ── On mount: handle ?verify=TOKEN in URL (email verification link) ──────
+  // ── On mount: handle ?page=verify or ?code= or ?verify=TOKEN in URL ──────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    const code = params.get('code');
     const token = params.get('verify');
-    if (!token) return;
 
-    const result = processVerificationToken(token);
-
-    if (result.success) {
-      if (result.isVendor) {
-        setVerifyBanner({
-          success: true,
-          name: result.name || 'Partner',
-          userId: result.id,
-          message: `✅ Partner Email Verified! Welcome ${result.name} (${result.id}) — Login credentials & APK dossier dispatched to your inbox.`
-        });
-      } else {
-        const user = result.user;
-        setVerifyBanner({
-          success: true,
-          name: user?.name || result.name || 'User',
-          userId: user ? (String(user.id).startsWith('USR-') ? user.id : `USR-${user.id}`) : `USR-${result.userId || result.id}`,
-          message: `✅ Email Verified! Welcome ${result.name || user?.name} — Login credentials & APK setup guide sent to your inbox.`
-        });
-      }
-    } else {
-      setVerifyBanner({ success: false, name: '', userId: '' });
+    // If explicit verification URL or code/token present, open verification portal
+    if (page === 'verify' || code || token) {
+      setInitialVerifyCode(code || token || '');
+      setShowVerifyPortal(true);
     }
-
-    // Clean URL (remove ?verify= param without reload)
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, '', cleanUrl);
-
-    // Auto-dismiss banner after 9 seconds
-    setTimeout(() => setVerifyBanner(null), 9000);
   }, []);
 
   // Direct Step Navigator from Master Workflow
@@ -231,6 +211,26 @@ export function App() {
         />
       )}
       
+      {/* ── Partner Verification Portal Modal (Triggered by Email Link or URL) ── */}
+      {showVerifyPortal && (
+        <PartnerVerificationPortal
+          initialCode={initialVerifyCode}
+          onClose={() => {
+            setShowVerifyPortal(false);
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, '', cleanUrl);
+          }}
+          onVerified={(vendor) => {
+            setVerifyBanner({
+              success: true,
+              name: vendor?.companyName || vendor?.name || 'Partner',
+              userId: vendor?.vendorId || vendor?.id || 'VND-101',
+              message: `✅ Partner Email Verified! ${vendor?.companyName || 'Partner'} (${vendor?.vendorId || vendor?.id}) is now ACTIVE.`
+            });
+          }}
+        />
+      )}
+
       {/* ── Email Verification Success / Failure Banner ── */}
       {verifyBanner && (
         <div className={`flex items-center justify-between px-5 py-2.5 text-sm font-semibold z-50 ${
