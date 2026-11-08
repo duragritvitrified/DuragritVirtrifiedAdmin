@@ -578,6 +578,29 @@ export const DataProvider = ({ children }) => {
           } catch (_) {}
         }
 
+        // Apply live verification events from Supabase to sbVendors
+        (claimRes.value?.data || []).forEach((row) => {
+          if (row.request_id && String(row.request_id).startsWith('VERIFY_EVENT_')) {
+            try {
+              const audit = JSON.parse(row.flag_reason || '{}');
+              const targetId = String(audit.vendorId || '').toUpperCase();
+              const targetMobile = String(audit.mobile || '').replace(/\D/g, '').slice(-10);
+              const target = sbVendors.find((v) => {
+                const vid = String(v.vendorId || v.id || '').toUpperCase();
+                const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+                return (targetId && vid === targetId) || (targetMobile && vDigits === targetMobile);
+              });
+              if (target) {
+                target.emailVerified = 'Verified';
+                target.emailVerifiedAt = audit.verifiedAt || row.timestamp;
+                target.verifiedWithCode = audit.code;
+                target.status = 'ACTIVE';
+                target.accountStatus = 'Active';
+              }
+            } catch (_) {}
+          }
+        });
+
         const tokenRows = tokRes.status === 'fulfilled' && !tokRes.value.error ? (tokRes.value.data || []) : [];
 
         if (batchRes.status === 'fulfilled' && !batchRes.value.error) {

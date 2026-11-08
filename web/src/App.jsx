@@ -79,17 +79,17 @@ export function App() {
     }
   }, [currentUser]);
 
-  // ── On mount: handle ?page=verify or ?code= or ?verify=TOKEN in URL ──────
+  // ── On mount: handle legacy ?page=verify or ?code= or ?verify=TOKEN in URL ──────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const page = params.get('page');
     const code = params.get('code');
     const token = params.get('verify');
 
-    // If explicit verification URL or code/token present, open verification portal
+    // Direct redirect to dedicated standalone verification page
     if (page === 'verify' || code || token) {
-      setInitialVerifyCode(code || token || '');
-      setShowVerifyPortal(true);
+      const c = code || token || '';
+      window.location.replace(`/verify?code=${encodeURIComponent(c)}`);
     }
   }, []);
 

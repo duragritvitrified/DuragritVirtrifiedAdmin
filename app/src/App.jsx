@@ -124,8 +124,8 @@ export function App() {
     const code = params.get('code');
     const token = params.get('verify');
     if (page === 'verify' || code || token) {
-      setInitialVerifyCode(code || token || '');
-      setShowVerifyPortal(true);
+      const c = code || token || '';
+      window.location.replace(`/verify?code=${encodeURIComponent(c)}`);
     }
   }, []);
 

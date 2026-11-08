@@ -16,7 +16,7 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{mobile}}', label: 'Registered Mobile', sample: '+91 98112 40591' },
       { tag: '{{verifyCode}}', label: '8-Digit Unique Verification Code', sample: '88264905' },
       { tag: '{{verifyToken}}', label: 'Security Auth Token', sample: 'DGVT-88264905' },
-      { tag: '{{verifyLink}}', label: '1-Click Verification Portal Link', sample: 'https://duragrit-virtrified-admin.vercel.app/?page=verify&code=88264905' },
+      { tag: '{{verifyLink}}', label: 'Dedicated Verification Page Link', sample: 'https://duragrit-virtrified-admin.vercel.app/verify?code=88264905' },
       { tag: '{{expiryHours}}', label: 'Link Expiry Window', sample: '24' }
     ],
     sampleData: {
@@ -25,7 +25,7 @@ export const EMAIL_TEMPLATES = [
       mobile: '+91 88260 21114',
       verifyCode: '88264905',
       verifyToken: 'DGVT-88264905',
-      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/?page=verify&code=88264905',
+      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/verify?code=88264905',
       expiryHours: '24'
     },
     generateHtml: (data = {}) => {
@@ -35,11 +35,12 @@ export const EMAIL_TEMPLATES = [
         mobile = '+91 88260 21114',
         verifyCode = '88264905',
         verifyToken = 'DGVT-88264905',
-        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/?page=verify&code=88264905',
+        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/verify?code=' + (verifyCode || '88264905'),
         expiryHours = '24'
       } = data;
 
       const displayCode = verifyCode || verifyToken || '88264905';
+      const finalVerifyLink = verifyLink || `https://duragrit-virtrified-admin.vercel.app/verify?code=${displayCode}`;
 
       return `<!DOCTYPE html>
 <html lang="en">
@@ -119,8 +120,8 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0 24px 0;">
                 <tr>
                   <td align="center">
-                    <a href="${verifyLink}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #C84826 0%, #A62C11 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 800; padding: 15px 40px; border-radius: 12px; box-shadow: 0 4px 16px rgba(200, 72, 38, 0.35); letter-spacing: 0.3px;">
-                      ✓ Open Verification Portal &amp; Enter Code
+                    <a href="${finalVerifyLink}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #C84826 0%, #A62C11 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 800; padding: 15px 40px; border-radius: 12px; box-shadow: 0 4px 16px rgba(200, 72, 38, 0.35); letter-spacing: 0.3px;">
+                      ✓ Open Verification Page &amp; Enter Code
                     </a>
                   </td>
                 </tr>
@@ -128,8 +129,8 @@ export const EMAIL_TEMPLATES = [
 
               <!-- DIRECT VERIFICATION URL CALLOUT -->
               <div style="background-color: #FAF9F6; border: 1px solid #e2e8f0; padding: 14px 18px; border-radius: 10px; margin-bottom: 24px; text-align: center;">
-                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Direct Verification Portal Link</div>
-                <div style="font-size: 11px; word-break: break-all; color: #C84826; font-family: monospace; font-weight: 700; margin-top: 5px;">${verifyLink}</div>
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Direct Verification Page Link</div>
+                <div style="font-size: 11px; word-break: break-all; color: #C84826; font-family: monospace; font-weight: 700; margin-top: 5px;">${finalVerifyLink}</div>
                 <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Valid for ${expiryHours} hours • Official DuraGrit Partner Desk</div>
               </div>
 

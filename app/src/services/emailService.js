@@ -183,7 +183,7 @@ export const sendVerificationEmail = async ({
   saveTokenMap(map);
 
   const baseUrl = getEmailBaseUrl();
-  const verifyLink = `${baseUrl}/?page=verify&code=${verifyCode}`;
+  const verifyLink = `${baseUrl}/verify?code=${verifyCode}`;
 
   const template = EMAIL_TEMPLATES.find((t) => t.id === 'verification');
   const html = template
@@ -500,7 +500,7 @@ export const sendVendorVerificationEmail = async ({
   saveTokenMap(map);
 
   const baseUrl = getEmailBaseUrl();
-  const verifyLink = `${baseUrl}/?page=verify&code=${verifyCode}`;
+  const verifyLink = `${baseUrl}/verify?code=${verifyCode}`;
 
   const template = EMAIL_TEMPLATES.find(t => t.id === 'verification');
   const html = template ? template.generateHtml({
