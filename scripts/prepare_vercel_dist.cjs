@@ -28,9 +28,9 @@ if (fs.existsSync(webDist) && fs.existsSync(appDist)) {
     console.log('✓ Successfully mirrored APK packages into web/dist/apk and web/dist/app/apk!');
   }
 
-  // 4. Ensure dedicated PWA manifests are mirrored into root and app subfolder
+  // 4. Ensure dedicated PWA manifests and Service Workers are mirrored into root and app subfolder
   const publicDir = path.resolve(__dirname, '..', 'public');
-  ['manifest.json', 'manifest-vendor.json', 'manifest-admin.json', 'download.html'].forEach((file) => {
+  ['manifest.json', 'manifest-vendor.json', 'manifest-admin.json', 'download.html', 'sw.js', 'sw-vendor.js'].forEach((file) => {
     const srcFile = path.join(publicDir, file);
     if (fs.existsSync(srcFile)) {
       fs.copyFileSync(srcFile, path.join(webDist, file));

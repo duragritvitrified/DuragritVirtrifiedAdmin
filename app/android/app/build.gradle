@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.duragrit.vitrified.portal"
+    namespace "com.duragrit.vitrified.vendor"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.duragrit.vitrified.portal"
+        applicationId "com.duragrit.vitrified.vendor"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "2.0"
+        versionCode 3
+        versionName "2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

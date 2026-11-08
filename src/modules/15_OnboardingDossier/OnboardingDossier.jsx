@@ -290,8 +290,17 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 text-center space-y-3">
-                    <h3 className="text-base font-black text-slate-900">Launch DuraGrit Mobile Scanner</h3>
+                    <h3 className="text-base font-black text-slate-900">Launch DuraGrit Vendor Partner App</h3>
+                    <p className="text-xs text-slate-500">Official Mobile App &amp; Web Portal dedicated strictly to Vendors &amp; Tile Contractors.</p>
                     <div className="flex flex-wrap items-center justify-center gap-3">
+                      <a
+                        href="/apk/duragrit-vendor-v2.apk"
+                        download="duragrit-vendor-v2.apk"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download Vendor APK (.apk)</span>
+                      </a>
                       <a
                         href={typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3002/' : `${typeof window !== 'undefined' ? window.location.origin : ''}/app/?app=vendor`}
                         target="_blank"
@@ -299,7 +308,7 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer"
                       >
                         <Smartphone className="w-4 h-4" />
-                        <span>Open Partner App (Android / iOS)</span>
+                        <span>Open Vendor Web App (iOS / PWA)</span>
                       </a>
                       {onNavigateToFieldApp && (
                         <button

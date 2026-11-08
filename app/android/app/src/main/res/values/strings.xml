@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">DuraGrit Vitrified</string>
-    <string name="title_activity_main">DuraGrit Vitrified</string>
-    <string name="package_name">com.duragrit.vitrified.portal</string>
-    <string name="custom_url_scheme">com.duragrit.vitrified.portal</string>
+    <string name="app_name">DuraGrit Vendor</string>
+    <string name="title_activity_main">DuraGrit Vendor</string>
+    <string name="package_name">com.duragrit.vitrified.vendor</string>
+    <string name="custom_url_scheme">com.duragrit.vitrified.vendor</string>
 </resources>

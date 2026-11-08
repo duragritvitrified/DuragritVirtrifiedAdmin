@@ -1,5 +1,6 @@
-package com.duragrit.vitrified.portal;
+package com.duragrit.vitrified.vendor;
 
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {}
+

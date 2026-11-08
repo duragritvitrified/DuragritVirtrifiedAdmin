@@ -249,19 +249,19 @@ export const EMAIL_TEMPLATES = [
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td width="50%" align="center" style="padding: 0 6px;">
-                      <a href="${apkUrl}" download="duragrit-vendor-v2.apk" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(5,150,105,0.35); text-align: center;">
+                      <a href="${apkUrl}" target="_blank" download="duragrit-vendor-v2.apk" style="display: block; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(5,150,105,0.35); text-align: center;">
                         🤖 Download Vendor App (.APK)
                       </a>
                     </td>
                     <td width="50%" align="center" style="padding: 0 6px;">
-                      <a href="${pwaUrl}" style="display: block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(15,23,42,0.35); text-align: center;">
+                      <a href="${pwaUrl}" target="_blank" style="display: block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(15,23,42,0.35); text-align: center;">
                         📱 iPhone / Web Vendor Portal
                       </a>
                     </td>
                   </tr>
                 </table>
                 <div style="margin-top: 10px; font-size: 11px; color: #64748b; text-align: center;">
-                  Android Package: <a href="${apkUrl}" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Download (.apk)</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • Web: <a href="${pwaUrl}" style="color: #059669; font-weight: 700; text-decoration: underline;">Open Field Portal</a>
+                  Android Package: <a href="${apkUrl}" target="_blank" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v2.apk">Direct Download (.apk)</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" target="_blank" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • iPhone Safari: <a href="${pwaUrl}" target="_blank" style="color: #059669; font-weight: 700; text-decoration: underline;">Open Vendor Web App</a>
                 </div>
               </div>
 
@@ -269,11 +269,11 @@ export const EMAIL_TEMPLATES = [
               <div style="background-color: #FAF9F6; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; font-size: 12px; color: #475569; line-height: 1.6;">
                 <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px;">Vendor Quick-Start Instructions:</strong>
                 1. Tap <strong>Download Vendor App (.APK)</strong> on Android, or tap <strong>iPhone / Web Vendor Portal</strong> on iOS Safari.<br>
-                2. On Android, if your phone prompts <em>&ldquo;File might be harmful&rdquo;</em>, tap <strong>&ldquo;Download anyway&rdquo;</strong> (this is normal for direct enterprise APK downloads).<br>
-                3. Tap the downloaded APK in your notifications or Downloads folder to install. If asked to allow installs from this source, tap <strong>Settings</strong> and enable <strong>Allow from this source</strong>.<br>
-                4. On iPhone Safari, tap the Share button and select <strong>&ldquo;Add to Home Screen&rdquo;</strong> for 1-tap full-screen access.<br>
+                2. On Android, if your phone prompts <em>&ldquo;File might be harmful&rdquo;</em>, tap <strong>&ldquo;Download anyway&rdquo;</strong> (this is standard for verified direct APK downloads).<br>
+                3. Once downloaded, tap the notification or open your Downloads folder to tap <strong>duragrit-vendor-v2.apk</strong> and choose <strong>Install</strong>.<br>
+                4. On iPhone Safari, open the portal link, tap the Share icon at the bottom, and select <strong>&ldquo;Add to Home Screen&rdquo;</strong> for 1-tap full-screen Vendor App access.<br>
                 5. Sign in with your <strong>Partner Login ID</strong> and <strong>One-Time Passkey</strong> shown above.<br>
-                6. Link your UPI VPA or Bank Account to scan QR codes and receive instant payouts!
+                6. Link your UPI VPA to scan genuine DuraGrit QR codes and receive instant cashback payouts!
               </div>
             </td>
           </tr>

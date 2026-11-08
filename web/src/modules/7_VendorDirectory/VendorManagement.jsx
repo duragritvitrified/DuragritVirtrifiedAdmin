@@ -1329,13 +1329,16 @@ function VendorFormModal({ vendor, onClose, onSave }) {
                     <code className="text-[#C84826] font-mono font-bold">{form.passkey}</code>
                   </div>
                   <div className="text-[10px] text-slate-400">
-                    URL: <span className="font-mono text-slate-600">http://localhost:3001</span> (or Android APK)
+                    Vendor Portal: <span className="font-mono text-slate-600">http://localhost:3002</span> (or Android Vendor APK)
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    const text = `DuraGrit Partner Login Credentials:\nPortal: http://localhost:3001\nLogin ID / Mobile: ${form.phone || form.vendorId}\nTemporary Password: ${form.passkey}\nRole: ${form.category}`;
+                    const portalUrl = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+                      ? `${window.location.origin}/app/?app=vendor`
+                      : 'http://localhost:3002';
+                    const text = `DuraGrit Vendor Partner Login Credentials:\nVendor App URL: ${portalUrl}\nLogin ID / Mobile: ${form.phone || form.vendorId}\nTemporary Password: ${form.passkey}\nRole: ${form.category}`;
                     navigator.clipboard.writeText(text);
                     setCopiedDossier(true);
                     setTimeout(() => setCopiedDossier(false), 2000);

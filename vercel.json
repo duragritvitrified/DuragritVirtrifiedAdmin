@@ -21,6 +21,32 @@
           "value": "no-cache, no-store, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/(sw(.*).js)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/(manifest(.*).json)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json; charset=utf-8"
+        }
+      ]
     }
   ],
   "redirects": [
@@ -40,6 +66,14 @@
       "destination": "/download.html"
     },
     {
+      "source": "/sw-vendor.js",
+      "destination": "/sw-vendor.js"
+    },
+    {
+      "source": "/app/sw-vendor.js",
+      "destination": "/sw-vendor.js"
+    },
+    {
       "source": "/manifest-vendor.json",
       "destination": "/manifest-vendor.json"
     },
@@ -54,6 +88,14 @@
     {
       "source": "/app/apk/(.*)",
       "destination": "/apk/$1"
+    },
+    {
+      "source": "/apk/(.*)",
+      "destination": "/apk/$1"
+    },
+    {
+      "source": "/app/assets/(.*)",
+      "destination": "/app/assets/$1"
     },
     {
       "source": "/app/(.*)",

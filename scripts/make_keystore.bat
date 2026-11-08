@@ -8,3 +8,4 @@ if exist duragrit-release.jks (
 ) else (
     echo ERROR: Failed to create keystore
 )
+
