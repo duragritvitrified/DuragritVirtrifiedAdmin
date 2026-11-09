@@ -50,7 +50,8 @@ import {
   checkForLiveAdminUpdate,
   applyAdminAppUpdate,
   getAdminAppReleases,
-  publishAdminNewRelease
+  publishAdminNewRelease,
+  isVersionHigher
 } from '../services/appInstallService';
 
 export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
@@ -1046,7 +1047,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             <span className="text-[9.5px] font-mono font-bold text-cyan-300 shrink-0">
               {adminUpdateStatus.installedVersion}
             </span>
-            {adminUpdateStatus.hasUpdate && (
+            {adminUpdateStatus.hasUpdate && isVersionHigher(adminUpdateStatus.latestVersion, adminUpdateStatus.installedVersion) && (
               <button
                 type="button"
                 onClick={handleTriggerAdminUpdate}
@@ -1079,7 +1080,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       {/* ===================================================================== */}
       {/* TOP ADMIN OTA UPDATE BANNER (Shown ONLY when an update is available)  */}
       {/* ===================================================================== */}
-      {adminUpdateStatus.hasUpdate && (
+      {adminUpdateStatus.hasUpdate && isVersionHigher(adminUpdateStatus.latestVersion, adminUpdateStatus.installedVersion) && (
         <div className="bg-gradient-to-r from-[#061224] via-[#0B1E3D] to-[#1E112A] text-white px-3.5 py-2.5 shadow-lg border-b border-cyan-500/40 shrink-0 font-sans sticky top-0 z-40 animate-in slide-in-from-top-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2.5 min-w-0">
@@ -2504,7 +2505,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
               </div>
 
               {/* Pending Update CTA (Only shown when hasUpdate === true) */}
-              {adminUpdateStatus.hasUpdate && (
+              {adminUpdateStatus.hasUpdate && isVersionHigher(adminUpdateStatus.latestVersion, adminUpdateStatus.installedVersion) && (
                 <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -3001,7 +3002,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       {/* ===================================================================== */}
 
       {/* Prominent Admin OTA Update Modal Popup */}
-      {showAdminUpdateModal && adminUpdateStatus.hasUpdate && (
+      {showAdminUpdateModal && adminUpdateStatus.hasUpdate && isVersionHigher(adminUpdateStatus.latestVersion, adminUpdateStatus.installedVersion) && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
           <div className="w-full max-w-sm bg-gradient-to-b from-[#0F1E36] via-[#091528] to-[#040A14] border border-cyan-500/50 rounded-3xl p-6 shadow-2xl space-y-4 text-center text-white relative">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">

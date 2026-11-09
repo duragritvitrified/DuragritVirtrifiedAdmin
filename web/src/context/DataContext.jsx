@@ -879,9 +879,11 @@ export const DataProvider = ({ children }) => {
         }
 
         // G. Process OTA Release Events from Supabase
-        const latestOtaRow = allClaimsRows.find(
+        const otaRows = allClaimsRows.filter(
           (c) => c.qr_serial === 'DURAGRIT_OTA_RELEASE' || (c.request_id && String(c.request_id).startsWith('SYNC_RELEASE_EVENT_'))
         );
+        otaRows.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+        const latestOtaRow = otaRows[0];
         if (latestOtaRow?.flag_reason) {
           try {
             const relInfo = JSON.parse(latestOtaRow.flag_reason);

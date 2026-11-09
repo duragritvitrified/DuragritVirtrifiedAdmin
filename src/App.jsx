@@ -17,6 +17,7 @@ import {
   applyClientAppUpdate,
   getClientInstalledVersion,
   getLatestRelease,
+  isVersionHigher,
   syncMobileClientDevice
 } from './services/appInstallService';
 import {
@@ -336,7 +337,7 @@ export function App() {
         {/* ===================================================================== */}
         {/* TOP OTA UPDATE NOTIFICATION BANNER (When Admin pushes new version)    */}
         {/* ===================================================================== */}
-        {updateStatus.hasUpdate && (
+        {updateStatus.hasUpdate && isVersionHigher(updateStatus.latestVersion, updateStatus.installedVersion) && (
           <div className="bg-gradient-to-r from-[#A62C11] via-[#C84826] to-[#8B230C] text-white px-3.5 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 shadow-md flex items-center justify-between text-xs border-b border-white/20 shrink-0 font-sans sticky top-0 z-50">
             <div className="flex items-center space-x-2.5 overflow-hidden pr-1">
               <div className="p-1.5 rounded-lg bg-white/20 text-white shrink-0">
@@ -548,7 +549,7 @@ export function App() {
         {/* ===================================================================== */}
         {/* INTERACTIVE OTA UPDATE POPUP & INSTALLATION MODAL                     */}
         {/* ===================================================================== */}
-        {showUpdateModal && (
+        {showUpdateModal && updateStatus.hasUpdate && isVersionHigher(updateStatus.latestVersion, updateStatus.installedVersion) && (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
             <div className="bg-[#1C1917] border border-stone-700 text-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl text-center animate-in fade-in zoom-in-95 relative overflow-hidden">
               

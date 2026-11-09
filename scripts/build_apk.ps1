@@ -19,7 +19,9 @@ npm --workspace=@duragrit/app run build
 # 2. Sync to app/android/app/src/main/assets/public/
 Write-Host "[2/5] Syncing dist to app/android assets..."
 $vendorAssets = "$root\app\android\app\src\main\assets\public"
-if (-not (Test-Path $vendorAssets)) {
+if (Test-Path $vendorAssets) {
+    Remove-Item -Path "$vendorAssets\*" -Recurse -Force
+} else {
     New-Item -ItemType Directory -Path $vendorAssets -Force | Out-Null
 }
 Copy-Item -Path "$root\app\dist\*" -Destination $vendorAssets -Recurse -Force
@@ -37,11 +39,15 @@ if (Test-Path $indexHtml) {
       try {
         localStorage.setItem('duragrit_preferred_portal', 'vendor');
         localStorage.removeItem('duragrit_app_releases_v1');
-        var curVer = localStorage.getItem('duragrit_client_installed_version');
-        if (!curVer || curVer.indexOf('v3.') === 0 || curVer === 'v4.8.8' || curVer === 'v4.8.9' || curVer === 'v4.9.0' || curVer === 'v4.9.1' || curVer === 'v4.9.2' || curVer === 'v4.9.3') {
-          localStorage.setItem('duragrit_client_installed_version', 'v4.9.4');
-          localStorage.setItem('duragrit_client_installed_build', '164');
-        }
+        localStorage.removeItem('duragrit_ota_last_broadcast');
+        localStorage.setItem('duragrit_client_installed_version', 'v4.9.5');
+        localStorage.setItem('duragrit_client_installed_build', '165');
+        ['v4.8.2', 'v4.8.3', 'v4.8.4', 'v4.8.5', 'v4.8.7', 'v4.8.8', 'v4.8.9', 'v4.9.0', 'v4.9.1', 'v4.9.2', 'v4.9.3', 'v4.9.4'].forEach(function(ver) {
+          localStorage.setItem('duragrit_ota_applied_' + ver, 'true');
+          localStorage.setItem('duragrit_ota_dismissed_' + ver, 'true');
+          localStorage.setItem('duragrit_ota_applied_' + ver.replace('v',''), 'true');
+          localStorage.setItem('duragrit_ota_dismissed_' + ver.replace('v',''), 'true');
+        });
       } catch (_) {}
     </script>
 "@

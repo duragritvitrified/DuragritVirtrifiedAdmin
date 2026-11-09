@@ -1,11 +1,11 @@
 {
-  "version": "4.9.4",
-  "buildNumber": 164,
-  "adminVersion": "4.9.4",
-  "adminBuildNumber": 164,
-  "vendorVersion": "4.9.4",
-  "vendorBuildNumber": 164,
+  "version": "4.9.5",
+  "buildNumber": 165,
+  "adminVersion": "4.9.5",
+  "adminBuildNumber": 165,
+  "vendorVersion": "4.9.5",
+  "vendorBuildNumber": 165,
   "apkUrl": "https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk",
   "pwaUrl": "https://duragrit-virtrified-admin.vercel.app/app/?app=admin",
-  "changelog": "Clean QR stickers with dedicated unique serial code (Ready to Scan text removed), full live Supabase management, and direct /qr deep-link claim support v4.9.4."
+  "changelog": "Persistent OTA update loop termination, stale release cache purge, and strict semantic version verification v4.9.5."
 }

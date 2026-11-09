@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import {
   checkClientUpdateStatus,
-  applyClientAppUpdate
+  applyClientAppUpdate,
+  isVersionHigher
 } from '../services/appInstallService';
 import {
   Key,
@@ -295,7 +296,7 @@ export function Step13_WelcomeDossier({ onBack }) {
               </span>
             </div>
 
-            {updateStatus.hasUpdate ? (
+            {updateStatus.hasUpdate && isVersionHigher(updateStatus.latestVersion, updateStatus.installedVersion) ? (
               <div className="bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-3 text-left space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-xs text-[#A62C11] flex items-center gap-1.5">

@@ -6,8 +6,10 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.9.4';
-export const CURRENT_BUILT_IN_BUILD = 164;
+export const CURRENT_BUILT_IN_VERSION = 'v4.9.5';
+export const CURRENT_BUILT_IN_BUILD = 165;
+export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.5';
+export const CURRENT_ADMIN_BUILT_IN_BUILD = 165;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -30,14 +32,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-017',
+    version: 'v4.9.5',
+    buildNumber: 165,
+    releaseDate: '2026-11-09 22:45:00',
+    title: 'Persistent OTA Loop Termination & Clean Cloud Sync v4.9.5',
+    changelog: 'Permanent fix for recurring v4.8.2 OTA update prompt, automated stale release cache purge, and strict semantic version verification.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-otapurgeloop165',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-016',
     version: 'v4.9.4',
     buildNumber: 164,
     releaseDate: '2026-11-09 22:15:00',
     title: 'Clean QR Unique Code Stickers & Live Supabase Cloud Sync v4.9.4',
     changelog: 'Clean QR stickers with dedicated unique serial code (Ready to Scan text removed), full live Supabase management, and direct /qr deep-link claim support.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-livecleanqr164',
@@ -51,8 +68,8 @@ export const DEFAULT_RELEASES = [
     releaseDate: '2026-11-09 21:50:00',
     title: 'Vendor Mobile QR Scanner Optical Jitter Elimination & Instant Batch Verification v4.9.3',
     changelog: 'Stabilized Vendor QR optical scanner (15 FPS, jitter elimination, buzz debouncing) + instant catalog SKU resolution for DA 777 & all DuraGrit QR batches.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-liveqrfix163',
@@ -66,8 +83,8 @@ export const DEFAULT_RELEASES = [
     releaseDate: '2026-11-09 21:00:00',
     title: 'Pure Live Production Sync & Test Purge Engine v4.9.2',
     changelog: 'All test and mock data purged; Admin and Vendor Mobile APK connected purely to live Supabase Cloud & Vercel production.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-livepure162',
@@ -290,9 +307,10 @@ export const getAppReleases = () => {
 export const saveAppReleases = (releases) => {
   try {
     localStorage.setItem(RELEASES_KEY, JSON.stringify(releases));
+    const topVer = releases[0]?.version || CURRENT_BUILT_IN_VERSION;
     // Trigger broadcast for cross-tab / cross-port sync
     localStorage.setItem('duragrit_ota_last_broadcast', JSON.stringify({
-      version: releases[0]?.version || 'v4.8.2',
+      version: topVer,
       timestamp: Date.now()
     }));
     return true;
@@ -304,8 +322,17 @@ export const saveAppReleases = (releases) => {
 
 export const getLatestRelease = () => {
   const releases = getAppReleases();
-  const live = releases.find(r => r.status === 'LIVE');
-  return live || releases[0] || DEFAULT_RELEASES[0];
+  const valid = (Array.isArray(releases) ? releases : []).filter(r => r && r.version);
+  if (valid.length === 0) return DEFAULT_RELEASES[0];
+
+  // Strictly sort descending by semantic version and build number so newest is ALWAYS first
+  const sorted = [...valid].sort((a, b) => {
+    if (isVersionHigher(b.version, a.version)) return 1;
+    if (isVersionHigher(a.version, b.version)) return -1;
+    return Number(b.buildNumber || 0) - Number(a.buildNumber || 0);
+  });
+
+  return sorted[0] || DEFAULT_RELEASES[0];
 };
 
 export const getAppVersionInfo = () => {
@@ -425,7 +452,7 @@ export const saveDeviceInstalls = (installs) => {
 export const registerAppInstall = (data) => {
   const list = getDeviceInstalls();
   const latestRelease = getLatestRelease();
-  const latestVer = latestRelease.version || 'v4.8.2';
+  const latestVer = latestRelease.version || CURRENT_BUILT_IN_VERSION;
 
   const existingIdx = list.findIndex(
     i => (data.deviceUuid && i.deviceUuid === data.deviceUuid) ||
@@ -515,7 +542,7 @@ export const getClientDeviceUuid = () => {
 export const getClientInstalledVersion = () => {
   if (typeof window === 'undefined') return CURRENT_BUILT_IN_VERSION;
   const saved = localStorage.getItem(CLIENT_VERSION_KEY);
-  if (!saved || saved.startsWith('v3.') || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
+  if (!saved || saved.startsWith('v3.') || saved === 'v4.8.2' || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
     localStorage.setItem(CLIENT_VERSION_KEY, CURRENT_BUILT_IN_VERSION);
     localStorage.setItem('duragrit_client_installed_build', String(CURRENT_BUILT_IN_BUILD));
     return CURRENT_BUILT_IN_VERSION;
@@ -527,13 +554,20 @@ export const getClientInstalledVersion = () => {
 export const checkClientUpdateStatus = () => {
   const installedVer = getClientInstalledVersion();
   const latestRelease = getLatestRelease();
-  const installedBuild = Number(localStorage.getItem('duragrit_client_installed_build') || 155);
-  const latestBuild = Number(latestRelease?.buildNumber || 157);
+  const installedBuild = Number(localStorage.getItem('duragrit_client_installed_build') || CURRENT_BUILT_IN_BUILD);
+  const latestBuild = Number(latestRelease?.buildNumber || CURRENT_BUILT_IN_BUILD);
 
   const isHigherVer = isVersionHigher(latestRelease?.version, installedVer);
-  const isHigherBuild = latestBuild > installedBuild;
+  const isSameVer = String(latestRelease?.version || '').replace(/^v/i, '').trim() === String(installedVer || '').replace(/^v/i, '').trim();
+  const isHigherBuild = isSameVer && (latestBuild > installedBuild);
 
-  const hasUpdate = Boolean(isHigherVer || isHigherBuild);
+  const cleanVer = String(latestRelease?.version || '').replace(/^v/i, '');
+  const isApplied = typeof window !== 'undefined' && (
+    localStorage.getItem('duragrit_ota_applied_v' + cleanVer) === 'true' ||
+    localStorage.getItem('duragrit_ota_applied_' + cleanVer) === 'true'
+  );
+
+  const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied);
 
   return {
     hasUpdate,
@@ -556,20 +590,26 @@ export const checkForLiveServerUpdate = async (appType = 'auto') => {
     const res = await fetch(`${origin}/api/version?t=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      const serverVer = data.version || '4.8.7';
+      const serverVer = data.version || CURRENT_BUILT_IN_VERSION;
       const cleanServerVer = String(serverVer).startsWith('v') ? serverVer : `v${serverVer}`;
-      const serverBuild = Number(data.buildNumber) || 157;
+      const serverBuild = Number(data.buildNumber) || CURRENT_BUILT_IN_BUILD;
 
-      const installedVer = (appType === 'admin' || (typeof window !== 'undefined' && window.DURAGRIT_APP_TYPE === 'admin'))
-        ? getAdminInstalledVersion()
-        : getClientInstalledVersion();
+      const isAdmin = (appType === 'admin' || (typeof window !== 'undefined' && window.DURAGRIT_APP_TYPE === 'admin'));
+      const installedVer = isAdmin ? getAdminInstalledVersion() : getClientInstalledVersion();
       const cleanInstalledVer = String(installedVer || '').startsWith('v') ? installedVer : `v${installedVer}`;
-      const installedBuild = Number(localStorage.getItem((appType === 'admin' || (typeof window !== 'undefined' && window.DURAGRIT_APP_TYPE === 'admin')) ? 'duragrit_admin_installed_build' : 'duragrit_client_installed_build') || 0);
+      const installedBuild = Number(localStorage.getItem(isAdmin ? 'duragrit_admin_installed_build' : 'duragrit_client_installed_build') || CURRENT_BUILT_IN_BUILD);
 
       const isHigherVer = isVersionHigher(cleanServerVer, cleanInstalledVer);
-      const isHigherBuild = serverBuild > installedBuild;
+      const isSameVer = cleanServerVer.replace(/^v/i, '').trim() === cleanInstalledVer.replace(/^v/i, '').trim();
+      const isHigherBuild = isSameVer && (serverBuild > installedBuild);
 
-      const hasUpdate = Boolean(isHigherVer || isHigherBuild);
+      const cleanVer = cleanServerVer.replace(/^v/i, '');
+      const isApplied = typeof window !== 'undefined' && (
+        localStorage.getItem((isAdmin ? 'duragrit_admin_ota_applied_v' : 'duragrit_ota_applied_v') + cleanVer) === 'true' ||
+        localStorage.getItem((isAdmin ? 'duragrit_admin_ota_applied_' : 'duragrit_ota_applied_') + cleanVer) === 'true'
+      );
+
+      const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied);
 
       return {
         hasUpdate,
@@ -601,11 +641,14 @@ export const applyClientAppUpdate = async (targetVersion) => {
   localStorage.setItem('duragrit_client_installed_build', String(targetBuild));
   localStorage.setItem('duragrit_ota_applied_' + ver, 'true');
   localStorage.setItem('duragrit_ota_applied_' + normVer, 'true');
+  localStorage.setItem('duragrit_ota_applied_v' + normVer, 'true');
   localStorage.setItem('duragrit_ota_dismissed_' + ver, 'true');
   localStorage.setItem('duragrit_ota_dismissed_' + normVer, 'true');
+  localStorage.setItem('duragrit_ota_dismissed_v' + normVer, 'true');
   try {
     sessionStorage.setItem('duragrit_ota_dismissed_' + ver, 'true');
     sessionStorage.setItem('duragrit_ota_dismissed_' + normVer, 'true');
+    sessionStorage.setItem('duragrit_ota_dismissed_v' + normVer, 'true');
   } catch (_) {}
 
   // 2. Mark release as LIVE in RELEASES_KEY
@@ -795,6 +838,25 @@ export const ADMIN_VERSION_KEY = 'duragrit_admin_installed_version';
 
 export const DEFAULT_ADMIN_RELEASES = [
   {
+    id: 'ADM-REL-2026-008',
+    version: 'v4.9.5',
+    buildNumber: 165,
+    releaseDate: '2026-11-09 22:45:00',
+    title: 'Persistent OTA Loop Termination & Clean Cloud Sync v4.9.5',
+    changelog: 'Permanent fix for recurring v4.8.2 OTA update prompt, automated stale release cache purge, and strict semantic version verification.',
+    changesList: [
+      'Eliminated recurring v4.8.2 OTA prompt loop and infinite update ping-pong',
+      'Automated local storage stale release cache purge on app startup',
+      'Strict semantic version descending comparator for OTA updates',
+      'Synchronized all mobile assets and APK packages to v4.9.5 (Build 165)'
+    ],
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '24.5 MB',
+    bundleHash: 'sha256-otapurgeloop165'
+  },
+  {
     id: 'ADM-REL-2026-007',
     version: 'v4.8.9',
     buildNumber: 159,
@@ -808,7 +870,7 @@ export const DEFAULT_ADMIN_RELEASES = [
       'Auto-purge obsolete test products and legacy caches on all devices',
       'Real-time batch generation and single-stage approval workflow parity'
     ],
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '24.5 MB',
@@ -955,7 +1017,7 @@ export const saveAdminAppReleases = (releases) => {
   try {
     localStorage.setItem(ADMIN_RELEASES_KEY, JSON.stringify(releases));
     localStorage.setItem('duragrit_admin_ota_last_broadcast', JSON.stringify({
-      version: releases[0]?.version || 'v4.8.8',
+      version: releases[0]?.version || CURRENT_ADMIN_BUILT_IN_VERSION,
       timestamp: Date.now()
     }));
     return true;
@@ -966,17 +1028,24 @@ export const saveAdminAppReleases = (releases) => {
 
 export const getLatestAdminRelease = () => {
   const releases = getAdminAppReleases();
-  const live = releases.find(r => r.status === 'LIVE');
-  return live || releases[0] || DEFAULT_ADMIN_RELEASES[0];
+  const valid = (Array.isArray(releases) ? releases : []).filter(r => r && r.version);
+  if (valid.length === 0) return DEFAULT_ADMIN_RELEASES[0];
+
+  const sorted = [...valid].sort((a, b) => {
+    if (isVersionHigher(b.version, a.version)) return 1;
+    if (isVersionHigher(a.version, b.version)) return -1;
+    return Number(b.buildNumber || 0) - Number(a.buildNumber || 0);
+  });
+
+  return sorted[0] || DEFAULT_ADMIN_RELEASES[0];
 };
 
 export const getAdminInstalledVersion = () => {
   const saved = localStorage.getItem(ADMIN_VERSION_KEY);
-  // Auto-upgrade any legacy v3.x or out-of-date version to v4.8.9
-  if (!saved || saved.startsWith('v3.') || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
-    const fresh = CURRENT_BUILT_IN_VERSION;
+  if (!saved || saved.startsWith('v3.') || saved === 'v4.8.2' || isVersionHigher(CURRENT_ADMIN_BUILT_IN_VERSION, saved)) {
+    const fresh = CURRENT_ADMIN_BUILT_IN_VERSION;
     localStorage.setItem(ADMIN_VERSION_KEY, fresh);
-    localStorage.setItem('duragrit_admin_installed_build', String(CURRENT_BUILT_IN_BUILD));
+    localStorage.setItem('duragrit_admin_installed_build', String(CURRENT_ADMIN_BUILT_IN_BUILD));
     return fresh;
   }
   return saved;
@@ -985,12 +1054,20 @@ export const getAdminInstalledVersion = () => {
 export const checkAdminUpdateStatus = () => {
   const installedVer = getAdminInstalledVersion();
   const latestRelease = getLatestAdminRelease();
-  const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || 158);
-  const latestBuild = Number(latestRelease?.buildNumber || 158);
+  const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || CURRENT_ADMIN_BUILT_IN_BUILD);
+  const latestBuild = Number(latestRelease?.buildNumber || CURRENT_ADMIN_BUILT_IN_BUILD);
 
   const isHigherVer = isVersionHigher(latestRelease?.version, installedVer);
-  const isHigherBuild = latestBuild > installedBuild;
-  const hasUpdate = Boolean(isHigherVer || isHigherBuild);
+  const isSameVer = String(latestRelease?.version || '').replace(/^v/i, '').trim() === String(installedVer || '').replace(/^v/i, '').trim();
+  const isHigherBuild = isSameVer && (latestBuild > installedBuild);
+
+  const cleanVer = String(latestRelease?.version || '').replace(/^v/i, '');
+  const isApplied = typeof window !== 'undefined' && (
+    localStorage.getItem('duragrit_admin_ota_applied_v' + cleanVer) === 'true' ||
+    localStorage.getItem('duragrit_admin_ota_applied_' + cleanVer) === 'true'
+  );
+
+  const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied);
 
   return {
     hasUpdate,
@@ -1050,8 +1127,8 @@ export const checkForLiveAdminUpdate = async () => {
 
 export const applyAdminAppUpdate = async (targetVersion) => {
   const latestRelease = getLatestAdminRelease();
-  const ver = targetVersion || latestRelease?.version || 'v4.8.7';
-  const targetBuild = Number(latestRelease?.buildNumber) || 157;
+  const ver = targetVersion || latestRelease?.version || CURRENT_ADMIN_BUILT_IN_VERSION;
+  const targetBuild = Number(latestRelease?.buildNumber) || CURRENT_ADMIN_BUILT_IN_BUILD;
 
   localStorage.setItem(ADMIN_VERSION_KEY, ver);
   localStorage.setItem('duragrit_admin_installed_build', String(targetBuild));

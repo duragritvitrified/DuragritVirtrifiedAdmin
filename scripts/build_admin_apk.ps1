@@ -23,7 +23,9 @@ npm --workspace=@duragrit/app run build
 # 3. Synchronize Web Assets to Android project
 Write-Host "[3/6] Syncing dist assets into android/app/src/main/assets/public/..."
 $assetsPublic = "$root\android\app\src\main\assets\public"
-if (-not (Test-Path $assetsPublic)) {
+if (Test-Path $assetsPublic) {
+    Remove-Item -Path "$assetsPublic\*" -Recurse -Force
+} else {
     New-Item -ItemType Directory -Path $assetsPublic -Force | Out-Null
 }
 
@@ -42,11 +44,15 @@ if (Test-Path $indexHtmlPath) {
       try {
         localStorage.setItem('duragrit_preferred_portal', 'admin');
         localStorage.removeItem('duragrit_admin_app_releases_v1');
-        var curVer = localStorage.getItem('duragrit_admin_installed_version');
-        if (!curVer || curVer.indexOf('v3.') === 0 || curVer === 'v4.8.8' || curVer === 'v4.8.9' || curVer === 'v4.9.0' || curVer === 'v4.9.1' || curVer === 'v4.9.2' || curVer === 'v4.9.3') {
-          localStorage.setItem('duragrit_admin_installed_version', 'v4.9.4');
-          localStorage.setItem('duragrit_admin_installed_build', '164');
-        }
+        localStorage.removeItem('duragrit_admin_ota_last_broadcast');
+        localStorage.setItem('duragrit_admin_installed_version', 'v4.9.5');
+        localStorage.setItem('duragrit_admin_installed_build', '165');
+        ['v4.8.2', 'v4.8.3', 'v4.8.4', 'v4.8.5', 'v4.8.7', 'v4.8.8', 'v4.8.9', 'v4.9.0', 'v4.9.1', 'v4.9.2', 'v4.9.3', 'v4.9.4'].forEach(function(ver) {
+          localStorage.setItem('duragrit_admin_ota_applied_' + ver, 'true');
+          localStorage.setItem('duragrit_admin_ota_dismissed_' + ver, 'true');
+          localStorage.setItem('duragrit_admin_ota_applied_' + ver.replace('v',''), 'true');
+          localStorage.setItem('duragrit_admin_ota_dismissed_' + ver.replace('v',''), 'true');
+        });
       } catch (_) {}
     </script>
 "@
