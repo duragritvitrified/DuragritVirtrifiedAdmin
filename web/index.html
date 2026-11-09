@@ -19,17 +19,21 @@
     <title>DuraGrit Vitrified — Stronger Bonds. Lasting Trust. | Corporate ERP</title>
     <script>
       (function() {
-        var APP_VER = 'v4.8.5';
+        var APP_VER = 'v4.8.8';
         try {
           var last = localStorage.getItem('duragrit_web_pwa_version');
           if (last !== APP_VER) {
             localStorage.setItem('duragrit_web_pwa_version', APP_VER);
+            localStorage.removeItem('duragrit_admin_app_releases_v1');
+            var currAdmin = localStorage.getItem('duragrit_admin_installed_version');
+            if (!currAdmin || currAdmin.indexOf('v3.') === 0) {
+              localStorage.setItem('duragrit_admin_installed_version', 'v4.8.8');
+              localStorage.setItem('duragrit_admin_installed_build', '158');
+            }
             if ('caches' in window) {
               caches.keys().then(function(keys) {
                 keys.forEach(function(k) {
-                  if (k.indexOf('v4.8.5') === -1) {
-                    caches.delete(k);
-                  }
+                  caches.delete(k);
                 });
               });
             }

@@ -3,11 +3,13 @@
   "appName": "DuraGrit Admin",
   "webDir": "dist",
   "server": {
+    "url": "https://duragrit-virtrified-admin.vercel.app/app/?app=admin",
+    "cleartext": false,
     "androidScheme": "https"
   },
   "android": {
     "allowMixedContent": false,
     "captureInput": true,
-    "webContentsDebuggingEnabled": false
+    "webContentsDebuggingEnabled": true
   }
 }

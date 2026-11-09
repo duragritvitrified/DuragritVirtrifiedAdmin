@@ -823,9 +823,16 @@ export const getAdminAppReleases = () => {
       return DEFAULT_ADMIN_RELEASES;
     }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    if (!Array.isArray(parsed) || parsed.length === 0 || Number(parsed[0]?.buildNumber || 0) < CURRENT_BUILT_IN_BUILD) {
       localStorage.setItem(ADMIN_RELEASES_KEY, JSON.stringify(DEFAULT_ADMIN_RELEASES));
       return DEFAULT_ADMIN_RELEASES;
+    }
+    const codeLatest = DEFAULT_ADMIN_RELEASES[0];
+    const cachedLatest = parsed[0];
+    if (codeLatest && Number(codeLatest.buildNumber) > Number(cachedLatest?.buildNumber || 0)) {
+      const merged = [codeLatest, ...parsed.filter(p => p.version !== codeLatest.version)];
+      localStorage.setItem(ADMIN_RELEASES_KEY, JSON.stringify(merged));
+      return merged;
     }
     return parsed;
   } catch (e) {
@@ -837,7 +844,7 @@ export const saveAdminAppReleases = (releases) => {
   try {
     localStorage.setItem(ADMIN_RELEASES_KEY, JSON.stringify(releases));
     localStorage.setItem('duragrit_admin_ota_last_broadcast', JSON.stringify({
-      version: releases[0]?.version || 'v3.2.0',
+      version: releases[0]?.version || 'v4.8.8',
       timestamp: Date.now()
     }));
     return true;
@@ -854,17 +861,21 @@ export const getLatestAdminRelease = () => {
 
 export const getAdminInstalledVersion = () => {
   const saved = localStorage.getItem(ADMIN_VERSION_KEY);
-  if (saved) return saved;
-  const defaultInstalled = 'v4.8.6';
-  localStorage.setItem(ADMIN_VERSION_KEY, defaultInstalled);
-  return defaultInstalled;
+  // Auto-upgrade any legacy v3.x or out-of-date version to v4.8.8
+  if (!saved || saved.startsWith('v3.') || isVersionHigher('v4.8.8', saved)) {
+    const fresh = 'v4.8.8';
+    localStorage.setItem(ADMIN_VERSION_KEY, fresh);
+    localStorage.setItem('duragrit_admin_installed_build', '158');
+    return fresh;
+  }
+  return saved;
 };
 
 export const checkAdminUpdateStatus = () => {
   const installedVer = getAdminInstalledVersion();
   const latestRelease = getLatestAdminRelease();
-  const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || 156);
-  const latestBuild = Number(latestRelease?.buildNumber || 157);
+  const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || 158);
+  const latestBuild = Number(latestRelease?.buildNumber || 158);
 
   const isHigherVer = isVersionHigher(latestRelease?.version, installedVer);
   const isHigherBuild = latestBuild > installedBuild;

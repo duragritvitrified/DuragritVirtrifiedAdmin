@@ -39,7 +39,15 @@ if (Test-Path $indexHtmlPath) {
     <meta name="apple-mobile-web-app-title" content="DuraGrit Admin" />
     <script>
       window.DURAGRIT_APP_TYPE = 'admin';
-      try { localStorage.setItem('duragrit_preferred_portal', 'admin'); } catch (_) {}
+      try {
+        localStorage.setItem('duragrit_preferred_portal', 'admin');
+        localStorage.removeItem('duragrit_admin_app_releases_v1');
+        var curVer = localStorage.getItem('duragrit_admin_installed_version');
+        if (!curVer || curVer.indexOf('v3.') === 0) {
+          localStorage.setItem('duragrit_admin_installed_version', 'v4.8.8');
+          localStorage.setItem('duragrit_admin_installed_build', '158');
+        }
+      } catch (_) {}
     </script>
 "@
     # Inject right after <head>
