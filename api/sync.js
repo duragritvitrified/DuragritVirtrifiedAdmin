@@ -47,6 +47,7 @@ export default async function handler(req, res) {
       }
 
       if (Array.isArray(payload.vendors)) {
+        const nowIso = new Date().toISOString();
         inserts.push(
           supabase.from('cashback_requests').insert({
             request_id: `SYNC_VENDORS_EVENT_${Date.now()}`,
@@ -54,9 +55,32 @@ export default async function handler(req, res) {
             claim_value: payload.vendors.length,
             status: 'Approved',
             payout_method: 'UPI',
-            flag_reason: JSON.stringify(payload.vendors)
+            flag_reason: JSON.stringify(payload.vendors),
+            timestamp: nowIso,
           })
         );
+        // Also persist each vendor individually as an atomic event to prevent overwrites
+        payload.vendors.forEach((v) => {
+          const vId = String(v.vendorId || v.id || '').toUpperCase();
+          if (vId) {
+            inserts.push(
+              supabase.from('cashback_requests').insert({
+                request_id: `DURAGRIT_VENDOR_POST_${vId}_${Date.now()}`,
+                qr_serial: 'DURAGRIT_VENDOR_EVENT',
+                claim_value: 1,
+                status: 'Approved',
+                payout_method: 'UPI',
+                flag_reason: JSON.stringify({
+                  action: 'UPSERT',
+                  vendorId: vId,
+                  vendor: v,
+                  timestamp: Date.now(),
+                }),
+                timestamp: nowIso,
+              })
+            );
+          }
+        });
       }
 
       if (Array.isArray(payload.deletedKeys)) {
@@ -67,7 +91,8 @@ export default async function handler(req, res) {
             claim_value: payload.deletedKeys.length,
             status: 'Approved',
             payout_method: 'UPI',
-            flag_reason: JSON.stringify(payload.deletedKeys)
+            flag_reason: JSON.stringify(payload.deletedKeys),
+            timestamp: new Date().toISOString(),
           })
         );
       }
@@ -84,10 +109,11 @@ export default async function handler(req, res) {
         'DURAGRIT_SKUS_REGISTRY',
         'DURAGRIT_BATCHES_REGISTRY',
         'DURAGRIT_VENDORS_STORE_V1',
+        'DURAGRIT_VENDOR_EVENT',
         'DURAGRIT_DELETED_KEYS'
       ])
       .order('timestamp', { ascending: false })
-      .limit(50);
+      .limit(100);
 
     const responseData = {
       skus: [],
@@ -96,6 +122,7 @@ export default async function handler(req, res) {
       deletedKeys: []
     };
 
+    const vendorEvents = [];
     (rows || []).forEach((r) => {
       try {
         const parsed = JSON.parse(r.flag_reason || '[]');
@@ -105,6 +132,8 @@ export default async function handler(req, res) {
           responseData.batches = parsed;
         } else if (r.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' && responseData.vendors.length === 0 && Array.isArray(parsed)) {
           responseData.vendors = parsed;
+        } else if (r.qr_serial === 'DURAGRIT_VENDOR_EVENT') {
+          vendorEvents.push({ ...parsed, timestamp: r.timestamp });
         } else if (r.qr_serial === 'DURAGRIT_DELETED_KEYS' && Array.isArray(parsed)) {
           parsed.forEach((k) => {
             if (!responseData.deletedKeys.includes(k)) responseData.deletedKeys.push(k);
@@ -112,6 +141,26 @@ export default async function handler(req, res) {
         }
       } catch (_) {}
     });
+
+    // Fold vendor events chronologically into responseData.vendors
+    if (vendorEvents.length > 0) {
+      const vMap = new Map();
+      responseData.vendors.forEach((v) => {
+        const id = String(v.vendorId || v.id || '').toUpperCase();
+        if (id) vMap.set(id, v);
+      });
+      vendorEvents.reverse().forEach((ev) => {
+        const id = String(ev.vendorId || ev.vendor?.vendorId || ev.vendor?.id || '').toUpperCase();
+        if (!id) return;
+        if (ev.action === 'DELETE') {
+          vMap.delete(id);
+        } else if (ev.vendor) {
+          const prev = vMap.get(id) || {};
+          vMap.set(id, { ...prev, ...ev.vendor });
+        }
+      });
+      responseData.vendors = Array.from(vMap.values());
+    }
 
     const DEFAULT_SEEDS = ['DG-ADH-01', 'DG-ADH-02', 'DG-PRM-03', 'DG-WPF-04'];
     DEFAULT_SEEDS.forEach((k) => {

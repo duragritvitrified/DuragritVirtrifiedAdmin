@@ -26,21 +26,55 @@ export default async function handler(req, res) {
     const digitsOnly = cleanCode.replace(/\D/g, '');
     const nowIso = new Date().toISOString();
 
-    // 1. Fetch SYNC_VENDORS_REGISTRY from Supabase cashback_requests
-    const { data: syncRow } = await supabase
+    // 1. Fetch vendor registries & events from Supabase cashback_requests
+    const { data: rows } = await supabase
       .from('cashback_requests')
-      .select('id, flag_reason')
-      .eq('request_id', 'SYNC_VENDORS_REGISTRY')
-      .maybeSingle();
+      .select('id, request_id, qr_serial, flag_reason, timestamp')
+      .or('qr_serial.eq.DURAGRIT_VENDORS_STORE_V1,qr_serial.eq.DURAGRIT_VENDOR_EVENT,request_id.ilike.%VENDOR%')
+      .order('timestamp', { ascending: false })
+      .limit(100);
 
     let vendors = [];
-    if (syncRow?.flag_reason) {
+    const vMap = new Map();
+    // Default seed vendor
+    vMap.set('VND-101', {
+      id: 'VND-101',
+      vendorId: 'VND-101',
+      companyName: 'DuraGrit Authorized Partner',
+      phone: '8826021114',
+      email: 'duragrit07@gmail.com',
+      status: 'ACTIVE',
+      category: 'Tile Contractor / Applicator',
+      location: 'Morbi Central Hub, Gujarat'
+    });
+
+    (rows || []).reverse().forEach((r) => {
       try {
-        vendors = JSON.parse(syncRow.flag_reason);
-      } catch (_) {
-        vendors = [];
-      }
-    }
+        if (r.qr_serial === 'DURAGRIT_VENDOR_EVENT') {
+          const ev = JSON.parse(r.flag_reason || '{}');
+          const vId = String(ev.vendorId || ev.vendor?.vendorId || ev.vendor?.id || '').toUpperCase();
+          if (vId) {
+            if (ev.action === 'DELETE') vMap.delete(vId);
+            else if (ev.vendor) {
+              const cur = vMap.get(vId) || {};
+              vMap.set(vId, { ...cur, ...ev.vendor });
+            }
+          }
+        } else if (r.flag_reason) {
+          const list = JSON.parse(r.flag_reason);
+          if (Array.isArray(list)) {
+            list.forEach((v) => {
+              const vId = String(v.vendorId || v.id || '').toUpperCase();
+              if (vId) {
+                const cur = vMap.get(vId) || {};
+                vMap.set(vId, { ...cur, ...v });
+              }
+            });
+          }
+        }
+      } catch (_) {}
+    });
+    vendors = Array.from(vMap.values());
 
     let matchedVendor = null;
     let matchedIndex = -1;
@@ -126,12 +160,11 @@ export default async function handler(req, res) {
       } catch (_) {}
     }
 
-    // 5. Always INSERT explicit verification audit row into Supabase cashback_requests
+    // 5. Always INSERT explicit verification audit and vendor update rows into Supabase cashback_requests
     // (RLS allows INSERT for all anonymous/public clients)
     try {
-      await supabase
-        .from('cashback_requests')
-        .insert({
+      await Promise.allSettled([
+        supabase.from('cashback_requests').insert({
           request_id: `VERIFY_EVENT_${cleanCode}_${finalVendorId}_${Date.now()}`,
           qr_serial: 'DURAGRIT_VERIFY_EVENT',
           claim_value: 1,
@@ -144,8 +177,24 @@ export default async function handler(req, res) {
             mobile: finalMobile,
             code: cleanCode,
             verifiedAt: nowIso
-          })
-        });
+          }),
+          timestamp: nowIso
+        }),
+        supabase.from('cashback_requests').insert({
+          request_id: `DURAGRIT_VENDOR_VERIFIED_${finalVendorId}_${Date.now()}`,
+          qr_serial: 'DURAGRIT_VENDOR_EVENT',
+          claim_value: 1,
+          status: 'Approved',
+          payout_method: 'UPI',
+          flag_reason: JSON.stringify({
+            action: 'UPSERT',
+            vendorId: finalVendorId,
+            vendor: verifiedVendor,
+            timestamp: Date.now()
+          }),
+          timestamp: nowIso
+        })
+      ]);
     } catch (insertErr) {
       console.warn('Verify event insert error:', insertErr);
     }

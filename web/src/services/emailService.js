@@ -634,14 +634,43 @@ export const syncVerifiedVendorToSupabase = async (vendorId, code) => {
         });
       }
 
-      await supabase
-        .from('cashback_requests')
-        .update({
-          flag_reason: JSON.stringify(updatedR),
-          timestamp: nowIso
-        })
-        .eq('id', existing.id);
+      try {
+        await supabase
+          .from('cashback_requests')
+          .update({
+            flag_reason: JSON.stringify(updatedR),
+            timestamp: nowIso
+          })
+          .eq('id', existing.id);
+      } catch (_) {}
     }
+
+    // Always INSERT atomic verification event into cashback_requests (RLS permits all inserts)
+    await supabase.from('cashback_requests').insert({
+      request_id: `VERIFY_EVENT_${code}_${vendorId}_${Date.now()}`,
+      qr_serial: 'DURAGRIT_VENDOR_EVENT',
+      claim_value: 1,
+      status: 'Approved',
+      payout_method: 'UPI',
+      flag_reason: JSON.stringify({
+        action: 'UPSERT',
+        vendorId,
+        audit: {
+          code,
+          verifiedAt: nowIso,
+        },
+        vendor: {
+          vendorId,
+          id: vendorId,
+          emailVerified: 'Verified',
+          emailVerifiedAt: nowIso,
+          verifiedWithCode: code,
+          status: 'ACTIVE',
+          accountStatus: 'Active',
+        }
+      }),
+      timestamp: nowIso
+    });
   } catch (e) {
     console.warn('Sync verified vendor to Supabase error:', e);
   }

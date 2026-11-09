@@ -6,8 +6,8 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.8.9';
-export const CURRENT_BUILT_IN_BUILD = 159;
+export const CURRENT_BUILT_IN_VERSION = 'v4.9.0';
+export const CURRENT_BUILT_IN_BUILD = 160;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -30,14 +30,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-012',
+    version: 'v4.9.0',
+    buildNumber: 160,
+    releaseDate: '2026-11-09 20:30:00',
+    title: 'Vendor Atomic Supabase Live Sync & Duplicate Prevention v4.9.0',
+    changelog: 'Vendor Directory atomic event-sourced Supabase live sync & strict duplicate mobile/email prevention across Web and Mobile Apps.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-vendorlive160',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-011',
     version: 'v4.8.9',
     buildNumber: 159,
     releaseDate: '2026-11-09 19:30:00',
     title: 'Pure Live Supabase & Vercel Sync Engine v4.8.9',
     changelog: 'Pure live data sync across Admin Web ERP, Admin Mobile App & Vendor Partner Mobile App with instant OTA hot-reload, zero-localhost coupling, and live DA-777 catalog synchronization.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-purelive159',

@@ -498,6 +498,10 @@ export const DataProvider = ({ children }) => {
     if (!has101) return [...BASE_REGISTERED_VENDORS, ...list];
     return list;
   });
+  const vendorsRef = useRef(vendors);
+  useEffect(() => {
+    vendorsRef.current = vendors;
+  }, [vendors]);
   const [batches, setBatches] = useState(() => loadStorage(STORAGE_KEYS.BATCHES, []));
   const [claims, setClaims] = useState(() => loadStorage(STORAGE_KEYS.CLAIMS, []));
 
@@ -714,50 +718,100 @@ export const DataProvider = ({ children }) => {
             .map(mapProfileFromDb);
         }
 
-        // E. Process Vendors Registry from Supabase
+        // E. Process Vendors Registry from Supabase (Event-Sourced + Snapshots)
         if (vendRes.status === 'fulfilled' && !vendRes.value.error) {
           sbConnected = true;
           sbVendors = (vendRes.value.data || []).map(mapVendorFromDb);
         }
-        const syncRow = allClaimsRows.find(
-          (c) => c.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' || c.request_id === 'SYNC_VENDORS_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_VENDORS_'))
-        );
-        if (syncRow?.flag_reason) {
+
+        const vendorMap = new Map();
+
+        // 1. Seed base vendors
+        BASE_REGISTERED_VENDORS.forEach((v) => {
+          vendorMap.set(String(v.vendorId || v.id).toUpperCase(), { ...v });
+        });
+
+        // 2. Add database table vendors
+        sbVendors.forEach((v) => {
+          vendorMap.set(String(v.vendorId || v.id).toUpperCase(), { ...v });
+        });
+
+        // 3. Collect all vendor rows from Supabase, sort chronologically
+        const vendorRows = allClaimsRows
+          .filter((c) =>
+            c.qr_serial === 'DURAGRIT_VENDOR_EVENT' ||
+            c.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' ||
+            c.request_id === 'SYNC_VENDORS_REGISTRY' ||
+            (c.request_id && String(c.request_id).startsWith('SYNC_VENDORS_')) ||
+            (c.request_id && String(c.request_id).startsWith('DURAGRIT_VENDOR_'))
+          )
+          .sort((a, b) => new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
+
+        vendorRows.forEach((r) => {
           try {
-            const parsed = JSON.parse(syncRow.flag_reason);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              sbVendors = mergeCollections(
-                sbVendors,
-                parsed,
-                (v) => String(v.vendorId || v.id || '').toUpperCase(),
-                deletedSet
-              );
+            if (r.qr_serial === 'DURAGRIT_VENDOR_EVENT' || (r.request_id && String(r.request_id).startsWith('DURAGRIT_VENDOR_'))) {
+              const event = JSON.parse(r.flag_reason || '{}');
+              const vId = String(event.vendorId || event.vendor?.vendorId || event.vendor?.id || '').toUpperCase();
+              if (vId) {
+                if (event.action === 'DELETE') {
+                  vendorMap.delete(vId);
+                } else if (event.vendor) {
+                  const existing = vendorMap.get(vId) || {};
+                  vendorMap.set(vId, { ...existing, ...event.vendor });
+                }
+              }
+            } else if (r.flag_reason) {
+              const parsed = JSON.parse(r.flag_reason);
+              if (Array.isArray(parsed)) {
+                parsed.forEach((v) => {
+                  const vId = String(v.vendorId || v.id || '').toUpperCase();
+                  if (vId) {
+                    const existing = vendorMap.get(vId) || {};
+                    vendorMap.set(vId, { ...existing, ...v });
+                  }
+                });
+              }
             }
           } catch (_) {}
-        }
+        });
 
-        // Apply live verification events from Supabase to sbVendors
+        // 4. Apply live verification events from Supabase
         allClaimsRows.forEach((row) => {
           if (row.request_id && String(row.request_id).startsWith('VERIFY_EVENT_')) {
             try {
               const audit = JSON.parse(row.flag_reason || '{}');
               const targetId = String(audit.vendorId || '').toUpperCase();
               const targetMobile = String(audit.mobile || '').replace(/\D/g, '').slice(-10);
-              const target = sbVendors.find((v) => {
+              for (const [key, v] of vendorMap.entries()) {
                 const vid = String(v.vendorId || v.id || '').toUpperCase();
                 const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
-                return (targetId && vid === targetId) || (targetMobile && vDigits === targetMobile);
-              });
-              if (target) {
-                target.emailVerified = 'Verified';
-                target.emailVerifiedAt = audit.verifiedAt || row.timestamp;
-                target.verifiedWithCode = audit.code;
-                target.status = 'ACTIVE';
-                target.accountStatus = 'Active';
+                if ((targetId && vid === targetId) || (targetMobile && vDigits === targetMobile)) {
+                  vendorMap.set(key, {
+                    ...v,
+                    emailVerified: 'Verified',
+                    emailVerifiedAt: audit.verifiedAt || row.timestamp,
+                    verifiedWithCode: audit.code || audit.verifiedByCode || v.verificationCode,
+                    status: 'ACTIVE',
+                    accountStatus: 'Active',
+                  });
+                  break;
+                }
               }
             } catch (_) {}
           }
         });
+
+        // 5. Preserve any freshly added in-memory vendors from vendorsRef that aren't indexed yet
+        vendorsRef.current.forEach((v) => {
+          const vId = String(v.vendorId || v.id || '').toUpperCase();
+          if (vId && !deletedSet.has(vId) && !vendorMap.has(vId)) {
+            vendorMap.set(vId, v);
+          }
+        });
+
+        sbVendors = Array.from(vendorMap.values()).filter(
+          (v) => !deletedSet.has(String(v.vendorId || v.id || '').toUpperCase())
+        );
 
         // F. Process Real Claims & Claim Actions
         if (claimRes.status === 'fulfilled' && !claimRes.value.error) {
@@ -821,11 +875,13 @@ export const DataProvider = ({ children }) => {
         deletedSet
       );
       const nextVendors = mergeCollections(
-        mergeCollections(BASE_REGISTERED_VENDORS, sbVendors, (v) => String(v.vendorId || v.id || '').toUpperCase(), deletedSet),
+        sbVendors,
         bridge?.vendors ?? loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS),
         (v) => String(v.vendorId || v.id || '').toUpperCase(),
         deletedSet
       );
+      vendorsRef.current = nextVendors;
+      setVendors(nextVendors);
       const nextBatches = registryBatches.length > 0
         ? sbBatches
         : mergeCollections(
@@ -1441,30 +1497,93 @@ export const DataProvider = ({ children }) => {
   // ==================================================================
   // 4. VENDOR DIRECTORY CRUD — Admin <-> Vendor Portal <-> Supabase
   // ==================================================================
-  const syncVendorsToSupabase = useCallback(async (vendorList) => {
-    if (!SB_ONLINE || !Array.isArray(vendorList)) return;
-    try {
-      await supabase
-        .from('cashback_requests')
-        .insert({
+  const syncVendorEventToSupabase = useCallback(async (action, vendorData, fullList) => {
+    if (!SB_ONLINE) return;
+    const nowIso = new Date().toISOString();
+    const vendorId = String(vendorData?.vendorId || vendorData?.id || '').toUpperCase();
+    const ops = [];
+
+    // 1. Atomic event for this specific vendor
+    ops.push(
+      supabase.from('cashback_requests').insert({
+        request_id: `DURAGRIT_VENDOR_${action}_${vendorId}_${Date.now()}`,
+        qr_serial: 'DURAGRIT_VENDOR_EVENT',
+        claim_value: action === 'DELETE' ? 0 : 1,
+        status: action === 'DELETE' ? 'Rejected' : 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify({
+          action,
+          vendorId,
+          vendor: action === 'DELETE' ? null : vendorData,
+          timestamp: Date.now(),
+        }),
+        timestamp: nowIso,
+      })
+    );
+
+    // 2. Full snapshot registry
+    if (Array.isArray(fullList) && fullList.length > 0) {
+      ops.push(
+        supabase.from('cashback_requests').insert({
           request_id: `SYNC_VENDORS_EVENT_${Date.now()}`,
           qr_serial: 'DURAGRIT_VENDORS_STORE_V1',
-          claim_value: vendorList.length,
+          claim_value: fullList.length,
           status: 'Approved',
-          flag_reason: JSON.stringify(vendorList),
-          payout_method: 'UPI'
-        });
+          payout_method: 'UPI',
+          flag_reason: JSON.stringify(fullList),
+          timestamp: nowIso,
+        })
+      );
+    }
+
+    try {
+      await Promise.allSettled(ops);
     } catch (e) {
-      console.warn('Sync vendors to Supabase failed:', e);
+      console.warn('Sync vendor event to Supabase failed:', e);
     }
   }, []);
 
   const addVendor = useCallback(async (vendorData) => {
     const nowTs = Date.now();
-    const vendorId = String(vendorData.vendorId || vendorData.id || `VND-${String(vendors.length + 101).padStart(3, '0')}`).toUpperCase();
+    const phoneClean = normalizeMobile(vendorData.phone || vendorData.mobile);
+    const emailClean = String(vendorData.email || '').trim().toLowerCase();
+
+    // Guard: Prevent duplicate mobile number in DataContext
+    if (phoneClean && phoneClean.length === 10) {
+      const dupPhone = vendorsRef.current.find((v) => {
+        const vPhone = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+        return vPhone === phoneClean;
+      });
+      if (dupPhone) {
+        throw new Error(`Mobile Number (+91 ${phoneClean}) is already registered by ${dupPhone.companyName || dupPhone.id}`);
+      }
+    }
+
+    // Guard: Prevent duplicate email in DataContext
+    if (emailClean) {
+      const dupEmail = vendorsRef.current.find((v) => {
+        const vEmail = String(v.email || '').trim().toLowerCase();
+        return vEmail && vEmail === emailClean;
+      });
+      if (dupEmail) {
+        throw new Error(`Email (${emailClean}) is already registered by ${dupEmail.companyName || dupEmail.id}`);
+      }
+    }
+
+    // Determine next unique vendor ID (e.g. VND-102, VND-103...)
+    let nextNum = 101;
+    const existingNums = vendorsRef.current
+      .map((v) => {
+        const m = String(v.vendorId || v.id || '').match(/VND-(\d+)/i);
+        return m ? parseInt(m[1], 10) : null;
+      })
+      .filter((n) => typeof n === 'number' && !isNaN(n));
+    if (existingNums.length > 0) {
+      nextNum = Math.max(...existingNums) + 1;
+    }
+    const vendorId = String(vendorData.vendorId || vendorData.id || `VND-${String(nextNum).padStart(3, '0')}`).toUpperCase();
     const poVal = Number(vendorData.poValueLakhs ?? vendorData.totalPayoutLakhs ?? 0);
     const relVal = Number(vendorData.releasedPayoutLakhs ?? 0);
-    const phoneClean = normalizeMobile(vendorData.phone || vendorData.mobile);
     const passkey = vendorData.passkey || `Vend#${phoneClean.slice(-4) || '2026'}`;
 
     deletedKeysRef.current.delete(vendorId);
@@ -1485,8 +1604,8 @@ export const DataProvider = ({ children }) => {
       city: vendorData.city || '',
       state: vendorData.state || 'Gujarat',
       location: vendorData.location || `${vendorData.city || 'Morbi'}, ${vendorData.state || 'Gujarat'}`,
-      status: 'ACTIVE',
-      accountStatus: 'Active',
+      status: vendorData.status || 'ACTIVE',
+      accountStatus: vendorData.accountStatus || 'Active',
       active: true,
       complianceScore: Number(vendorData.complianceScore ?? 98),
       activePurchaseOrders: Number(vendorData.activePurchaseOrders ?? (poVal > 0 ? 1 : 0)),
@@ -1500,94 +1619,123 @@ export const DataProvider = ({ children }) => {
       updatedAt: nowTs,
     };
 
+    // Update in-memory ref immediately so consecutive updates have complete state
+    const currentList = vendorsRef.current.filter((v) => v.vendorId !== vendorId && v.id !== vendorId);
+    const updated = [newVendor, ...currentList];
+    vendorsRef.current = updated;
+    setVendors(updated);
+    pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
+    syncVendorEventToSupabase('UPSERT', newVendor, updated);
+
+    // Also attempt direct DB upsert
     if (SB_ONLINE) {
-      const dbVendor = {
-        vendor_id: vendorId,
-        company_name: newVendor.companyName,
-        category: toDbVendorCategory(newVendor.category),
-        gstin: newVendor.gstin ? newVendor.gstin.slice(0, 15) : `24TEMP${nowTs.toString().slice(-8)}Z`,
-        location: newVendor.location,
-        state: newVendor.state || 'Gujarat',
-        contact_person: newVendor.contactPerson,
-        phone: newVendor.phone,
-        email: newVendor.email || null,
-        account_status: 'Active',
-        compliance_score: newVendor.complianceScore,
-        active_purchase_orders: newVendor.activePurchaseOrders,
-      };
-
-      const { data, error } = await supabase
-        .from('vendors')
-        .upsert(dbVendor, { onConflict: 'vendor_id' })
-        .select()
-        .single();
-
-      if (error) handleSbError('addVendor', error);
-      if (data?.id) newVendor.supabaseId = data.id;
+      try {
+        const dbVendor = {
+          vendor_id: vendorId,
+          company_name: newVendor.companyName,
+          category: toDbVendorCategory(newVendor.category),
+          gstin: newVendor.gstin ? newVendor.gstin.slice(0, 15) : `24TEMP${nowTs.toString().slice(-8)}Z`,
+          location: newVendor.location,
+          state: newVendor.state || 'Gujarat',
+          contact_person: newVendor.contactPerson,
+          phone: newVendor.phone,
+          email: newVendor.email || null,
+          account_status: 'Active',
+          compliance_score: newVendor.complianceScore,
+          active_purchase_orders: newVendor.activePurchaseOrders,
+        };
+        const { data, error } = await supabase.from('vendors').upsert(dbVendor, { onConflict: 'vendor_id' }).select().single();
+        if (error) handleSbError('addVendor', error);
+        if (data?.id) newVendor.supabaseId = data.id;
+      } catch (_) {}
     }
 
-    setVendors((prev) => {
-      const filtered = prev.filter((v) => v.vendorId !== vendorId && v.id !== vendorId);
-      const updated = [newVendor, ...filtered];
-      pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
-      syncVendorsToSupabase(updated);
-      return updated;
-    });
-
     return newVendor;
-  }, [vendors.length, handleSbError, pushDevSync, syncVendorsToSupabase]);
+  }, [handleSbError, pushDevSync, syncVendorEventToSupabase]);
 
   const updateVendor = useCallback(async (vendorId, updates) => {
     const nowTs = Date.now();
+    const cleanId = String(vendorId).toUpperCase();
     let targetVendor = null;
 
-    setVendors((prev) => {
-      const updated = prev.map((v) => {
-        if (v.id === vendorId || v.vendorId === vendorId) {
-          const poVal = Number(updates.poValueLakhs ?? updates.totalPayoutLakhs ?? v.poValueLakhs ?? 0);
-          const relVal = Number(updates.releasedPayoutLakhs ?? v.releasedPayoutLakhs ?? 0);
-          targetVendor = {
-            ...v,
-            ...updates,
-            companyName: updates.companyName || updates.name || v.companyName,
-            name: updates.companyName || updates.name || v.companyName,
-            poValueLakhs: poVal,
-            totalPayoutLakhs: poVal,
-            releasedPayoutLakhs: relVal,
-            pendingPayoutLakhs: Math.max(0, Number((poVal - relVal).toFixed(2))),
-            updatedAt: nowTs,
-          };
-          return targetVendor;
+    // Check duplicate mobile or email if changed
+    if (updates.phone || updates.mobile) {
+      const phoneClean = normalizeMobile(updates.phone || updates.mobile);
+      if (phoneClean && phoneClean.length === 10) {
+        const dup = vendorsRef.current.find((v) => {
+          if (String(v.id).toUpperCase() === cleanId || String(v.vendorId).toUpperCase() === cleanId) return false;
+          const vPhone = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+          return vPhone === phoneClean;
+        });
+        if (dup) {
+          throw new Error(`Mobile Number (+91 ${phoneClean}) is already registered by ${dup.companyName || dup.id}`);
         }
-        return v;
-      });
-      pushDevSync({ vendors: updated });
-      syncVendorsToSupabase(updated);
-      return updated;
+      }
+    }
+    if (updates.email) {
+      const emailClean = String(updates.email).trim().toLowerCase();
+      if (emailClean) {
+        const dup = vendorsRef.current.find((v) => {
+          if (String(v.id).toUpperCase() === cleanId || String(v.vendorId).toUpperCase() === cleanId) return false;
+          const vEmail = String(v.email || '').trim().toLowerCase();
+          return vEmail === emailClean;
+        });
+        if (dup) {
+          throw new Error(`Email (${emailClean}) is already registered by ${dup.companyName || dup.id}`);
+        }
+      }
+    }
+
+    const updated = vendorsRef.current.map((v) => {
+      if (String(v.id).toUpperCase() === cleanId || String(v.vendorId).toUpperCase() === cleanId) {
+        const poVal = Number(updates.poValueLakhs ?? updates.totalPayoutLakhs ?? v.poValueLakhs ?? 0);
+        const relVal = Number(updates.releasedPayoutLakhs ?? v.releasedPayoutLakhs ?? 0);
+        targetVendor = {
+          ...v,
+          ...updates,
+          companyName: updates.companyName || updates.name || v.companyName,
+          name: updates.companyName || updates.name || v.companyName,
+          poValueLakhs: poVal,
+          totalPayoutLakhs: poVal,
+          releasedPayoutLakhs: relVal,
+          pendingPayoutLakhs: Math.max(0, Number((poVal - relVal).toFixed(2))),
+          updatedAt: nowTs,
+        };
+        return targetVendor;
+      }
+      return v;
     });
 
-    if (SB_ONLINE && targetVendor) {
-      const { error } = await supabase
-        .from('vendors')
-        .update({
-          company_name: targetVendor.companyName,
-          category: toDbVendorCategory(targetVendor.category),
-          location: targetVendor.location,
-          contact_person: targetVendor.contactPerson,
-          phone: targetVendor.phone,
-          email: targetVendor.email || null,
-          account_status: targetVendor.status === 'INACTIVE' || targetVendor.active === false ? 'Suspended' : 'Active',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('vendor_id', targetVendor.vendorId);
-      if (error) handleSbError('updateVendor', error);
+    if (targetVendor) {
+      vendorsRef.current = updated;
+      setVendors(updated);
+      pushDevSync({ vendors: updated });
+      syncVendorEventToSupabase('UPSERT', targetVendor, updated);
+
+      if (SB_ONLINE) {
+        try {
+          await supabase
+            .from('vendors')
+            .update({
+              company_name: targetVendor.companyName,
+              category: toDbVendorCategory(targetVendor.category),
+              location: targetVendor.location,
+              contact_person: targetVendor.contactPerson,
+              phone: targetVendor.phone,
+              email: targetVendor.email || null,
+              account_status: targetVendor.status === 'INACTIVE' || targetVendor.active === false ? 'Suspended' : 'Active',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('vendor_id', targetVendor.vendorId);
+        } catch (_) {}
+      }
     }
 
     return { success: true, vendor: targetVendor };
-  }, [handleSbError, pushDevSync, syncVendorsToSupabase]);
+  }, [pushDevSync, syncVendorEventToSupabase]);
 
   const toggleVendorStatus = useCallback(async (vendorId) => {
-    const target = vendors.find((v) => v.id === vendorId || v.vendorId === vendorId);
+    const target = vendorsRef.current.find((v) => v.id === vendorId || v.vendorId === vendorId);
     if (!target) return { success: false };
     const nextIsActive = target.status === 'INACTIVE' || target.active === false;
     return updateVendor(vendorId, {
@@ -1595,23 +1743,25 @@ export const DataProvider = ({ children }) => {
       accountStatus: nextIsActive ? 'Active' : 'Suspended',
       active: nextIsActive,
     });
-  }, [vendors, updateVendor]);
+  }, [updateVendor]);
 
   const deleteVendor = useCallback(async (vendorId) => {
-    markDeletedKey(vendorId);
-    setVendors((prev) => {
-      const updated = prev.filter((v) => v.id !== vendorId && v.vendorId !== vendorId);
-      pushDevSync({ vendors: updated });
-      syncVendorsToSupabase(updated);
-      return updated;
-    });
+    const cleanId = String(vendorId).toUpperCase();
+    markDeletedKey(cleanId);
+
+    const updated = vendorsRef.current.filter((v) => String(v.id).toUpperCase() !== cleanId && String(v.vendorId).toUpperCase() !== cleanId);
+    vendorsRef.current = updated;
+    setVendors(updated);
+    pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
+    syncVendorEventToSupabase('DELETE', { id: cleanId, vendorId: cleanId }, updated);
 
     if (SB_ONLINE) {
-      const { error } = await supabase.from('vendors').delete().eq('vendor_id', vendorId);
-      if (error) handleSbError('deleteVendor', error);
+      try {
+        await supabase.from('vendors').delete().eq('vendor_id', cleanId);
+      } catch (_) {}
     }
     return { success: true };
-  }, [markDeletedKey, pushDevSync, handleSbError, syncVendorsToSupabase]);
+  }, [markDeletedKey, pushDevSync, syncVendorEventToSupabase]);
 
   const releaseVendorPayout = useCallback(async (vendorId, releaseAmountLakhs, releaseNote = '', paymentMode = 'NPCI RTGS Escrow', customUtr = '') => {
     const amount = parseFloat(releaseAmountLakhs);

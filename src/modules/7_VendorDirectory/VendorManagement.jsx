@@ -807,7 +807,7 @@ function ViewModal({ vendor, onClose, onEdit, onReleasePayout, onResendVerificat
 // =========================================================================
 // ADD / EDIT VENDOR MODAL (MULTI-SECTION ACCORDION)
 // =========================================================================
-function VendorFormModal({ vendor, onClose, onSave }) {
+function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
   const isEdit = !!vendor;
   const modalScrollRef = React.useRef(null);
   const [form, setForm] = useState(
@@ -877,6 +877,7 @@ function VendorFormModal({ vendor, onClose, onSave }) {
   const validateCompulsoryFields = () => {
     const errors = {};
     const missing = [];
+    const currentVendorId = vendor?.vendorId || vendor?.id;
 
     // 1. Company Name
     if (!form.companyName?.trim()) {
@@ -890,21 +891,41 @@ function VendorFormModal({ vendor, onClose, onSave }) {
       missing.push('Contact Person Full Name');
     }
 
-    // 3. Mobile Number (10 digits)
+    // 3. Mobile Number (10 digits & Unique)
     const phoneClean = String(form.phone || '').replace(/\D/g, '').slice(-10);
     if (!phoneClean || phoneClean.length !== 10) {
       errors.phone = 'Valid 10-digit Mobile Number is compulsory';
       missing.push('Mobile Phone Number');
+    } else {
+      const dupPhone = (existingVendors || []).find((v) => {
+        if (currentVendorId && String(v.vendorId || v.id).toUpperCase() === String(currentVendorId).toUpperCase()) return false;
+        const vPhone = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+        return vPhone === phoneClean;
+      });
+      if (dupPhone) {
+        errors.phone = `Yeh Mobile Number (+91 ${phoneClean}) pehle se registered hai (${dupPhone.companyName || dupPhone.id})! Naya mobile number enter karein.`;
+        missing.push(`Mobile Number (+91 ${phoneClean} already registered)`);
+      }
     }
 
-    // 4. Email ID (Compulsory)
-    const emailStr = String(form.email || '').trim();
+    // 4. Email ID (Compulsory & Unique)
+    const emailStr = String(form.email || '').trim().toLowerCase();
     if (!emailStr) {
       errors.email = 'Business Email ID is compulsory for verification & credentials';
       missing.push('Business Email Address');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
       errors.email = 'Please enter a valid email format (e.g. partner@example.com)';
       missing.push('Valid Email Format');
+    } else {
+      const dupEmail = (existingVendors || []).find((v) => {
+        if (currentVendorId && String(v.vendorId || v.id).toUpperCase() === String(currentVendorId).toUpperCase()) return false;
+        const vEmail = String(v.email || '').trim().toLowerCase();
+        return vEmail === emailStr;
+      });
+      if (dupEmail) {
+        errors.email = `Yeh Email ID (${emailStr}) pehle se registered hai (${dupEmail.companyName || dupEmail.id})! Nayi email ID enter karein.`;
+        missing.push(`Email ID (${emailStr} already registered)`);
+      }
     }
 
     // 5. Passkey / Password (at least 4 characters)
@@ -1925,6 +1946,42 @@ export function VendorManagement() {
   );
 
   const handleSaveVendor = async (data) => {
+    const editId = editingVendor?.id || editingVendor?.vendorId;
+    const phoneClean = String(data.phone || data.mobile || '').replace(/\D/g, '').slice(-10);
+    const emailClean = String(data.email || '').trim().toLowerCase();
+
+    // Guard: Prevent duplicate mobile number
+    if (phoneClean && phoneClean.length === 10) {
+      const dupPhone = (vendors || []).find((v) => {
+        if (editId && String(v.vendorId || v.id).toUpperCase() === String(editId).toUpperCase()) return false;
+        const vPhone = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+        return vPhone === phoneClean;
+      });
+      if (dupPhone) {
+        setAlertToast({
+          type: 'error',
+          msg: `❌ Registration Failed: Mobile Number (+91 ${phoneClean}) pehle se registered hai (${dupPhone.companyName || dupPhone.id})! Naya mobile number enter karein.`,
+        });
+        return;
+      }
+    }
+
+    // Guard: Prevent duplicate email address
+    if (emailClean) {
+      const dupEmail = (vendors || []).find((v) => {
+        if (editId && String(v.vendorId || v.id).toUpperCase() === String(editId).toUpperCase()) return false;
+        const vEmail = String(v.email || '').trim().toLowerCase();
+        return vEmail === emailClean;
+      });
+      if (dupEmail) {
+        setAlertToast({
+          type: 'error',
+          msg: `❌ Registration Failed: Email ID (${emailClean}) pehle se registered hai (${dupEmail.companyName || dupEmail.id})! Nayi email ID enter karein.`,
+        });
+        return;
+      }
+    }
+
     if (editingVendor) {
       await updateVendor(editingVendor.id || editingVendor.vendorId, data);
       setAlertToast({
@@ -2465,6 +2522,7 @@ export function VendorManagement() {
       {showFormModal && (
         <VendorFormModal
           vendor={editingVendor}
+          existingVendors={vendors}
           onClose={() => {
             setShowFormModal(false);
             setEditingVendor(null);
