@@ -675,7 +675,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   // =========================================================================
   if (!isAdminAuthenticated) {
     return (
-      <div className="w-full max-w-[460px] mx-auto h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-[580px] bg-gradient-to-b from-[#061224] via-[#0B1E3D] to-[#050D1A] text-slate-100 flex flex-col justify-between p-5 sm:p-6 select-none font-sans relative overflow-y-auto sm:rounded-[36px] border border-blue-900/50 shadow-2xl">
+      <div className="w-full max-w-[460px] landscape:max-w-2xl mx-auto h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-0 landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:min-h-0 bg-gradient-to-b from-[#061224] via-[#0B1E3D] to-[#050D1A] text-slate-100 flex flex-col justify-between p-4 sm:p-6 landscape:p-3 select-none font-sans relative overflow-y-auto sm:rounded-[36px] landscape:rounded-none border border-blue-900/50 shadow-2xl">
         {/* Luminous Blue & Cyan Ambient Glow Orbs */}
         <div className="absolute -top-12 -right-12 w-72 h-72 bg-blue-600/25 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
         <div className="absolute top-1/2 -left-20 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
@@ -879,7 +879,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   // MAIN ADMIN MOBILE APP (STEP 12 IMPLEMENTATION - OBSIDIAN & CRIMSON)
   // =========================================================================
   return (
-    <div className="w-full max-w-[460px] mx-auto h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-[580px] bg-[#FAFBFD] text-slate-800 flex flex-col font-sans select-none relative shadow-2xl rounded-none sm:rounded-[36px] overflow-hidden border-0 sm:border border-slate-200/80 overflow-x-hidden">
+    <div className="w-full max-w-[460px] landscape:max-w-3xl mx-auto h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-0 landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:min-h-0 bg-[#FAFBFD] text-slate-800 flex flex-col font-sans select-none relative shadow-2xl rounded-none sm:rounded-[36px] landscape:rounded-none overflow-hidden border-0 sm:border landscape:border-0 border-slate-200/80 overflow-x-hidden">
       <style>{`
         @keyframes hapticBumpSuccess {
           0% { transform: scale(1); }
@@ -964,77 +964,37 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       {/* ===================================================================== */}
       {/* 1. TOP APP HEADER (Executive Obsidian & Crimson Theme)               */}
       {/* ===================================================================== */}
-      <header className="pt-3.5 pb-2.5 px-4 bg-[#0B0F19] border-b border-slate-800 text-white flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-md">
-        <div className="flex items-center space-x-2.5">
+      <header className="h-12 sm:h-13 px-3.5 sm:px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] landscape:py-1.5 bg-[#0B0F19] border-b border-slate-800 text-white flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-md">
+        <div className="flex items-center space-x-2.5 min-w-0">
           {/* Brand Icon Tile */}
-          <div className="w-8 h-8 rounded-lg bg-[#BA3A24] flex items-center justify-center text-white shadow-sm shrink-0 ring-1 ring-[#BA3A24]/40">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#BA3A24] flex items-center justify-center text-white shadow-sm shrink-0 ring-1 ring-[#BA3A24]/40">
             <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
               <path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"></path>
             </svg>
           </div>
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-bold text-white text-xs tracking-tight">DuraGrit</span>
-              <span className="bg-[#BA3A24] text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase">
-                ADMIN
-              </span>
-              <span className="text-[9px] font-mono font-bold text-cyan-300">
-                {adminUpdateStatus.installedVersion}
-              </span>
-              {adminUpdateStatus.hasUpdate ? (
-                <button
-                  type="button"
-                  onClick={handleTriggerAdminUpdate}
-                  className="text-[8px] font-black text-amber-300 bg-amber-950/80 hover:bg-amber-900 px-1.5 py-0.2 rounded border border-amber-500/50 cursor-pointer active:scale-95 animate-pulse"
-                  title="New Admin Version Available — Tap to Update"
-                >
-                  Update Ready ⚡
-                </button>
-              ) : (
-                <span className="text-[8px] font-bold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/30">
-                  Up to date ✓
-                </span>
-              )}
-            </div>
-            <div className="text-[10px] text-slate-400 font-medium leading-tight font-mono flex items-center gap-1.5 mt-0.5">
-              <span>Super Admin Portal</span>
-              <span className="text-slate-600">•</span>
+          <div className="flex items-center space-x-1.5 min-w-0">
+            <span className="font-bold text-white text-xs sm:text-sm tracking-tight truncate">DuraGrit</span>
+            <span className="bg-[#BA3A24] text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase shrink-0">
+              ADMIN
+            </span>
+            <span className="text-[9.5px] font-mono font-bold text-cyan-300 shrink-0">
+              {adminUpdateStatus.installedVersion}
+            </span>
+            {adminUpdateStatus.hasUpdate && (
               <button
                 type="button"
-                onClick={() => setShowAdminChangelogModal(true)}
-                className="text-[9.5px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+                onClick={handleTriggerAdminUpdate}
+                className="text-[8px] font-black text-amber-300 bg-amber-950/80 hover:bg-amber-900 px-1.5 py-0.5 rounded border border-amber-500/50 cursor-pointer active:scale-95 animate-pulse shrink-0"
+                title="New Admin Version Available — Tap to Update"
               >
-                Version Logs
+                Update Ready ⚡
               </button>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Profile / Switch / Logout Icon Buttons */}
-        <div className="flex items-center gap-1.5">
-          {!isInstalled && (
-            <button
-              onClick={handleInstallClick}
-              title="Install Admin App on Home Screen"
-              className="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-500 border border-blue-400/50 text-white text-[10px] font-bold flex items-center space-x-1 transition active:scale-95 cursor-pointer shadow-2xs"
-            >
-              <span>📲</span>
-              <span className="hidden xs:inline">Install</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              if (onSwitchToPartnerApp) onSwitchToPartnerApp();
-              else window.location.href = '/?app=vendor';
-            }}
-            title="Open Vendor / Partner Mobile App"
-            className="px-2 py-1 rounded-md bg-stone-900 hover:bg-stone-800 border border-amber-500/40 text-amber-300 hover:text-amber-200 text-[10px] font-bold flex items-center space-x-1 transition active:scale-95 cursor-pointer shadow-2xs"
-          >
-            <Smartphone className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden xs:inline">Vendor App</span>
-          </button>
-
+        {/* Right Action: Admin Logout Button */}
+        <div className="flex items-center shrink-0 ml-2">
           <button
             onClick={() => {
               if (window.confirm('Sign out of Admin Mobile App?')) {
@@ -1104,7 +1064,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       {/* ===================================================================== */}
       {/* 2. SCROLLABLE DASHBOARD CONTENT (Bounded between pinned header & footer) */}
       {/* ===================================================================== */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3.5 pb-28 space-y-3 pt-2.5">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3.5 pb-24 landscape:pb-16 space-y-3 pt-2.5 landscape:pt-1.5">
         {/* Node Connectivity & Haptic Feedback Banner */}
         <section className="flex items-center justify-between text-[10px] px-1 text-slate-600 font-medium">
           <div className="flex items-center space-x-1.5">
@@ -2534,7 +2494,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       {/* ===================================================================== */}
       <nav
         aria-label="Executive Bottom Navigation"
-        className="shrink-0 sticky bottom-0 inset-x-0 bg-white/98 backdrop-blur-md border-t-2 border-slate-200/90 px-1 sm:px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-around z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.09)]"
+        className="shrink-0 sticky bottom-0 inset-x-0 bg-white/98 backdrop-blur-md border-t-2 border-slate-200/90 px-1 sm:px-3 pt-2 landscape:pt-1 pb-[max(0.6rem,env(safe-area-inset-bottom))] landscape:pb-[max(0.35rem,env(safe-area-inset-bottom))] flex items-center justify-around z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.09)]"
       >
         {/* Tab 1: Overview */}
         <button
@@ -2543,15 +2503,15 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('overview');
             showHapticHUD('Tab: Overview Dashboard');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'overview'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 landscape:py-0.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'overview'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
             }`}
         >
           <div className="relative">
-            <LayoutGrid className={`w-5 h-5 transition-transform ${activeTab === 'overview' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
+            <LayoutGrid className={`w-5 h-5 landscape:w-4 landscape:h-4 transition-transform ${activeTab === 'overview' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
           </div>
-          <span className="text-[9.5px] sm:text-[10px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
+          <span className="text-[9.5px] sm:text-[10px] landscape:text-[8.5px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
             Overview
           </span>
           {activeTab === 'overview' && (
@@ -2566,20 +2526,20 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('requests');
             showHapticHUD('Tab: Moderation Requests Queue');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'requests'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 landscape:py-0.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'requests'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
             }`}
         >
           <div className="relative">
-            <Layers className={`w-5 h-5 transition-transform ${activeTab === 'requests' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
+            <Layers className={`w-5 h-5 landscape:w-4 landscape:h-4 transition-transform ${activeTab === 'requests' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
             {pendingCount > 0 && (
               <span className="absolute -top-1.5 -right-2.5 min-w-[17px] h-[17px] px-1 bg-[#BA3A24] text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white shadow-xs animate-pulse">
                 {pendingCount}
               </span>
             )}
           </div>
-          <span className="text-[9.5px] sm:text-[10px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
+          <span className="text-[9.5px] sm:text-[10px] landscape:text-[8.5px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
             Requests
           </span>
           {activeTab === 'requests' && (
@@ -2594,15 +2554,15 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('qrgen');
             showHapticHUD('Tab: QR Batch Engine');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'qrgen'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 landscape:py-0.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'qrgen'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
             }`}
         >
           <div className="relative">
-            <QrCode className={`w-5 h-5 transition-transform ${activeTab === 'qrgen' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
+            <QrCode className={`w-5 h-5 landscape:w-4 landscape:h-4 transition-transform ${activeTab === 'qrgen' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
           </div>
-          <span className="text-[9.5px] sm:text-[10px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
+          <span className="text-[9.5px] sm:text-[10px] landscape:text-[8.5px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
             QR Gen
           </span>
           {activeTab === 'qrgen' && (
@@ -2617,15 +2577,15 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             setActiveTab('audit');
             showHapticHUD('Tab: Escrow Audit Log');
           }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'audit'
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 landscape:py-0.5 px-1 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'audit'
               ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
             }`}
         >
           <div className="relative">
-            <ShieldCheck className={`w-5 h-5 transition-transform ${activeTab === 'audit' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
+            <ShieldCheck className={`w-5 h-5 landscape:w-4 landscape:h-4 transition-transform ${activeTab === 'audit' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
           </div>
-          <span className="text-[9.5px] sm:text-[10px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
+          <span className="text-[9.5px] sm:text-[10px] landscape:text-[8.5px] tracking-wider uppercase mt-0.5 font-bold truncate max-w-full">
             Audit
           </span>
           {activeTab === 'audit' && (

@@ -272,7 +272,7 @@ export function App() {
   // If URL has ?app=admin or running on Port 3001, render strictly the dedicated Admin Mobile App!
   if (isAppAdmin) {
     return (
-      <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#0B0F19] flex flex-col items-center justify-center p-0 sm:py-4 sm:px-2 selection:bg-[#BA3A24] selection:text-white font-sans overflow-hidden">
+      <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#0B0F19] flex flex-col items-center justify-center landscape:justify-start p-0 sm:py-4 sm:px-2 landscape:p-0 landscape:py-0 selection:bg-[#BA3A24] selection:text-white font-sans overflow-hidden">
         {showSplash && (
           <OpeningSplashScreen
             onComplete={handleSplashComplete}
@@ -300,7 +300,7 @@ export function App() {
   // VENDOR MOBILE APP (Dedicated Partner / Vendor Mobile Portal)
   // =========================================================================
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full bg-stone-900/60 flex flex-col items-center justify-center p-0 sm:py-4 selection:bg-[#C84826] selection:text-white font-serif overflow-hidden">
+    <div className="h-[100dvh] max-h-[100dvh] w-full bg-stone-900/60 flex flex-col items-center justify-center landscape:justify-start p-0 sm:py-4 landscape:p-0 landscape:py-0 selection:bg-[#C84826] selection:text-white font-serif overflow-hidden">
       {showSplash && (
         <OpeningSplashScreen
           onComplete={handleSplashComplete}
@@ -308,7 +308,7 @@ export function App() {
           portalLabel="Vendor Partner Portal"
         />
       )}
-      <div className="w-full max-w-[440px] bg-[#FAF9F6] h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-[580px] rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl border-0 sm:border border-stone-200/90 flex flex-col relative">
+      <div className="w-full max-w-[440px] landscape:max-w-2xl bg-[#FAF9F6] h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-0 landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:min-h-0 rounded-none sm:rounded-[40px] landscape:rounded-none overflow-hidden shadow-2xl border-0 sm:border landscape:border-0 border-stone-200/90 flex flex-col relative">
         
         {/* Floating Toast Notification */}
         {toastMsg && (
