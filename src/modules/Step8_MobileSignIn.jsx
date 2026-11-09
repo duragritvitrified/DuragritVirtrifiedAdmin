@@ -178,7 +178,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
       if (isAdminIdentifier) {
         const adminUrl = typeof window !== 'undefined' && !window.location.origin.includes('localhost')
           ? `${window.location.origin}/app/?app=admin`
-          : 'http://localhost:3001/?app=admin';
+          : 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin';
         setErrorMsg(`⛔ This portal is strictly for Vendors & Contractors. To access the Super Admin Operations Console, please open: ${adminUrl}`);
         setIsSubmitting(false);
         return;

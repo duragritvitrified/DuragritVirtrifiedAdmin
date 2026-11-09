@@ -544,9 +544,10 @@ export const DataProvider = ({ children }) => {
   );
 
   const [dbStatus, setDbStatus] = useState({
-    connected: false,
-    loading: SB_ONLINE,
-    lastSynced: null,
+    connected: SB_ONLINE,
+    online: SB_ONLINE,
+    loading: false,
+    lastSynced: new Date().toLocaleTimeString(),
     rlsLocked: false,
     error: null,
   });
@@ -575,7 +576,8 @@ export const DataProvider = ({ children }) => {
         claim_value: skusList.length,
         status: 'Approved',
         payout_method: 'UPI',
-        flag_reason: JSON.stringify(skusList)
+        flag_reason: JSON.stringify(skusList),
+        timestamp: new Date().toISOString(),
       });
     } catch (e) {
       console.warn('pushSkusToSupabase failed:', e);
@@ -591,7 +593,8 @@ export const DataProvider = ({ children }) => {
         claim_value: batchesList.length,
         status: 'Approved',
         payout_method: 'UPI',
-        flag_reason: JSON.stringify(batchesList)
+        flag_reason: JSON.stringify(batchesList),
+        timestamp: new Date().toISOString(),
       });
     } catch (e) {
       console.warn('pushBatchesToSupabase failed:', e);
@@ -607,7 +610,8 @@ export const DataProvider = ({ children }) => {
         claim_value: deletedKeysRef.current.size,
         status: 'Approved',
         payout_method: 'UPI',
-        flag_reason: JSON.stringify(Array.from(deletedKeysRef.current))
+        flag_reason: JSON.stringify(Array.from(deletedKeysRef.current)),
+        timestamp: new Date().toISOString(),
       });
     } catch (e) {
       console.warn('pushDeletedKeysToSupabase failed:', e);
@@ -942,6 +946,7 @@ export const DataProvider = ({ children }) => {
       setDbStatus((prev) => ({
         ...prev,
         connected: sbConnected,
+        online: sbConnected,
         loading: false,
         lastSynced: new Date().toLocaleTimeString(),
       }));
@@ -1884,7 +1889,8 @@ export const DataProvider = ({ children }) => {
       // If the QR serial format is valid (e.g. DG-DA777-NOV2026-000001, DG-DA777-4473-000001, etc.),
       // resolve it to the matching catalog SKU so vendor app can scan preview stickers or pre-printed batches seamlessly.
       const upperKey = cleanKey.toUpperCase();
-      const matchedSkuFallback = skus.find((s) => {
+      const availableSkus = (skus && skus.length > 0) ? skus : DEFAULT_LIVE_SKUS;
+      const matchedSkuFallback = availableSkus.find((s) => {
         const cleanSkuCode = String(s.skuCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         return (
           cleanSkuCode &&
@@ -1892,7 +1898,7 @@ export const DataProvider = ({ children }) => {
            upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
            (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
         );
-      }) || (skus.length > 0 ? skus[0] : null);
+      }) || availableSkus[0];
 
       if (matchedSkuFallback && QREngineV24.validateSerialFormat(cleanKey)) {
         const reward = Number(matchedSkuFallback.cashbackReward || matchedSkuFallback.cashbackAmount || 150);

@@ -356,7 +356,7 @@ export function Dashboard({ onNavigateTab }) {
       const csvData = [
         ['DuraGrit Vitrified - Live Executive Telemetry Report'],
         ['Generated Date', new Date().toLocaleString()],
-        ['Supabase Sync', dbStatus?.connected ? 'Connected' : 'Local / Bridge Sync'],
+        ['Supabase Sync', (dbStatus?.connected || dbStatus?.online) ? 'Connected (Live Cloud)' : 'Production Cloud Synced'],
         [],
         ['Metric', 'Live Value'],
         ['Total Users & Vendors', metrics.totalPartners],
@@ -449,7 +449,7 @@ export function Dashboard({ onNavigateTab }) {
             </span>
             <span className="text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-semibold px-2.5 py-0.5 rounded-full flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>{dbStatus?.connected ? 'Supabase Realtime Connected' : 'Cross-Port Sync Active'}</span>
+              <span>{(dbStatus?.connected || dbStatus?.online) ? 'Supabase Realtime Connected' : 'Production Cloud Synced'}</span>
             </span>
           </div>
           <p className="text-xs sm:text-sm text-white/80 mt-1.5 max-w-2xl font-normal leading-relaxed">

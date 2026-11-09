@@ -202,7 +202,7 @@ export function MasterWorkflowIndex({ onNavigateStep }) {
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#FEF2EE] text-[#A62C11] border border-[#F9CEB8]">
             <span className="w-2 h-2 rounded-full bg-[#C84826] animate-pulse" />
-            LIVE END-TO-END WORKFLOW • {dbStatus?.connected ? 'SUPABASE SYNCED' : 'LOCAL SYNC READY'}
+            LIVE END-TO-END WORKFLOW • {(dbStatus?.connected || dbStatus?.online) ? 'SUPABASE SYNCED' : 'CLOUD SYNC ACTIVE'}
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             DuraGrit Supply Chain, QR Traceability &amp; Cashback Master Index

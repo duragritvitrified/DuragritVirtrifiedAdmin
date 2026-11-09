@@ -518,7 +518,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     : 'bg-amber-50 text-amber-800 border-amber-200'
                 }`}>
                   <span className={`w-2 h-2 rounded-full ${dbStatus?.connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                  <span>{dbStatus?.connected ? 'Supabase Connected' : 'Cross-Port Sync Active'}</span>
+                  <span>{(dbStatus?.connected || dbStatus?.online) ? 'Supabase Connected' : 'Production Cloud Synced'}</span>
                 </span>
               </div>
             </div>

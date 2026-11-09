@@ -220,7 +220,7 @@ export function ContractorRedemption() {
                     <CheckCircle2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm font-bold text-slate-700">No QR Redemptions Logged Yet</p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Scan a QR serial in the Mobile App (`http://localhost:3001`) to see live redemptions appear here.
+                      Scan a QR serial in the Vendor Mobile App to see live redemptions appear here.
                     </p>
                   </td>
                 </tr>
