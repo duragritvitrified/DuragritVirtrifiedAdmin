@@ -853,6 +853,114 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
     }
   };
 
+  const checkDuplicatePhone = (rawPhone) => {
+    const clean = String(rawPhone || '').replace(/\D/g, '').slice(-10);
+    if (!clean || clean.length !== 10) return null;
+    const currentVendorId = vendor?.vendorId || vendor?.id;
+    return (existingVendors || []).find((v) => {
+      if (currentVendorId && String(v.vendorId || v.id).toUpperCase() === String(currentVendorId).toUpperCase()) return false;
+      const vPhone = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+      return vPhone === clean;
+    });
+  };
+
+  const checkDuplicateEmail = (rawEmail) => {
+    const clean = String(rawEmail || '').trim().toLowerCase();
+    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return null;
+    const currentVendorId = vendor?.vendorId || vendor?.id;
+    return (existingVendors || []).find((v) => {
+      if (currentVendorId && String(v.vendorId || v.id).toUpperCase() === String(currentVendorId).toUpperCase()) return false;
+      const vEmail = String(v.email || '').trim().toLowerCase();
+      return vEmail === clean;
+    });
+  };
+
+  const handlePhoneChange = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 10);
+    setForm((f) => ({ ...f, phone: digits }));
+    if (digits.length === 10) {
+      const dup = checkDuplicatePhone(digits);
+      if (dup) {
+        setFormErrors((prev) => ({
+          ...prev,
+          phone: `Already registered! Yeh mobile number (+91 ${digits}) pehle se registered hai (${dup.companyName || dup.id}). New mobile number enter karna hoga.`,
+        }));
+      } else {
+        setFormErrors((prev) => {
+          const next = { ...prev };
+          delete next.phone;
+          return next;
+        });
+      }
+    } else {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next.phone;
+        return next;
+      });
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    const clean = String(form.phone || '').replace(/\D/g, '').slice(-10);
+    if (!clean || clean.length !== 10) {
+      setFormErrors((prev) => ({ ...prev, phone: 'Valid 10-digit Mobile Number is compulsory' }));
+      return;
+    }
+    const dup = checkDuplicatePhone(clean);
+    if (dup) {
+      setFormErrors((prev) => ({
+        ...prev,
+        phone: `Already registered! Yeh mobile number (+91 ${clean}) pehle se registered hai (${dup.companyName || dup.id}). New mobile number enter karna hoga.`,
+      }));
+    }
+  };
+
+  const handleEmailChange = (val) => {
+    setForm((f) => ({ ...f, email: val }));
+    const clean = val.trim().toLowerCase();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      const dup = checkDuplicateEmail(clean);
+      if (dup) {
+        setFormErrors((prev) => ({
+          ...prev,
+          email: `Already registered! Yeh email ID (${clean}) pehle se registered hai (${dup.companyName || dup.id}). New email ID enter karna hoga.`,
+        }));
+      } else {
+        setFormErrors((prev) => {
+          const next = { ...prev };
+          delete next.email;
+          return next;
+        });
+      }
+    } else if (formErrors.email && !formErrors.email.includes('Already registered')) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next.email;
+        return next;
+      });
+    }
+  };
+
+  const handleEmailBlur = () => {
+    const clean = String(form.email || '').trim().toLowerCase();
+    if (!clean) {
+      setFormErrors((prev) => ({ ...prev, email: 'Business Email ID is compulsory' }));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      setFormErrors((prev) => ({ ...prev, email: 'Please enter a valid email format (e.g. partner@example.com)' }));
+      return;
+    }
+    const dup = checkDuplicateEmail(clean);
+    if (dup) {
+      setFormErrors((prev) => ({
+        ...prev,
+        email: `Already registered! Yeh email ID (${clean}) pehle se registered hai (${dup.companyName || dup.id}). New email ID enter karna hoga.`,
+      }));
+    }
+  };
+
   const regenPassword = () => set('passkey', `Dura#${Math.floor(1000 + Math.random() * 9000)}`);
 
   const generateFormatGstin = () => {
@@ -903,7 +1011,7 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
         return vPhone === phoneClean;
       });
       if (dupPhone) {
-        errors.phone = `Yeh Mobile Number (+91 ${phoneClean}) pehle se registered hai (${dupPhone.companyName || dupPhone.id})! Naya mobile number enter karein.`;
+        errors.phone = `Already registered! Yeh mobile number (+91 ${phoneClean}) pehle se registered hai (${dupPhone.companyName || dupPhone.id}). New mobile number enter karna hoga.`;
         missing.push(`Mobile Number (+91 ${phoneClean} already registered)`);
       }
     }
@@ -923,7 +1031,7 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
         return vEmail === emailStr;
       });
       if (dupEmail) {
-        errors.email = `Yeh Email ID (${emailStr}) pehle se registered hai (${dupEmail.companyName || dupEmail.id})! Nayi email ID enter karein.`;
+        errors.email = `Already registered! Yeh email ID (${emailStr}) pehle se registered hai (${dupEmail.companyName || dupEmail.id}). New email ID enter karna hoga.`;
         missing.push(`Email ID (${emailStr} already registered)`);
       }
     }
@@ -1157,8 +1265,15 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
                     className={`${getInputCls(formErrors.phone)} font-mono font-bold text-slate-900`}
                     placeholder="10-digit mobile number"
                     value={form.phone}
-                    onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    onBlur={handlePhoneBlur}
                   />
+                  {formErrors.phone && formErrors.phone.includes('Already registered') && (
+                    <div className="mt-1.5 p-2 bg-rose-50 border border-rose-300 rounded-lg flex items-center gap-1.5 text-rose-800 text-[11px] font-bold animate-in fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      <span>⚠️ Already Registered: Unique number mandatory. Naya mobile number enter karna hoga!</span>
+                    </div>
+                  )}
                 </FieldRow>
               </div>
 
@@ -1170,8 +1285,15 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
                     className={getInputCls(formErrors.email)}
                     placeholder="partner@example.com (Compulsory)"
                     value={form.email}
-                    onChange={(e) => set('email', e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
+                    onBlur={handleEmailBlur}
                   />
+                  {formErrors.email && formErrors.email.includes('Already registered') && (
+                    <div className="mt-1.5 p-2 bg-rose-50 border border-rose-300 rounded-lg flex items-center gap-1.5 text-rose-800 text-[11px] font-bold animate-in fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      <span>⚠️ Already Registered: Unique email mandatory. Nayi email ID enter karni hogi!</span>
+                    </div>
+                  )}
                 </FieldRow>
 
                 <FieldRow label="Tier Classification">
@@ -1960,7 +2082,7 @@ export function VendorManagement() {
       if (dupPhone) {
         setAlertToast({
           type: 'error',
-          msg: `❌ Registration Failed: Mobile Number (+91 ${phoneClean}) pehle se registered hai (${dupPhone.companyName || dupPhone.id})! Naya mobile number enter karein.`,
+          msg: `❌ Registration Failed: Already registered! Yeh mobile number (+91 ${phoneClean}) pehle se registered hai (${dupPhone.companyName || dupPhone.id}). New mobile number enter karna hoga.`,
         });
         return;
       }
@@ -1976,7 +2098,7 @@ export function VendorManagement() {
       if (dupEmail) {
         setAlertToast({
           type: 'error',
-          msg: `❌ Registration Failed: Email ID (${emailClean}) pehle se registered hai (${dupEmail.companyName || dupEmail.id})! Nayi email ID enter karein.`,
+          msg: `❌ Registration Failed: Already registered! Yeh email ID (${emailClean}) pehle se registered hai (${dupEmail.companyName || dupEmail.id}). New email ID enter karni hogi.`,
         });
         return;
       }

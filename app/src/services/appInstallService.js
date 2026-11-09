@@ -6,8 +6,8 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.9.0';
-export const CURRENT_BUILT_IN_BUILD = 160;
+export const CURRENT_BUILT_IN_VERSION = 'v4.9.1';
+export const CURRENT_BUILT_IN_BUILD = 161;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -30,14 +30,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-013',
+    version: 'v4.9.1',
+    buildNumber: 161,
+    releaseDate: '2026-11-09 20:35:00',
+    title: 'Vendor Duplicate Phone & Email Prevention Engine v4.9.1',
+    changelog: 'Real-time duplicate mobile & duplicate email prevention with instant inline alerts on Vendor Management page.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-duplive161',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-012',
     version: 'v4.9.0',
     buildNumber: 160,
     releaseDate: '2026-11-09 20:30:00',
     title: 'Vendor Atomic Supabase Live Sync & Duplicate Prevention v4.9.0',
     changelog: 'Vendor Directory atomic event-sourced Supabase live sync & strict duplicate mobile/email prevention across Web and Mobile Apps.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-vendorlive160',

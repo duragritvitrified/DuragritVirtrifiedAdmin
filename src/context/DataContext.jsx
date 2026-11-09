@@ -1555,7 +1555,7 @@ export const DataProvider = ({ children }) => {
         return vPhone === phoneClean;
       });
       if (dupPhone) {
-        throw new Error(`Mobile Number (+91 ${phoneClean}) is already registered by ${dupPhone.companyName || dupPhone.id}`);
+        throw new Error(`Already registered! Yeh mobile number (+91 ${phoneClean}) pehle se registered hai (${dupPhone.companyName || dupPhone.id}). New mobile number enter karna hoga.`);
       }
     }
 
@@ -1566,7 +1566,7 @@ export const DataProvider = ({ children }) => {
         return vEmail && vEmail === emailClean;
       });
       if (dupEmail) {
-        throw new Error(`Email (${emailClean}) is already registered by ${dupEmail.companyName || dupEmail.id}`);
+        throw new Error(`Already registered! Yeh email ID (${emailClean}) pehle se registered hai (${dupEmail.companyName || dupEmail.id}). New email ID enter karni hogi.`);
       }
     }
 
@@ -1668,7 +1668,7 @@ export const DataProvider = ({ children }) => {
           return vPhone === phoneClean;
         });
         if (dup) {
-          throw new Error(`Mobile Number (+91 ${phoneClean}) is already registered by ${dup.companyName || dup.id}`);
+          throw new Error(`Already registered! Yeh mobile number (+91 ${phoneClean}) pehle se registered hai (${dup.companyName || dup.id}). New mobile number enter karna hoga.`);
         }
       }
     }
@@ -1681,7 +1681,7 @@ export const DataProvider = ({ children }) => {
           return vEmail === emailClean;
         });
         if (dup) {
-          throw new Error(`Email (${emailClean}) is already registered by ${dup.companyName || dup.id}`);
+          throw new Error(`Already registered! Yeh email ID (${emailClean}) pehle se registered hai (${dup.companyName || dup.id}). New email ID enter karni hogi.`);
         }
       }
     }
