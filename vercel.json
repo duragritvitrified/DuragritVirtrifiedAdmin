@@ -211,6 +211,10 @@
       "destination": "/api/$1"
     },
     {
+      "source": "/qr/(.*)",
+      "destination": "/app/index.html?serial=$1"
+    },
+    {
       "source": "/verify",
       "destination": "/verify.html"
     },

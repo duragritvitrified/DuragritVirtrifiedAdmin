@@ -516,8 +516,8 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
                 <div className="md:col-span-3 flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-[#E7E5E0] shadow-xs">
                   <img src={liveQrDataUrl} alt="Sample QR Code" className="w-28 h-28 object-contain" />
-                  <span className="text-[9px] font-mono text-stone-400 uppercase tracking-widest mt-1">
-                    DURAGRIT • SERIAL • v2.4
+                  <span className="text-[10px] font-mono font-bold text-[#1C1917] mt-1.5 block tracking-wide">
+                    {sampleTokenId}
                   </span>
                 </div>
 
@@ -800,11 +800,8 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                         onError={(e) => { e.currentTarget.src = liveQrDataUrl; }}
                       />
                     </div>
-                    <span className="text-[7.5px] font-mono font-bold text-[#1C1917] block truncate max-w-full">
+                    <span className="text-[8px] font-mono font-bold text-[#1C1917] block truncate max-w-full pb-1">
                       {t.serialKey}
-                    </span>
-                    <span className={`text-[7px] font-bold block mt-0.5 uppercase ${t.isScanned ? 'text-rose-600' : 'text-emerald-700'}`}>
-                      {t.isScanned ? 'REDEEMED' : 'READY TO SCAN'}
                     </span>
                   </div>
                 ))}

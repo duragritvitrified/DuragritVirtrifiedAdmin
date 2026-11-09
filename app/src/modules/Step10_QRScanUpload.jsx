@@ -21,7 +21,15 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
   const { currentUser } = useAuth();
   const { submitScannedCode, batches = [], claims = [] } = useData();
 
-  const [manualSerial, setManualSerial] = useState('');
+  const [manualSerial, setManualSerial] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlSerial = params.get('serial') || params.get('qr') || params.get('code');
+      return urlSerial ? urlSerial.trim().toUpperCase() : '';
+    } catch (_) {
+      return '';
+    }
+  });
   const [proofImage, setProofImage] = useState(null);
   const [proofFileName, setProofFileName] = useState('');
   const [torchOn, setTorchOn] = useState(false);

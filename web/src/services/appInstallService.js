@@ -6,8 +6,8 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.9.3';
-export const CURRENT_BUILT_IN_BUILD = 163;
+export const CURRENT_BUILT_IN_VERSION = 'v4.9.4';
+export const CURRENT_BUILT_IN_BUILD = 164;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -29,6 +29,21 @@ export const isVersionHigher = (vNew, vOld) => {
 };
 
 export const DEFAULT_RELEASES = [
+  {
+    id: 'REL-2026-016',
+    version: 'v4.9.4',
+    buildNumber: 164,
+    releaseDate: '2026-11-09 22:15:00',
+    title: 'Clean QR Unique Code Stickers & Live Supabase Cloud Sync v4.9.4',
+    changelog: 'Clean QR stickers with dedicated unique serial code (Ready to Scan text removed), full live Supabase management, and direct /qr deep-link claim support.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-livecleanqr164',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
   {
     id: 'REL-2026-015',
     version: 'v4.9.3',

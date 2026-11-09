@@ -1,11 +1,11 @@
 {
-  "version": "4.9.3",
-  "buildNumber": 163,
-  "adminVersion": "4.9.3",
-  "adminBuildNumber": 163,
-  "vendorVersion": "4.9.3",
-  "vendorBuildNumber": 163,
+  "version": "4.9.4",
+  "buildNumber": 164,
+  "adminVersion": "4.9.4",
+  "adminBuildNumber": 164,
+  "vendorVersion": "4.9.4",
+  "vendorBuildNumber": 164,
   "apkUrl": "https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk",
   "pwaUrl": "https://duragrit-virtrified-admin.vercel.app/app/?app=admin",
-  "changelog": "Stabilized Vendor QR optical scanner (15 FPS, jitter elimination, buzz debouncing) + instant catalog SKU resolution for DA 777 & all DuraGrit QR batches v4.9.3."
+  "changelog": "Clean QR stickers with dedicated unique serial code (Ready to Scan text removed), full live Supabase management, and direct /qr deep-link claim support v4.9.4."
 }
