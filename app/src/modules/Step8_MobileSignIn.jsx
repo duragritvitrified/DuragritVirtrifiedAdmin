@@ -85,7 +85,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
     try {
       const manifestEl = document.getElementById('app-manifest') || document.querySelector('link[rel="manifest"]');
       if (manifestEl) manifestEl.setAttribute('href', '/manifest-vendor.json');
-    } catch (_) {}
+    } catch (_) { }
 
     if (!deferredPrompt) {
       alert(
@@ -220,7 +220,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               });
             }
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const matchedUserInUsers = users.find((u) => {
@@ -238,25 +238,25 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
       const fallbackVendor =
         cleanDigits === '8826021114' || cleanLower === 'vnd-101' || cleanLower === 'duragrit07@gmail.com'
           ? {
-              id: 'VND-101',
-              vendorId: 'VND-101',
-              companyName: 'DuraGrit Authorized Partner',
-              contactPerson: 'Vendor Partner',
-              phone: '8826021114',
-              mobile: '8826021114',
-              email: 'duragrit07@gmail.com',
-              location: 'Morbi Central Hub, Gujarat',
-              status: 'ACTIVE',
-              passkey: 'Dura#4905',
-              tempPassword: 'Dura#4905',
-              password: 'Dura#4905',
-              pass: 'Dura#4905',
-              role: 'Vendor',
-              category: 'Tile Contractor / Applicator',
-              active: true
-            }
+            id: 'VND-101',
+            vendorId: 'VND-101',
+            companyName: 'DuraGrit Authorized Partner',
+            contactPerson: 'Vendor Partner',
+            phone: '8826021114',
+            mobile: '8826021114',
+            email: 'duragrit07@gmail.com',
+            location: 'Morbi Central Hub, Gujarat',
+            status: 'ACTIVE',
+            passkey: 'Dura#4905',
+            tempPassword: 'Dura#4905',
+            password: 'Dura#4905',
+            pass: 'Dura#4905',
+            role: 'Vendor',
+            category: 'Tile Contractor / Applicator',
+            active: true
+          }
           : cleanLower === 'vnd-102' || cleanDigits === '9876543210' || cleanLower === 'sahoo.sunaj@gmail.com'
-          ? {
+            ? {
               id: 'VND-102',
               vendorId: 'VND-102',
               companyName: 'JEEE Toure',
@@ -270,45 +270,45 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               role: 'Vendor',
               active: true
             }
-          : cleanLower === 'vnd-103' || cleanDigits === '9811223344' || cleanLower === 'rohit.agency@gmail.com'
-          ? {
-              id: 'VND-103',
-              vendorId: 'VND-103',
-              companyName: 'RR Agency',
-              contactPerson: 'Rohit Verma',
-              phone: '9811223344',
-              mobile: '9811223344',
-              email: 'rohit.agency@gmail.com',
-              location: 'Morbi Central Hub, Gujarat',
-              status: 'ACTIVE',
-              passkey: '1234',
-              role: 'Vendor',
-              active: true
-            }
-          : null;
+            : cleanLower === 'vnd-103' || cleanDigits === '9811223344' || cleanLower === 'rohit.agency@gmail.com'
+              ? {
+                id: 'VND-103',
+                vendorId: 'VND-103',
+                companyName: 'RR Agency',
+                contactPerson: 'Rohit Verma',
+                phone: '9811223344',
+                mobile: '9811223344',
+                email: 'rohit.agency@gmail.com',
+                location: 'Morbi Central Hub, Gujarat',
+                status: 'ACTIVE',
+                passkey: '1234',
+                role: 'Vendor',
+                active: true
+              }
+              : null;
 
       // Built-in verified partner baseline (fallback if offline)
       const fallbackPartner =
         cleanLower === 'partner' || cleanLower === 'contractor' || cleanDigits === '9820144521' || cleanLower === 'usr-001'
           ? {
-              id: 'USR-001',
-              userId: 'USR-001',
-              name: 'Rameshwar Prasad Sharma',
-              fullLegalName: 'Rameshwar Prasad Sharma',
-              mobile: '9820144521',
-              email: 'rameshwar.contractor@duragrit.partner',
-              role: 'Contractor',
-              tierLevel: 'Gold Applicator (Tier 2)',
-              upi: 'rameshwar.tile@okaxis',
-              bankName: 'HDFC Bank',
-              accountNumber: '50100428912345',
-              ifsc: 'HDFC0001234',
-              location: 'Jaipur Central, Rajasthan',
-              status: 'Active',
-              passkey: '1234',
-            }
+            id: 'USR-001',
+            userId: 'USR-001',
+            name: 'Rameshwar Prasad Sharma',
+            fullLegalName: 'Rameshwar Prasad Sharma',
+            mobile: '9820144521',
+            email: 'rameshwar.contractor@duragrit.partner',
+            role: 'Contractor',
+            tierLevel: 'Gold Applicator (Tier 2)',
+            upi: 'rameshwar.tile@okaxis',
+            bankName: 'HDFC Bank',
+            accountNumber: '50100428912345',
+            ifsc: 'HDFC0001234',
+            location: 'Jaipur Central, Rajasthan',
+            status: 'Active',
+            passkey: '1234',
+          }
           : cleanDigits === '9898012345' || cleanLower === 'usr-002'
-          ? {
+            ? {
               id: 'USR-002',
               userId: 'USR-002',
               name: 'Hitesh Bhai Patel',
@@ -321,7 +321,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               status: 'Active',
               passkey: '1234',
             }
-          : null;
+            : null;
 
       // Decide whether account is Vendor or Contractor/User
       const targetVendor = matchedVendor || fallbackVendor;
@@ -498,23 +498,23 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
 
       const matchedUser = matchedVendorPartner
         ? {
-            id: matchedVendorPartner.vendorId || matchedVendorPartner.id,
-            userId: matchedVendorPartner.vendorId || matchedVendorPartner.id,
-            name: matchedVendorPartner.contactPerson || matchedVendorPartner.companyName || 'Verified Partner',
-            mobile: matchedVendorPartner.phone || matchedVendorPartner.mobile || '',
-            email: matchedVendorPartner.email || '',
-            role: matchedVendorPartner.category === 'Contractor' ? 'Contractor' : (matchedVendorPartner.category || 'Contractor'),
-            tierLevel: matchedVendorPartner.tierLevel || 'Gold Applicator (Tier 2)',
-            upi: matchedVendorPartner.upi || '',
-            location: matchedVendorPartner.city || matchedVendorPartner.location || 'Morbi Central Hub',
-            status: 'Active',
-            avatarUrl: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
-            profileImage: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
-          }
+          id: matchedVendorPartner.vendorId || matchedVendorPartner.id,
+          userId: matchedVendorPartner.vendorId || matchedVendorPartner.id,
+          name: matchedVendorPartner.contactPerson || matchedVendorPartner.companyName || 'Verified Partner',
+          mobile: matchedVendorPartner.phone || matchedVendorPartner.mobile || '',
+          email: matchedVendorPartner.email || '',
+          role: matchedVendorPartner.category === 'Contractor' ? 'Contractor' : (matchedVendorPartner.category || 'Contractor'),
+          tierLevel: matchedVendorPartner.tierLevel || 'Gold Applicator (Tier 2)',
+          upi: matchedVendorPartner.upi || '',
+          location: matchedVendorPartner.city || matchedVendorPartner.location || 'Morbi Central Hub',
+          status: 'Active',
+          avatarUrl: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
+          profileImage: matchedVendorPartner.avatarUrl || matchedVendorPartner.profileImage || '',
+        }
         : users.find((u) => {
-            const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);
-            return uDigits === cleanDigits;
-          });
+          const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);
+          return uDigits === cleanDigits;
+        });
 
       if (matchedUser) {
         loginUser({
@@ -645,11 +645,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   await Promise.all(regs.map(r => r.unregister()));
                 }
                 localStorage.removeItem('duragrit_client_pwa_version');
-              } catch (_) {}
+              } catch (_) { }
               if (refreshAllData) await refreshAllData();
               try {
                 window.dispatchEvent(new CustomEvent('duragrit:ota-release-pushed'));
-              } catch (_) {}
+              } catch (_) { }
               setTimeout(() => {
                 showToast('✓ Cache cleared! Loading fresh version...');
                 window.location.reload(true);
@@ -663,9 +663,8 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
 
         {/* Main Sign-In Card matching PDF Page 8 */}
         <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">
-          <div className={`flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider mb-2 font-sans ${
-            portalMode === 'admin' ? 'text-blue-600' : 'text-[#C84826]'
-          }`}>
+          <div className={`flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider mb-2 font-sans ${portalMode === 'admin' ? 'text-blue-600' : 'text-[#C84826]'
+            }`}>
             <ShieldCheck className="w-4 h-4" />
             <span>
               {portalMode === 'vendor'

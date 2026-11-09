@@ -40,6 +40,7 @@ import {
 import {
   getSmtpConfig,
   saveSmtpConfig,
+  fetchSmtpConfigFromSupabase,
   testSmtpConnection,
   sendLiveCustomEmail,
   DEFAULT_SMTP_CONFIG,
@@ -63,7 +64,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     claims = [],
     dbStatus = {},
     clearAllSampleData,
-    refreshAllData
+    refreshAllData,
+    smtpConfig: ctxSmtpConfig,
+    updateSmtpConfig,
   } = useData();
 
   const [activeSubTab, setActiveSubTab] = useState(initialSubTab || 'general'); // 'general' | 'mobile-downloads' | 'email-smtp' | 'security' | 'sms-otp'
@@ -118,8 +121,18 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   }, [initialSubTab]);
 
   useEffect(() => {
-    const loaded = getSmtpConfig();
-    setConfig(loaded);
+    fetchSmtpConfigFromSupabase().then((loaded) => {
+      if (loaded) setConfig(loaded);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (ctxSmtpConfig) {
+      setConfig((prev) => ({ ...prev, ...ctxSmtpConfig }));
+    }
+  }, [ctxSmtpConfig]);
+
+  useEffect(() => {
     setAdminCreds(getAdminCredentials());
 
     // Generate scannable QR codes for Android APK and iOS Safari PWA (Partner App)
@@ -170,7 +183,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     setTimeout(() => setToastMsg(''), 4500);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     if (e) e.preventDefault();
     if (!config.senderEmail || !config.senderEmail.includes('@')) {
       showToast('Please enter a valid Sender Email address.');
@@ -181,12 +194,22 @@ export function SystemSettings({ initialSubTab = 'general' }) {
       return;
     }
 
-    const success = saveSmtpConfig(config);
-    if (success) {
+    const cleanPassword = (config.smtpPassword || '').replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+    const activeConfig = {
+      ...config,
+      smtpPassword: cleanPassword
+    };
+
+    try {
+      if (updateSmtpConfig) {
+        await updateSmtpConfig(activeConfig);
+      } else {
+        saveSmtpConfig(activeConfig);
+      }
       setIsEditing(false);
-      showToast(`SMTP Configuration saved! Outbound sender: ${config.senderEmail}`);
-    } else {
-      showToast('Failed to save configuration to local storage.');
+      showToast(`✅ SMTP Configuration permanently saved & synced to Supabase database! Outbound: ${config.senderEmail}`);
+    } catch (err) {
+      showToast(`Error saving configuration: ${err.message}`);
     }
   };
 
@@ -197,7 +220,11 @@ export function SystemSettings({ initialSubTab = 'general' }) {
       smtpPassword: cleanPassword
     };
     setConfig(activeConfig);
-    saveSmtpConfig(activeConfig);
+    if (updateSmtpConfig) {
+      updateSmtpConfig(activeConfig);
+    } else {
+      saveSmtpConfig(activeConfig);
+    }
 
     setIsTesting(true);
     setTestResult(null);
@@ -216,10 +243,14 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     }
   };
 
-  const handleResetDefaults = () => {
-    if (window.confirm('Reset SMTP configuration to official Gmail defaults (duragrit07@gmail.com)?')) {
+  const handleResetDefaults = async () => {
+    if (window.confirm('WARNING: Are you sure you want to reset SMTP settings to factory defaults? This will erase your saved Google App Password.')) {
       setConfig(DEFAULT_SMTP_CONFIG);
-      saveSmtpConfig(DEFAULT_SMTP_CONFIG);
+      if (updateSmtpConfig) {
+        await updateSmtpConfig(DEFAULT_SMTP_CONFIG);
+      } else {
+        saveSmtpConfig(DEFAULT_SMTP_CONFIG);
+      }
       setTestResult(null);
       setLiveSendResult(null);
       showToast('Restored default Gmail (duragrit07@gmail.com) SMTP settings.');
@@ -242,9 +273,13 @@ export function SystemSettings({ initialSubTab = 'general' }) {
       smtpPassword: cleanPassword
     };
 
-    // Auto-save configuration immediately so state & localStorage are always kept in sync
+    // Auto-save configuration immediately so state, localStorage, and Supabase are kept in sync
     setConfig(activeConfig);
-    saveSmtpConfig(activeConfig);
+    if (updateSmtpConfig) {
+      updateSmtpConfig(activeConfig);
+    } else {
+      saveSmtpConfig(activeConfig);
+    }
 
     setIsSendingLiveEmail(true);
     setLiveSendResult(null);
@@ -1104,13 +1139,13 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleResetDefaults}
-                  className="w-full py-2 text-slate-500 hover:text-slate-800 text-xs font-semibold hover:underline"
-                >
-                  Reset to Default AWS SES Settings
-                </button>
+                <div className="flex items-center justify-between text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Supabase Cloud Sync Active</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-700 font-mono font-bold">PERSISTENT DB</span>
+                </div>
               </div>
             </div>
           </form>

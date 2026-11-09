@@ -9,6 +9,9 @@ import { NPCIGateway } from '../services/npciGateway';
 import {
   sendCashbackReceiptEmail,
   sendKycApprovalEmail,
+  getSmtpConfig,
+  saveSmtpConfig,
+  DEFAULT_SMTP_CONFIG,
 } from '../services/emailService';
 
 // =====================================================================
@@ -542,6 +545,7 @@ export const DataProvider = ({ children }) => {
   const [claims, setClaims] = useState(() =>
     (loadStorage(STORAGE_KEYS.CLAIMS, []) || []).filter((c) => !isTestOrInternalClaim(c, deletedKeysRef.current))
   );
+  const [smtpConfig, setSmtpConfig] = useState(() => getSmtpConfig());
 
   const [dbStatus, setDbStatus] = useState({
     connected: SB_ONLINE,
@@ -617,6 +621,30 @@ export const DataProvider = ({ children }) => {
       console.warn('pushDeletedKeysToSupabase failed:', e);
     }
   }, []);
+
+  const updateSmtpConfig = useCallback(async (newConfig) => {
+    const merged = { ...DEFAULT_SMTP_CONFIG, ...newConfig };
+    setSmtpConfig(merged);
+    saveSmtpConfig(merged);
+    pushDevSync({ smtpConfig: merged });
+
+    if (SB_ONLINE) {
+      try {
+        await supabase.from('cashback_requests').insert({
+          request_id: `SYNC_SMTP_EVENT_${Date.now()}`,
+          qr_serial: 'DURAGRIT_SMTP_CONFIG',
+          claim_value: 1,
+          status: 'Approved',
+          payout_method: 'UPI',
+          flag_reason: JSON.stringify(merged),
+          timestamp: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn('updateSmtpConfig Supabase push failed:', e);
+      }
+    }
+    return merged;
+  }, [pushDevSync]);
 
   const pushClaimActionToSupabase = useCallback(async (action) => {
     if (!SB_ONLINE || !action?.claimId) return;
@@ -896,6 +924,25 @@ export const DataProvider = ({ children }) => {
               window.dispatchEvent(new CustomEvent('duragrit:admin-ota-release-pushed', { detail: relInfo }));
             }
           } catch (_) {}
+        }
+
+        // H. Process Authoritative SMTP Config from Supabase
+        const latestSmtpRow = allClaimsRows.find(
+          (c) => c.qr_serial === 'DURAGRIT_SMTP_CONFIG' || (c.request_id && String(c.request_id).startsWith('SYNC_SMTP_'))
+        );
+        if (latestSmtpRow?.flag_reason) {
+          try {
+            const parsedSmtp = JSON.parse(latestSmtpRow.flag_reason);
+            if (parsedSmtp && typeof parsedSmtp === 'object') {
+              const mergedSmtp = { ...DEFAULT_SMTP_CONFIG, ...parsedSmtp };
+              saveSmtpConfig(mergedSmtp);
+              setSmtpConfig(mergedSmtp);
+            }
+          } catch (_) {}
+        } else if (bridge?.smtpConfig) {
+          const mergedSmtp = { ...DEFAULT_SMTP_CONFIG, ...bridge.smtpConfig };
+          saveSmtpConfig(mergedSmtp);
+          setSmtpConfig(mergedSmtp);
         }
       }
 
@@ -2515,6 +2562,8 @@ export const DataProvider = ({ children }) => {
         vendors,
         batches,
         claims,
+        smtpConfig,
+        updateSmtpConfig,
         dbStatus,
         supabaseOnline: SB_ONLINE,
         refreshAllData,

@@ -73,9 +73,62 @@ export const getSmtpConfig = () => {
   }
 };
 
+export const fetchSmtpConfigFromSupabase = async () => {
+  try {
+    if (supabase) {
+      const { data: row } = await supabase
+        .from('cashback_requests')
+        .select('flag_reason')
+        .eq('qr_serial', 'DURAGRIT_SMTP_CONFIG')
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (row?.flag_reason) {
+        const parsed = JSON.parse(row.flag_reason);
+        if (parsed && typeof parsed === 'object') {
+          const merged = { ...DEFAULT_SMTP_CONFIG, ...parsed };
+          localStorage.setItem(SMTP_CONFIG_KEY, JSON.stringify(merged));
+          return merged;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('fetchSmtpConfigFromSupabase failed:', e);
+  }
+  return getSmtpConfig();
+};
+
 export const saveSmtpConfig = (config) => {
   try {
-    localStorage.setItem(SMTP_CONFIG_KEY, JSON.stringify(config));
+    const merged = { ...DEFAULT_SMTP_CONFIG, ...config };
+    localStorage.setItem(SMTP_CONFIG_KEY, JSON.stringify(merged));
+
+    // Asynchronously push to Supabase cashback_requests for permanent persistent storage
+    if (supabase) {
+      const nowIso = new Date().toISOString();
+      supabase.from('cashback_requests').insert({
+        request_id: `SYNC_SMTP_EVENT_${Date.now()}`,
+        qr_serial: 'DURAGRIT_SMTP_CONFIG',
+        claim_value: 1,
+        status: 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify(merged),
+        timestamp: nowIso,
+      }).then(() => {}).catch((err) => console.warn('Supabase SMTP sync failed:', err));
+    }
+
+    // Also push to /api/sync
+    const syncUrl = typeof window !== 'undefined' && window.location.hostname === 'duragrit-virtrified-admin.vercel.app'
+      ? '/api/sync'
+      : `${LIVE_PUBLIC_URL}/api/sync`;
+
+    fetch(syncUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ smtpConfig: merged }),
+    }).catch(() => {});
+
     return true;
   } catch (e) {
     console.error('Failed to save SMTP config:', e);
@@ -368,6 +421,16 @@ export const sendKycApprovalEmail = async ({
   };
 };
 
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const o = window.location.origin;
+    if (!o.includes('localhost') && !o.includes('127.0.0.1') && !o.startsWith('file:') && !o.startsWith('capacitor:')) {
+      return o;
+    }
+  }
+  return LIVE_PUBLIC_URL;
+};
+
 // ─── Test Connection Verification ───────────────────────────────────────────
 
 export const testSmtpConnection = async (config) => {
@@ -377,8 +440,7 @@ export const testSmtpConnection = async (config) => {
   };
 
   try {
-    const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:3000';
-    const url = `${origin}/api/smtp-test`;
+    const url = `${getApiBaseUrl()}/api/smtp-test`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -419,8 +481,7 @@ export const sendLiveCustomEmail = async ({
   let apiRes = null;
 
   try {
-    const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:3000';
-    const url = `${origin}/api/send-email`;
+    const url = `${getApiBaseUrl()}/api/send-email`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -97,6 +97,20 @@ export default async function handler(req, res) {
         );
       }
 
+      if (payload.smtpConfig && typeof payload.smtpConfig === 'object') {
+        inserts.push(
+          supabase.from('cashback_requests').insert({
+            request_id: `SYNC_SMTP_EVENT_${Date.now()}`,
+            qr_serial: 'DURAGRIT_SMTP_CONFIG',
+            claim_value: 1,
+            status: 'Approved',
+            payout_method: 'UPI',
+            flag_reason: JSON.stringify(payload.smtpConfig),
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
       await Promise.allSettled(inserts);
       return res.status(200).json({ success: true, count: inserts.length });
     }
@@ -110,7 +124,8 @@ export default async function handler(req, res) {
         'DURAGRIT_BATCHES_REGISTRY',
         'DURAGRIT_VENDORS_STORE_V1',
         'DURAGRIT_VENDOR_EVENT',
-        'DURAGRIT_DELETED_KEYS'
+        'DURAGRIT_DELETED_KEYS',
+        'DURAGRIT_SMTP_CONFIG'
       ])
       .order('timestamp', { ascending: false })
       .limit(100);
@@ -119,7 +134,8 @@ export default async function handler(req, res) {
       skus: [],
       batches: [],
       vendors: [],
-      deletedKeys: []
+      deletedKeys: [],
+      smtpConfig: null
     };
 
     const vendorEvents = [];
@@ -134,6 +150,8 @@ export default async function handler(req, res) {
           responseData.vendors = parsed;
         } else if (r.qr_serial === 'DURAGRIT_VENDOR_EVENT') {
           vendorEvents.push({ ...parsed, timestamp: r.timestamp });
+        } else if (r.qr_serial === 'DURAGRIT_SMTP_CONFIG' && !responseData.smtpConfig && typeof parsed === 'object') {
+          responseData.smtpConfig = parsed;
         } else if (r.qr_serial === 'DURAGRIT_DELETED_KEYS' && Array.isArray(parsed)) {
           parsed.forEach((k) => {
             if (!responseData.deletedKeys.includes(k)) responseData.deletedKeys.push(k);

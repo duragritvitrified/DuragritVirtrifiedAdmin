@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getEmailDispatches, getSmtpConfig, saveEmailDispatches, sendLiveCustomEmail } from '../../services/emailService';
+import {
+  getEmailDispatches,
+  getSmtpConfig,
+  fetchSmtpConfigFromSupabase,
+  saveEmailDispatches,
+  sendLiveCustomEmail
+} from '../../services/emailService';
 import { EMAIL_TEMPLATES, getTemplateById } from '../../services/emailTemplates';
 import {
   Mail,
@@ -81,6 +87,9 @@ export function EmailReports({ onNavigateSettings, initialMainTab = 'templates' 
 
   useEffect(() => {
     loadDispatches();
+    fetchSmtpConfigFromSupabase().then((cfg) => {
+      if (cfg) setSmtpConfig(cfg);
+    });
   }, []);
 
   useEffect(() => {
