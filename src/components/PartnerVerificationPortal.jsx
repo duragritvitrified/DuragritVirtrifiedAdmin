@@ -3,22 +3,12 @@ import { ShieldCheck, CheckCircle2, AlertCircle, ArrowRight, Copy, Check, Sparkl
 import { verifyVendorByCode } from '../services/emailService';
 
 export function PartnerVerificationPortal({ initialCode = '', onClose, onVerified }) {
-  const [code, setCode] = useState(initialCode || '');
+  // Input must start blank; vendor will manually copy and paste code
+  const [code, setCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successData, setSuccessData] = useState(null);
   const [copied, setCopied] = useState(false);
-
-  // Auto-detect code from URL on mount if not provided via props
-  useEffect(() => {
-    if (!code && typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const urlCode = params.get('code') || params.get('verify') || '';
-      if (urlCode) {
-        setCode(urlCode.trim());
-      }
-    }
-  }, [code]);
 
   const handlePasteClipboard = async () => {
     try {
@@ -99,7 +89,8 @@ export function PartnerVerificationPortal({ initialCode = '', onClose, onVerifie
                 Verify Your Partner Email
               </h2>
               <p className="text-xs text-stone-400 leading-relaxed max-w-sm mx-auto">
-                Enter or paste the unique <strong>8-digit verification code</strong> dispatched to your email (<span className="text-stone-300 font-mono">Verify Your Email — DuraGrit Vitrified Partner Portal</span>).
+                Paste the unique <strong>8-digit verification code</strong> dispatched to your email.<br />
+                <span className="text-amber-400 font-bold">Valid for 48 hours • Copy &amp; Paste Code Below</span>
               </p>
             </div>
 

@@ -16,8 +16,8 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{mobile}}', label: 'Registered Mobile', sample: '+91 98112 40591' },
       { tag: '{{verifyCode}}', label: '8-Digit Unique Verification Code', sample: '88264905' },
       { tag: '{{verifyToken}}', label: 'Security Auth Token', sample: 'DGVT-88264905' },
-      { tag: '{{verifyLink}}', label: 'Dedicated Verification Page Link', sample: 'https://duragrit-virtrified-admin.vercel.app/verify?code=88264905' },
-      { tag: '{{expiryHours}}', label: 'Link Expiry Window', sample: '24' }
+      { tag: '{{verifyLink}}', label: 'Dedicated Verification Page Link', sample: 'https://duragrit-virtrified-admin.vercel.app/verify' },
+      { tag: '{{expiryHours}}', label: 'Link Expiry Window', sample: '48' }
     ],
     sampleData: {
       recipientName: 'Rajesh Kumar',
@@ -25,8 +25,8 @@ export const EMAIL_TEMPLATES = [
       mobile: '+91 88260 21114',
       verifyCode: '88264905',
       verifyToken: 'DGVT-88264905',
-      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/verify?code=88264905',
-      expiryHours: '24'
+      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/verify',
+      expiryHours: '48'
     },
     generateHtml: (data = {}) => {
       const {
@@ -35,12 +35,12 @@ export const EMAIL_TEMPLATES = [
         mobile = '+91 88260 21114',
         verifyCode = '88264905',
         verifyToken = 'DGVT-88264905',
-        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/verify?code=' + (verifyCode || '88264905'),
-        expiryHours = '24'
+        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/verify',
+        expiryHours = '48'
       } = data;
 
       const displayCode = verifyCode || verifyToken || '88264905';
-      const finalVerifyLink = verifyLink || `https://duragrit-virtrified-admin.vercel.app/verify?code=${displayCode}`;
+      const finalVerifyLink = verifyLink || 'https://duragrit-virtrified-admin.vercel.app/verify';
 
       return `<!DOCTYPE html>
 <html lang="en">

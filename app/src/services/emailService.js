@@ -236,7 +236,33 @@ export const sendVerificationEmail = async ({
   saveTokenMap(map);
 
   const baseUrl = getEmailBaseUrl();
-  const verifyLink = `${baseUrl}/verify?code=${verifyCode}`;
+  const verifyLink = `${baseUrl}/verify`;
+  const nowIso = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+
+  // Persist directly to Supabase cashback_requests so the code is accessible anywhere
+  if (supabase) {
+    try {
+      await supabase.from('cashback_requests').insert({
+        request_id: `VERIFY_CODE_${verifyCode}`,
+        qr_serial: 'DURAGRIT_VERIFY_CODE',
+        claim_value: 1,
+        status: 'Pending',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify({
+          code: verifyCode,
+          token,
+          userId: cleanUserId,
+          recipientName,
+          recipientEmail,
+          mobile,
+          createdAt: nowIso,
+          expiresAt
+        }),
+        timestamp: nowIso
+      });
+    } catch (_) {}
+  }
 
   const template = EMAIL_TEMPLATES.find((t) => t.id === 'verification');
   const html = template
@@ -247,9 +273,9 @@ export const sendVerificationEmail = async ({
         verifyCode,
         verifyToken: token,
         verifyLink,
-        expiryHours: '24'
+        expiryHours: '48'
       })
-    : `<p>Hello ${recipientName}, please verify your email for DuraGrit Partner Portal using 8-digit code: <strong>${verifyCode}</strong> at <a href="${verifyLink}">${verifyLink}</a></p>`;
+    : `<p>Hello ${recipientName}, please verify your email for DuraGrit Partner Portal using 8-digit code: <strong>${verifyCode}</strong> (valid for 48 hours) at <a href="${verifyLink}">${verifyLink}</a></p>`;
 
   const to = recipientEmail || `${(mobile || 'partner').replace(/\D/g, '').slice(-10)}@duragrit.partner`;
   const subject = `Verify Your Email — DuraGrit Vitrified Partner Portal`;
@@ -258,7 +284,7 @@ export const sendVerificationEmail = async ({
     to,
     subject,
     html,
-    text: `Hello ${recipientName}, please verify your email for DuraGrit Partner Portal. Your unique 8-digit verification code is: ${verifyCode}. Verify here: ${verifyLink}`,
+    text: `Hello ${recipientName}, please verify your email for DuraGrit Partner Portal. Your unique 8-digit verification code is: ${verifyCode} (valid for 48 hours). Verify here: ${verifyLink}`,
     templateKey: 'verification',
     verifyCode,
     verifyToken: token
@@ -561,7 +587,36 @@ export const sendVendorVerificationEmail = async ({
   saveTokenMap(map);
 
   const baseUrl = getEmailBaseUrl();
-  const verifyLink = `${baseUrl}/verify?code=${verifyCode}`;
+  const verifyLink = `${baseUrl}/verify`;
+  const nowIso = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+
+  // Persist dedicated verification record directly to Supabase cashback_requests
+  if (supabase) {
+    try {
+      await supabase.from('cashback_requests').insert({
+        request_id: `VERIFY_CODE_${verifyCode}`,
+        qr_serial: 'DURAGRIT_VERIFY_CODE',
+        claim_value: 1,
+        status: 'Pending',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify({
+          code: verifyCode,
+          token,
+          vendorId,
+          recipientName,
+          recipientEmail,
+          mobile,
+          role,
+          createdAt: nowIso,
+          expiresAt
+        }),
+        timestamp: nowIso
+      });
+    } catch (e) {
+      console.warn('Supabase verify code insert error:', e);
+    }
+  }
 
   const template = EMAIL_TEMPLATES.find(t => t.id === 'verification');
   const html = template ? template.generateHtml({
@@ -571,8 +626,8 @@ export const sendVendorVerificationEmail = async ({
     verifyCode,
     verifyToken: token,
     verifyLink,
-    expiryHours: '24'
-  }) : `<p>Hello ${recipientName}, please verify your email for DuraGrit Partner Portal using 8-digit code: <strong>${verifyCode}</strong> at <a href="${verifyLink}">${verifyLink}</a></p>`;
+    expiryHours: '48'
+  }) : `<p>Hello ${recipientName}, please verify your email for DuraGrit Partner Portal using 8-digit code: <strong>${verifyCode}</strong> (valid for 48 hours) at <a href="${verifyLink}">${verifyLink}</a></p>`;
 
   const to = recipientEmail || `${(mobile || 'vendor').replace(/\D/g, '').slice(-10)}@duragrit.partner`;
   const subject = `Verify Your Email — DuraGrit Vitrified Partner Portal`;
@@ -581,7 +636,7 @@ export const sendVendorVerificationEmail = async ({
     to,
     subject,
     html,
-    text: `Hello ${recipientName}, please verify your email for DuraGrit Partner Portal. Your unique 8-digit verification code is: ${verifyCode}. Verify here: ${verifyLink}`,
+    text: `Hello ${recipientName}, please verify your email for DuraGrit Partner Portal. Your unique 8-digit verification code is: ${verifyCode} (valid for 48 hours). Verify here: ${verifyLink}`,
     templateKey: 'verification',
     verifyCode,
     verifyToken: token
@@ -648,17 +703,21 @@ export const sendVendorOnboardingCredentialsEmail = async ({
 export const syncVerifiedVendorToSupabase = async (vendorId, code) => {
   if (!supabase) return;
   const nowIso = new Date().toISOString();
+  const nowTs = Date.now();
   try {
-    const { data: existing } = await supabase
+    const { data: rows } = await supabase
       .from('cashback_requests')
-      .select('id, flag_reason')
-      .eq('request_id', 'SYNC_VENDORS_REGISTRY')
-      .maybeSingle();
+      .select('id, request_id, qr_serial, flag_reason')
+      .or('qr_serial.eq.DURAGRIT_VENDORS_STORE_V1,request_id.eq.SYNC_VENDORS_REGISTRY')
+      .order('timestamp', { ascending: false })
+      .limit(5);
 
-    if (existing?.id) {
+    const storeRow = (rows || []).find(r => r.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' || r.request_id === 'SYNC_VENDORS_REGISTRY');
+
+    if (storeRow?.id) {
       let rVendors = [];
       try {
-        rVendors = JSON.parse(existing.flag_reason || '[]');
+        rVendors = JSON.parse(storeRow.flag_reason || '[]');
       } catch (_) {}
 
       const cleanId = String(vendorId).toUpperCase();
@@ -702,36 +761,52 @@ export const syncVerifiedVendorToSupabase = async (vendorId, code) => {
             flag_reason: JSON.stringify(updatedR),
             timestamp: nowIso
           })
-          .eq('id', existing.id);
+          .eq('id', storeRow.id);
       } catch (_) {}
     }
 
     // Always INSERT atomic verification event into cashback_requests (RLS permits all inserts)
-    await supabase.from('cashback_requests').insert({
-      request_id: `VERIFY_EVENT_${code}_${vendorId}_${Date.now()}`,
-      qr_serial: 'DURAGRIT_VENDOR_EVENT',
-      claim_value: 1,
-      status: 'Approved',
-      payout_method: 'UPI',
-      flag_reason: JSON.stringify({
-        action: 'UPSERT',
-        vendorId,
-        audit: {
+    await Promise.allSettled([
+      supabase.from('cashback_requests').insert({
+        request_id: `VERIFY_EVENT_${code}_${vendorId}_${nowTs}`,
+        qr_serial: 'DURAGRIT_VERIFY_EVENT',
+        claim_value: 1,
+        status: 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify({
+          event: 'Partner verified email via dedicated portal',
+          vendorId,
           code,
           verifiedAt: nowIso,
-        },
-        vendor: {
-          vendorId,
-          id: vendorId,
-          emailVerified: 'Verified',
-          emailVerifiedAt: nowIso,
-          verifiedWithCode: code,
-          status: 'ACTIVE',
-          accountStatus: 'Active',
-        }
+        }),
+        timestamp: nowIso
       }),
-      timestamp: nowIso
-    });
+      supabase.from('cashback_requests').insert({
+        request_id: `DURAGRIT_VENDOR_VERIFIED_${vendorId}_${nowTs}`,
+        qr_serial: 'DURAGRIT_VENDOR_EVENT',
+        claim_value: 1,
+        status: 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify({
+          action: 'UPSERT',
+          vendorId,
+          audit: {
+            code,
+            verifiedAt: nowIso,
+          },
+          vendor: {
+            vendorId,
+            id: vendorId,
+            emailVerified: 'Verified',
+            emailVerifiedAt: nowIso,
+            verifiedWithCode: code,
+            status: 'ACTIVE',
+            accountStatus: 'Active',
+          }
+        }),
+        timestamp: nowIso
+      })
+    ]);
   } catch (e) {
     console.warn('Sync verified vendor to Supabase error:', e);
   }
@@ -745,6 +820,33 @@ export const verifyVendorByCode = async (rawCode) => {
 
   const cleanCode = String(rawCode).trim().toUpperCase();
   const digitsOnly = cleanCode.replace(/\D/g, '');
+  const MAX_EXPIRY_MS = 48 * 60 * 60 * 1000; // Strict 48 Hours validity
+
+  // First try calling the serverless backend /api/verify
+  try {
+    const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+      ? window.location.origin
+      : 'https://duragrit-virtrified-admin.vercel.app';
+    const apiRes = await fetch(`${origin}/api/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: cleanCode })
+    });
+    const apiData = await apiRes.json();
+    if (apiRes.ok && apiData?.success) {
+      return {
+        success: true,
+        isVendor: true,
+        entity: apiData.vendor,
+        code: cleanCode,
+        name: apiData.vendor?.companyName || 'Authorized Partner',
+        id: apiData.vendor?.vendorId || 'VND-101',
+        message: '✓ Email & Account successfully verified! Your partner credentials are now active.'
+      };
+    } else if (apiData?.reason && !apiData.reason.includes('Server error')) {
+      return { success: false, reason: apiData.reason };
+    }
+  } catch (_) {}
 
   const map = getTokenMap();
   const rawTarget =
@@ -775,32 +877,61 @@ export const verifyVendorByCode = async (rawCode) => {
     );
   });
 
-  // 2. Search in Supabase SYNC_VENDORS_REGISTRY
+  // 2. Search in Supabase DURAGRIT_VENDORS_STORE_V1 & DURAGRIT_VERIFY_CODE
+  let matchedVerifyToken = null;
   if (!matchedVendor && supabase) {
     try {
-      const { data: syncRow } = await supabase
+      const { data: rows } = await supabase
         .from('cashback_requests')
-        .select('flag_reason')
-        .eq('request_id', 'SYNC_VENDORS_REGISTRY')
-        .maybeSingle();
-      if (syncRow?.flag_reason) {
-        const remoteVendors = JSON.parse(syncRow.flag_reason);
-        if (Array.isArray(remoteVendors)) {
-          matchedVendor = remoteVendors.find((v) => {
-            const vid = String(v.vendorId || v.id || '').toUpperCase();
-            const vCode = String(v.verificationCode || '').trim().toUpperCase();
-            const vToken = String(v.verificationToken || '').trim().toUpperCase();
-            const vDigits = vCode.replace(/\D/g, '');
-            return (
-              (targetId && vid === targetId.toUpperCase()) ||
-              vCode === cleanCode ||
-              vToken === cleanCode ||
-              (digitsOnly.length >= 6 && vDigits === digitsOnly)
-            );
-          });
+        .select('id, request_id, qr_serial, flag_reason, timestamp')
+        .or('qr_serial.eq.DURAGRIT_VENDORS_STORE_V1,qr_serial.eq.DURAGRIT_VERIFY_CODE,qr_serial.eq.DURAGRIT_VENDOR_EVENT')
+        .order('timestamp', { ascending: false })
+        .limit(50);
+
+      (rows || []).forEach((r) => {
+        if (!matchedVendor && (r.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' || r.request_id === 'SYNC_VENDORS_REGISTRY')) {
+          try {
+            const remoteVendors = JSON.parse(r.flag_reason || '[]');
+            if (Array.isArray(remoteVendors)) {
+              matchedVendor = remoteVendors.find((v) => {
+                const vid = String(v.vendorId || v.id || '').toUpperCase();
+                const vCode = String(v.verificationCode || '').trim().toUpperCase();
+                const vToken = String(v.verificationToken || '').trim().toUpperCase();
+                const vDigits = vCode.replace(/\D/g, '');
+                return (
+                  (targetId && vid === targetId.toUpperCase()) ||
+                  vCode === cleanCode ||
+                  vToken === cleanCode ||
+                  (digitsOnly.length >= 6 && vDigits === digitsOnly)
+                );
+              });
+            }
+          } catch (_) {}
         }
-      }
+
+        if (r.qr_serial === 'DURAGRIT_VERIFY_CODE' || String(r.request_id || '').startsWith('VERIFY_CODE_')) {
+          try {
+            const data = JSON.parse(r.flag_reason || '{}');
+            const rowCode = String(data.code || data.verifyCode || '').trim().toUpperCase();
+            if (rowCode === cleanCode || (digitsOnly.length === 8 && rowCode.replace(/\D/g, '') === digitsOnly)) {
+              matchedVerifyToken = data;
+            }
+          } catch (_) {}
+        }
+      });
     } catch (_) {}
+  }
+
+  // 3. Expiration Check (48 Hours)
+  const codeCreatedAt = matchedVerifyToken?.createdAt || matchedVendor?.verificationSentAt || matchedVendor?.updatedAt;
+  if (codeCreatedAt) {
+    const ageMs = Date.now() - new Date(codeCreatedAt).getTime();
+    if (ageMs > MAX_EXPIRY_MS) {
+      return {
+        success: false,
+        reason: 'This 8-digit verification code has expired (valid for 48 hours). Please request a new verification email.'
+      };
+    }
   }
 
   // Fallback for baseline vendor VND-101 / 8826021114 if code matches

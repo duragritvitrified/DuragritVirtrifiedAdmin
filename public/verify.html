@@ -340,7 +340,7 @@
         </div>
 
         <h1 class="title">Verify Partner Account</h1>
-        <p class="subtitle">Enter the 8-digit unique verification code received in your registration email to activate your account in the DuraGrit Network.</p>
+        <p class="subtitle">Enter the 8-digit unique verification code received in your registration email to activate your account in the DuraGrit Network.<br><span style="color: #f59e0b; font-weight: 600; font-size: 12px;">Valid for 48 hours • Copy &amp; Paste Code Below</span></p>
 
         <form id="verifyForm">
           <div class="form-group">
@@ -359,7 +359,7 @@
               id="codeInput"
               name="code"
               class="input-box"
-              placeholder="e.g. 88264905"
+              placeholder="Paste 8-digit code"
               maxlength="16"
               autocomplete="off"
               autocorrect="off"
@@ -461,12 +461,9 @@
     const verifyFormSection = document.getElementById('verifyFormSection');
     const successSection = document.getElementById('successSection');
 
-    // Auto-fill code from URL query params: ?code=88264905 or ?c=...
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialCode = urlParams.get('code') || urlParams.get('c') || urlParams.get('verify') || '';
-    if (initialCode) {
-      codeInput.value = initialCode.trim().toUpperCase();
-    }
+    // Verification code input must NOT auto-fill per requirement.
+    // Vendor must manually paste or type the 8-digit code.
+    codeInput.value = '';
 
     // 1-Tap Paste Button
     pasteBtn.addEventListener('click', async () => {
@@ -521,59 +518,123 @@
 
       try {
         // Attempt 1: Call Dedicated Serverless API /api/verify
-        let response = null;
         let data = null;
+        let fetchFailed = false;
 
         try {
-          response = await fetch('/api/verify', {
+          const response = await fetch('/api/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: rawCode })
           });
-          if (response.ok) {
-            data = await response.json();
+          const jsonRes = await response.json();
+          if (response.ok && jsonRes?.success) {
+            data = jsonRes;
+          } else {
+            data = jsonRes;
           }
-        } catch (_) {}
+        } catch (_) {
+          fetchFailed = true;
+        }
 
-        // Attempt 2: Direct Client-Side Supabase fallback if serverless offline
+        // Attempt 2: Direct Client-Side Supabase fallback if serverless offline or returned 404/500
         if (!data || !data.success) {
           if (supabaseClient) {
-            const nowIso = new Date().toISOString();
-            const { data: syncRow } = await supabaseClient
-              .from('cashback_requests')
-              .select('id, flag_reason')
-              .eq('request_id', 'SYNC_VENDORS_REGISTRY')
-              .maybeSingle();
+            try {
+              const nowIso = new Date().toISOString();
+              const nowTs = Date.now();
+              const MAX_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 Hours
 
-            if (syncRow?.flag_reason) {
-              const vendors = JSON.parse(syncRow.flag_reason);
+              const { data: rows } = await supabaseClient
+                .from('cashback_requests')
+                .select('id, request_id, qr_serial, flag_reason, timestamp')
+                .or('qr_serial.eq.DURAGRIT_VENDORS_STORE_V1,qr_serial.eq.DURAGRIT_VENDOR_EVENT,qr_serial.eq.DURAGRIT_VERIFY_CODE,request_id.ilike.%VENDOR%')
+                .order('timestamp', { ascending: false })
+                .limit(50);
+
+              let vendorsList = [];
+              let storeRow = null;
+              let matchedVerifyToken = null;
+
+              (rows || []).forEach((r) => {
+                if (r.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' && !storeRow) {
+                  storeRow = r;
+                  try {
+                    const parsed = JSON.parse(r.flag_reason || '[]');
+                    if (Array.isArray(parsed)) vendorsList = parsed;
+                  } catch (_) {}
+                }
+                if (r.qr_serial === 'DURAGRIT_VERIFY_CODE' || String(r.request_id || '').startsWith('VERIFY_CODE_')) {
+                  try {
+                    const parsed = JSON.parse(r.flag_reason || '{}');
+                    const c = String(parsed.code || parsed.verifyCode || '').trim().toUpperCase();
+                    if (c === rawCode || rawCode.replace(/\D/g, '') === c.replace(/\D/g, '')) {
+                      matchedVerifyToken = { row: r, data: parsed };
+                    }
+                  } catch (_) {}
+                }
+              });
+
               const cleanDigits = rawCode.replace(/\D/g, '');
-              let matched = vendors.find(v => {
+              let matched = vendorsList.find(v => {
                 const vCode = String(v.verificationCode || '').trim().toUpperCase();
                 const vDigits = vCode.replace(/\D/g, '');
                 return vCode === rawCode || (cleanDigits.length >= 6 && vDigits === cleanDigits);
               });
 
+              if (!matched && matchedVerifyToken?.data?.vendorId) {
+                const vId = String(matchedVerifyToken.data.vendorId).toUpperCase();
+                matched = vendorsList.find(v => String(v.vendorId || v.id || '').toUpperCase() === vId);
+              }
+
               if (!matched && (rawCode.includes('4905') || cleanDigits === '88264905')) {
-                matched = vendors.find(v => String(v.phone || v.mobile || '').includes('8826021114') || String(v.id || v.vendorId).includes('101'));
+                matched = vendorsList.find(v => String(v.phone || v.mobile || '').includes('8826021114') || String(v.id || v.vendorId).includes('101'));
               }
 
               if (matched) {
+                // Check 48h expiry
+                const tokenCreatedAt = matchedVerifyToken?.data?.createdAt || matched.verificationSentAt || matched.updatedAt;
+                if (tokenCreatedAt && (nowTs - new Date(tokenCreatedAt).getTime()) > MAX_EXPIRY_MS) {
+                  showError('This 8-digit verification code has expired (valid for 48 hours). Please request a new code.');
+                  setLoading(false);
+                  return;
+                }
+
                 matched.emailVerified = 'Verified';
                 matched.emailVerifiedAt = nowIso;
                 matched.verifiedWithCode = rawCode;
                 matched.status = 'ACTIVE';
+                matched.accountStatus = 'Active';
 
-                await supabaseClient
-                  .from('cashback_requests')
-                  .update({ flag_reason: JSON.stringify(vendors), timestamp: nowIso })
-                  .eq('id', syncRow.id);
+                // Update Supabase
+                await Promise.allSettled([
+                  supabaseClient.from('cashback_requests').insert({
+                    request_id: `VERIFY_EVENT_${rawCode}_${matched.vendorId || matched.id}_${nowTs}`,
+                    qr_serial: 'DURAGRIT_VERIFY_EVENT',
+                    claim_value: 1,
+                    status: 'Approved',
+                    payout_method: 'UPI',
+                    flag_reason: JSON.stringify({
+                      event: 'Partner verified email via portal',
+                      vendorId: matched.vendorId || matched.id,
+                      code: rawCode,
+                      verifiedAt: nowIso
+                    }),
+                    timestamp: nowIso
+                  }),
+                  storeRow ? supabaseClient.from('cashback_requests').update({
+                    flag_reason: JSON.stringify(vendorsList),
+                    timestamp: nowIso
+                  }).eq('id', storeRow.id) : null
+                ]);
 
                 data = {
                   success: true,
                   vendor: matched
                 };
               }
+            } catch (sbErr) {
+              console.warn('Direct Supabase verification error:', sbErr);
             }
           }
         }
