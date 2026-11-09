@@ -6,8 +6,8 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.8.6';
-export const CURRENT_BUILT_IN_BUILD = 156;
+export const CURRENT_BUILT_IN_VERSION = 'v4.8.7';
+export const CURRENT_BUILT_IN_BUILD = 157;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -30,13 +30,28 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-009',
+    version: 'v4.8.7',
+    buildNumber: 157,
+    releaseDate: '2026-11-09 16:15:00',
+    title: 'Real-time Supabase Data Sync & Catalog Parity Engine v4.8.7',
+    changelog: 'Bidirectional Supabase realtime sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.7.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-d777sync157',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-008',
     version: 'v4.8.6',
     buildNumber: 156,
     releaseDate: '2026-11-09 16:00:00',
     title: 'Real-time Supabase Data Sync & Catalog Parity Engine',
     changelog: 'Bidirectional Supabase realtime sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.6.',
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
@@ -427,7 +442,7 @@ export const checkClientUpdateStatus = () => {
 };
 
 // Check for live server updates via /api/version
-export const checkForLiveServerUpdate = async () => {
+export const checkForLiveServerUpdate = async (appType = 'auto') => {
   try {
     const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
       ? window.location.origin
@@ -435,12 +450,18 @@ export const checkForLiveServerUpdate = async () => {
     const res = await fetch(`${origin}/api/version?t=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      const serverVer = data.version || '4.8.5';
+      const serverVer = data.version || '4.8.7';
       const cleanServerVer = String(serverVer).startsWith('v') ? serverVer : `v${serverVer}`;
-      const serverBuild = Number(data.buildNumber) || 155;
+      const serverBuild = Number(data.buildNumber) || 157;
 
-      const isHigherVer = isVersionHigher(serverVer, CURRENT_BUILT_IN_VERSION);
-      const isHigherBuild = serverBuild > CURRENT_BUILT_IN_BUILD;
+      const installedVer = (appType === 'admin' || (typeof window !== 'undefined' && window.DURAGRIT_APP_TYPE === 'admin'))
+        ? getAdminInstalledVersion()
+        : getClientInstalledVersion();
+      const cleanInstalledVer = String(installedVer || '').startsWith('v') ? installedVer : `v${installedVer}`;
+      const installedBuild = Number(localStorage.getItem((appType === 'admin' || (typeof window !== 'undefined' && window.DURAGRIT_APP_TYPE === 'admin')) ? 'duragrit_admin_installed_build' : 'duragrit_client_installed_build') || 0);
+
+      const isHigherVer = isVersionHigher(cleanServerVer, cleanInstalledVer);
+      const isHigherBuild = serverBuild > installedBuild;
 
       const hasUpdate = Boolean(isHigherVer || isHigherBuild);
 
@@ -451,7 +472,7 @@ export const checkForLiveServerUpdate = async () => {
         changelog: data.changelog || 'Latest security & performance patches.',
         apkUrl: data.apkUrl,
         pwaUrl: data.pwaUrl,
-        installedVersion: CURRENT_BUILT_IN_VERSION,
+        installedVersion: cleanInstalledVer,
         title: `Official Release ${cleanServerVer}`
       };
     }
@@ -668,6 +689,25 @@ export const ADMIN_VERSION_KEY = 'duragrit_admin_installed_version';
 
 export const DEFAULT_ADMIN_RELEASES = [
   {
+    id: 'ADM-REL-2026-005',
+    version: 'v4.8.7',
+    buildNumber: 157,
+    releaseDate: '2026-11-09 16:15:00',
+    title: 'Real-time Supabase Data Sync & Catalog Parity Engine v4.8.7',
+    changelog: 'Bidirectional Supabase realtime sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.7.',
+    changesList: [
+      'Live Supabase Realtime synchronization for Product Catalog (duragrit DA 777)',
+      'Instant QR Generator SKU auto-population and ₹150 reward calculation',
+      'Purged obsolete test products and synchronized deleted keys across all clients',
+      'Instant OTA hot-reload and real-time push notification'
+    ],
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '24.5 MB',
+    bundleHash: 'sha256-adm487sync157'
+  },
+  {
     id: 'ADM-REL-2026-004',
     version: 'v3.2.0',
     buildNumber: 132,
@@ -680,7 +720,7 @@ export const DEFAULT_ADMIN_RELEASES = [
       'Quick batch creation modal with QR token preview',
       'Enhanced Flag/Quarantine modal with forensic audit logging'
     ],
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Principal Architect',
     downloadSize: '24.2 MB',
@@ -781,8 +821,7 @@ export const getLatestAdminRelease = () => {
 export const getAdminInstalledVersion = () => {
   const saved = localStorage.getItem(ADMIN_VERSION_KEY);
   if (saved) return saved;
-  // Default to v3.1.5 initially so update button appears cleanly until user taps Update
-  const defaultInstalled = 'v3.1.5';
+  const defaultInstalled = 'v4.8.6';
   localStorage.setItem(ADMIN_VERSION_KEY, defaultInstalled);
   return defaultInstalled;
 };
@@ -790,13 +829,19 @@ export const getAdminInstalledVersion = () => {
 export const checkAdminUpdateStatus = () => {
   const installedVer = getAdminInstalledVersion();
   const latestRelease = getLatestAdminRelease();
-  const hasUpdate = Boolean(latestRelease && latestRelease.version && latestRelease.version !== installedVer);
+  const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || 156);
+  const latestBuild = Number(latestRelease?.buildNumber || 157);
+
+  const isHigherVer = isVersionHigher(latestRelease?.version, installedVer);
+  const isHigherBuild = latestBuild > installedBuild;
+  const hasUpdate = Boolean(isHigherVer || isHigherBuild);
 
   return {
     hasUpdate,
     installedVersion: installedVer,
     latestRelease,
     latestVersion: latestRelease?.version || installedVer,
+    buildNumber: latestBuild,
     isMandatory: Boolean(latestRelease?.isMandatory),
     changelog: latestRelease?.changelog || '',
     changesList: latestRelease?.changesList || [],
@@ -805,11 +850,67 @@ export const checkAdminUpdateStatus = () => {
   };
 };
 
-export const applyAdminAppUpdate = (targetVersion) => {
+export const checkForLiveAdminUpdate = async () => {
+  try {
+    const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+      ? window.location.origin
+      : 'https://duragrit-virtrified-admin.vercel.app';
+    const res = await fetch(`${origin}/api/version?t=${Date.now()}&app=admin`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const serverVer = data.adminVersion || data.version || '4.8.7';
+      const cleanServerVer = String(serverVer).startsWith('v') ? serverVer : `v${serverVer}`;
+      const serverBuild = Number(data.adminBuildNumber || data.buildNumber) || 157;
+
+      const installedVer = getAdminInstalledVersion();
+      const cleanInstalledVer = String(installedVer || '').startsWith('v') ? installedVer : `v${installedVer}`;
+      const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || 0);
+
+      const isHigherVer = isVersionHigher(cleanServerVer, cleanInstalledVer);
+      const isHigherBuild = serverBuild > installedBuild;
+      const hasUpdate = Boolean(isHigherVer || isHigherBuild);
+
+      return {
+        hasUpdate,
+        installedVersion: cleanInstalledVer,
+        latestVersion: cleanServerVer,
+        buildNumber: serverBuild,
+        changelog: data.changelog || 'Real-time bidirectional Supabase sync for Product Catalog (duragrit DA 777), QR Batches & Moderation.',
+        changesList: data.changesList || [
+          'Live Supabase Realtime synchronization for Product Catalog (duragrit DA 777)',
+          'Instant QR Generator SKU auto-population and ₹150 reward calculation',
+          'Instant OTA hot-reload and real-time push notification'
+        ],
+        title: `Official Release ${cleanServerVer}`,
+        isMandatory: true,
+        apkUrl: data.apkUrl || 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk'
+      };
+    }
+  } catch (e) {
+    console.warn('Check live admin update error:', e);
+  }
+  return checkAdminUpdateStatus();
+};
+
+export const applyAdminAppUpdate = async (targetVersion) => {
   const latestRelease = getLatestAdminRelease();
-  const ver = targetVersion || latestRelease.version;
+  const ver = targetVersion || latestRelease?.version || 'v4.8.7';
+  const targetBuild = Number(latestRelease?.buildNumber) || 157;
 
   localStorage.setItem(ADMIN_VERSION_KEY, ver);
+  localStorage.setItem('duragrit_admin_installed_build', String(targetBuild));
+  localStorage.setItem('duragrit_admin_ota_applied_' + ver, 'true');
+  localStorage.setItem('duragrit_admin_ota_dismissed_' + ver, 'true');
+  try {
+    sessionStorage.setItem('duragrit_admin_ota_dismissed_' + ver, 'true');
+  } catch (_) {}
+
+  if (typeof window !== 'undefined' && 'caches' in window) {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    } catch (_) {}
+  }
 
   try {
     window.dispatchEvent(new CustomEvent('duragrit:admin-ota-update-applied', {

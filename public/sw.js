@@ -3,7 +3,7 @@
  * Provides offline fallback, static asset caching, and resilient network-first caching.
  */
 
-const CACHE_NAME = 'duragrit-portal-v4.8.5-live';
+const CACHE_NAME = 'duragrit-portal-v4.8.7-live';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/icon.svg',

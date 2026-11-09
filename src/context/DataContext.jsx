@@ -753,6 +753,20 @@ export const DataProvider = ({ children }) => {
             }
           });
         }
+
+        // G. Process OTA Release Events from Supabase
+        const latestOtaRow = allClaimsRows.find(
+          (c) => c.qr_serial === 'DURAGRIT_OTA_RELEASE' || (c.request_id && String(c.request_id).startsWith('SYNC_RELEASE_EVENT_'))
+        );
+        if (latestOtaRow?.flag_reason) {
+          try {
+            const relInfo = JSON.parse(latestOtaRow.flag_reason);
+            if (relInfo?.version && typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('duragrit:ota-release-pushed', { detail: relInfo }));
+              window.dispatchEvent(new CustomEvent('duragrit:admin-ota-release-pushed', { detail: relInfo }));
+            }
+          } catch (_) {}
+        }
       }
 
       // 3. Merge Collections with Authoritative Priority

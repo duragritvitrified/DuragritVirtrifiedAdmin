@@ -1,7 +1,11 @@
 {
-  "version": "4.8.5",
-  "buildNumber": 155,
-  "apkUrl": "https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.5.apk",
-  "pwaUrl": "https://duragrit-virtrified-admin.vercel.app/app/?app=vendor",
-  "changelog": "Instant vendor login for 8826021114 with Dura#4905, automated cache purging & real-time live sync v4.8.5."
+  "version": "4.8.7",
+  "buildNumber": 157,
+  "adminVersion": "4.8.7",
+  "adminBuildNumber": 157,
+  "vendorVersion": "4.8.7",
+  "vendorBuildNumber": 157,
+  "apkUrl": "https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk",
+  "pwaUrl": "https://duragrit-virtrified-admin.vercel.app/app/?app=admin",
+  "changelog": "Real-time bidirectional Supabase sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.7."
 }

@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import {
   checkAdminUpdateStatus,
+  checkForLiveAdminUpdate,
   applyAdminAppUpdate,
   getAdminAppReleases,
   publishAdminNewRelease
@@ -224,23 +225,48 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   const [isAdminUpdating, setIsAdminUpdating] = useState(false);
   const [adminUpdateProgress, setAdminUpdateProgress] = useState(0);
   const [adminUpdateProgressMsg, setAdminUpdateProgressMsg] = useState('');
+  const [showAdminUpdateModal, setShowAdminUpdateModal] = useState(false);
   const [showAdminChangelogModal, setShowAdminChangelogModal] = useState(false);
   const [showPublishReleaseModal, setShowPublishReleaseModal] = useState(false);
   const [newReleaseVersion, setNewReleaseVersion] = useState('');
   const [newReleaseTitle, setNewReleaseTitle] = useState('');
   const [newReleaseChangelog, setNewReleaseChangelog] = useState('');
 
-  // Auto-Push Listeners: Listen for live broadcasts
+  // Auto-Push Listeners: Check server immediately on mount & listen for live broadcasts
   useEffect(() => {
+    let isMounted = true;
+    const checkLiveUpdate = async () => {
+      try {
+        const live = await checkForLiveAdminUpdate();
+        if (live && isMounted) {
+          setAdminUpdateStatus(live);
+          const isApplied = localStorage.getItem('duragrit_admin_ota_applied_' + live.latestVersion) === 'true';
+          const isDismissed = sessionStorage.getItem('duragrit_admin_ota_dismissed_' + live.latestVersion) === 'true' ||
+                              localStorage.getItem('duragrit_admin_ota_dismissed_' + live.latestVersion) === 'true';
+          if (live.hasUpdate && !isApplied && !isDismissed) {
+            setShowAdminUpdateModal(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Admin live update check error:', err);
+      }
+    };
+
+    checkLiveUpdate();
+
     const handleSync = () => {
-      setAdminUpdateStatus(checkAdminUpdateStatus());
+      checkLiveUpdate();
     };
 
     window.addEventListener('storage', handleSync);
     window.addEventListener('duragrit:admin-ota-release-pushed', handleSync);
     window.addEventListener('duragrit:admin-ota-update-applied', handleSync);
 
+    const interval = setInterval(checkLiveUpdate, 15000);
+
     return () => {
+      isMounted = false;
+      clearInterval(interval);
       window.removeEventListener('storage', handleSync);
       window.removeEventListener('duragrit:admin-ota-release-pushed', handleSync);
       window.removeEventListener('duragrit:admin-ota-update-applied', handleSync);
@@ -248,6 +274,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   }, []);
 
   const handleTriggerAdminUpdate = () => {
+    setShowAdminUpdateModal(false);
     setIsAdminUpdating(true);
     setAdminUpdateProgress(20);
     setAdminUpdateProgressMsg('Handshaking with Morbi Central Cloud...');
@@ -258,20 +285,24 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       setTimeout(() => {
         setAdminUpdateProgress(85);
         setAdminUpdateProgressMsg('Patching executive moderation node & hot-reloading state...');
-        setTimeout(() => {
+        setTimeout(async () => {
           setAdminUpdateProgress(100);
           setAdminUpdateProgressMsg(`Applied ${adminUpdateStatus.latestVersion}!`);
+          await applyAdminAppUpdate(adminUpdateStatus.latestVersion);
+          setAdminUpdateStatus((prev) => ({ ...prev, hasUpdate: false }));
+          showHapticHUD(`Super Admin Console updated to ${adminUpdateStatus.latestVersion}!`, '🚀', 'emerald');
+          playApproveChime();
+
           setTimeout(() => {
-            applyAdminAppUpdate(adminUpdateStatus.latestVersion);
-            setAdminUpdateStatus(checkAdminUpdateStatus());
             setIsAdminUpdating(false);
             setAdminUpdateProgress(0);
             setAdminUpdateProgressMsg('');
-            playApproveChime();
-            showHapticHUD(`Super Admin Console updated to ${adminUpdateStatus.latestVersion}!`, '🚀', 'emerald');
-          }, 400);
-        }, 500);
-      }, 500);
+            const url = new URL(window.location.href);
+            url.searchParams.set('v', String(Date.now()));
+            window.location.replace(url.toString());
+          }, 600);
+        }, 400);
+      }, 400);
     }, 400);
   };
 
@@ -2954,6 +2985,65 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       {/* ===================================================================== */}
       {/* 4. ADMIN OTA UPDATE MODALS & OVERLAYS */}
       {/* ===================================================================== */}
+
+      {/* Prominent Admin OTA Update Modal Popup */}
+      {showAdminUpdateModal && adminUpdateStatus.hasUpdate && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-sm bg-gradient-to-b from-[#0F1E36] via-[#091528] to-[#040A14] border border-cyan-500/50 rounded-3xl p-6 shadow-2xl space-y-4 text-center text-white relative">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+              <Rocket className="w-8 h-8 text-white animate-bounce" />
+            </div>
+
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950 px-2.5 py-0.5 rounded-full font-mono">
+                Official Update Available
+              </span>
+              <h3 className="text-lg font-black text-white mt-2">
+                Update Ready: {adminUpdateStatus.latestVersion}
+              </h3>
+              <p className="text-xs text-cyan-200/90 font-mono mt-0.5">
+                Build {adminUpdateStatus.buildNumber || 157} • Live Cloud Release
+              </p>
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-700/60 rounded-xl p-3 text-left">
+              <p className="text-[11px] font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                What's New in this Update:
+              </p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                {adminUpdateStatus.changelog || 'Real-time bidirectional Supabase sync for Product Catalog (duragrit DA 777), QR Batches & Moderation.'}
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={handleTriggerAdminUpdate}
+                disabled={isAdminUpdating}
+                className="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-cyan-500/30 transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4 text-slate-950" />
+                <span>⚡ Update Now &amp; Apply Changes</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAdminUpdateModal(false);
+                  if (adminUpdateStatus.latestVersion) {
+                    sessionStorage.setItem('duragrit_admin_ota_dismissed_' + adminUpdateStatus.latestVersion, 'true');
+                    localStorage.setItem('duragrit_admin_ota_dismissed_' + adminUpdateStatus.latestVersion, 'true');
+                  }
+                }}
+                className="w-full py-2 text-slate-400 hover:text-white text-xs font-semibold transition cursor-pointer"
+              >
+                Remind Me Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Admin OTA Update Progress Overlay Modal */}
       {isAdminUpdating && (
