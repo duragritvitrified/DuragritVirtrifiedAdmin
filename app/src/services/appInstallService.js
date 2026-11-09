@@ -410,23 +410,22 @@ export const getClientDeviceUuid = () => {
 export const getClientInstalledVersion = () => {
   if (typeof window === 'undefined') return CURRENT_BUILT_IN_VERSION;
   const saved = localStorage.getItem(CLIENT_VERSION_KEY);
-  if (!saved || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
-    localStorage.setItem(CLIENT_VERSION_KEY, CURRENT_BUILT_IN_VERSION);
-    localStorage.setItem('duragrit_client_installed_build', String(CURRENT_BUILT_IN_BUILD));
-    return CURRENT_BUILT_IN_VERSION;
-  }
-  return saved;
+  if (saved) return saved;
+  const defaultInstalled = 'v4.8.5';
+  localStorage.setItem(CLIENT_VERSION_KEY, defaultInstalled);
+  localStorage.setItem('duragrit_client_installed_build', '155');
+  return defaultInstalled;
 };
 
 // Check if current client has an OTA update available
 export const checkClientUpdateStatus = () => {
   const installedVer = getClientInstalledVersion();
   const latestRelease = getLatestRelease();
+  const installedBuild = Number(localStorage.getItem('duragrit_client_installed_build') || 155);
+  const latestBuild = Number(latestRelease?.buildNumber || 157);
 
-  // Strict check: An update ONLY exists if latestRelease is strictly HIGHER than installedVer
-  // AND strictly HIGHER than CURRENT_BUILT_IN_VERSION (v4.8.4)
-  const isHigherVer = isVersionHigher(latestRelease?.version, installedVer) && isVersionHigher(latestRelease?.version, CURRENT_BUILT_IN_VERSION);
-  const isHigherBuild = Number(latestRelease?.buildNumber || 0) > CURRENT_BUILT_IN_BUILD;
+  const isHigherVer = isVersionHigher(latestRelease?.version, installedVer);
+  const isHigherBuild = latestBuild > installedBuild;
 
   const hasUpdate = Boolean(isHigherVer || isHigherBuild);
 
@@ -435,6 +434,7 @@ export const checkClientUpdateStatus = () => {
     installedVersion: installedVer || CURRENT_BUILT_IN_VERSION,
     latestRelease,
     latestVersion: latestRelease?.version || CURRENT_BUILT_IN_VERSION,
+    buildNumber: latestBuild,
     isMandatory: Boolean(latestRelease?.isMandatory),
     changelog: latestRelease?.changelog || '',
     title: latestRelease?.title || ''
