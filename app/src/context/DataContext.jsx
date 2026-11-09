@@ -23,18 +23,15 @@ const DataContext = createContext();
 
 const SB_ONLINE = isSupabaseConfigured();
 
-const IS_LOCAL_DEV =
-  typeof window !== 'undefined' &&
-  (window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    window.location.hostname.endsWith('.local'));
+const LIVE_VERCEL_SYNC_URL = 'https://duragrit-virtrified-admin.vercel.app/api/sync';
 
+// Pure Live Architecture — always connect to live Vercel & Supabase
+// Under NO circumstances should mobile devices (Capacitor/WebView) attempt to connect to localhost:3000!
 const DEV_SYNC_URL =
-  typeof window !== 'undefined'
-    ? (IS_LOCAL_DEV
-        ? `${window.location.protocol}//${window.location.hostname}:3000/api/dev-sync`
-        : '/api/sync')
-    : '/api/sync';
+  typeof window !== 'undefined' &&
+  window.location.hostname === 'duragrit-virtrified-admin.vercel.app'
+    ? '/api/sync'
+    : LIVE_VERCEL_SYNC_URL;
 
 const STORAGE_KEYS = {
   CLEAN_FLAG: 'duragrit_clean_slate_v7',
@@ -452,8 +449,48 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
   return Array.from(map.values());
 }
 
+const DEFAULT_DELETED_SEEDS = ['DG-ADH-01', 'DG-ADH-02', 'DG-PRM-03', 'DG-WPF-04'];
+
+const DEFAULT_LIVE_SKUS = [
+  {
+    id: 'SKU-DA-777',
+    skuCode: 'DA-777',
+    name: 'duragrit DA 777',
+    category: 'Adhesives',
+    subCategory: 'High-Polymer Vitrified',
+    packSize: '20 kg',
+    packWeight: '20 kg',
+    mrp: 650,
+    baseMrp: 650,
+    dealerPrice: 480,
+    contractorPrice: 530,
+    cashbackAmount: 150,
+    cashbackReward: 150,
+    rewardPoints: 600,
+    gstPercent: 18,
+    hsnCode: '38245090',
+    minBatchQty: 100,
+    batchesCount: 1,
+    activeBatchesCount: 1,
+    status: 'Active',
+    isActive: true,
+    description: 'DuraGrit DA 777 High Polymer Polymer-Modified Adhesive for Vitrified & Large Format Tiles.',
+    createdAt: '2026-11-09T10:19:23.951Z',
+    updatedAt: 1794219563952,
+  }
+];
+
 export const DataProvider = ({ children }) => {
-  const [skus, setSkus] = useState(() => loadStorage(STORAGE_KEYS.SKUS, []));
+  const deletedKeysRef = useRef(new Set([
+    ...DEFAULT_DELETED_SEEDS,
+    ...loadStorage(STORAGE_KEYS.DELETED, DEFAULT_DELETED_SEEDS)
+  ]));
+
+  const [skus, setSkus] = useState(() => {
+    const raw = loadStorage(STORAGE_KEYS.SKUS, DEFAULT_LIVE_SKUS);
+    const filtered = (raw || []).filter((s) => !deletedKeysRef.current.has(String(s.skuCode || s.id || '').toUpperCase()));
+    return filtered.length > 0 ? filtered : DEFAULT_LIVE_SKUS;
+  });
   const [users, setUsers] = useState(() => loadStorage(STORAGE_KEYS.USERS, []));
   const [vendors, setVendors] = useState(() => {
     const list = loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS);
@@ -463,7 +500,6 @@ export const DataProvider = ({ children }) => {
   });
   const [batches, setBatches] = useState(() => loadStorage(STORAGE_KEYS.BATCHES, []));
   const [claims, setClaims] = useState(() => loadStorage(STORAGE_KEYS.CLAIMS, []));
-  const deletedKeysRef = useRef(new Set(loadStorage(STORAGE_KEYS.DELETED, [])));
 
   const [dbStatus, setDbStatus] = useState({
     connected: false,

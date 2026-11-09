@@ -6,8 +6,8 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.8.8';
-export const CURRENT_BUILT_IN_BUILD = 158;
+export const CURRENT_BUILT_IN_VERSION = 'v4.8.9';
+export const CURRENT_BUILT_IN_BUILD = 159;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -30,13 +30,28 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-011',
+    version: 'v4.8.9',
+    buildNumber: 159,
+    releaseDate: '2026-11-09 19:30:00',
+    title: 'Pure Live Supabase & Vercel Sync Engine v4.8.9',
+    changelog: 'Pure live data sync across Admin Web ERP, Admin Mobile App & Vendor Partner Mobile App with instant OTA hot-reload, zero-localhost coupling, and live DA-777 catalog synchronization.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-purelive159',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-010',
     version: 'v4.8.8',
     buildNumber: 158,
     releaseDate: '2026-11-09 17:30:00',
     title: 'Simplified Claim Cards & Responsive Layout Release v4.8.8',
     changelog: 'Streamlined claim cards on Overview and Requests tabs, crisp vendor attribution, compact 2-line rejection alerts, and responsive fixes for all mobile viewports.',
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
@@ -425,11 +440,12 @@ export const getClientDeviceUuid = () => {
 export const getClientInstalledVersion = () => {
   if (typeof window === 'undefined') return CURRENT_BUILT_IN_VERSION;
   const saved = localStorage.getItem(CLIENT_VERSION_KEY);
-  if (saved) return saved;
-  const defaultInstalled = 'v4.8.5';
-  localStorage.setItem(CLIENT_VERSION_KEY, defaultInstalled);
-  localStorage.setItem('duragrit_client_installed_build', '155');
-  return defaultInstalled;
+  if (!saved || saved.startsWith('v3.') || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
+    localStorage.setItem(CLIENT_VERSION_KEY, CURRENT_BUILT_IN_VERSION);
+    localStorage.setItem('duragrit_client_installed_build', String(CURRENT_BUILT_IN_BUILD));
+    return CURRENT_BUILT_IN_VERSION;
+  }
+  return saved;
 };
 
 // Check if current client has an OTA update available
@@ -704,6 +720,26 @@ export const ADMIN_VERSION_KEY = 'duragrit_admin_installed_version';
 
 export const DEFAULT_ADMIN_RELEASES = [
   {
+    id: 'ADM-REL-2026-007',
+    version: 'v4.8.9',
+    buildNumber: 159,
+    releaseDate: '2026-11-09 19:30:00',
+    title: 'Pure Live Supabase & Vercel Sync Engine v4.8.9',
+    changelog: 'Pure live data sync across Admin Web ERP, Admin Mobile App & Vendor Partner Mobile App with instant OTA hot-reload, zero-localhost coupling, and live DA-777 catalog synchronization.',
+    changesList: [
+      'Pure live Supabase Realtime synchronization across all Web and Mobile endpoints',
+      'Zero localhost dependency: direct Vercel & Supabase connections for Android and Web',
+      'Live Product Catalog auto-population with duragrit DA 777 and instant ₹150 reward calculation',
+      'Auto-purge obsolete test products and legacy caches on all devices',
+      'Real-time batch generation and single-stage approval workflow parity'
+    ],
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '24.5 MB',
+    bundleHash: 'sha256-purelive159'
+  },
+  {
     id: 'ADM-REL-2026-006',
     version: 'v4.8.8',
     buildNumber: 158,
@@ -716,7 +752,7 @@ export const DEFAULT_ADMIN_RELEASES = [
       'Clean touch-friendly action buttons (Approve & Pay / Reject) with zero horizontal overflow',
       'Limited Overview recent claims to top 5 with direct Full Queue link'
     ],
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '24.5 MB',
@@ -861,11 +897,11 @@ export const getLatestAdminRelease = () => {
 
 export const getAdminInstalledVersion = () => {
   const saved = localStorage.getItem(ADMIN_VERSION_KEY);
-  // Auto-upgrade any legacy v3.x or out-of-date version to v4.8.8
-  if (!saved || saved.startsWith('v3.') || isVersionHigher('v4.8.8', saved)) {
-    const fresh = 'v4.8.8';
+  // Auto-upgrade any legacy v3.x or out-of-date version to v4.8.9
+  if (!saved || saved.startsWith('v3.') || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
+    const fresh = CURRENT_BUILT_IN_VERSION;
     localStorage.setItem(ADMIN_VERSION_KEY, fresh);
-    localStorage.setItem('duragrit_admin_installed_build', '158');
+    localStorage.setItem('duragrit_admin_installed_build', String(CURRENT_BUILT_IN_BUILD));
     return fresh;
   }
   return saved;

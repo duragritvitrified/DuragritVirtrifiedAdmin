@@ -3,6 +3,8 @@
   "appName": "DuraGrit Vendor",
   "webDir": "dist",
   "server": {
+    "url": "https://duragrit-virtrified-admin.vercel.app/app/?app=vendor",
+    "cleartext": false,
     "androidScheme": "https"
   },
   "android": {

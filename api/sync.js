@@ -113,6 +113,40 @@ export default async function handler(req, res) {
       } catch (_) {}
     });
 
+    const DEFAULT_SEEDS = ['DG-ADH-01', 'DG-ADH-02', 'DG-PRM-03', 'DG-WPF-04'];
+    DEFAULT_SEEDS.forEach((k) => {
+      if (!responseData.deletedKeys.includes(k)) responseData.deletedKeys.push(k);
+    });
+
+    if (responseData.skus.length === 0) {
+      responseData.skus = [
+        {
+          id: 'SKU-DA-777',
+          skuCode: 'DA-777',
+          name: 'duragrit DA 777',
+          category: 'Adhesives',
+          subCategory: 'High-Polymer Vitrified',
+          packSize: '20 kg',
+          packWeight: '20 kg',
+          mrp: 650,
+          baseMrp: 650,
+          dealerPrice: 480,
+          contractorPrice: 530,
+          cashbackAmount: 150,
+          cashbackReward: 150,
+          rewardPoints: 600,
+          gstPercent: 18,
+          hsnCode: '38245090',
+          minBatchQty: 100,
+          batchesCount: 1,
+          activeBatchesCount: 1,
+          status: 'Active',
+          isActive: true,
+          description: 'DuraGrit DA 777 High Polymer Polymer-Modified Adhesive for Vitrified & Large Format Tiles.'
+        }
+      ];
+    }
+
     return res.status(200).json(responseData);
   } catch (err) {
     console.error('api/sync error:', err);
