@@ -191,10 +191,22 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [selectedSkuId, setSelectedSkuId] = useState('');
   const [batchQty, setBatchQty] = useState(100);
-  const [batchCashback, setBatchCashback] = useState(250);
+  const [batchCashback, setBatchCashback] = useState(150);
   const [batchLoading, setBatchLoading] = useState(false);
   const [inspectedBatch, setInspectedBatch] = useState(null);
   const [copiedToken, setCopiedToken] = useState('');
+
+  // Auto-sync selected SKU and reward with live catalog from Supabase
+  useEffect(() => {
+    if (skus.length > 0) {
+      const currentExists = skus.some((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId);
+      if (!selectedSkuId || !currentExists) {
+        setSelectedSkuId(skus[0].id || skus[0].skuCode);
+        const reward = Number(skus[0].cashbackReward || skus[0].cashbackAmount || 150);
+        setBatchCashback(reward);
+      }
+    }
+  }, [skus, selectedSkuId]);
 
   // Admin Login State (if accessed without admin session)
   const [adminId, setAdminId] = useState('admin');
@@ -580,16 +592,16 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     setBatchLoading(true);
     try {
       const targetSku =
-        skus.find((s) => s.id === selectedSkuId) ||
+        skus.find((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId) ||
         skus[0] || {
-          id: 'SKU-DG-ADH-01',
-          skuCode: 'DG-ADH-01',
-          name: 'Tile Adhesive 20kg',
-          cashbackReward: batchCashback
+          id: 'SKU-DA-777',
+          skuCode: 'DA-777',
+          name: 'duragrit DA 777',
+          cashbackReward: batchCashback || 150
         };
 
       const count = Math.max(1, Number(batchQty) || 1);
-      const reward = Number(batchCashback) || Number(targetSku.cashbackReward) || 50;
+      const reward = Number(batchCashback) || Number(targetSku.cashbackReward || targetSku.cashbackAmount) || 150;
       const batchNum = Math.floor(1000 + Math.random() * 9000);
       const batchId = `DG-BATCH-${targetSku.skuCode || 'SKU'}-${batchNum}`;
 
@@ -2202,15 +2214,22 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Target Product SKU</label>
                   <select
                     value={selectedSkuId}
-                    onChange={(e) => setSelectedSkuId(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedSkuId(val);
+                      const target = skus.find((s) => s.id === val || s.skuCode === val);
+                      if (target && (target.cashbackReward || target.cashbackAmount)) {
+                        setBatchCashback(Number(target.cashbackReward || target.cashbackAmount));
+                      }
+                    }}
                     className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium"
                   >
                     {skus.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.skuCode} — {s.name} (Reward: ₹{s.cashbackReward || 50})
+                      <option key={s.id || s.skuCode} value={s.id || s.skuCode}>
+                        {s.skuCode} — {s.name} (Reward: ₹{s.cashbackReward || s.cashbackAmount || 50})
                       </option>
                     ))}
-                    {skus.length === 0 && <option value="">DG-ADH-01 — High Polymer Tile Adhesive (20kg)</option>}
+                    {skus.length === 0 && <option value="">Loading live products from Supabase...</option>}
                   </select>
                 </div>
 
@@ -2673,15 +2692,22 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Target Product SKU</label>
                 <select
                   value={selectedSkuId}
-                  onChange={(e) => setSelectedSkuId(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedSkuId(val);
+                    const target = skus.find((s) => s.id === val || s.skuCode === val);
+                    if (target && (target.cashbackReward || target.cashbackAmount)) {
+                      setBatchCashback(Number(target.cashbackReward || target.cashbackAmount));
+                    }
+                  }}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium"
                 >
                   {skus.map((s) => (
-                    <option key={s.id} value={s.id}>
+                    <option key={s.id || s.skuCode} value={s.id || s.skuCode}>
                       {s.skuCode} — {s.name}
                     </option>
                   ))}
-                  {skus.length === 0 && <option value="">DG-ADH-01 — High Polymer Tile Adhesive (20kg)</option>}
+                  {skus.length === 0 && <option value="">Loading live products from Supabase...</option>}
                 </select>
               </div>
 

@@ -6,8 +6,8 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.8.5';
-export const CURRENT_BUILT_IN_BUILD = 155;
+export const CURRENT_BUILT_IN_VERSION = 'v4.8.6';
+export const CURRENT_BUILT_IN_BUILD = 156;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -30,13 +30,28 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-008',
+    version: 'v4.8.6',
+    buildNumber: 156,
+    releaseDate: '2026-11-09 16:00:00',
+    title: 'Real-time Supabase Data Sync & Catalog Parity Engine',
+    changelog: 'Bidirectional Supabase realtime sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.6.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-d777sync982',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-007',
     version: 'v4.8.5',
     buildNumber: 155,
     releaseDate: '2026-11-08 22:30:00',
     title: 'Vendor Master Authentication & Aggressive Cache Purge Engine',
     changelog: 'Instant hardware/direct bypass login for 8826021114 with Dura#4905, automated legacy PWA cache busting, and real-time live sync v4.8.5.',
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',

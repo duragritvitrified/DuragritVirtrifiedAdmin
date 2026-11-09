@@ -33,8 +33,8 @@ const DEV_SYNC_URL =
   typeof window !== 'undefined'
     ? (IS_LOCAL_DEV
         ? `${window.location.protocol}//${window.location.hostname}:3000/api/dev-sync`
-        : '/api/dev-sync')
-    : 'http://localhost:3000/api/dev-sync';
+        : '/api/sync')
+    : '/api/sync';
 
 const STORAGE_KEYS = {
   CLEAN_FLAG: 'duragrit_clean_slate_v7',
@@ -476,9 +476,8 @@ export const DataProvider = ({ children }) => {
   const realtimeChannelRef = useRef(null);
   const isFetchingRef = useRef(false);
 
-  // Push partial state to /api/dev-sync so :3000 and :3001 stay instantaneously mirrored (local dev only)
+  // Push partial state to /api/sync so all clients stay mirrored
   const pushDevSync = useCallback(async (patch) => {
-    if (!IS_LOCAL_DEV) return;
     try {
       await fetch(DEV_SYNC_URL, {
         method: 'POST',
@@ -486,6 +485,71 @@ export const DataProvider = ({ children }) => {
         body: JSON.stringify(patch),
       });
     } catch (_) {}
+  }, []);
+
+  // Universal Supabase Realtime Event Broadcasters (Works under all RLS policies via cashback_requests)
+  const pushSkusToSupabase = useCallback(async (skusList) => {
+    if (!SB_ONLINE || !Array.isArray(skusList)) return;
+    try {
+      await supabase.from('cashback_requests').insert({
+        request_id: `SYNC_SKUS_EVENT_${Date.now()}`,
+        qr_serial: 'DURAGRIT_SKUS_REGISTRY',
+        claim_value: skusList.length,
+        status: 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify(skusList)
+      });
+    } catch (e) {
+      console.warn('pushSkusToSupabase failed:', e);
+    }
+  }, []);
+
+  const pushBatchesToSupabase = useCallback(async (batchesList) => {
+    if (!SB_ONLINE || !Array.isArray(batchesList)) return;
+    try {
+      await supabase.from('cashback_requests').insert({
+        request_id: `SYNC_BATCHES_EVENT_${Date.now()}`,
+        qr_serial: 'DURAGRIT_BATCHES_REGISTRY',
+        claim_value: batchesList.length,
+        status: 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify(batchesList)
+      });
+    } catch (e) {
+      console.warn('pushBatchesToSupabase failed:', e);
+    }
+  }, []);
+
+  const pushDeletedKeysToSupabase = useCallback(async () => {
+    if (!SB_ONLINE || deletedKeysRef.current.size === 0) return;
+    try {
+      await supabase.from('cashback_requests').insert({
+        request_id: `SYNC_DELETED_EVENT_${Date.now()}`,
+        qr_serial: 'DURAGRIT_DELETED_KEYS',
+        claim_value: deletedKeysRef.current.size,
+        status: 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify(Array.from(deletedKeysRef.current))
+      });
+    } catch (e) {
+      console.warn('pushDeletedKeysToSupabase failed:', e);
+    }
+  }, []);
+
+  const pushClaimActionToSupabase = useCallback(async (action) => {
+    if (!SB_ONLINE || !action?.claimId) return;
+    try {
+      await supabase.from('cashback_requests').insert({
+        request_id: `CLAIM_ACTION_EVENT_${action.claimId}_${Date.now()}`,
+        qr_serial: 'DURAGRIT_CLAIM_ACTION',
+        claim_value: Number(action.disbursedAmount || action.amount || 1),
+        status: action.status || 'Approved',
+        payout_method: 'UPI',
+        flag_reason: JSON.stringify(action)
+      });
+    } catch (e) {
+      console.warn('pushClaimActionToSupabase failed:', e);
+    }
   }, []);
 
   const markDeletedKey = useCallback((key) => {
@@ -496,7 +560,8 @@ export const DataProvider = ({ children }) => {
       localStorage.setItem(STORAGE_KEYS.DELETED, JSON.stringify(arr));
     } catch (_) {}
     pushDevSync({ deletedKeys: arr });
-  }, [pushDevSync]);
+    pushDeletedKeysToSupabase();
+  }, [pushDevSync, pushDeletedKeysToSupabase]);
 
   // Preserve all Supabase records — never delete production vendors, skus or profiles
   const purgeLegacySeedsFromSupabase = useCallback(async () => {
@@ -509,14 +574,12 @@ export const DataProvider = ({ children }) => {
     isFetchingRef.current = true;
 
     try {
-      // 1. Read shared cross-port bridge (:3000 <-> :3001) in local dev only
+      // 1. Read shared cross-port bridge (:3000 <-> :3001) or /api/sync
       let bridge = null;
-      if (IS_LOCAL_DEV) {
-        try {
-          const res = await fetch(DEV_SYNC_URL);
-          if (res.ok) bridge = await res.json();
-        } catch (_) {}
-      }
+      try {
+        const res = await fetch(DEV_SYNC_URL);
+        if (res.ok) bridge = await res.json();
+      } catch (_) {}
 
       if (Array.isArray(bridge?.deletedKeys)) {
         bridge.deletedKeys.forEach((k) => deletedKeysRef.current.add(String(k).toUpperCase()));
@@ -534,6 +597,8 @@ export const DataProvider = ({ children }) => {
       let sbBatches = [];
       let sbClaims = [];
       let sbConnected = false;
+      let registrySkus = [];
+      let registryBatches = [];
 
       if (SB_ONLINE) {
         const [prodRes, profRes, vendRes, batchRes, tokRes, claimRes] = await Promise.allSettled([
@@ -545,11 +610,67 @@ export const DataProvider = ({ children }) => {
           supabase.from('cashback_requests').select('*, profiles(full_name, mobile, role, location)').order('timestamp', { ascending: false }),
         ]);
 
-        if (prodRes.status === 'fulfilled' && !prodRes.value.error) {
-          sbConnected = true;
-          sbSkus = (prodRes.value.data || []).map(mapProductFromDb);
+        const allClaimsRows = claimRes.status === 'fulfilled' && !claimRes.value.error ? (claimRes.value.data || []) : [];
+
+        // A. Process Deleted Keys from Supabase
+        allClaimsRows.forEach((row) => {
+          if (row.qr_serial === 'DURAGRIT_DELETED_KEYS' || (row.request_id && String(row.request_id).startsWith('SYNC_DELETED_'))) {
+            try {
+              const keys = JSON.parse(row.flag_reason || '[]');
+              if (Array.isArray(keys)) {
+                keys.forEach((k) => deletedKeysRef.current.add(String(k).toUpperCase()));
+              }
+            } catch (_) {}
+          }
+        });
+
+        // B. Process Authoritative SKUs Registry from Supabase
+        const latestSkuRow = allClaimsRows.find(
+          (c) => c.qr_serial === 'DURAGRIT_SKUS_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_SKUS_'))
+        );
+        if (latestSkuRow?.flag_reason) {
+          try {
+            const parsed = JSON.parse(latestSkuRow.flag_reason);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              registrySkus = parsed;
+            }
+          } catch (_) {}
         }
 
+        if (registrySkus.length > 0) {
+          sbConnected = true;
+          sbSkus = registrySkus.filter((s) => !deletedSet.has(String(s.skuCode || s.id || '').toUpperCase()));
+        } else if (prodRes.status === 'fulfilled' && !prodRes.value.error) {
+          sbConnected = true;
+          sbSkus = (prodRes.value.data || [])
+            .map(mapProductFromDb)
+            .filter((s) => !deletedSet.has(String(s.skuCode || s.id || '').toUpperCase()));
+        }
+
+        // C. Process Authoritative Batches Registry from Supabase
+        const latestBatchRow = allClaimsRows.find(
+          (c) => c.qr_serial === 'DURAGRIT_BATCHES_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_BATCHES_'))
+        );
+        if (latestBatchRow?.flag_reason) {
+          try {
+            const parsed = JSON.parse(latestBatchRow.flag_reason);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              registryBatches = parsed;
+            }
+          } catch (_) {}
+        }
+
+        const tokenRows = tokRes.status === 'fulfilled' && !tokRes.value.error ? (tokRes.value.data || []) : [];
+        if (batchRes.status === 'fulfilled' && !batchRes.value.error) {
+          sbConnected = true;
+          sbBatches = (batchRes.value.data || []).map((b) => mapBatchFromDb(b, tokenRows));
+        }
+        if (registryBatches.length > 0) {
+          sbConnected = true;
+          sbBatches = mergeCollections(sbBatches, registryBatches, (b) => String(b.batchId || b.id || '').toUpperCase(), deletedSet);
+        }
+
+        // D. Process Profiles / Users
         if (profRes.status === 'fulfilled' && !profRes.value.error) {
           sbConnected = true;
           sbUsers = (profRes.value.data || [])
@@ -557,13 +678,14 @@ export const DataProvider = ({ children }) => {
             .map(mapProfileFromDb);
         }
 
+        // E. Process Vendors Registry from Supabase
         if (vendRes.status === 'fulfilled' && !vendRes.value.error) {
           sbConnected = true;
           sbVendors = (vendRes.value.data || []).map(mapVendorFromDb);
         }
-
-        // Cross-platform SYNC_VENDORS_REGISTRY from Supabase
-        const syncRow = (claimRes.value?.data || []).find((c) => c.request_id === 'SYNC_VENDORS_REGISTRY');
+        const syncRow = allClaimsRows.find(
+          (c) => c.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' || c.request_id === 'SYNC_VENDORS_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_VENDORS_'))
+        );
         if (syncRow?.flag_reason) {
           try {
             const parsed = JSON.parse(syncRow.flag_reason);
@@ -579,7 +701,7 @@ export const DataProvider = ({ children }) => {
         }
 
         // Apply live verification events from Supabase to sbVendors
-        (claimRes.value?.data || []).forEach((row) => {
+        allClaimsRows.forEach((row) => {
           if (row.request_id && String(row.request_id).startsWith('VERIFY_EVENT_')) {
             try {
               const audit = JSON.parse(row.flag_reason || '{}');
@@ -601,25 +723,47 @@ export const DataProvider = ({ children }) => {
           }
         });
 
-        const tokenRows = tokRes.status === 'fulfilled' && !tokRes.value.error ? (tokRes.value.data || []) : [];
-
-        if (batchRes.status === 'fulfilled' && !batchRes.value.error) {
-          sbConnected = true;
-          sbBatches = (batchRes.value.data || []).map((b) => mapBatchFromDb(b, tokenRows));
-        }
-
+        // F. Process Real Claims & Claim Actions
         if (claimRes.status === 'fulfilled' && !claimRes.value.error) {
           sbConnected = true;
-          sbClaims = (claimRes.value.data || []).map(mapClaimFromDb);
+          const realClaimRows = allClaimsRows.filter(
+            (c) =>
+              !c.request_id?.startsWith('SYNC_') &&
+              !c.request_id?.startsWith('VERIFY_EVENT_') &&
+              !c.request_id?.startsWith('CLAIM_ACTION_EVENT_') &&
+              !c.qr_serial?.startsWith('DURAGRIT_')
+          );
+          sbClaims = realClaimRows.map(mapClaimFromDb);
+
+          // Apply claim action events (Approvals, Rejections, Payouts)
+          allClaimsRows.forEach((row) => {
+            if (row.request_id && String(row.request_id).startsWith('CLAIM_ACTION_EVENT_')) {
+              try {
+                const action = JSON.parse(row.flag_reason || '{}');
+                const target = sbClaims.find((c) => c.id === action.claimId || c.requestId === action.claimId || c.supabaseId === action.claimId);
+                if (target) {
+                  if (action.status) target.status = action.status;
+                  if (action.payoutStatus) target.payoutStatus = action.payoutStatus;
+                  if (action.transactionId) target.transactionId = action.transactionId;
+                  if (action.disbursedAmount) target.disbursedAmount = action.disbursedAmount;
+                  if (action.flagReason) target.flagReason = action.flagReason;
+                  if (action.remarks) target.remarks = action.remarks;
+                }
+              } catch (_) {}
+            }
+          });
         }
       }
 
-      const nextSkus = mergeCollections(
-        sbSkus,
-        bridge?.skus ?? loadStorage(STORAGE_KEYS.SKUS, []),
-        (s) => String(s.skuCode || s.id || '').toUpperCase(),
-        deletedSet
-      );
+      // 3. Merge Collections with Authoritative Priority
+      const nextSkus = registrySkus.length > 0
+        ? sbSkus
+        : mergeCollections(
+            sbSkus,
+            bridge?.skus ?? loadStorage(STORAGE_KEYS.SKUS, []),
+            (s) => String(s.skuCode || s.id || '').toUpperCase(),
+            deletedSet
+          );
       const nextUsers = mergeCollections(
         sbUsers,
         bridge?.users ?? loadStorage(STORAGE_KEYS.USERS, []),
@@ -632,12 +776,14 @@ export const DataProvider = ({ children }) => {
         (v) => String(v.vendorId || v.id || '').toUpperCase(),
         deletedSet
       );
-      const nextBatches = mergeCollections(
-        sbBatches,
-        bridge?.batches ?? loadStorage(STORAGE_KEYS.BATCHES, []),
-        (b) => String(b.batchId || b.id || '').toUpperCase(),
-        deletedSet
-      );
+      const nextBatches = registryBatches.length > 0
+        ? sbBatches
+        : mergeCollections(
+            sbBatches,
+            bridge?.batches ?? loadStorage(STORAGE_KEYS.BATCHES, []),
+            (b) => String(b.batchId || b.id || '').toUpperCase(),
+            deletedSet
+          );
       const nextClaims = mergeCollections(
         sbClaims,
         bridge?.claims ?? loadStorage(STORAGE_KEYS.CLAIMS, []),
@@ -794,11 +940,12 @@ export const DataProvider = ({ children }) => {
       const filtered = prev.filter((s) => String(s.skuCode).toUpperCase() !== skuCode);
       const updated = [newSku, ...filtered];
       pushDevSync({ skus: updated, deletedKeys: Array.from(deletedKeysRef.current) });
+      pushSkusToSupabase(updated);
       return updated;
     });
 
     return newSku;
-  }, [handleSbError, pushDevSync]);
+  }, [handleSbError, pushDevSync, pushSkusToSupabase]);
 
   const updateSKU = useCallback(async (skuIdOrCode, updates) => {
     const nowTs = Date.now();
@@ -827,6 +974,7 @@ export const DataProvider = ({ children }) => {
         return s;
       });
       pushDevSync({ skus: updated });
+      pushSkusToSupabase(updated);
       return updated;
     });
 
@@ -855,15 +1003,18 @@ export const DataProvider = ({ children }) => {
     }
 
     return { success: true, sku: targetSku };
-  }, [handleSbError, pushDevSync]);
+  }, [handleSbError, pushDevSync, pushSkusToSupabase]);
 
   const deleteSKU = useCallback(async (skuIdOrCode) => {
     const target = skus.find((s) => s.id === skuIdOrCode || s.skuCode === skuIdOrCode || s.supabaseId === skuIdOrCode);
     if (target?.skuCode) markDeletedKey(target.skuCode);
+    if (target?.id) markDeletedKey(target.id);
+    if (skuIdOrCode) markDeletedKey(skuIdOrCode);
 
     setSkus((prev) => {
       const updated = prev.filter((s) => s.id !== skuIdOrCode && s.skuCode !== skuIdOrCode && s.supabaseId !== skuIdOrCode);
       pushDevSync({ skus: updated });
+      pushSkusToSupabase(updated);
       return updated;
     });
 
@@ -872,7 +1023,7 @@ export const DataProvider = ({ children }) => {
       if (error) handleSbError('deleteSKU', error);
     }
     return { success: true };
-  }, [skus, markDeletedKey, pushDevSync, handleSbError]);
+  }, [skus, markDeletedKey, pushDevSync, pushSkusToSupabase, handleSbError]);
 
   // ==================================================================
   // 2. QR BATCHES & CRYPTOGRAPHIC TOKENS — Admin <-> App <-> Supabase
@@ -1009,6 +1160,7 @@ export const DataProvider = ({ children }) => {
       const filtered = prev.filter((b) => b.batchId !== finalBatch.batchId);
       const updated = [finalBatch, ...filtered];
       pushDevSync({ batches: updated, deletedKeys: Array.from(deletedKeysRef.current) });
+      pushBatchesToSupabase(updated);
       return updated;
     });
 
@@ -1019,11 +1171,12 @@ export const DataProvider = ({ children }) => {
           : s
       );
       pushDevSync({ skus: updated });
+      pushSkusToSupabase(updated);
       return updated;
     });
 
     return finalBatch;
-  }, [skus, handleSbError, pushDevSync]);
+  }, [skus, handleSbError, pushDevSync, pushBatchesToSupabase, pushSkusToSupabase]);
 
   const deleteBatch = useCallback(async (batchId) => {
     markDeletedKey(batchId);
@@ -1032,6 +1185,7 @@ export const DataProvider = ({ children }) => {
     setBatches((prev) => {
       const updated = prev.filter((b) => b.batchId !== batchId && b.id !== batchId);
       pushDevSync({ batches: updated });
+      pushBatchesToSupabase(updated);
       return updated;
     });
 
@@ -1040,7 +1194,7 @@ export const DataProvider = ({ children }) => {
       if (error) handleSbError('deleteBatch', error);
     }
     return { success: true };
-  }, [batches, markDeletedKey, pushDevSync, handleSbError]);
+  }, [batches, markDeletedKey, pushDevSync, pushBatchesToSupabase, handleSbError]);
 
   // ==================================================================
   // 3. USER DIRECTORY CRUD — Admin <-> Mobile Sign-In <-> Supabase
@@ -1240,32 +1394,16 @@ export const DataProvider = ({ children }) => {
   const syncVendorsToSupabase = useCallback(async (vendorList) => {
     if (!SB_ONLINE || !Array.isArray(vendorList)) return;
     try {
-      const { data: existing } = await supabase
+      await supabase
         .from('cashback_requests')
-        .select('id')
-        .eq('request_id', 'SYNC_VENDORS_REGISTRY')
-        .maybeSingle();
-
-      if (existing?.id) {
-        await supabase
-          .from('cashback_requests')
-          .update({
-            flag_reason: JSON.stringify(vendorList),
-            timestamp: new Date().toISOString()
-          })
-          .eq('id', existing.id);
-      } else {
-        await supabase
-          .from('cashback_requests')
-          .insert({
-            request_id: 'SYNC_VENDORS_REGISTRY',
-            qr_serial: 'DURAGRIT_VENDORS_STORE_V1',
-            claim_value: 1,
-            status: 'Approved',
-            flag_reason: JSON.stringify(vendorList),
-            payout_method: 'UPI'
-          });
-      }
+        .insert({
+          request_id: `SYNC_VENDORS_EVENT_${Date.now()}`,
+          qr_serial: 'DURAGRIT_VENDORS_STORE_V1',
+          claim_value: vendorList.length,
+          status: 'Approved',
+          flag_reason: JSON.stringify(vendorList),
+          payout_method: 'UPI'
+        });
     } catch (e) {
       console.warn('Sync vendors to Supabase failed:', e);
     }
@@ -1763,15 +1901,25 @@ export const DataProvider = ({ children }) => {
     });
 
     if (SB_ONLINE && targetClaim) {
+      pushClaimActionToSupabase({
+        claimId: targetClaim.id,
+        requestId: targetClaim.requestId,
+        status: 'Approved',
+        payoutStatus: 'Pending Release',
+        approvedAt: approvedIso,
+        decisionAt: approvedIso,
+      });
+
       const q = targetClaim.supabaseId
         ? supabase.from('cashback_requests').update({ status: 'Approved', updated_at: approvedIso }).eq('id', targetClaim.supabaseId)
         : supabase.from('cashback_requests').update({ status: 'Approved', updated_at: approvedIso }).eq('request_id', targetClaim.requestId || targetClaim.id);
-      const { error } = await q;
-      if (error) handleSbError('approveClaimStep1', error);
+      q.then(({ error }) => {
+        if (error) handleSbError('approveClaimStep1', error);
+      });
     }
 
     return { success: true, claim: targetClaim };
-  }, [handleSbError, pushDevSync]);
+  }, [handleSbError, pushDevSync, pushClaimActionToSupabase]);
 
   // Step 2 Payout Release (Approved -> Disbursed with Amount, Screenshot, Transaction ID, Remarks)
   const releaseClaimPayout = useCallback(async (claimId, { disbursedAmount, transactionId, paymentMode = 'UPI', remarks = '', paymentProofUrl = null } = {}) => {
@@ -1837,6 +1985,17 @@ export const DataProvider = ({ children }) => {
     });
 
     if (SB_ONLINE) {
+      pushClaimActionToSupabase({
+        claimId: existing.id,
+        requestId: existing.requestId,
+        status: 'Disbursed',
+        payoutStatus: 'Disbursed',
+        disbursedAmount: finalAmount,
+        transactionId: finalTxnId,
+        disbursedAt: disbursedIso,
+        remarks,
+      });
+
       const dbClaimPatch = {
         status: 'Disbursed',
         payout_method: toDbPayoutMethod(paymentMode),
@@ -1887,7 +2046,7 @@ export const DataProvider = ({ children }) => {
     }
 
     return { success: true, claim: updatedClaim };
-  }, [claims, handleSbError, pushDevSync]);
+  }, [claims, handleSbError, pushDevSync, pushClaimActionToSupabase]);
 
   // Legacy single-step approveClaim compatibility wrapper
   const approveClaim = useCallback(async (claimId) => {
@@ -1927,13 +2086,22 @@ export const DataProvider = ({ children }) => {
     });
 
     if (SB_ONLINE && target) {
+      pushClaimActionToSupabase({
+        claimId: target.id,
+        requestId: target.requestId,
+        status: 'Flagged',
+        payoutStatus: 'Flagged',
+        flagReason: reason,
+        remarks: reason,
+      });
+
       const q = target.supabaseId
         ? supabase.from('cashback_requests').update({ status: 'Flagged', flag_reason: reason, updated_at: new Date().toISOString() }).eq('id', target.supabaseId)
         : supabase.from('cashback_requests').update({ status: 'Flagged', flag_reason: reason, updated_at: new Date().toISOString() }).eq('request_id', target.requestId || target.id);
       await q;
     }
     return { success: true };
-  }, [pushDevSync]);
+  }, [pushDevSync, pushClaimActionToSupabase]);
 
   const rejectClaim = useCallback(async (claimId, reason = 'Rejected during Admin Verification') => {
     const nowTs = Date.now();
@@ -1979,13 +2147,23 @@ export const DataProvider = ({ children }) => {
     }
 
     if (SB_ONLINE && existing) {
+      pushClaimActionToSupabase({
+        claimId: existing.id,
+        requestId: existing.requestId,
+        status: 'Rejected',
+        payoutStatus: 'Rejected',
+        flagReason: reason,
+        remarks: reason,
+        rejectedAt: rejectedIso,
+      });
+
       const q = existing.supabaseId
         ? supabase.from('cashback_requests').update({ status: 'Rejected', flag_reason: reason, updated_at: new Date().toISOString() }).eq('id', existing.supabaseId)
         : supabase.from('cashback_requests').update({ status: 'Rejected', flag_reason: reason, updated_at: new Date().toISOString() }).eq('request_id', existing.requestId || existing.id);
       await q;
     }
     return { success: true };
-  }, [claims, pushDevSync]);
+  }, [claims, pushDevSync, pushClaimActionToSupabase]);
 
   const lockSettlement = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0];

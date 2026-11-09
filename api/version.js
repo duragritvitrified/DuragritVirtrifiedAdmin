@@ -11,11 +11,11 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.8.5',
-    buildNumber: 155,
+    version: '4.8.6',
+    buildNumber: 156,
     timestamp: buildTime,
-    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.5.apk',
-    pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
-    changelog: 'Instant vendor login for 8826021114 with Dura#4905, automated cache purging & real-time live sync v4.8.5.'
+    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
+    pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
+    changelog: 'Real-time bidirectional Supabase sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.6.'
   });
 }
