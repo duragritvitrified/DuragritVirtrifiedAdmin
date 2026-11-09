@@ -162,10 +162,36 @@ export default async function handler(req, res) {
       responseData.vendors = Array.from(vMap.values());
     }
 
-    const DEFAULT_SEEDS = ['DG-ADH-01', 'DG-ADH-02', 'DG-PRM-03', 'DG-WPF-04'];
+    const DEFAULT_SEEDS = [
+      'DG-ADH-01',
+      'DG-ADH-02',
+      'DG-PRM-03',
+      'DG-WPF-04',
+      'VEN-001',
+      'VEN-002',
+      'VEN-003',
+      'CB-TEST-VERIFY-99',
+      'DG-TEST-SERIAL-99',
+      'CB-VERIFY-ROW-COUNT',
+      'DG-TEST-99',
+      'SYNC-VENDOR-TEST-1',
+      'SYNC-DATA-1',
+      'TEST_SYNC_1794219328616',
+      'TEST_SERIAL',
+      'TEST_CHECK_1794231268339',
+      'TEST_CHECK_2_1794231269625',
+      'TEST_SERIAL_2',
+      'TEST-REQ-99',
+      'DURAGRIT_TEST'
+    ];
     DEFAULT_SEEDS.forEach((k) => {
       if (!responseData.deletedKeys.includes(k)) responseData.deletedKeys.push(k);
     });
+
+    const deletedUpperSet = new Set(responseData.deletedKeys.map((k) => String(k).toUpperCase()));
+    responseData.vendors = responseData.vendors.filter(
+      (v) => !deletedUpperSet.has(String(v.vendorId || v.id || '').toUpperCase())
+    );
 
     if (responseData.skus.length === 0) {
       responseData.skus = [

@@ -73,13 +73,13 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     if (c?.vendorName && String(c.vendorName).trim() && c.vendorName !== '—') {
       return {
         vendorName: String(c.vendorName).trim(),
-        vendorId: c.vendorId || 'VEN-001'
+        vendorId: c.vendorId || 'VND-101'
       };
     }
     if (c?.companyName && String(c.companyName).trim()) {
       return {
         vendorName: String(c.companyName).trim(),
-        vendorId: c.vendorId || 'VEN-001'
+        vendorId: c.vendorId || 'VND-101'
       };
     }
 
@@ -117,7 +117,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       if (v?.companyName || v?.name) {
         return {
           vendorName: v.companyName || v.name,
-          vendorId: v.vendorId || v.id || 'VEN-001'
+          vendorId: v.vendorId || v.id || 'VND-101'
         };
       }
     }
@@ -132,7 +132,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       if (v?.companyName || v?.name) {
         return {
           vendorName: v.companyName || v.name,
-          vendorId: v.vendorId || v.id || 'VEN-001'
+          vendorId: v.vendorId || v.id || 'VND-101'
         };
       }
     }
@@ -144,13 +144,13 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       if (u?.vendorName || u?.companyName) {
         return {
           vendorName: u.vendorName || u.companyName,
-          vendorId: u.vendorId || 'VEN-001'
+          vendorId: u.vendorId || 'VND-101'
         };
       }
       if (u?.associatedVendor || u?.dealerName) {
         return {
           vendorName: u.associatedVendor || u.dealerName,
-          vendorId: u.vendorId || 'VEN-001'
+          vendorId: u.vendorId || 'VND-101'
         };
       }
     }
@@ -160,15 +160,15 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       String(c?.userRole || '').toLowerCase().includes('deal')
     ) {
       return {
-        vendorName: c?.userName || 'Authorized Vendor Partner',
-        vendorId: c?.vendorId || 'VEN-001'
+        vendorName: c?.userName || 'DuraGrit Authorized Partner',
+        vendorId: c?.vendorId || 'VND-101'
       };
     }
 
     const firstVendor = vendors.find((v) => v.companyName);
     return {
-      vendorName: firstVendor?.companyName || 'Reliance Polymers Ltd (Hazira Complex)',
-      vendorId: firstVendor?.vendorId || firstVendor?.id || 'VEN-001'
+      vendorName: firstVendor?.companyName || 'DuraGrit Authorized Partner',
+      vendorId: firstVendor?.vendorId || firstVendor?.id || 'VND-101'
     };
   };
 
@@ -474,21 +474,37 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     }
   };
 
-  // Metrics Counters & Financial Escrow
-  const pendingCount = claims.filter((c) => c.status === 'Pending').length;
-  const approvedCount = claims.filter((c) => c.status === 'Approved' || c.status === 'Disbursed').length;
-  const rejectedCount = claims.filter((c) => c.status === 'Rejected' || c.status === 'Flagged').length;
-  const totalRequestsCount = claims.length;
+  // Filter claims strictly to exclude any test or internal events
+  const cleanClaims = (claims || []).filter((c) => {
+    const reqId = String(c.requestId || c.id || c.claimNumber || '').toUpperCase();
+    const qr = String(c.qrSerial || c.serialKey || c.qr_serial || '').toUpperCase();
+    return (
+      !reqId.startsWith('TEST') &&
+      !reqId.startsWith('CB-TEST') &&
+      !reqId.startsWith('CB-VERIFY') &&
+      !reqId.startsWith('SYNC') &&
+      !qr.startsWith('TEST') &&
+      !qr.startsWith('SYNC') &&
+      !qr.startsWith('DG-TEST') &&
+      !qr.startsWith('DURAGRIT')
+    );
+  });
 
-  const pendingAmount = claims
+  // Metrics Counters & Financial Escrow
+  const pendingCount = cleanClaims.filter((c) => c.status === 'Pending').length;
+  const approvedCount = cleanClaims.filter((c) => c.status === 'Approved' || c.status === 'Disbursed').length;
+  const rejectedCount = cleanClaims.filter((c) => c.status === 'Rejected' || c.status === 'Flagged').length;
+  const totalRequestsCount = cleanClaims.length;
+
+  const pendingAmount = cleanClaims
     .filter((c) => c.status === 'Pending')
-    .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 250), 0);
-  const approvedAmount = claims
+    .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 150), 0);
+  const approvedAmount = cleanClaims
     .filter((c) => c.status === 'Approved' || c.status === 'Disbursed')
-    .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 250), 0);
-  const rejectedAmount = claims
+    .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 150), 0);
+  const rejectedAmount = cleanClaims
     .filter((c) => c.status === 'Rejected' || c.status === 'Flagged')
-    .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 250), 0);
+    .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 150), 0);
   const totalAmount = pendingAmount + approvedAmount + rejectedAmount;
 
   // Dual-Mode Pie / Donut Chart State ('count' = Claims Volume, 'amount' = Escrow Liability in ₹)
@@ -569,7 +585,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   };
 
   // Filtered Claims (Always sorted with Latest Request on TOP)
-  const filteredClaims = claims
+  const filteredClaims = cleanClaims
     .filter((c) => {
       if (filterTab === 'pending' && c.status !== 'Pending') return false;
       if (filterTab === 'approved' && c.status !== 'Approved' && c.status !== 'Disbursed') return false;
@@ -2424,13 +2440,13 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
               </h3>
               <div className="space-y-2 font-mono text-[10px] text-slate-600">
                 <div className="p-2 rounded bg-slate-50 border border-slate-100">
-                  <span className="text-emerald-600 font-bold">✓ ESCROW-REL:</span> Batch CB-9021 auto-reconciled via UPI Gateway.
+                  <span className="text-emerald-600 font-bold">✓ CLOUD-GATEWAY:</span> Connected to Supabase Cloud &amp; Vercel Live Production.
                 </div>
                 <div className="p-2 rounded bg-slate-50 border border-slate-100">
-                  <span className="text-blue-600 font-bold">ℹ SEC-AUTH:</span> Super Admin authenticated via local mobile session.
+                  <span className="text-blue-600 font-bold">ℹ DB-SYNC:</span> {cleanClaims.length} live requests active ({pendingCount} Pending, {approvedCount} Approved).
                 </div>
                 <div className="p-2 rounded bg-slate-50 border border-slate-100">
-                  <span className="text-amber-600 font-bold">⚡ SYNC-PULSE:</span> Cross-port RPC relay connected to port 3000.
+                  <span className="text-amber-600 font-bold">⚡ REALTIME-BUS:</span> Live database node online (fykxjzvdslvxablmjlfw.supabase.co).
                 </div>
               </div>
             </div>

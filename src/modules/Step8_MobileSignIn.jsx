@@ -255,38 +255,35 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               category: 'Tile Contractor / Applicator',
               active: true
             }
-          : cleanLower === 'ven-001' || cleanLower === 'vnd-001' || cleanDigits === '9825011223'
+          : cleanLower === 'vnd-102' || cleanDigits === '9876543210' || cleanLower === 'sahoo.sunaj@gmail.com'
           ? {
-              id: 'VEN-001',
-              vendorId: 'VEN-001',
-              companyName: 'Reliance Polymers Ltd (Hazira Complex)',
-              phone: '9825011223',
-              email: 'hazira.dispatch@reliance.com',
-              location: 'Hazira, Surat, Gujarat',
+              id: 'VND-102',
+              vendorId: 'VND-102',
+              companyName: 'JEEE Toure',
+              contactPerson: 'Sunaj Sahoo',
+              phone: '9876543210',
+              mobile: '9876543210',
+              email: 'sahoo.sunaj@gmail.com',
+              location: 'Morbi Central Hub, Gujarat',
               status: 'ACTIVE',
               passkey: '1234',
+              role: 'Vendor',
+              active: true
             }
-          : cleanLower === 'ven-002' || cleanDigits === '9909944556'
+          : cleanLower === 'vnd-103' || cleanDigits === '9811223344' || cleanLower === 'rohit.agency@gmail.com'
           ? {
-              id: 'VEN-002',
-              vendorId: 'VEN-002',
-              companyName: 'Gujarat Silicates & Additives Pvt Ltd',
-              phone: '9909944556',
-              email: 'dispatch@gujaratsilicates.in',
-              location: 'Morbi Industrial Estate, Gujarat',
+              id: 'VND-103',
+              vendorId: 'VND-103',
+              companyName: 'RR Agency',
+              contactPerson: 'Rohit Verma',
+              phone: '9811223344',
+              mobile: '9811223344',
+              email: 'rohit.agency@gmail.com',
+              location: 'Morbi Central Hub, Gujarat',
               status: 'ACTIVE',
               passkey: '1234',
-            }
-          : cleanLower === 'ven-003' || cleanDigits === '9824288990'
-          ? {
-              id: 'VEN-003',
-              vendorId: 'VEN-003',
-              companyName: 'Morbi Multi-Wall Bags & Packaging LLP',
-              phone: '9824288990',
-              email: 'orders@morbibags.com',
-              location: 'Morbi-Wankaner Highway, Gujarat',
-              status: 'ACTIVE',
-              passkey: '1234',
+              role: 'Vendor',
+              active: true
             }
           : null;
 
@@ -709,7 +706,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. VEN-001 or 9825011223"
+                  placeholder="e.g. VND-101 or 8826021114"
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#ECEAE6] bg-[#FBFAF9] focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] text-xs font-semibold text-stone-900 outline-none transition-all font-mono"
                   required
                 />

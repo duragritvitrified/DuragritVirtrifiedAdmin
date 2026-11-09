@@ -93,48 +93,39 @@ export const BASE_REGISTERED_VENDORS = [
     active: true,
   },
   {
-    id: 'VEN-001',
-    vendorId: 'VEN-001',
-    companyName: 'Reliance Polymers Ltd (Hazira Complex)',
-    contactPerson: 'Suresh Mehta',
-    phone: '9825011223',
-    mobile: '9825011223',
-    email: 'hazira.dispatch@reliance.com',
+    id: 'VND-102',
+    vendorId: 'VND-102',
+    companyName: 'JEEE Toure',
+    contactPerson: 'Sunaj Sahoo',
+    phone: '9876543210',
+    mobile: '9876543210',
+    email: 'sahoo.sunaj@gmail.com',
     passkey: '1234',
+    tempPassword: '1234',
+    password: '1234',
+    pass: '1234',
     status: 'ACTIVE',
     accountStatus: 'Active',
-    category: 'Raw materials',
-    location: 'Hazira, Surat, Gujarat',
+    category: 'Tile Contractor / Applicator',
+    location: 'Morbi Central Hub, Gujarat',
     active: true,
   },
   {
-    id: 'VEN-002',
-    vendorId: 'VEN-002',
-    companyName: 'Gujarat Silicates & Additives Pvt Ltd',
-    contactPerson: 'Ketan Patel',
-    phone: '9909944556',
-    mobile: '9909944556',
-    email: 'dispatch@gujaratsilicates.in',
+    id: 'VND-103',
+    vendorId: 'VND-103',
+    companyName: 'RR Agency',
+    contactPerson: 'Rohit Verma',
+    phone: '9811223344',
+    mobile: '9811223344',
+    email: 'rohit.agency@gmail.com',
     passkey: '1234',
+    tempPassword: '1234',
+    password: '1234',
+    pass: '1234',
     status: 'ACTIVE',
     accountStatus: 'Active',
-    category: 'Chemicals',
-    location: 'Morbi Industrial Estate, Gujarat',
-    active: true,
-  },
-  {
-    id: 'VEN-003',
-    vendorId: 'VEN-003',
-    companyName: 'Morbi Multi-Wall Bags & Packaging LLP',
-    contactPerson: 'Pravin Bhai',
-    phone: '9824288990',
-    mobile: '9824288990',
-    email: 'orders@morbibags.com',
-    passkey: '1234',
-    status: 'ACTIVE',
-    accountStatus: 'Active',
-    category: 'Packaging',
-    location: 'Morbi-Wankaner Highway, Gujarat',
+    category: 'Tile Contractor / Applicator',
+    location: 'Morbi Central Hub, Gujarat',
     active: true,
   }
 ];
@@ -449,7 +440,52 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
   return Array.from(map.values());
 }
 
-const DEFAULT_DELETED_SEEDS = ['DG-ADH-01', 'DG-ADH-02', 'DG-PRM-03', 'DG-WPF-04'];
+const DEFAULT_DELETED_SEEDS = [
+  'DG-ADH-01',
+  'DG-ADH-02',
+  'DG-PRM-03',
+  'DG-WPF-04',
+  'VEN-001',
+  'VEN-002',
+  'VEN-003',
+  'CB-TEST-VERIFY-99',
+  'DG-TEST-SERIAL-99',
+  'CB-VERIFY-ROW-COUNT',
+  'DG-TEST-99',
+  'SYNC-VENDOR-TEST-1',
+  'SYNC-DATA-1',
+  'TEST_SYNC_1794219328616',
+  'TEST_SERIAL',
+  'TEST_CHECK_1794231268339',
+  'TEST_CHECK_2_1794231269625',
+  'TEST_SERIAL_2',
+  'TEST-REQ-99',
+  'DURAGRIT_TEST'
+];
+
+export const isTestOrInternalClaim = (c, deletedSet = new Set()) => {
+  if (!c) return true;
+  const reqId = String(c.request_id || c.requestId || c.claimNumber || c.id || '').toUpperCase();
+  const qr = String(c.qr_serial || c.qrSerial || c.serialKey || '').toUpperCase();
+  if (
+    reqId.startsWith('SYNC') ||
+    reqId.startsWith('VERIFY_EVENT') ||
+    reqId.startsWith('CLAIM_ACTION_EVENT') ||
+    reqId.startsWith('TEST') ||
+    reqId.startsWith('CB-TEST') ||
+    reqId.startsWith('CB-VERIFY') ||
+    qr.startsWith('DURAGRIT') ||
+    qr.startsWith('TEST') ||
+    qr.startsWith('SYNC') ||
+    qr.startsWith('DG-TEST')
+  ) {
+    return true;
+  }
+  if (deletedSet.has(reqId) || deletedSet.has(qr)) {
+    return true;
+  }
+  return false;
+};
 
 const DEFAULT_LIVE_SKUS = [
   {
@@ -503,7 +539,9 @@ export const DataProvider = ({ children }) => {
     vendorsRef.current = vendors;
   }, [vendors]);
   const [batches, setBatches] = useState(() => loadStorage(STORAGE_KEYS.BATCHES, []));
-  const [claims, setClaims] = useState(() => loadStorage(STORAGE_KEYS.CLAIMS, []));
+  const [claims, setClaims] = useState(() =>
+    (loadStorage(STORAGE_KEYS.CLAIMS, []) || []).filter((c) => !isTestOrInternalClaim(c, deletedKeysRef.current))
+  );
 
   const [dbStatus, setDbStatus] = useState({
     connected: false,
@@ -817,11 +855,7 @@ export const DataProvider = ({ children }) => {
         if (claimRes.status === 'fulfilled' && !claimRes.value.error) {
           sbConnected = true;
           const realClaimRows = allClaimsRows.filter(
-            (c) =>
-              !c.request_id?.startsWith('SYNC_') &&
-              !c.request_id?.startsWith('VERIFY_EVENT_') &&
-              !c.request_id?.startsWith('CLAIM_ACTION_EVENT_') &&
-              !c.qr_serial?.startsWith('DURAGRIT_')
+            (c) => !isTestOrInternalClaim(c, deletedSet)
           );
           sbClaims = realClaimRows.map(mapClaimFromDb);
 
@@ -892,10 +926,10 @@ export const DataProvider = ({ children }) => {
           );
       const nextClaims = mergeCollections(
         sbClaims,
-        bridge?.claims ?? loadStorage(STORAGE_KEYS.CLAIMS, []),
+        (bridge?.claims ?? loadStorage(STORAGE_KEYS.CLAIMS, [])).filter((c) => !isTestOrInternalClaim(c, deletedSet)),
         (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
         deletedSet
-      );
+      ).filter((c) => !isTestOrInternalClaim(c, deletedSet));
 
       setSkus(nextSkus);
       setUsers(nextUsers);
@@ -1900,14 +1934,14 @@ export const DataProvider = ({ children }) => {
       matchedVendor?.companyName ||
       (user?.role === 'Vendor' ? user?.name : '') ||
       liveUser?.vendorName ||
-      (vendors.length > 0 ? (vendors[0].companyName || 'Reliance Polymers Ltd (Hazira Complex)') : 'Reliance Polymers Ltd (Hazira Complex)');
+      (vendors.length > 0 ? (vendors[0].companyName || 'DuraGrit Authorized Partner') : 'DuraGrit Authorized Partner');
 
     const vendorId =
       user?.vendorId ||
       matchedVendor?.vendorId ||
       matchedVendor?.id ||
       (user?.role === 'Vendor' ? user?.id : '') ||
-      (vendors.length > 0 ? (vendors[0].vendorId || 'VEN-001') : 'VEN-001');
+      (vendors.length > 0 ? (vendors[0].vendorId || 'VND-101') : 'VND-101');
 
     const requestId = `CB-${Math.floor(1000 + Math.random() * 9000)}`;
     const tdsInfo = QREngineV24.calculateTDS(claimAmount, Boolean(liveUser?.panNumber || user?.panNumber));

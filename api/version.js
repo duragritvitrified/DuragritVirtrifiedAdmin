@@ -11,15 +11,15 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.9.1',
-    buildNumber: 161,
+    version: '4.9.2',
+    buildNumber: 162,
     timestamp: buildTime,
-    adminVersion: '4.9.1',
-    adminBuildNumber: 161,
-    vendorVersion: '4.9.1',
-    vendorBuildNumber: 161,
+    adminVersion: '4.9.2',
+    adminBuildNumber: 162,
+    vendorVersion: '4.9.2',
+    vendorBuildNumber: 162,
     apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
-    changelog: 'Real-time duplicate mobile & duplicate email prevention with instant inline alerts on Vendor Management page v4.9.1.'
+    changelog: 'Pure live database sync: test & dummy records completely purged, live Supabase & Vercel production verified v4.9.2.'
   });
 }

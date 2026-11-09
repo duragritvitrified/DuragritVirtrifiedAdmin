@@ -72,7 +72,7 @@ export default async function handler(req, res) {
             });
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     });
     vendors = Array.from(vMap.values());
 
@@ -157,7 +157,7 @@ export default async function handler(req, res) {
             flag_reason: JSON.stringify(vendors)
           })
           .eq('id', syncRow.id);
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 5. Always INSERT explicit verification audit and vendor update rows into Supabase cashback_requests
