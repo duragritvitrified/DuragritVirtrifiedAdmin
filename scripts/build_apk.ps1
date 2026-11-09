@@ -38,9 +38,9 @@ if (Test-Path $indexHtml) {
         localStorage.setItem('duragrit_preferred_portal', 'vendor');
         localStorage.removeItem('duragrit_app_releases_v1');
         var curVer = localStorage.getItem('duragrit_client_installed_version');
-        if (!curVer || curVer.indexOf('v3.') === 0 || curVer === 'v4.8.8' || curVer === 'v4.8.9' || curVer === 'v4.9.0' || curVer === 'v4.9.1') {
-          localStorage.setItem('duragrit_client_installed_version', 'v4.9.2');
-          localStorage.setItem('duragrit_client_installed_build', '162');
+        if (!curVer || curVer.indexOf('v3.') === 0 || curVer === 'v4.8.8' || curVer === 'v4.8.9' || curVer === 'v4.9.0' || curVer === 'v4.9.1' || curVer === 'v4.9.2') {
+          localStorage.setItem('duragrit_client_installed_version', 'v4.9.3');
+          localStorage.setItem('duragrit_client_installed_build', '163');
         }
       } catch (_) {}
     </script>

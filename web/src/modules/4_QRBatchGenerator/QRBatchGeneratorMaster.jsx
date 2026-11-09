@@ -131,10 +131,10 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
 
       const tokensList = Array.from({ length: qtyNum }).map((_, i) => {
         const serialSeq = String(i + 1).padStart(6, '0');
-        const tokenSerial = `DG-${cleanSku}-${batchNum}-${serialSeq}`;
+        const tokenSerial = `DG-${cleanSku}-${datePart}-${serialSeq}`;
         return {
           serialKey: tokenSerial,
-          dualSha128: `SHA128-${batchNum}-${serialSeq}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+          dualSha128: `SHA128-${cleanSku}-${serialSeq}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
           cashbackAmount: Number(cashbackReward),
           lotNumber: String(batchNum),
           qrPayloadUrl: `https://verify.duragritvitrified.com/qr/${tokenSerial}`,
@@ -190,13 +190,13 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
       return;
     }
 
-    const qrImgSrc = liveQrDataUrl || createSimpleQRSvg();
+    const fallbackQr = liveQrDataUrl || createSimpleQRSvg();
     const stickersHtml = allTokens
       .map(
         (t) => `
       <div class="sticker">
         <div class="sticker-header">DURAGRIT VITRIFIED</div>
-        <div class="qr-container"><img src="${qrImgSrc}" class="qr-img" alt="QR" /></div>
+        <div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.qrPayloadUrl || ('https://verify.duragritvitrified.com/qr/' + t.serialKey))}" class="qr-img" alt="QR" onerror="this.src='${fallbackQr}'" /></div>
         <div class="serial-key">${t.serialKey}</div>
       </div>`
       )
@@ -793,7 +793,12 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                       DURAGRIT VITRIFIED
                     </div>
                     <div className="my-1.5">
-                      <img src={liveQrDataUrl} alt="QR" className="w-16 h-16" />
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.qrPayloadUrl || ('https://verify.duragritvitrified.com/qr/' + t.serialKey))}`}
+                        alt="QR"
+                        className="w-16 h-16"
+                        onError={(e) => { e.currentTarget.src = liveQrDataUrl; }}
+                      />
                     </div>
                     <span className="text-[7.5px] font-mono font-bold text-[#1C1917] block truncate max-w-full">
                       {t.serialKey}

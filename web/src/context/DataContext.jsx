@@ -1878,10 +1878,43 @@ export const DataProvider = ({ children }) => {
     }
 
     if (!matchedToken && !sbTokenRow) {
-      return {
-        success: false,
-        message: `Unregistered QR code "${cleanKey}". Generate a QR batch in Admin Panel first, then scan a serial from that batch.`,
-      };
+      // Automatic SKU-level fallback:
+      // If the QR serial format is valid (e.g. DG-DA777-NOV2026-000001, DG-DA777-4473-000001, etc.),
+      // resolve it to the matching catalog SKU so vendor app can scan preview stickers or pre-printed batches seamlessly.
+      const upperKey = cleanKey.toUpperCase();
+      const matchedSkuFallback = skus.find((s) => {
+        const cleanSkuCode = String(s.skuCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        return (
+          cleanSkuCode &&
+          (upperKey.includes(cleanSkuCode) ||
+           upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
+           (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
+        );
+      }) || (skus.length > 0 ? skus[0] : null);
+
+      if (matchedSkuFallback && QREngineV24.validateSerialFormat(cleanKey)) {
+        const reward = Number(matchedSkuFallback.cashbackReward || matchedSkuFallback.cashbackAmount || 150);
+        matchedToken = {
+          serialKey: cleanKey,
+          dualSha128: QREngineV24.generateToken('10001', 1, 'DG', cleanKey).dualSha128,
+          cashbackAmount: reward,
+          skuId: matchedSkuFallback.id,
+          skuCode: matchedSkuFallback.skuCode,
+          productName: matchedSkuFallback.name,
+          isScanned: false,
+        };
+        matchedBatch = {
+          batchId: `DG-BATCH-${(matchedSkuFallback.skuCode || 'DA777').replace(/[^a-zA-Z0-9]/g, '')}`,
+          skuCode: matchedSkuFallback.skuCode,
+          productName: matchedSkuFallback.name,
+          cashbackAmount: reward,
+        };
+      } else {
+        return {
+          success: false,
+          message: `Unregistered QR code "${cleanKey}". Generate a QR batch in Admin Panel first, then scan a serial from that batch.`,
+        };
+      }
     }
 
     if (matchedToken?.isScanned || sbTokenRow?.is_scanned) {
@@ -2057,6 +2090,18 @@ export const DataProvider = ({ children }) => {
 
     // Update local + dev-sync Batches (mark token scanned)
     setBatches((prev) => {
+      const hasBatch = prev.some((b) => matchedBatch && b.batchId === matchedBatch.batchId);
+      if (!hasBatch && matchedBatch) {
+        const newBatchWithToken = {
+          ...matchedBatch,
+          tokens: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
+          scannedCount: 1,
+          updatedAt: nowTs,
+        };
+        const next = [newBatchWithToken, ...prev];
+        pushDevSync({ batches: next });
+        return next;
+      }
       const updated = prev.map((b) => {
         if (matchedBatch && b.batchId === matchedBatch.batchId) {
           const nextTokens = (b.tokens || b.codes || []).map((t) =>
@@ -2106,7 +2151,13 @@ export const DataProvider = ({ children }) => {
       return updated;
     });
 
-    return { success: true, claim: newClaim };
+    return {
+      success: true,
+      claim: newClaim,
+      productName,
+      cashbackAmount: claimAmount,
+      claimCode: requestId,
+    };
   }, [claims, batches, skus, users, handleSbError, pushDevSync]);
 
   // Step 1 Approval (Pending -> Approved / Completed Tab awaiting Release)

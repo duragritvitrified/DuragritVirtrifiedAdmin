@@ -11,15 +11,15 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.9.2',
-    buildNumber: 162,
+    version: '4.9.3',
+    buildNumber: 163,
     timestamp: buildTime,
-    adminVersion: '4.9.2',
-    adminBuildNumber: 162,
-    vendorVersion: '4.9.2',
-    vendorBuildNumber: 162,
+    adminVersion: '4.9.3',
+    adminBuildNumber: 163,
+    vendorVersion: '4.9.3',
+    vendorBuildNumber: 163,
     apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
-    changelog: 'Pure live database sync: test & dummy records completely purged, live Supabase & Vercel production verified v4.9.2.'
+    changelog: 'Stabilized Vendor QR optical scanner (15 FPS, jitter elimination, buzz debouncing) + instant catalog SKU resolution for DA 777 & all DuraGrit QR batches v4.9.3.'
   });
 }

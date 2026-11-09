@@ -40,6 +40,10 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
 
   const fileInputRef = useRef(null);
   const html5QrCodeRef = useRef(null);
+  const isProcessingRef = useRef(false);
+  const lastScannedTextRef = useRef('');
+  const lastScannedTimeRef = useRef(0);
+  const lastBuzzTimeRef = useRef(0);
   const scannerContainerId = 'interactive-qr-scanner-viewport';
 
   // Save session tags
@@ -67,15 +71,27 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
           await html5QrCode.start(
             cameraId,
             {
-              fps: 60,
+              fps: 15, // Optimal 15 fps scanning to prevent CPU/battery strain and rapid jitter
               qrbox: { width: 220, height: 220 },
               aspectRatio: 1.0,
             },
             (decodedText) => {
-              if (decodedText) {
-                // Optical scan match
-                processSubmission(decodedText);
+              if (!decodedText || isProcessingRef.current) return;
+              const clean = String(decodedText).trim();
+              const now = Date.now();
+              // Prevent repeat rapid firing on same code
+              if (lastScannedTextRef.current === clean && now - lastScannedTimeRef.current < 3000) {
+                return;
               }
+              lastScannedTextRef.current = clean;
+              lastScannedTimeRef.current = now;
+              isProcessingRef.current = true;
+
+              processSubmission(clean).finally(() => {
+                setTimeout(() => {
+                  isProcessingRef.current = false;
+                }, 1500);
+              });
             },
             () => {}
           );
@@ -174,7 +190,10 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
     const cleanSerial = rawSerial.replace(/^#/, '').trim();
 
     setIsScanning(true);
-    setScanStatus(null);
+    setScanStatus({
+      type: 'processing',
+      message: `Verifying QR code "${cleanSerial}"...`,
+    });
 
     try {
       const result = await submitScannedCode({
@@ -186,7 +205,11 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
       setIsScanning(false);
 
       if (!result || !result.success) {
-        if (soundEnabled && AudioService?.playErrorBuzz) AudioService.playErrorBuzz();
+        const now = Date.now();
+        if (now - lastBuzzTimeRef.current > 3000) {
+          lastBuzzTimeRef.current = now;
+          if (soundEnabled && AudioService?.playErrorBuzz) AudioService.playErrorBuzz();
+        }
         setScanStatus({
           type: 'error',
           message: result?.message || 'Unable to verify QR code. Ensure batch is generated in Admin Panel.',
@@ -207,7 +230,7 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
       const newTag = {
         id: Date.now(),
         tag: cleanSerial,
-        desc: `${result.productName || 'Vitrified SKU'} • ₹${result.cashbackAmount || 50} Cashback Claimed`,
+        desc: `${result.productName || 'Vitrified SKU'} • ₹${result.cashbackAmount || 150} Cashback Claimed`,
         time: 'Just now',
         status: 'QUEUED',
       };
@@ -215,7 +238,7 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
       setRecentTags((prev) => [newTag, ...prev.slice(0, 9)]);
       setScanStatus({
         type: 'success',
-        message: `Success! Claim ${result.claimCode || ''} (₹${result.cashbackAmount}) queued for NPCI Escrow moderation.`,
+        message: `Success! Claim ${result.claimCode || ''} (₹${result.cashbackAmount || 150}) queued for NPCI Escrow moderation.`,
       });
       setManualSerial('');
       setProofImage(null);
@@ -226,6 +249,11 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
       }
     } catch (err) {
       setIsScanning(false);
+      const now = Date.now();
+      if (now - lastBuzzTimeRef.current > 3000) {
+        lastBuzzTimeRef.current = now;
+        if (soundEnabled && AudioService?.playErrorBuzz) AudioService.playErrorBuzz();
+      }
       setScanStatus({
         type: 'error',
         message: `Verification Error: ${err.message}`,
@@ -275,7 +303,7 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
           <div className="relative z-10 flex items-center justify-between font-sans text-xs">
             <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-white font-mono text-[10px]">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-              <span>CAM OPTIC 01 • 60FPS</span>
+              <span>CAM OPTIC 01 • 15FPS</span>
             </div>
 
             <button
@@ -378,23 +406,33 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
           </div>
         </div>
 
-        {/* Status Alerts */}
-        {scanStatus && (
-          <div
-            className={`p-3 rounded-2xl text-xs flex items-start gap-2.5 font-sans ${
-              scanStatus.type === 'error'
-                ? 'bg-rose-50 border border-rose-200 text-rose-800'
-                : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-            }`}
-          >
-            {scanStatus.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
-            )}
-            <span className="leading-relaxed font-semibold">{scanStatus.message}</span>
-          </div>
-        )}
+        {/* Status Alerts with stable container to eliminate vertical jumping */}
+        <div className="min-h-[58px] flex items-center">
+          {scanStatus ? (
+            <div
+              className={`w-full p-3 rounded-2xl text-xs flex items-start gap-2.5 font-sans transition-all duration-200 ${
+                scanStatus.type === 'error'
+                  ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                  : scanStatus.type === 'processing'
+                  ? 'bg-amber-50 border border-amber-200 text-amber-800'
+                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              }`}
+            >
+              {scanStatus.type === 'error' ? (
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+              ) : scanStatus.type === 'processing' ? (
+                <div className="w-4 h-4 shrink-0 mt-0.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+              )}
+              <span className="leading-relaxed font-semibold">{scanStatus.message}</span>
+            </div>
+          ) : (
+            <div className="w-full py-2.5 px-3 bg-stone-50 border border-stone-200/60 rounded-xl text-center text-[11px] text-stone-500 font-sans">
+              Point camera steadily at QR code on DuraGrit bag or carton
+            </div>
+          )}
+        </div>
 
         {/* Manual Serial Ingest Card matching PDF Page 10 */}
         <section className="bg-white rounded-2xl p-4 border border-[#ECEAE6] shadow-xs space-y-3 font-sans">
