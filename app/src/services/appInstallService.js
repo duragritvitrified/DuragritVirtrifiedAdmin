@@ -6,8 +6,8 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.8.7';
-export const CURRENT_BUILT_IN_BUILD = 157;
+export const CURRENT_BUILT_IN_VERSION = 'v4.8.8';
+export const CURRENT_BUILT_IN_BUILD = 158;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -30,13 +30,28 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-010',
+    version: 'v4.8.8',
+    buildNumber: 158,
+    releaseDate: '2026-11-09 17:30:00',
+    title: 'Simplified Claim Cards & Responsive Layout Release v4.8.8',
+    changelog: 'Streamlined claim cards on Overview and Requests tabs, crisp vendor attribution, compact 2-line rejection alerts, and responsive fixes for all mobile viewports.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-d777sync158',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-009',
     version: 'v4.8.7',
     buildNumber: 157,
     releaseDate: '2026-11-09 16:15:00',
     title: 'Real-time Supabase Data Sync & Catalog Parity Engine v4.8.7',
     changelog: 'Bidirectional Supabase realtime sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.7.',
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
@@ -689,6 +704,25 @@ export const ADMIN_VERSION_KEY = 'duragrit_admin_installed_version';
 
 export const DEFAULT_ADMIN_RELEASES = [
   {
+    id: 'ADM-REL-2026-006',
+    version: 'v4.8.8',
+    buildNumber: 158,
+    releaseDate: '2026-11-09 17:30:00',
+    title: 'Simplified Claim Cards & Responsive Layout Release v4.8.8',
+    changelog: 'Streamlined claim cards on Overview and Requests tabs, crisp vendor attribution, compact 2-line rejection alerts, and responsive fixes for all mobile viewports.',
+    changesList: [
+      'Simplified moderation cards on Overview and Requests queues with 2-to-3 row hierarchy',
+      'Compact Vendor Name, Firm ID, and Applicant strip with SKU badge',
+      'Clean touch-friendly action buttons (Approve & Pay / Reject) with zero horizontal overflow',
+      'Limited Overview recent claims to top 5 with direct Full Queue link'
+    ],
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '24.5 MB',
+    bundleHash: 'sha256-adm488resp158'
+  },
+  {
     id: 'ADM-REL-2026-005',
     version: 'v4.8.7',
     buildNumber: 157,
@@ -701,7 +735,7 @@ export const DEFAULT_ADMIN_RELEASES = [
       'Purged obsolete test products and synchronized deleted keys across all clients',
       'Instant OTA hot-reload and real-time push notification'
     ],
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '24.5 MB',

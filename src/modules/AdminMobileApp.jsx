@@ -456,10 +456,17 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   };
 
   const handleRefresh = async () => {
-    if (!refreshAllData) return;
     setIsSyncing(true);
     try {
-      await refreshAllData();
+      if (refreshAllData) await refreshAllData();
+      // Also check live server for OTA update on manual header refresh!
+      try {
+        const live = await checkForLiveAdminUpdate();
+        if (live?.hasUpdate) {
+          setAdminUpdateStatus(live);
+          setShowAdminUpdateModal(true);
+        }
+      } catch (_) {}
       setLastSyncSeconds(0);
       showHapticHUD('Live Moderation Node Synced', '🔄', 'emerald');
     } finally {
