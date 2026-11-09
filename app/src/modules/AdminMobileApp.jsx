@@ -1792,21 +1792,30 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             {/* Moderation Queue Section Header */}
             <section className="flex items-center justify-between pt-1">
               <div className="flex items-center space-x-1.5">
-                <h2 className="text-xs font-bold text-slate-900">Pending Moderation</h2>
+                <h2 className="text-xs font-bold text-slate-900">
+                  {filterTab === 'pending'
+                    ? 'Pending Verification'
+                    : filterTab === 'approved'
+                    ? 'Approved Claims'
+                    : filterTab === 'rejected'
+                    ? 'Rejected Claims'
+                    : 'Recent Claims Activity'}
+                </h2>
                 <span className="bg-orange-50 text-[#B9381E] border border-orange-200/50 text-[9px] font-bold px-1.5 py-0.2 rounded-full font-mono">
-                  {pendingCount}
+                  {filteredClaims.length}
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => setActiveTab('requests')}
                 className="text-[10px] font-semibold text-[#B9381E] hover:underline flex items-center space-x-0.5 cursor-pointer"
               >
-                <span>View Full Queue</span>
+                <span>Full Queue</span>
                 <span>→</span>
               </button>
             </section>
 
-            {/* Moderation Cards List */}
+            {/* Moderation Cards List (Simplified, Streamlined & 100% Responsive) */}
             <section className="space-y-2.5">
               {filteredClaims.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-1">
@@ -1817,168 +1826,160 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   </p>
                 </div>
               ) : (
-                filteredClaims.map((claim) => {
+                (filterTab === 'all' ? filteredClaims.slice(0, 5) : filteredClaims).map((claim) => {
                   const isPending = claim.status === 'Pending';
                   const isApproved = claim.status === 'Approved' || claim.status === 'Disbursed';
                   const isRejected = claim.status === 'Rejected' || claim.status === 'Flagged';
                   const vInfo = resolveVendorInfo(claim);
+                  const rejectionReason = claim.flagReason || claim.remarks || claim.reason || 'Flagged during audit verification';
 
                   return (
                     <article
                       key={claim.id}
-                      className="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-xs space-y-2.5 hover:border-slate-300 transition"
+                      className="bg-white rounded-xl border border-slate-200/90 p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5"
                     >
-                      {/* Card Header ID & State */}
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <div className="flex items-center space-x-1.5 text-slate-800">
-                          <ShieldCheck className="w-3.5 h-3.5 text-[#B9381E]" />
-                          <span className="text-xs font-bold tracking-tight font-mono">
-                            {claim.requestId || claim.claimCode || claim.id}
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-mono">
-                            • {formatRequestDateTime(claim)}
-                          </span>
-                        </div>
-
-                        <span
-                          className={`inline-flex items-center space-x-1 text-[9px] font-semibold px-2 py-0.5 rounded-full border ${isApproved
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : isRejected
-                                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                : 'bg-amber-50 text-amber-700 border-amber-200'
-                            }`}
-                        >
-                          <span
-                            className={`w-1 h-1 rounded-full ${isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
-                              }`}
-                          ></span>
-                          <span>{isApproved ? 'Approved & Settled' : isRejected ? 'Rejected / Flagged' : 'Pending Verification'}</span>
-                        </span>
-                      </div>
-
-                      {/* Prominent Vendor Banner */}
-                      <div className="flex items-center space-x-2 bg-gradient-to-r from-[#FEF2EE] to-amber-50/70 border border-[#F9CEB8]/80 px-2.5 py-1.5 rounded-xl">
-                        <div className="w-6 h-6 rounded-md bg-white border border-[#F9CEB8] flex items-center justify-center text-[#C84826] shrink-0">
-                          <Building2 className="w-3.5 h-3.5" />
-                        </div>
+                      {/* Row 1: Header - Vendor Firm & Amount + Status */}
+                      <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="text-[9px] font-black uppercase tracking-wider text-[#A62C11] flex items-center gap-1">
-                            <span>Vendor / Partner Firm</span>
-                            <span className="text-stone-300">•</span>
-                            <span className="font-mono text-stone-500 font-semibold">{vInfo.vendorId || 'VEN-001'}</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-xs sm:text-[13px] text-slate-900 truncate">
+                              {vInfo.vendorName || 'DuraGrit Partner'}
+                            </span>
+                            {vInfo.vendorId && (
+                              <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
+                                {vInfo.vendorId}
+                              </span>
+                            )}
                           </div>
-                          <div className="text-xs font-black text-slate-900 truncate">
-                            {vInfo.vendorName}
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-0.5 font-mono truncate">
+                            <span>{claim.requestId || claim.claimCode || claim.id}</span>
+                            <span>•</span>
+                            <span>{formatRequestDateTime(claim)}</span>
                           </div>
+                        </div>
+
+                        {/* Amount & Status Badge */}
+                        <div className="text-right shrink-0">
+                          <span className="text-xs sm:text-sm font-black text-slate-900 font-mono block">
+                            ₹{Number(claim.amount || claim.cashbackAmount || 0).toLocaleString('en-IN')}
+                          </span>
+                          <span
+                            className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${
+                              isApproved
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : isRejected
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-amber-50 text-amber-800 border-amber-200'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                              }`}
+                            />
+                            <span>{isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}</span>
+                          </span>
                         </div>
                       </div>
 
-                      {/* Contractor / Applicant Profile Details */}
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Applicant:</span>
-                            <span className="text-xs font-bold text-slate-900">{claim.userName || 'Registered Partner'}</span>
-                            <CheckCircle2 className="w-3 h-3 text-sky-500" />
-                          </div>
-                          <p className="text-[10px] text-slate-500 mt-0.5">
-                            {claim.userRole || 'Contractor'} • {claim.userMobile || claim.mobile || '+91 98450 21980'}
-                          </p>
+                      {/* Row 2: Applicant & Product SKU in Single Clean Strip */}
+                      <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-100 flex items-center justify-between gap-2 text-[10.5px]">
+                        <div className="min-w-0 flex-1 truncate text-slate-700">
+                          <span className="font-semibold text-slate-900 truncate">
+                            {claim.userName || claim.contractorName || 'Partner'}
+                          </span>
+                          {(claim.userMobile || claim.mobile) && (
+                            <span className="text-slate-500 font-mono ml-1.5 text-[10px]">
+                              {claim.userMobile || claim.mobile}
+                            </span>
+                          )}
                         </div>
-                        <span className="text-[9px] font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/80 font-mono">
-                          {claim.location ? String(claim.location).slice(0, 10).toUpperCase() : 'MOR-HQ-01'}
-                        </span>
-                      </div>
-
-                      {/* Product Claim Info Block */}
-                      <div className="bg-slate-50/80 rounded-xl p-2 border border-slate-100 flex items-center justify-between">
-                        <div className="flex items-center space-x-2 min-w-0">
-                          <div className="w-7 h-7 rounded-lg bg-slate-200/70 flex items-center justify-center text-slate-700 text-xs shrink-0 font-bold font-mono">
-                            📦
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-[10.5px] font-bold text-slate-800 tracking-tight font-mono truncate">
-                              {claim.skuCode || 'DTA-999'} • {claim.qrSerial || claim.serialKey || 'QR-88410-01'}
-                            </div>
-                            <div className="text-[9.5px] text-slate-500 truncate">
-                              {claim.productName || '20kg Bag • High-Polymer Adhesive'}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right shrink-0 ml-2">
-                          <div className="text-xs font-black text-slate-900 font-mono">
-                            ₹{claim.amount || 250}
-                          </div>
-                          <div className="text-[8.5px] text-slate-500 font-mono">
-                            {formatRequestDateTime(claim)}
-                          </div>
+                        <div className="shrink-0 font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
+                          {claim.skuCode || claim.productName || 'DA-777'}
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      {isPending ? (
+                      {/* Row 3 (Conditional): Rejection Reason if Rejected */}
+                      {isRejected && (
+                        <div className="bg-rose-50/90 border border-rose-200/80 rounded-lg px-2.5 py-1.5 text-[10.5px] text-rose-800 flex items-start gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <span className="font-bold text-rose-900 text-[10px] uppercase font-mono mr-1">Reason:</span>
+                            <span className="font-medium text-rose-700 break-words">
+                              {rejectionReason}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Row 4 (Conditional): UTR for Approved */}
+                      {isApproved && (claim.npciRrn || claim.transactionId || claim.utr) && (
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
+                          <span className="text-emerald-700 font-bold flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> Settled via UPI
+                          </span>
+                          <span className="text-slate-600 font-medium truncate ml-2">
+                            UTR: <strong className="text-slate-800">{claim.npciRrn || claim.transactionId || claim.utr}</strong>
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Row 5 (Conditional): Quick Review & Approve / Reject Action Buttons */}
+                      {isPending && (
                         <div className="grid grid-cols-2 gap-2 pt-0.5">
                           <button
+                            type="button"
                             onClick={() => handleApprove(claim)}
-                            className="py-1.5 px-3 bg-[#B9381E] text-white text-[11px] font-bold rounded-xl hover:bg-[#A33019] flex items-center justify-center space-x-1 shadow-xs active:scale-95 transition cursor-pointer"
+                            className="py-1.5 px-3 bg-[#BA3A24] hover:bg-[#A02F17] text-white text-[11px] font-bold rounded-lg shadow-xs active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer min-w-0"
                           >
-                            <span>✔</span>
-                            <span>Review &amp; Approve</span>
+                            <Check className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Approve &amp; Pay</span>
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => setFlagModalClaim(claim)}
-                            className="py-1.5 px-3 bg-white border border-slate-200 text-slate-700 text-[11px] font-semibold rounded-xl hover:bg-slate-50 flex items-center justify-center space-x-1 active:scale-95 transition cursor-pointer"
+                            className="py-1.5 px-3 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-slate-700 hover:text-rose-700 text-[11px] font-bold rounded-lg active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer min-w-0"
                           >
-                            <span>⚐</span>
-                            <span>Flag / Reject</span>
+                            <X className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Reject</span>
                           </button>
-                        </div>
-                      ) : isRejected ? (
-                        <div className="bg-rose-50 border border-rose-200/80 rounded-xl p-2.5 text-xs space-y-1">
-                          <div className="flex items-center gap-1.5 font-bold text-rose-800 text-[11px]">
-                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                            <span className="uppercase tracking-wider">Rejection Reason:</span>
-                          </div>
-                          <p className="text-[11px] text-rose-700 font-medium pl-5 leading-snug">
-                            {claim.flagReason || claim.remarks || claim.reason || 'Flagged during audit verification'}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="pt-1 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-100">
-                          <span>Audited by Super Admin</span>
-                          <span className="font-mono font-bold text-slate-700">
-                            UTR: {claim.npciRrn || claim.transactionId || 'SETTLED-DIRECT'}
-                          </span>
                         </div>
                       )}
                     </article>
                   );
                 })
               )}
+
+              {/* View Full Queue button when more than 5 claims exist in Overview */}
+              {filterTab === 'all' && filteredClaims.length > 5 && (
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('requests')}
+                    className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200/90 transition active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span>View All {filteredClaims.length} Claims in Full Queue</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </section>
 
-            {/* NPCI 256-Bit Automated Escrow Footer matching Step 12 */}
-            <footer className="bg-slate-100/90 rounded-2xl p-3 border border-slate-200/70 space-y-2 mt-3">
-              <div className="flex items-start space-x-2">
-                <ShieldCheck className="w-4 h-4 text-slate-700 mt-0.5 shrink-0" />
-                <div>
-                  <h4 className="text-[11px] font-bold text-slate-800">NPCI 256-Bit Automated Escrow</h4>
-                  <p className="text-[9px] text-slate-500 leading-tight mt-0.5">
-                    Claims auto-reconcile via UPI Direct Node. 1% GSTIN TDS deducted under Sec 194C for non-composite mason accounts.
-                  </p>
+            {/* NPCI Automated Escrow Compact Node */}
+            <footer className="bg-slate-100/90 rounded-xl p-2.5 border border-slate-200/70 space-y-1 mt-2">
+              <div className="flex items-center justify-between text-[10px]">
+                <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>NPCI 256-Bit Escrow Node Active</span>
                 </div>
+                <span className="text-[9px] text-slate-500 font-mono">100% SLA</span>
               </div>
-
-              <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[10px]">
-                <div className="flex items-center space-x-1 text-slate-600">
-                  <span>🎧</span>
-                  <span>Admin IT Desk: <strong className="text-slate-800 font-mono">+91 7303967198</strong></span>
-                </div>
+              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between text-[9.5px] text-slate-600">
+                <span className="truncate">Admin IT Desk: <strong className="text-slate-800 font-mono">+91 7303967198</strong></span>
                 <a
                   href="tel:+917303967198"
-                  className="text-[9px] font-semibold bg-white border border-slate-300 text-slate-700 px-2 py-0.5 rounded-lg shadow-2xs hover:bg-slate-50"
+                  className="font-bold text-[#BA3A24] hover:underline shrink-0 ml-1"
                 >
                   Call Node
                 </a>
@@ -2096,129 +2097,119 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   const rejectionReason = claim.flagReason || claim.remarks || claim.reason || 'Flagged during audit verification';
 
                   return (
-                    <div
+                    <article
                       key={claim.id}
-                      className="bg-white rounded-xl border border-slate-200 p-3.5 space-y-2.5 shadow-2xs hover:border-slate-300 transition"
+                      className="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5"
                     >
-                      {/* Top Header: Request ID, Date-Time Received & Amount */}
+                      {/* Row 1: Header - Vendor Firm & Amount + Status */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                            <span className="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/80">
-                              {claim.requestId || claim.claimCode || claim.id}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-xs sm:text-[13px] text-slate-900 truncate">
+                              {vInfo.vendorName || 'DuraGrit Partner'}
                             </span>
-                            {/* Prominent Date & Time Request Received */}
-                            <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 font-semibold bg-slate-100/90 px-2 py-0.5 rounded border border-slate-200">
-                              <Clock className="w-3 h-3 text-[#BA3A24]" />
-                              <span>{formatRequestDateTime(claim)}</span>
-                            </span>
+                            {vInfo.vendorId && (
+                              <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
+                                {vInfo.vendorId}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-0.5 font-mono truncate">
+                            <span>{claim.requestId || claim.claimCode || claim.id}</span>
+                            <span>•</span>
+                            <span>{formatRequestDateTime(claim)}</span>
                           </div>
                         </div>
+
+                        {/* Amount & Status Badge */}
                         <div className="text-right shrink-0">
-                          <span className="text-xs font-black text-emerald-700 font-mono block">
-                            ₹{Number(claim.amount || claim.cashbackAmount || 250).toLocaleString('en-IN')}
+                          <span className="text-xs sm:text-sm font-black text-slate-900 font-mono block">
+                            ₹{Number(claim.amount || claim.cashbackAmount || 0).toLocaleString('en-IN')}
+                          </span>
+                          <span
+                            className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${
+                              isApproved
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : isRejected
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-amber-50 text-amber-800 border-amber-200'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                              }`}
+                            />
+                            <span>{isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}</span>
                           </span>
                         </div>
                       </div>
 
-                      {/* Vendor Name Badge */}
-                      <div className="flex items-center space-x-1.5 bg-[#FEF2EE] border border-[#F9CEB8]/70 px-2.5 py-1.5 rounded-lg">
-                        <Building2 className="w-3.5 h-3.5 text-[#C84826] shrink-0" />
-                        <div className="min-w-0 flex-1 flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-900 truncate">
-                            Vendor: <strong className="text-[#A62C11]">{vInfo.vendorName}</strong>
+                      {/* Row 2: Applicant & Product SKU in Single Clean Strip */}
+                      <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-100 flex items-center justify-between gap-2 text-[10.5px]">
+                        <div className="min-w-0 flex-1 truncate text-slate-700">
+                          <span className="font-semibold text-slate-900 truncate">
+                            {claim.userName || claim.contractorName || 'Partner'}
                           </span>
-                          <span className="text-[9px] font-mono font-bold text-stone-500 bg-white px-1.5 py-0.5 rounded border border-[#F9CEB8]/60 ml-1">
-                            {vInfo.vendorId}
-                          </span>
+                          {(claim.userMobile || claim.mobile) && (
+                            <span className="text-slate-500 font-mono ml-1.5 text-[10px]">
+                              {claim.userMobile || claim.mobile}
+                            </span>
+                          )}
+                        </div>
+                        <div className="shrink-0 font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
+                          {claim.skuCode || claim.productName || 'DA-777'}
                         </div>
                       </div>
 
-                      {/* Applicant & SKU / Product Details */}
-                      <div className="text-xs text-slate-600 bg-slate-50/70 p-2 rounded-lg border border-slate-100 space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-slate-800 truncate">
-                            Applicant: {claim.userName || 'Registered Partner'}
-                          </span>
-                          <span className="font-mono text-[10px] text-slate-500">
-                            {claim.userMobile || 'N/A'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-[10.5px] text-slate-500 pt-1 border-t border-slate-200/50">
-                          <span className="truncate">{claim.productName || 'DuraGrit Tile Adhesive'}</span>
-                          <span className="font-mono text-[10px] text-slate-600 bg-white px-1.5 py-0.5 rounded border border-slate-200 shrink-0 ml-1">
-                            {claim.skuCode || 'DG-ADH-01'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* REJECTION REASON BOX (Prominently displayed on Rejected tab and on any rejected claim) */}
+                      {/* Row 3 (Conditional): Rejection Reason if Rejected */}
                       {isRejected && (
-                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-2.5 space-y-1">
-                          <div className="flex items-center gap-1.5 text-rose-800 font-bold text-[11px]">
-                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                            <span className="uppercase tracking-wider">Rejection Reason:</span>
+                        <div className="bg-rose-50/90 border border-rose-200/80 rounded-lg px-2.5 py-1.5 text-[10.5px] text-rose-800 flex items-start gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <span className="font-bold text-rose-900 text-[10px] uppercase font-mono mr-1">Reason:</span>
+                            <span className="font-medium text-rose-700 break-words">
+                              {rejectionReason}
+                            </span>
                           </div>
-                          <p className="text-[11px] text-rose-700 font-medium pl-5 leading-relaxed">
-                            {rejectionReason}
-                          </p>
                         </div>
                       )}
 
-                      {/* Pending Action Buttons */}
+                      {/* Row 4 (Conditional): UTR for Approved */}
+                      {isApproved && (claim.npciRrn || claim.transactionId || claim.utr) && (
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
+                          <span className="text-emerald-700 font-bold flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> Settled via UPI
+                          </span>
+                          <span className="text-slate-600 font-medium truncate ml-2">
+                            UTR: <strong className="text-slate-800">{claim.npciRrn || claim.transactionId || claim.utr}</strong>
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Row 5 (Conditional): Quick Review & Approve / Reject Action Buttons */}
                       {isPending && (
-                        <div className="flex gap-2 pt-1 border-t border-slate-100">
+                        <div className="grid grid-cols-2 gap-2 pt-0.5">
                           <button
+                            type="button"
                             onClick={() => handleApprove(claim)}
-                            className="flex-1 py-1.5 bg-[#BA3A24] text-white rounded-lg text-[11px] font-bold cursor-pointer hover:bg-[#A33019] active:scale-95 transition shadow-2xs"
+                            className="py-1.5 px-3 bg-[#BA3A24] hover:bg-[#A02F17] text-white text-[11px] font-bold rounded-lg shadow-xs active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer min-w-0"
                           >
-                            Approve &amp; Release
+                            <Check className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Approve &amp; Pay</span>
                           </button>
+
                           <button
+                            type="button"
                             onClick={() => setFlagModalClaim(claim)}
-                            className="px-3.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-lg text-[11px] font-bold cursor-pointer active:scale-95 transition border border-slate-200"
+                            className="py-1.5 px-3 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-slate-700 hover:text-rose-700 text-[11px] font-bold rounded-lg active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer min-w-0"
                           >
-                            Reject
+                            <X className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Reject</span>
                           </button>
                         </div>
                       )}
-
-                      {/* BOTTOM STATUS ROW ON ALL TABS (small color badge for Approved / Pending / Rejected) */}
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-slate-400 font-medium text-[10px]">Status:</span>
-                          {isApproved ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                              <span>{claim.status === 'Disbursed' ? 'Disbursed' : 'Approved'}</span>
-                            </span>
-                          ) : isRejected ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                              <span>{claim.status === 'Flagged' ? 'Flagged' : 'Rejected'}</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                              <span>Pending</span>
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="text-slate-500 font-mono text-[9.5px] flex items-center gap-1">
-                          {isApproved && (claim.npciRrn || claim.transactionId || claim.utr) ? (
-                            <span className="font-semibold text-slate-600">
-                              UTR: {claim.npciRrn || claim.transactionId || claim.utr}
-                            </span>
-                          ) : (
-                            <>
-                              <Clock className="w-2.5 h-2.5 text-slate-400" />
-                              <span>Req: {formatRequestDateTime(claim)}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    </article>
                   );
                 })
               )}

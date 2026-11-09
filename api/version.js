@@ -11,15 +11,15 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.8.7',
-    buildNumber: 157,
+    version: '4.8.8',
+    buildNumber: 158,
     timestamp: buildTime,
-    adminVersion: '4.8.7',
-    adminBuildNumber: 157,
-    vendorVersion: '4.8.7',
-    vendorBuildNumber: 157,
+    adminVersion: '4.8.8',
+    adminBuildNumber: 158,
+    vendorVersion: '4.8.8',
+    vendorBuildNumber: 158,
     apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
-    changelog: 'Real-time bidirectional Supabase sync for Product Catalog (duragrit DA 777), QR Batches & Claim Moderation across Admin Web & Mobile App v4.8.7.'
+    changelog: 'Simplified moderation claim cards and optimized responsive layout on Overview and Requests tabs v4.8.8.'
   });
 }
