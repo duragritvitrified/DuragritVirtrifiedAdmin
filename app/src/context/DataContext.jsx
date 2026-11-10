@@ -658,14 +658,20 @@ export const DataProvider = ({ children }) => {
   const pushClaimActionToSupabase = useCallback(async (action) => {
     if (!SB_ONLINE || !action?.claimId) return;
     try {
+      const disbursedAmt = Number(action.disbursedAmount || action.amount || 0);
+      const isDisbursed = action.status === 'Disbursed';
       await supabase.from('cashback_requests').insert({
         request_id: `CLAIM_ACTION_EVENT_${action.claimId}_${Date.now()}`,
         qr_serial: 'DURAGRIT_CLAIM_ACTION',
-        claim_value: Number(action.disbursedAmount || action.amount || 1),
+        claim_value: disbursedAmt || 1,
+        // net_disbursed: always set to actual amount when Disbursed, so mapClaimFromDb reads it correctly
+        net_disbursed: isDisbursed ? disbursedAmt : 0,
+        npci_rrn: action.transactionId || action.utr || action.npciRrn || null,
+        disbursed_at: isDisbursed ? (action.disbursedAt || new Date().toISOString()) : null,
         status: action.status || 'Approved',
-        payout_method: 'UPI',
+        payout_method: action.paymentMode || 'UPI',
         flag_reason: JSON.stringify(action),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (e) {
       console.warn('pushClaimActionToSupabase failed:', e);
