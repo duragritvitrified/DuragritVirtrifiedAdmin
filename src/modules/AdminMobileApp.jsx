@@ -285,7 +285,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   };
 
   // Screen & Navigation State
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'requests' | 'qrgen' | 'audit'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'requests' | 'release' | 'qrgen'
   const [filterTab, setFilterTab] = useState('all'); // 'all' | 'pending' | 'approved' | 'rejected'
   const [searchQuery, setSearchQuery] = useState('');
   const [hapticEnabled, setHapticEnabled] = useState(true);
@@ -990,205 +990,102 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   };
 
   // =========================================================================
-  // IF NOT AUTHENTICATED AS ADMIN: SHOW DISTINCT EXECUTIVE BLUE ADMIN LOGIN SCREEN
+  // IF NOT AUTHENTICATED AS ADMIN: CLEAN MINIMALISTIC ADMIN LOGIN SCREEN
   // =========================================================================
   if (!isAdminAuthenticated) {
     return (
-      <div className="w-full max-w-[460px] landscape:max-w-2xl mx-auto h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-0 landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:min-h-0 bg-gradient-to-b from-[#061224] via-[#0B1E3D] to-[#050D1A] text-slate-100 flex flex-col justify-between p-4 sm:p-6 landscape:p-3 select-none font-sans relative overflow-y-auto sm:rounded-[36px] landscape:rounded-none border border-blue-900/50 shadow-2xl">
-        {/* Luminous Blue & Cyan Ambient Glow Orbs */}
-        <div className="absolute -top-12 -right-12 w-72 h-72 bg-blue-600/25 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
-        <div className="absolute top-1/2 -left-20 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 right-0 w-60 h-60 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="pt-4 sm:pt-6 space-y-5 relative z-10">
-          {/* Executive Blue Brand Logo & Header */}
-          <div className="flex items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 border border-blue-400/40 shrink-0">
-              <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                <path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z" />
-              </svg>
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white font-serif">DuraGrit</h1>
-                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9.5px] font-black px-2 py-0.5 rounded-full tracking-wider uppercase border border-blue-400/40 shadow-xs shadow-blue-500/20">
-                  ADMIN CONSOLE
-                </span>
-              </div>
-              <p className="text-[11px] text-blue-300 font-mono flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                Executive Field Moderation Console
-              </p>
-            </div>
-          </div>
-
-          {/* Blue Cyber Glass Security Terminal Card */}
-          <div className="bg-[#0B1E3C]/80 backdrop-blur-md border border-blue-500/30 rounded-2xl p-4 space-y-2 shadow-lg shadow-blue-950/60 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500" />
-            <div className="flex items-center justify-between text-xs font-bold text-blue-100">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                <span>Super Admin Security Terminal</span>
-              </div>
-              <span className="text-[9.5px] font-mono text-cyan-300 bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-800/80">
-                FIPS 140-2
-              </span>
-            </div>
-            <p className="text-[11px] text-blue-200/80 leading-relaxed font-sans">
-              Sign in with your master administrative credentials to access live QR claim moderation, automated escrow payouts, and factory batch generation.
-            </p>
-          </div>
-
-          {/* 1-Tap Mobile Admin App Install Banner - 100% Mobile Responsive */}
-          {!isInstalled && (
-            <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white rounded-2xl p-2.5 sm:p-3 border border-blue-500/40 shadow-lg shadow-blue-950/80 font-sans relative z-10">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center shrink-0">
-                    <span className="text-base">📲</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span className="text-[11.5px] font-black tracking-tight text-white whitespace-nowrap truncate">
-                        Install Admin Console
-                      </span>
-                      <span className="text-[8px] bg-cyan-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full uppercase shrink-0 font-mono tracking-wider">
-                        1-Tap
-                      </span>
-                    </div>
-                    <p className="text-[9.5px] text-blue-200/90 truncate mt-0.5">
-                      Fullscreen executive command &amp; offline sync
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleInstallClick}
-                  className="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow transition shrink-0 whitespace-nowrap cursor-pointer"
-                >
-                  Install App
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Login Error Notification */}
-          {loginError && (
-            <div className="bg-rose-950/70 border border-rose-500/60 text-rose-200 text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
-              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>{loginError}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleAdminSignIn} className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-bold text-blue-200 uppercase tracking-wide mb-1.5 font-mono">
-                Admin Username or Email <span className="text-cyan-400">*</span>
-              </label>
-              <div className="relative flex items-center">
-                <span className="absolute left-3 text-blue-400">
-                  <User className="w-4 h-4" />
-                </span>
-                <input
-                  type="text"
-                  value={adminId}
-                  onChange={(e) => setAdminId(e.target.value)}
-                  placeholder="admin or duragrit07@gmail.com"
-                  className="w-full pl-9 pr-3.5 py-2.5 bg-[#07162C]/90 border border-blue-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 rounded-xl text-xs text-white placeholder-blue-300/40 transition font-mono outline-none shadow-inner"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[11px] font-bold text-blue-200 uppercase tracking-wide font-mono">
-                  Master Security Password <span className="text-cyan-400">*</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowAdminPass(!showAdminPass)}
-                  className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer font-bold"
-                >
-                  {showAdminPass ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              <div className="relative flex items-center">
-                <span className="absolute left-3 text-blue-400">
-                  <Lock className="w-4 h-4" />
-                </span>
-                <input
-                  type={showAdminPass ? 'text' : 'password'}
-                  value={adminPass}
-                  onChange={(e) => setAdminPass(e.target.value)}
-                  placeholder="Enter admin password (e.g. 1234)"
-                  className="w-full pl-9 pr-3.5 py-2.5 bg-[#07162C]/90 border border-blue-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 rounded-xl text-xs text-white placeholder-blue-300/40 transition font-mono outline-none shadow-inner"
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              onClick={handleAdminSignIn}
-              disabled={isSubmittingLogin}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/40 transition active:scale-[0.98] cursor-pointer flex items-center justify-center space-x-2 border border-blue-400/30"
-            >
-              {isSubmittingLogin ? (
-                <>
-                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Verifying Credentials...</span>
-                </>
-              ) : (
-                <>
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Sign In to Admin Console</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Quick-Fill Demo Admin Credentials Helper Card */}
-          <div className="p-3 bg-[#081833]/90 rounded-2xl border border-blue-800/60 flex items-center justify-between text-xs shadow-inner">
-            <div>
-              <div className="text-[10px] text-blue-300/80 font-mono font-medium">Default Super Admin Credentials</div>
-              <div className="text-[11px] font-mono font-bold text-white mt-0.5">
-                admin / <span className="text-cyan-400">1234</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setAdminId('admin');
-                setAdminPass('1234');
-                setLoginError('');
-                showHapticHUD('Admin Credentials Loaded', '🔑', 'emerald');
+      <div className="w-full max-w-[420px] mx-auto h-full min-h-[100dvh] bg-[#FAF9F6] px-4 flex flex-col items-center justify-center font-sans overflow-hidden select-none">
+        <div className="w-full">
+          {/* Centered Official DuraGrit Vitrified Logo */}
+          <div className="flex justify-center mb-6">
+            <img
+              src="/logo.png"
+              alt="DuraGrit Vitrified"
+              className="h-10 sm:h-12 w-auto object-contain"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/logo-white.png';
               }}
-              className="px-2.5 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-cyan-300 border border-blue-400/40 rounded-xl text-[10px] font-bold font-mono transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs"
-            >
-              <Zap className="w-3 h-3 text-cyan-400" />
-              <span>Auto-Fill</span>
-            </button>
+            />
           </div>
-        </div>
 
-        {/* Footer Navigation Strip */}
-        <div className="pt-6 border-t border-blue-900/60 text-center space-y-2 relative z-10">
-          {onSwitchToPartnerApp && (
-            <button
-              type="button"
-              onClick={onSwitchToPartnerApp}
-              className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer flex items-center justify-center gap-1.5 mx-auto transition"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>← Switch to Vendor / Contractor App</span>
-            </button>
-          )}
-          <p className="text-[9.5px] text-blue-400/70 font-mono">
-            DuraGrit Security Core v2.5.0 • FIPS 140-2 Level 3 • 256-Bit TLS 1.3
-          </p>
+          {/* Main Sign-In Card (Clean, Minimalistic & Centered) */}
+          <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">
+            {loginError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 mb-3.5">
+                <XCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+                <span className="leading-relaxed">{loginError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleAdminSignIn} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-stone-800 mb-1.5">
+                  Admin Username <span className="text-[#C84826]">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-stone-400">
+                    <User className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="text"
+                    value={adminId}
+                    onChange={(e) => setAdminId(e.target.value)}
+                    placeholder="e.g. admin or 9000000000"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#ECEAE6] bg-[#FBFAF9] focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] text-xs font-semibold text-stone-900 outline-none transition-all font-mono"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-bold text-stone-800">
+                    Master Security Password <span className="text-[#C84826]">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPass(!showAdminPass)}
+                    className="text-[11px] font-bold text-stone-500 hover:text-stone-800 cursor-pointer"
+                  >
+                    {showAdminPass ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-stone-400">
+                    <Lock className="w-4 h-4" />
+                  </span>
+                  <input
+                    type={showAdminPass ? 'text' : 'password'}
+                    value={adminPass}
+                    onChange={(e) => setAdminPass(e.target.value)}
+                    placeholder="••••••••••"
+                    className="w-full pl-9 pr-14 py-2.5 rounded-xl border border-[#ECEAE6] bg-[#FBFAF9] focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] text-xs font-mono text-stone-900 outline-none transition-all"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                onClick={handleAdminSignIn}
+                disabled={isSubmittingLogin}
+                className="w-full active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer bg-[#C84826] hover:bg-[#A6300F] text-xs"
+              >
+                {isSubmittingLogin ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Verifying Credentials...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Sign in to admin console →</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );
@@ -2373,25 +2270,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
               )}
             </section>
 
-            {/* NPCI Automated Escrow Compact Node */}
-            <footer className="bg-slate-100/90 rounded-xl p-2.5 border border-slate-200/70 space-y-1 mt-2">
-              <div className="flex items-center justify-between text-[10px]">
-                <div className="flex items-center gap-1.5 text-slate-700 font-bold">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>NPCI 256-Bit Escrow Node Active</span>
-                </div>
-                <span className="text-[9px] text-slate-500 font-mono">100% SLA</span>
-              </div>
-              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between text-[9.5px] text-slate-600">
-                <span className="truncate">Admin IT Desk: <strong className="text-slate-800 font-mono">+91 7303967198</strong></span>
-                <a
-                  href="tel:+917303967198"
-                  className="font-bold text-[#BA3A24] hover:underline shrink-0 ml-1"
-                >
-                  Call Node
-                </a>
-              </div>
-            </footer>
+
           </>
         )}
 
@@ -3035,9 +2914,6 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 <QrCode className="w-4 h-4 text-[#BA3A24]" />
                 <h2 className="text-xs font-bold text-slate-900">Mobile QR Batch Ingestion Engine</h2>
               </div>
-              <p className="text-[11px] text-slate-500">
-                Generate cryptographic QR code tokens for factory kilns. Tokens are instantly stored in Supabase with dual SHA-128 anti-counterfeit hashes.
-              </p>
 
               <form onSubmit={handleQuickCreateBatch} className="space-y-3 pt-1 text-xs">
                 <div>
@@ -3192,124 +3068,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
           </div>
         )}
 
-        {/* =================================================================== */}
-        {/* TAB 4: AUDIT LOG SCREEN                                            */}
-        {/* =================================================================== */}
-        {activeTab === 'audit' && (
-          <div className="space-y-3">
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-[#BA3A24]" />
-                <h2 className="text-xs font-bold text-slate-900">NPCI Escrow &amp; Security Audit Trail</h2>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Cryptographic transaction telemetry, audit logs, and hardware security module status.
-              </p>
 
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <div className="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                  <span className="text-[9px] uppercase font-bold text-slate-400">HSM Core</span>
-                  <div className="text-xs font-bold text-emerald-600 mt-0.5">FIPS 140-2 Level 3</div>
-                </div>
-                <div className="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                  <span className="text-[9px] uppercase font-bold text-slate-400">Sync Pipeline</span>
-                  <div className="text-xs font-bold text-slate-900 mt-0.5 font-mono">Supabase Realtime</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Audit Entries */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-3 space-y-2 text-xs">
-              <h3 className="font-bold text-slate-800 text-[11px] uppercase tracking-wider pb-1 border-b border-slate-100">
-                Live Audit Logs
-              </h3>
-              <div className="space-y-2 font-mono text-[10px] text-slate-600">
-                <div className="p-2 rounded bg-slate-50 border border-slate-100">
-                  <span className="text-emerald-600 font-bold">✓ CLOUD-GATEWAY:</span> Connected to Supabase Cloud &amp; Vercel Live Production.
-                </div>
-                <div className="p-2 rounded bg-slate-50 border border-slate-100">
-                  <span className="text-blue-600 font-bold">ℹ DB-SYNC:</span> {cleanClaims.length} live requests active ({pendingCount} Pending, {approvedCount} Approved, {disbursedCount} Disbursed).
-                </div>
-                <div className="p-2 rounded bg-slate-50 border border-slate-100">
-                  <span className="text-amber-600 font-bold">⚡ REALTIME-BUS:</span> Live database node online (fykxjzvdslvxablmjlfw.supabase.co).
-                </div>
-              </div>
-            </div>
-
-            {/* Admin Software Version & OTA Auto-Push Control Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-3.5 space-y-3 text-xs shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#BA3A24]">
-                    <Rocket className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-xs tracking-tight">Software Version & OTA Pipeline</h3>
-                    <p className="text-[10px] text-slate-500">Continuous Auto-Push Deployment Engine</p>
-                  </div>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold ${adminUpdateStatus.hasUpdate
-                    ? 'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse'
-                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  }`}>
-                  {adminUpdateStatus.hasUpdate ? 'Update Available' : 'Current & Synced'}
-                </span>
-              </div>
-
-              {/* Version & Sync Grid */}
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[9px] uppercase font-bold text-slate-400">Installed Version</div>
-                  <div className="text-xs font-black text-slate-800 font-mono mt-0.5 flex items-center gap-1.5">
-                    <span>{adminUpdateStatus.installedVersion}</span>
-                    {!adminUpdateStatus.hasUpdate && (
-                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">✓ Latest</span>
-                    )}
-                  </div>
-                </div>
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[9px] uppercase font-bold text-slate-400">Latest Live Release</div>
-                  <div className="text-xs font-black text-[#BA3A24] font-mono mt-0.5">
-                    {adminUpdateStatus.latestVersion}
-                  </div>
-                </div>
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[9px] uppercase font-bold text-slate-400">Auto-Push Relay</div>
-                  <div className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                    <span>Instant Live Push</span>
-                  </div>
-                </div>
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[9px] uppercase font-bold text-slate-400">Target Channel</div>
-                  <div className="text-[11px] font-bold text-slate-700 mt-0.5">
-                    Production Exec
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons: Version Logs & Push New Release */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowAdminChangelogModal(true)}
-                  className="w-full py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <History className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Version Logs</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPublishReleaseModal(true)}
-                  className="w-full py-2 px-2.5 bg-slate-900 hover:bg-black text-white text-[11px] font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <Send className="w-3.5 h-3.5 text-amber-400" />
-                  <span>+ Push Version</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ===================================================================== */}
@@ -3418,29 +3177,6 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             QR Gen
           </span>
           {activeTab === 'qrgen' && (
-            <span className="w-4 h-0.5 bg-[#BA3A24] rounded-full mt-0.5 -mb-0.5 animate-in fade-in" />
-          )}
-        </button>
-
-        {/* Tab 5: Audit */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('audit');
-            showHapticHUD('Tab: Escrow Audit Log');
-          }}
-          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 landscape:py-0.5 px-0.5 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${activeTab === 'audit'
-              ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
-            }`}
-        >
-          <div className="relative">
-            <ShieldCheck className={`w-4.5 h-4.5 landscape:w-4 landscape:h-4 transition-transform ${activeTab === 'audit' ? 'scale-110 text-[#BA3A24]' : 'text-slate-500'}`} />
-          </div>
-          <span className="text-[9px] sm:text-[9.5px] landscape:text-[8px] tracking-tight uppercase mt-0.5 font-bold truncate max-w-full">
-            Audit
-          </span>
-          {activeTab === 'audit' && (
             <span className="w-4 h-0.5 bg-[#BA3A24] rounded-full mt-0.5 -mb-0.5 animate-in fade-in" />
           )}
         </button>
