@@ -78,13 +78,6 @@ export const Navbar = ({ activeTab, setActiveTab, currentMode, setMode, onToggle
             <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
           </button>
 
-          {/* User Icon Circle matching PDF Right Edge (kept inside bounds) */}
-          <div className="absolute right-0 top-0 translate-x-10 hidden xl:block pointer-events-none">
-            <div className="w-8 h-8 rounded-full bg-[#9A3412] text-white flex items-center justify-center shadow-xs">
-              <User className="w-4 h-4 text-white" />
-            </div>
-          </div>
-
           {/* Profile Dropdown */}
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-[#E7E5E4] py-2 z-50 text-xs">
