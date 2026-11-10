@@ -133,10 +133,9 @@ export function VendorSalesReport() {
       }
     }
 
-    const firstVendor = vendors.find((v) => v.companyName);
     return {
-      vendorName: firstVendor?.companyName || 'Reliance Polymers Ltd (Hazira Complex)',
-      vendorId: firstVendor?.vendorId || firstVendor?.id || 'VEN-001'
+      vendorName: c?.userName || c?.contractorName || 'Partner Applicator',
+      vendorId: c?.vendorId || 'VEN-001'
     };
   };
 
@@ -1317,4 +1316,3 @@ export function VendorSalesReport() {
     </div>
   );
 }
-

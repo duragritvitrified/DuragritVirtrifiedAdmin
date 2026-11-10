@@ -43,7 +43,10 @@ import {
   Rocket,
   Download,
   History,
-  Send
+  Send,
+  Eye,
+  Package,
+  Tag
 } from 'lucide-react';
 import {
   checkAdminUpdateStatus,
@@ -71,105 +74,207 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
   // Helper to reliably resolve Vendor Name & ID for each claim
   const resolveVendorInfo = (c) => {
-    if (c?.vendorName && String(c.vendorName).trim() && c.vendorName !== '—') {
+    // 1. Explicit vendorName (ignore generic placeholder)
+    const rawVName = String(c?.vendorName || '').trim();
+    if (
+      rawVName &&
+      rawVName !== '—' &&
+      rawVName.toLowerCase() !== 'duragrit authorized partner' &&
+      rawVName.toLowerCase() !== 'duragrit partner'
+    ) {
       return {
-        vendorName: String(c.vendorName).trim(),
-        vendorId: c.vendorId || 'VND-101'
-      };
-    }
-    if (c?.companyName && String(c.companyName).trim()) {
-      return {
-        vendorName: String(c.companyName).trim(),
-        vendorId: c.vendorId || 'VND-101'
+        vendorName: rawVName,
+        vendorId: c?.vendorId || 'VND-101'
       };
     }
 
+    // 2. Explicit companyName (ignore generic placeholder)
+    const rawCName = String(c?.companyName || '').trim();
+    if (
+      rawCName &&
+      rawCName !== '—' &&
+      rawCName.toLowerCase() !== 'duragrit authorized partner' &&
+      rawCName.toLowerCase() !== 'duragrit partner'
+    ) {
+      return {
+        vendorName: rawCName,
+        vendorId: c?.vendorId || 'VND-101'
+      };
+    }
+
+    // 3. Match against vendors directory by vendorId
     if (c?.vendorId) {
       const v = vendors.find(
         (item) => String(item.vendorId || item.id || '').toUpperCase() === String(c.vendorId).toUpperCase()
       );
-      if (v?.companyName || v?.name) {
+      if (v?.companyName && v.companyName.toLowerCase() !== 'duragrit authorized partner') {
         return {
-          vendorName: v.companyName || v.name,
+          vendorName: v.companyName,
           vendorId: v.vendorId || v.id || c.vendorId
         };
       }
     }
 
+    // 4. Match by userId / supabaseId against vendors
     const cleanUid = String(c?.userId || c?.userSupabaseId || '').toUpperCase();
     if (cleanUid) {
       const v = vendors.find(
         (item) => String(item.vendorId || item.id || '').toUpperCase() === cleanUid
       );
-      if (v?.companyName || v?.name) {
+      if (v?.companyName && v.companyName.toLowerCase() !== 'duragrit authorized partner') {
         return {
-          vendorName: v.companyName || v.name,
+          vendorName: v.companyName,
           vendorId: v.vendorId || v.id || cleanUid
         };
       }
     }
 
+    // 5. Match against vendors directory by 10-digit mobile phone
     const cleanMobile = String(c?.userMobile || c?.mobile || '').replace(/\D/g, '').slice(-10);
     if (cleanMobile && cleanMobile.length === 10) {
       const v = vendors.find((item) => {
         const vDigits = String(item.phone || item.mobile || '').replace(/\D/g, '').slice(-10);
         return vDigits === cleanMobile;
       });
-      if (v?.companyName || v?.name) {
+      if (v?.companyName && v.companyName.toLowerCase() !== 'duragrit authorized partner') {
         return {
-          vendorName: v.companyName || v.name,
+          vendorName: v.companyName,
           vendorId: v.vendorId || v.id || 'VND-101'
         };
       }
     }
 
+    // 6. Match against vendors directory by person or firm name
     const cleanName = String(c?.userName || c?.contractorName || '').trim().toLowerCase();
-    if (cleanName) {
+    if (
+      cleanName &&
+      cleanName !== 'registered partner' &&
+      cleanName !== 'partner applicator' &&
+      cleanName !== 'duragrit partner'
+    ) {
       const v = vendors.find((item) => {
         const cName = String(item.companyName || '').trim().toLowerCase();
         const pName = String(item.contactPerson || '').trim().toLowerCase();
         return cName === cleanName || pName === cleanName;
       });
-      if (v?.companyName || v?.name) {
+      if (v?.companyName && v.companyName.toLowerCase() !== 'duragrit authorized partner') {
         return {
-          vendorName: v.companyName || v.name,
+          vendorName: v.companyName,
           vendorId: v.vendorId || v.id || 'VND-101'
         };
       }
     }
 
+    // 7. Check users directory for matching mobile phone
     if (cleanMobile) {
       const u = users.find(
         (item) => String(item.mobile || item.phone || '').replace(/\D/g, '').slice(-10) === cleanMobile
       );
-      if (u?.vendorName || u?.companyName) {
+      if (u?.companyName && u.companyName.toLowerCase() !== 'duragrit authorized partner') {
         return {
-          vendorName: u.vendorName || u.companyName,
+          vendorName: u.companyName,
           vendorId: u.vendorId || 'VND-101'
         };
       }
-      if (u?.associatedVendor || u?.dealerName) {
+      if (u?.vendorName && u.vendorName.toLowerCase() !== 'duragrit authorized partner') {
         return {
-          vendorName: u.associatedVendor || u.dealerName,
+          vendorName: u.vendorName,
           vendorId: u.vendorId || 'VND-101'
+        };
+      }
+      if (u?.associatedVendor && u.associatedVendor.toLowerCase() !== 'duragrit authorized partner') {
+        return {
+          vendorName: u.associatedVendor,
+          vendorId: u.vendorId || 'VND-101'
+        };
+      }
+      if (u?.name && u.name.toLowerCase() !== 'admin') {
+        return {
+          vendorName: u.name,
+          vendorId: u.vendorId || u.userId || 'VND-101'
         };
       }
     }
 
+    // 8. If claimant has explicit registered user name
     if (
-      String(c?.userRole || '').toLowerCase().includes('vend') ||
-      String(c?.userRole || '').toLowerCase().includes('deal')
+      c?.userName &&
+      String(c.userName).trim().toLowerCase() !== 'registered partner' &&
+      String(c.userName).trim().toLowerCase() !== 'admin'
     ) {
       return {
-        vendorName: c?.userName || 'DuraGrit Authorized Partner',
+        vendorName: String(c.userName).trim(),
         vendorId: c?.vendorId || 'VND-101'
       };
     }
 
-    const firstVendor = vendors.find((v) => v.companyName);
+    if (c?.contractorName && String(c.contractorName).trim()) {
+      return {
+        vendorName: String(c.contractorName).trim(),
+        vendorId: c?.vendorId || 'VND-101'
+      };
+    }
+
+    if (rawVName && rawVName !== '—') {
+      return {
+        vendorName: rawVName,
+        vendorId: c?.vendorId || 'VND-101'
+      };
+    }
+
+    // 9. Clean fallback (NEVER 'DuraGrit Authorized Partner')
     return {
-      vendorName: firstVendor?.companyName || 'DuraGrit Authorized Partner',
-      vendorId: firstVendor?.vendorId || firstVendor?.id || 'VND-101'
+      vendorName: 'Partner Applicator',
+      vendorId: c?.vendorId || 'VND-101'
+    };
+  };
+
+  // Helper to reliably resolve full Product info (Name, SKU, Pack Size, Category, MRP, Photo, etc.)
+  const resolveProductInfo = (c) => {
+    const rawSku = String(c?.skuCode || '').trim();
+    const rawName = String(c?.productName || '').trim();
+    const rawSerial = String(c?.serialKey || c?.qrSerial || c?.batchCode || '').trim();
+
+    // Match in catalog skus
+    const matchedSku = skus.find((s) => {
+      const sCode = String(s.skuCode || s.id || '').toUpperCase();
+      const sClean = sCode.replace(/[^a-zA-Z0-9]/g, '');
+      const rawSkuClean = rawSku.toUpperCase().replace(/[^a-zA-Z0-9]/g, '');
+      const serialClean = rawSerial.toUpperCase().replace(/[^a-zA-Z0-9]/g, '');
+
+      return (
+        (rawSku && sCode === rawSku.toUpperCase()) ||
+        (rawSkuClean && sClean && (sClean.includes(rawSkuClean) || rawSkuClean.includes(sClean))) ||
+        (serialClean && sClean && serialClean.includes(sClean)) ||
+        (rawName && String(s.name || '').toLowerCase() === rawName.toLowerCase())
+      );
+    }) || skus[0] || {};
+
+    const productName =
+      c?.productName && c.productName !== 'DuraGrit Verified Pack'
+        ? c.productName
+        : (matchedSku.name || 'DuraGrit DA 777 High Polymer Adhesive');
+
+    const skuCode = c?.skuCode || matchedSku.skuCode || 'DA-777';
+    const packSize = c?.packSize || matchedSku.packSize || matchedSku.packWeight || '20 kg';
+    const category = c?.category || matchedSku.category || 'Adhesives';
+    const subCategory = c?.subCategory || matchedSku.subCategory || 'High-Polymer Vitrified';
+    const mrp = Number(c?.mrp || matchedSku.baseMrp || matchedSku.mrp || 650);
+    const rewardValue = Number(c?.amount || c?.claimValue || matchedSku.cashbackReward || matchedSku.cashbackAmount || 150);
+    const photoUrl = c?.proofUrl || c?.proofImageUrl || matchedSku.imageUrl || matchedSku.photoUrl || '/site-assets/logo.png';
+    const description = matchedSku.description || 'DuraGrit DA 777 High Polymer Polymer-Modified Adhesive for Vitrified & Large Format Tiles.';
+
+    return {
+      productName,
+      skuCode,
+      packSize,
+      category,
+      subCategory,
+      mrp,
+      rewardValue,
+      photoUrl,
+      description,
+      rawSerial
     };
   };
 
@@ -184,6 +289,9 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   // Floating Haptic HUD Notification
   const [hudNotice, setHudNotice] = useState({ visible: false, text: '', icon: '📳', color: 'slate' });
   const hudTimeoutRef = useRef(null);
+
+  // Inspect Product Modal State (View Link)
+  const [inspectedProductClaim, setInspectedProductClaim] = useState(null);
 
   // Reject / Flag Modal State
   const [flagModalClaim, setFlagModalClaim] = useState(null);
@@ -1867,7 +1975,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-bold text-xs sm:text-[13px] text-slate-900 truncate">
-                              {vInfo.vendorName || 'DuraGrit Partner'}
+                              {vInfo.vendorName || claim.userName || 'Partner Applicator'}
                             </span>
                             {vInfo.vendorId && (
                               <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
@@ -1918,8 +2026,19 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                             </span>
                           )}
                         </div>
-                        <div className="shrink-0 font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
-                          {claim.skuCode || claim.productName || 'DA-777'}
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          <span className="font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
+                            {claim.skuCode || claim.productName || 'DA-777'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setInspectedProductClaim(claim)}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#BA3A24] hover:text-[#962B16] bg-[#FEF2EE] hover:bg-[#FCE3D8] border border-[#F9CEB8] px-2 py-0.5 rounded-md cursor-pointer transition active:scale-95 shrink-0 shadow-2xs"
+                            title="View Product & Cashback Details"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View</span>
+                          </button>
                         </div>
                       </div>
 
@@ -1957,7 +2076,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                             className="py-1.5 px-3 bg-[#BA3A24] hover:bg-[#A02F17] text-white text-[11px] font-bold rounded-lg shadow-xs active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer min-w-0"
                           >
                             <Check className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">Approve &amp; Pay</span>
+                            <span className="truncate">Approve</span>
                           </button>
 
                           <button
@@ -2130,7 +2249,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-bold text-xs sm:text-[13px] text-slate-900 truncate">
-                              {vInfo.vendorName || 'DuraGrit Partner'}
+                              {vInfo.vendorName || claim.userName || 'Partner Applicator'}
                             </span>
                             {vInfo.vendorId && (
                               <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
@@ -2181,8 +2300,19 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                             </span>
                           )}
                         </div>
-                        <div className="shrink-0 font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
-                          {claim.skuCode || claim.productName || 'DA-777'}
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          <span className="font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
+                            {claim.skuCode || claim.productName || 'DA-777'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setInspectedProductClaim(claim)}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#BA3A24] hover:text-[#962B16] bg-[#FEF2EE] hover:bg-[#FCE3D8] border border-[#F9CEB8] px-2 py-0.5 rounded-md cursor-pointer transition active:scale-95 shrink-0 shadow-2xs"
+                            title="View Product & Cashback Details"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View</span>
+                          </button>
                         </div>
                       </div>
 
@@ -2220,7 +2350,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                             className="py-1.5 px-3 bg-[#BA3A24] hover:bg-[#A02F17] text-white text-[11px] font-bold rounded-lg shadow-xs active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer min-w-0"
                           >
                             <Check className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">Approve &amp; Pay</span>
+                            <span className="truncate">Approve</span>
                           </button>
 
                           <button
@@ -2660,8 +2790,204 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       </nav>
 
       {/* ===================================================================== */}
-      {/* 4. MODALS (FLAG / REJECT & QUICK BATCH)                               */}
+      {/* 4. MODALS (PRODUCT INSPECTION, FLAG / REJECT & QUICK BATCH)           */}
       {/* ===================================================================== */}
+      {inspectedProductClaim && (() => {
+        const pInfo = resolveProductInfo(inspectedProductClaim);
+        const vInfo = resolveVendorInfo(inspectedProductClaim);
+        const isPending = inspectedProductClaim.status === 'Pending';
+        const isApproved = inspectedProductClaim.status === 'Approved' || inspectedProductClaim.status === 'Disbursed';
+        const isRejected = inspectedProductClaim.status === 'Rejected' || inspectedProductClaim.status === 'Flagged';
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-sm max-h-[92vh] overflow-y-auto bg-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-slate-200 space-y-4">
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#BA3A24] to-[#E35D38] text-white flex items-center justify-center shadow-sm">
+                    <Package className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 tracking-tight">Product &amp; Cashback Details</h3>
+                    <p className="text-[10.5px] text-slate-500 font-medium">Verified SKU &amp; Claim Inspection</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setInspectedProductClaim(null)}
+                  className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 cursor-pointer transition active:scale-95"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Product Hero Banner */}
+              <div className="bg-gradient-to-br from-slate-50 via-orange-50/30 to-amber-50/40 rounded-2xl p-3.5 border border-amber-100/80 space-y-3">
+                <div className="flex items-start gap-3">
+                  {/* Photo or Visual Badge */}
+                  <div className="w-16 h-16 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                    {inspectedProductClaim.proofUrl || inspectedProductClaim.proofImageUrl ? (
+                      <img
+                        src={inspectedProductClaim.proofUrl || inspectedProductClaim.proofImageUrl}
+                        alt={pInfo.productName}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#FEF2EE] rounded-lg flex flex-col items-center justify-center text-[#BA3A24]">
+                        <Package className="w-6 h-6" />
+                        <span className="text-[8px] font-black tracking-tight uppercase">DuraGrit</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono text-[10px] font-bold text-[#BA3A24] bg-[#FEF2EE] border border-[#F9CEB8] px-2 py-0.5 rounded-md">
+                        {pInfo.skuCode}
+                      </span>
+                      <span className="text-[9.5px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                        {pInfo.category}
+                      </span>
+                    </div>
+                    <h4 className="font-black text-slate-900 text-[13px] leading-snug mt-1.5">
+                      {pInfo.productName}
+                    </h4>
+                    <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
+                      {pInfo.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 4-Tile Spec Grid */}
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60">
+                  <div className="bg-white/90 rounded-xl p-2.5 border border-slate-200/80">
+                    <span className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Packing Size</span>
+                    <span className="text-xs font-black text-slate-900 font-mono mt-0.5 block">{pInfo.packSize}</span>
+                  </div>
+
+                  <div className="bg-white/90 rounded-xl p-2.5 border border-slate-200/80">
+                    <span className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">MRP Price</span>
+                    <span className="text-xs font-black text-slate-900 font-mono mt-0.5 block">₹{pInfo.mrp.toLocaleString('en-IN')}</span>
+                  </div>
+
+                  <div className="bg-emerald-50/80 rounded-xl p-2.5 border border-emerald-200/80">
+                    <span className="text-[9.5px] font-bold text-emerald-800 uppercase tracking-wider block">Cashback Reward</span>
+                    <span className="text-xs font-black text-emerald-700 font-mono mt-0.5 block">₹{pInfo.rewardValue.toLocaleString('en-IN')}</span>
+                  </div>
+
+                  <div className="bg-white/90 rounded-xl p-2.5 border border-slate-200/80">
+                    <span className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Sub-Category</span>
+                    <span className="text-xs font-bold text-slate-800 truncate mt-0.5 block">{pInfo.subCategory}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Vendor & Scan Audit Information */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-0.5">Scan &amp; Claimant Audit</span>
+                
+                <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 space-y-2 text-xs">
+                  {/* Scanned Serial */}
+                  <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">QR Serial</span>
+                    <span className="text-[11px] font-mono font-bold text-[#BA3A24] truncate">
+                      {pInfo.rawSerial || inspectedProductClaim.requestId}
+                    </span>
+                  </div>
+
+                  {/* Actual Vendor */}
+                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                    <span className="text-slate-500 text-[11px]">Claimant Vendor:</span>
+                    <span className="font-bold text-slate-900 text-right text-[11px] truncate max-w-[60%]">
+                      {vInfo.vendorName} {vInfo.vendorId ? `(${vInfo.vendorId})` : ''}
+                    </span>
+                  </div>
+
+                  {/* Scanned By User */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 text-[11px]">Scanned By:</span>
+                    <span className="font-semibold text-slate-800 text-right text-[11px] truncate">
+                      {inspectedProductClaim.userName || 'Trade Partner'} • {inspectedProductClaim.userMobile || 'Verified Mobile'}
+                    </span>
+                  </div>
+
+                  {/* Date & Request ID */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 text-[11px]">Request / Date:</span>
+                    <span className="font-mono text-slate-700 text-[10.5px]">
+                      {inspectedProductClaim.requestId || inspectedProductClaim.id} • {formatRequestDateTime(inspectedProductClaim)}
+                    </span>
+                  </div>
+
+                  {/* Status */}
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/80">
+                    <span className="text-slate-500 text-[11px]">Status:</span>
+                    <span
+                      className={`inline-flex items-center gap-1 text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                        isApproved
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : isRejected
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                        }`}
+                      />
+                      <span>{isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending Verification'}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                {isPending ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = inspectedProductClaim;
+                        setInspectedProductClaim(null);
+                        handleApprove(target);
+                      }}
+                      className="flex-1 py-2.5 bg-[#BA3A24] hover:bg-[#A02F17] text-white text-xs font-bold rounded-xl shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Approve</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = inspectedProductClaim;
+                        setInspectedProductClaim(null);
+                        setFlagModalClaim(target);
+                      }}
+                      className="px-3 py-2.5 bg-white hover:bg-rose-50 border border-slate-300 hover:border-rose-300 text-rose-700 text-xs font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Reject</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setInspectedProductClaim(null)}
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer active:scale-95 transition"
+                  >
+                    Close Window
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {flagModalClaim && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
           <div className="w-full max-w-sm max-h-[92vh] overflow-y-auto bg-white rounded-3xl p-5 shadow-2xl border border-slate-200 space-y-4">

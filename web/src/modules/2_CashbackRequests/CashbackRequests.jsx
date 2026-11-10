@@ -140,11 +140,10 @@ export function CashbackRequests() {
       };
     }
 
-    // 8. Fallback to active vendor in directory or default
-    const firstVendor = vendors.find((v) => v.companyName);
+    // 8. Fallback to claimant user name or clean partner title (no hardcoded first vendor)
     return {
-      vendorName: firstVendor?.companyName || 'Reliance Polymers Ltd (Hazira Complex)',
-      vendorId: firstVendor?.vendorId || firstVendor?.id || 'VEN-001'
+      vendorName: c.userName || c.contractorName || 'Partner Applicator',
+      vendorId: c.vendorId || 'VND-101'
     };
   };
 

@@ -11,15 +11,15 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.9.5',
-    buildNumber: 165,
+    version: '4.9.7',
+    buildNumber: 167,
     timestamp: buildTime,
-    adminVersion: '4.9.5',
-    adminBuildNumber: 165,
-    vendorVersion: '4.9.5',
-    vendorBuildNumber: 165,
+    adminVersion: '4.9.7',
+    adminBuildNumber: 167,
+    vendorVersion: '4.9.7',
+    vendorBuildNumber: 167,
     apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
-    changelog: 'Persistent OTA update loop termination, stale release cache purge, and strict semantic version verification v4.9.5.'
+    changelog: 'Accurate vendor name resolution on claim cards without generic defaults, single-click Approve moderation action, and interactive Product Details inspection modal with full SKU specs v4.9.7.'
   });
 }

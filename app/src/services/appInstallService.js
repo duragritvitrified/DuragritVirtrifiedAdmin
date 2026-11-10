@@ -6,10 +6,10 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.9.5';
-export const CURRENT_BUILT_IN_BUILD = 165;
-export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.5';
-export const CURRENT_ADMIN_BUILT_IN_BUILD = 165;
+export const CURRENT_BUILT_IN_VERSION = 'v4.9.7';
+export const CURRENT_BUILT_IN_BUILD = 167;
+export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.7';
+export const CURRENT_ADMIN_BUILT_IN_BUILD = 167;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -32,14 +32,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-018',
+    version: 'v4.9.7',
+    buildNumber: 167,
+    releaseDate: '2026-11-10 08:30:00',
+    title: 'Actual Vendor Attribution & Product Inspection Release v4.9.7',
+    changelog: 'Accurate vendor name resolution on claim cards without generic defaults, single-click Approve moderation action, and interactive Product Details inspection modal with full SKU specs.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-vendorviewprod167',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-017',
     version: 'v4.9.5',
     buildNumber: 165,
     releaseDate: '2026-11-09 22:45:00',
     title: 'Persistent OTA Loop Termination & Clean Cloud Sync v4.9.5',
     changelog: 'Permanent fix for recurring v4.8.2 OTA update prompt, automated stale release cache purge, and strict semantic version verification.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-otapurgeloop165',
@@ -838,6 +853,26 @@ export const ADMIN_VERSION_KEY = 'duragrit_admin_installed_version';
 
 export const DEFAULT_ADMIN_RELEASES = [
   {
+    id: 'ADM-REL-2026-009',
+    version: 'v4.9.7',
+    buildNumber: 167,
+    releaseDate: '2026-11-10 08:30:00',
+    title: 'Actual Vendor Attribution & Product Inspection Release v4.9.7',
+    changelog: 'Displays actual vendor company name on Requests queue, refines action button strictly to Approve, and provides rich Product Inspection modal with SKU, pack size, category, and MRP.',
+    changesList: [
+      'Accurate vendor name resolution on Overview and Requests tab claim cards',
+      'Eliminated fallback to DuraGrit Authorized Partner on all moderation cards',
+      'Refined action button text strictly to Approve',
+      'Added interactive View button opening full product specifications and cashback details',
+      'Direct Supabase persistence of claim metadata (vendor, product, sku, packing size, mrp)'
+    ],
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '24.5 MB',
+    bundleHash: 'sha256-adminviewprod167'
+  },
+  {
     id: 'ADM-REL-2026-008',
     version: 'v4.9.5',
     buildNumber: 165,
@@ -850,8 +885,8 @@ export const DEFAULT_ADMIN_RELEASES = [
       'Strict semantic version descending comparator for OTA updates',
       'Synchronized all mobile assets and APK packages to v4.9.5 (Build 165)'
     ],
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '24.5 MB',
     bundleHash: 'sha256-otapurgeloop165'

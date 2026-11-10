@@ -337,7 +337,13 @@ const mapBatchFromDb = (row, tokensRows = []) => {
 };
 
 const mapClaimFromDb = (row) => {
-  const meta = row.metadata || {};
+  let meta = row.metadata || {};
+  if (row.flag_reason && typeof row.flag_reason === 'string' && row.flag_reason.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(row.flag_reason);
+      meta = { ...meta, ...parsed };
+    } catch (_) {}
+  }
   const status = row.status || 'Pending';
   let payoutStatus = meta.payoutStatus || 'Awaiting Approval';
   if (status === 'Approved') payoutStatus = 'Pending Release';
@@ -346,6 +352,7 @@ const mapClaimFromDb = (row) => {
 
   const gross = Number(row.claim_value ?? meta.amount ?? 0);
   const net = Number(row.net_disbursed || meta.disbursedAmount || gross);
+  const cleanFlagReason = (row.flag_reason && !row.flag_reason.trim().startsWith('{')) ? row.flag_reason : (meta.remarks || meta.flagReason || '');
 
   return {
     ...meta,
@@ -386,8 +393,8 @@ const mapClaimFromDb = (row) => {
     npciRrn: row.npci_rrn || meta.transactionId || '',
     transactionId: row.npci_rrn || meta.transactionId || '',
     utr: row.npci_rrn || meta.transactionId || '',
-    remarks: meta.remarks || row.flag_reason || '',
-    flagReason: row.flag_reason || meta.remarks || '',
+    remarks: meta.remarks || cleanFlagReason,
+    flagReason: cleanFlagReason,
     disbursedAt: row.disbursed_at || meta.disbursedAt || (status === 'Disbursed' ? (row.updated_at || null) : null),
     approvedAt: meta.approvedAt || row.approved_at || (status === 'Approved' || status === 'Disbursed' ? (row.updated_at || row.timestamp) : null),
     rejectedAt: meta.rejectedAt || row.rejected_at || (status === 'Rejected' || status === 'Flagged' ? (row.updated_at || row.timestamp) : null),
@@ -2017,19 +2024,23 @@ export const DataProvider = ({ children }) => {
     });
 
     const vendorName =
-      user?.vendorName ||
-      user?.companyName ||
-      matchedVendor?.companyName ||
-      (user?.role === 'Vendor' ? user?.name : '') ||
-      liveUser?.vendorName ||
-      (vendors.length > 0 ? (vendors[0].companyName || 'DuraGrit Authorized Partner') : 'DuraGrit Authorized Partner');
+      (user?.companyName && user.companyName !== 'DuraGrit Authorized Partner' ? user.companyName : '') ||
+      (user?.vendorName && user.vendorName !== 'DuraGrit Authorized Partner' ? user.vendorName : '') ||
+      (matchedVendor?.companyName && matchedVendor.companyName !== 'DuraGrit Authorized Partner' ? matchedVendor.companyName : '') ||
+      (user?.role === 'Vendor' ? (user?.name || user?.companyName) : '') ||
+      (liveUser?.companyName && liveUser.companyName !== 'DuraGrit Authorized Partner' ? liveUser.companyName : '') ||
+      (liveUser?.vendorName && liveUser.vendorName !== 'DuraGrit Authorized Partner' ? liveUser.vendorName : '') ||
+      user?.name ||
+      liveUser?.name ||
+      'Trade Partner';
 
     const vendorId =
       user?.vendorId ||
       matchedVendor?.vendorId ||
       matchedVendor?.id ||
       (user?.role === 'Vendor' ? user?.id : '') ||
-      (vendors.length > 0 ? (vendors[0].vendorId || 'VND-101') : 'VND-101');
+      liveUser?.vendorId ||
+      'VND-101';
 
     const requestId = `CB-${Math.floor(1000 + Math.random() * 9000)}`;
     const tdsInfo = QREngineV24.calculateTDS(claimAmount, Boolean(liveUser?.panNumber || user?.panNumber));
@@ -2095,6 +2106,22 @@ export const DataProvider = ({ children }) => {
         if (profLookup?.id) sbUserId = profLookup.id;
       }
 
+      const claimMeta = {
+        vendorName: newClaim.vendorName,
+        vendorId: newClaim.vendorId,
+        userName: newClaim.userName,
+        userMobile: newClaim.userMobile,
+        userRole: newClaim.userRole,
+        productName: newClaim.productName,
+        skuCode: newClaim.skuCode,
+        packSize: matchedSku?.packSize || matchedSku?.packWeight || '20 kg',
+        category: matchedSku?.category || 'Adhesives',
+        subCategory: matchedSku?.subCategory || 'High-Polymer Vitrified',
+        mrp: Number(matchedSku?.baseMrp || matchedSku?.mrp || 650),
+        claimValue: claimAmount,
+        serialKey: cleanKey
+      };
+
       const dbClaim = {
         request_id: requestId,
         user_id: sbUserId,
@@ -2107,6 +2134,7 @@ export const DataProvider = ({ children }) => {
         proof_url: proofImage || null,
         tds_deducted: tdsInfo.tdsAmount,
         net_disbursed: tdsInfo.netAmount,
+        flag_reason: JSON.stringify(claimMeta),
         geo_lat: geoLat || null,
         geo_lng: geoLng || null,
       };
