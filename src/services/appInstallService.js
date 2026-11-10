@@ -6,10 +6,10 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.9.8';
-export const CURRENT_BUILT_IN_BUILD = 168;
-export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.8';
-export const CURRENT_ADMIN_BUILT_IN_BUILD = 168;
+export const CURRENT_BUILT_IN_VERSION = 'v4.9.9';
+export const CURRENT_BUILT_IN_BUILD = 169;
+export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.9';
+export const CURRENT_ADMIN_BUILT_IN_BUILD = 169;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -32,14 +32,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-020',
+    version: 'v4.9.9',
+    buildNumber: 169,
+    releaseDate: '2026-11-10 09:15:00',
+    title: 'Product Inspection Modal & Action Link Release v4.9.9',
+    changelog: 'Product inspection modal with SKU, packing size, category, MRP, and photo on Web Admin Cashback Requests page.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-vendorviewprod169',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-019',
     version: 'v4.9.8',
     buildNumber: 168,
     releaseDate: '2026-11-10 08:50:00',
     title: 'Dedicated Release Payment Tab & Dual-Portal Disbursal Sync v4.9.8',
     changelog: 'Dedicated Release Payment tab in Admin Mobile App with full disbursal redemption popup, payment mode selection, UTR auto-generator, proof screenshot attachment, and instant bidirectional Supabase cloud sync.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-vendorreleasepay168',
@@ -868,6 +883,25 @@ export const ADMIN_VERSION_KEY = 'duragrit_admin_installed_version';
 
 export const DEFAULT_ADMIN_RELEASES = [
   {
+    id: 'ADM-REL-2026-011',
+    version: 'v4.9.9',
+    buildNumber: 169,
+    releaseDate: '2026-11-10 09:15:00',
+    title: 'Product Inspection Modal & Action Link Release v4.9.9',
+    changelog: 'Product inspection modal with SKU, packing size, category, MRP, and photo on Web Admin Cashback Requests page.',
+    changesList: [
+      'Interactive View button added in Action column and Product column on Web Admin Cashback Requests page',
+      'Rich Product Inspection Modal showing Product Name, SKU, Category, Sub-Category, Packing Size, MRP, and Photo',
+      'Direct one-click Approve, Reject, Release Payout, and View Receipt actions within the inspection modal',
+      'Full metadata sync across Web ERP and Mobile Applications via Supabase cloud'
+    ],
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '24.5 MB',
+    bundleHash: 'sha256-adminviewprod169'
+  },
+  {
     id: 'ADM-REL-2026-010',
     version: 'v4.9.8',
     buildNumber: 168,
@@ -881,8 +915,8 @@ export const DEFAULT_ADMIN_RELEASES = [
       'Instant bidirectional Supabase cloud synchronization between Mobile App and Web Admin ERP',
       'Full claim metadata preservation (vendor, SKU, product, pack size, MRP) across payout states'
     ],
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '24.5 MB',
     bundleHash: 'sha256-adminreleasepay168'

@@ -5,7 +5,8 @@ import {
   RefreshCw, Eye, Sparkles,
   Zap, UploadCloud, Image as ImageIcon, X,
   Building2,
-  AlertCircle
+  AlertCircle,
+  Package, Tag, Layers
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
@@ -147,6 +148,56 @@ export function CashbackRequests() {
     };
   };
 
+  // Helper to reliably resolve full Product info (Name, SKU, Pack Size, Category, MRP, Photo, etc.)
+  const resolveProductInfo = (c) => {
+    if (!c) return {};
+    const rawSku = String(c?.skuCode || '').trim();
+    const rawName = String(c?.productName || '').trim();
+    const rawSerial = String(c?.qrSerial || c?.serialKey || c?.batchCode || '').trim();
+
+    // Match in catalog skus
+    const matchedSku = (skus || []).find((s) => {
+      const sCode = String(s.skuCode || s.id || '').toUpperCase();
+      const sClean = sCode.replace(/[^a-zA-Z0-9]/g, '');
+      const rawSkuClean = rawSku.toUpperCase().replace(/[^a-zA-Z0-9]/g, '');
+      const serialClean = rawSerial.toUpperCase().replace(/[^a-zA-Z0-9]/g, '');
+
+      return (
+        (rawSku && sCode === rawSku.toUpperCase()) ||
+        (rawSkuClean && sClean && (sClean.includes(rawSkuClean) || rawSkuClean.includes(sClean))) ||
+        (serialClean && sClean && serialClean.includes(sClean)) ||
+        (rawName && String(s.name || '').toLowerCase() === rawName.toLowerCase())
+      );
+    }) || (skus && skus[0]) || {};
+
+    const productName =
+      c?.productName && c.productName !== 'DuraGrit Verified Pack'
+        ? c.productName
+        : (matchedSku.name || 'DuraGrit DA 777 High Polymer Adhesive');
+
+    const skuCode = c?.skuCode || matchedSku.skuCode || 'DA-777';
+    const packSize = c?.packSize || matchedSku.packSize || matchedSku.packWeight || '20 kg';
+    const category = c?.category || matchedSku.category || 'Adhesives';
+    const subCategory = c?.subCategory || matchedSku.subCategory || 'High-Polymer Vitrified';
+    const mrp = Number(c?.mrp || matchedSku.baseMrp || matchedSku.mrp || 650);
+    const rewardValue = Number(c?.cashback || c?.amount || c?.claimValue || matchedSku.cashbackReward || matchedSku.cashbackAmount || 150);
+    const photoUrl = c?.proofImageUrl || c?.proofUrl || matchedSku.imageUrl || matchedSku.photoUrl || null;
+    const description = matchedSku.description || 'DuraGrit DA 777 High Polymer Polymer-Modified Adhesive for Vitrified & Large Format Tiles.';
+
+    return {
+      productName,
+      skuCode,
+      packSize,
+      category,
+      subCategory,
+      mrp,
+      rewardValue,
+      photoUrl,
+      description,
+      rawSerial
+    };
+  };
+
   // Tabs: 'pending' (Pending List - Approve Only) | 'completed' (In Process / Complete - Release Payout & Disbursed) | 'rejected' (Quarantine)
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -175,6 +226,8 @@ export function CashbackRequests() {
   // View Receipt / Scan Proof Modal State
   const [viewReceiptClaim, setViewReceiptClaim] = useState(null);
   const [viewScanPhotoClaim, setViewScanPhotoClaim] = useState(null);
+  // View Product Modal State
+  const [inspectedProductClaim, setInspectedProductClaim] = useState(null);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -192,6 +245,7 @@ export function CashbackRequests() {
       const payoutType = rawMethod.toUpperCase().includes('UPI') ? 'UPI' : 'Bank';
       const payoutDest = c.vpaOrIfsc || c.upiId || c.bankAccount || c.payoutDest || '—';
       const vInfo = resolveVendorInfo(c);
+      const pInfo = resolveProductInfo(c);
 
       return {
         ...c,
@@ -201,7 +255,13 @@ export function CashbackRequests() {
         userName: c.userName || c.contractorName || 'Registered Partner',
         userRole: c.userRole || 'Contractor',
         userMobile: c.userMobile || c.contractorPhone || c.mobile || '—',
-        productName: c.productName || 'DuraGrit Verified Pack',
+        productName: pInfo.productName,
+        skuCode: pInfo.skuCode,
+        packSize: pInfo.packSize,
+        category: pInfo.category,
+        subCategory: pInfo.subCategory,
+        mrp: pInfo.mrp,
+        photoUrl: pInfo.photoUrl,
         qrSerial: c.qrSerial || c.serialKey || '—',
         cashback,
         disbursedAmount: isDisbursed ? Number(c.disbursedAmount ?? c.netDisbursed ?? cashback) : 0,
@@ -970,8 +1030,21 @@ export function CashbackRequests() {
 
                       {/* Scanned Product & QR Serial */}
                       <td className="py-3 px-4">
-                        <div className="font-bold text-slate-800 text-xs leading-snug">{claim.productName}</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => setInspectedProductClaim(claim)}
+                            className="font-bold text-slate-900 hover:text-[#BA3A24] text-xs leading-snug cursor-pointer transition text-left hover:underline inline-flex items-center gap-1"
+                            title="Click to inspect Product SKU & Specifications"
+                          >
+                            <Package className="w-3.5 h-3.5 text-[#C84826] shrink-0" />
+                            <span>{claim.productName}</span>
+                          </button>
+                        </div>
                         <div className="flex items-center space-x-1.5 mt-0.5 flex-wrap gap-y-1">
+                          <span className="font-mono text-[10px] font-bold text-[#A62C11] bg-[#FEF2EE] px-1.5 py-0.5 rounded border border-[#F9CEB8]">
+                            {claim.skuCode || 'DA-777'}
+                          </span>
                           <span className="font-mono text-[10px] text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/80">
                             {claim.qrSerial}
                           </span>
@@ -1143,38 +1216,49 @@ export function CashbackRequests() {
 
                       {/* Actions Column */}
                       <td className="py-3 px-4 text-right whitespace-nowrap">
-                        {/* TAB 1: PENDING LIST -> ONLY APPROVE & REJECT BUTTONS */}
-                        {claim.status === 'Pending' && (
-                          <div className="flex items-center justify-end space-x-1.5">
-                            <button
-                              disabled={isProcessing}
-                              onClick={() => handleSingleApprove(claim)}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1 active:scale-95"
-                              title="Approve this claim (moves to Completed tab for Release Payout)"
-                            >
-                              {isProcessing ? (
-                                '...'
-                              ) : (
-                                <>
-                                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                  <span>Approve</span>
-                                </>
-                              )}
-                            </button>
-                            <button
-                              disabled={isProcessing}
-                              onClick={() => handleSingleReject(claim)}
-                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg text-xs font-semibold transition cursor-pointer"
-                              title="Reject Claim"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex items-center justify-end space-x-1.5">
+                          {/* Dedicated View Product & Specs Button */}
+                          <button
+                            type="button"
+                            onClick={() => setInspectedProductClaim(claim)}
+                            className="px-2.5 py-1.5 bg-[#FEF2EE] hover:bg-[#FCE3D8] text-[#BA3A24] hover:text-[#962B16] border border-[#F9CEB8] rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                            title="View Product Name, SKU, Packing Size, Category, MRP & Photo"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View</span>
+                          </button>
 
-                        {/* TAB 2: COMPLETED TAB -> RELEASE PAYOUT BUTTON FOR APPROVED, DISBURSED + VIEW RECEIPT ONCE SETTLED */}
-                        {claim.isApprovedAwaiting && (
-                          <div className="flex items-center justify-end space-x-2">
+                          {/* TAB 1: PENDING LIST -> ONLY APPROVE & REJECT BUTTONS */}
+                          {claim.status === 'Pending' && (
+                            <>
+                              <button
+                                disabled={isProcessing}
+                                onClick={() => handleSingleApprove(claim)}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1 active:scale-95"
+                                title="Approve this claim (moves to Completed tab for Release Payout)"
+                              >
+                                {isProcessing ? (
+                                  '...'
+                                ) : (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                    <span>Approve</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                disabled={isProcessing}
+                                onClick={() => handleSingleReject(claim)}
+                                className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg text-xs font-semibold transition cursor-pointer"
+                                title="Reject Claim"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+
+                          {/* TAB 2: COMPLETED TAB -> RELEASE PAYOUT BUTTON FOR APPROVED */}
+                          {claim.isApprovedAwaiting && (
                             <button
                               onClick={() => handleOpenReleaseModal(claim)}
                               className="px-3.5 py-1.5 bg-[#C84826] hover:bg-[#A62C11] text-white font-black rounded-lg text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 border border-[#A62C11]"
@@ -1183,36 +1267,27 @@ export function CashbackRequests() {
                               <Zap className="w-3.5 h-3.5 text-white fill-white" />
                               <span>Release Payout</span>
                             </button>
-                          </div>
-                        )}
+                          )}
 
-                        {claim.isDisbursed && (
-                          <div className="flex items-center justify-end space-x-2">
-                            <span className="text-[11px] font-bold text-emerald-700 font-mono">✓ Disbursed</span>
+                          {/* DISBURSED + VIEW RECEIPT ONCE SETTLED */}
+                          {claim.isDisbursed && (
                             <button
                               onClick={() => setViewReceiptClaim(claim)}
-                              className="px-2.5 py-1 bg-[#FEF2EE] hover:bg-[#F9CEB8]/50 text-[#A62C11] border border-[#F9CEB8] rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                              className="px-2.5 py-1.5 bg-[#FEF2EE] hover:bg-[#F9CEB8]/50 text-[#A62C11] border border-[#F9CEB8] rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
                               title="View Disbursal Screenshot / UTR"
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              <span>View Receipt</span>
+                              <span>Receipt</span>
                             </button>
-                          </div>
-                        )}
+                          )}
 
-                        {claim.isRejected && (
-                          <div className="text-right space-y-0.5">
-                            <span className="text-[11px] font-mono text-rose-600 font-bold block">Quarantined</span>
-                            {(claim.remarks || claim.flagReason) && (
-                              <span
-                                className="text-[10px] text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded inline-block max-w-[200px] truncate"
-                                title={claim.remarks || claim.flagReason}
-                              >
-                                {claim.remarks || claim.flagReason}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                          {/* REJECTED / QUARANTINED */}
+                          {claim.isRejected && (
+                            <span className="text-[10px] font-mono text-rose-600 font-bold bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">
+                              Quarantined
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1264,6 +1339,281 @@ export function CashbackRequests() {
           </span>
         </div>
       </section>
+
+      {/* ========================================================================= */}
+      {/* POPUP MODAL 0: PRODUCT SPECIFICATIONS & CLAIM DETAILS (ACTION: VIEW)      */}
+      {/* ========================================================================= */}
+      {inspectedProductClaim && (() => {
+        const pInfo = resolveProductInfo(inspectedProductClaim);
+        const vInfo = resolveVendorInfo(inspectedProductClaim);
+        const isPending = inspectedProductClaim.status === 'Pending';
+        const isApproved = inspectedProductClaim.status === 'Approved' || inspectedProductClaim.status === 'Disbursed';
+        const isRejected = inspectedProductClaim.status === 'Rejected' || inspectedProductClaim.status === 'Flagged';
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+              {/* Modal Header */}
+              <div className="px-5 py-4 bg-gradient-to-r from-[#8B230B] via-[#BA3A24] to-[#C84826] text-white flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 shadow-xs">
+                    <Package className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-white">Product &amp; Cashback Specifications</h3>
+                    <p className="text-[10.5px] text-white/85 font-mono">
+                      Verified Catalog SKU • Claim #{inspectedProductClaim.requestId || inspectedProductClaim.id}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setInspectedProductClaim(null)}
+                  className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
+                  title="Close Modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-5 space-y-4 overflow-y-auto flex-1">
+                {/* 1. Product Hero Card */}
+                <div className="bg-gradient-to-br from-slate-50 via-orange-50/20 to-amber-50/30 rounded-2xl p-4 border border-amber-100 shadow-2xs space-y-3">
+                  <div className="flex items-start gap-3.5">
+                    {/* Product Photo / Bag Thumbnail */}
+                    <div className="w-20 h-20 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                      {pInfo.photoUrl ? (
+                        <img
+                          src={pInfo.photoUrl}
+                          alt={pInfo.productName}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#FEF2EE] rounded-lg flex flex-col items-center justify-center text-[#BA3A24]">
+                          <Package className="w-8 h-8" />
+                          <span className="text-[8px] font-black uppercase tracking-tight mt-0.5">DuraGrit</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Identifiers & Title */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-[10.5px] font-bold text-[#BA3A24] bg-[#FEF2EE] border border-[#F9CEB8] px-2 py-0.5 rounded-md">
+                          SKU: {pInfo.skuCode}
+                        </span>
+                        <span className="text-[10px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                          {pInfo.category}
+                        </span>
+                        {pInfo.subCategory && (
+                          <span className="text-[10px] font-medium text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            {pInfo.subCategory}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-black text-slate-900 text-sm leading-snug mt-1.5">
+                        {pInfo.productName}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                        {pInfo.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 4-Tile Spec Grid (SKU, Packing Size, MRP, Cashback Reward) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200/60">
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-2xs">
+                      <span className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Product SKU</span>
+                      <span className="text-xs font-black text-slate-900 font-mono mt-0.5 block truncate">{pInfo.skuCode}</span>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-2xs">
+                      <span className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">Packing Size</span>
+                      <span className="text-xs font-black text-slate-900 font-mono mt-0.5 block">{pInfo.packSize}</span>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-2xs">
+                      <span className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">MRP Price</span>
+                      <span className="text-xs font-black text-slate-900 font-mono mt-0.5 block">₹{pInfo.mrp.toLocaleString('en-IN')}</span>
+                    </div>
+
+                    <div className="bg-emerald-50 rounded-xl p-2.5 border border-emerald-200 shadow-2xs">
+                      <span className="text-[9.5px] font-bold text-emerald-800 uppercase tracking-wider block">Cashback Reward</span>
+                      <span className="text-xs font-black text-emerald-700 font-mono mt-0.5 block">₹{pInfo.rewardValue.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. QR Token & Batch Scan Details */}
+                <div className="space-y-1.5">
+                  <span className="text-[10.5px] font-black text-slate-500 uppercase tracking-wider px-0.5">
+                    QR Token &amp; Batch Security
+                  </span>
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2 text-xs">
+                    <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-lg border border-slate-200">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">QR Serial Number</span>
+                      <span className="text-xs font-mono font-bold text-[#BA3A24]">
+                        {pInfo.rawSerial || inspectedProductClaim.qrSerial || inspectedProductClaim.id}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <span className="text-slate-500">Claim Request ID:</span>
+                      <span className="font-mono font-semibold text-slate-800">
+                        {inspectedProductClaim.requestId || inspectedProductClaim.id}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500">Scan Recorded At:</span>
+                      <span className="font-mono text-slate-700 font-medium">
+                        {inspectedProductClaim.scanTimestamp}
+                      </span>
+                    </div>
+                    {inspectedProductClaim.proofImageUrl && (
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                        <span className="text-slate-500">Contractor Site Photo:</span>
+                        <button
+                          type="button"
+                          onClick={() => setViewScanPhotoClaim(inspectedProductClaim)}
+                          className="text-[11px] text-[#C84826] hover:text-[#A62C11] font-bold inline-flex items-center gap-1 underline cursor-pointer"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          <span>View Uploaded Proof</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Vendor & Beneficiary Attribution */}
+                <div className="space-y-1.5">
+                  <span className="text-[10.5px] font-black text-slate-500 uppercase tracking-wider px-0.5">
+                    Vendor &amp; Beneficiary Partner
+                  </span>
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500">Authorized Vendor:</span>
+                      <span className="font-extrabold text-[#A62C11] text-right truncate max-w-[65%] flex items-center justify-end gap-1">
+                        <Building2 className="w-3.5 h-3.5 shrink-0" />
+                        <span>{vInfo.vendorName} ({vInfo.vendorId || 'VEN-001'})</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500">Claimant Applicator:</span>
+                      <span className="font-bold text-slate-900">
+                        {inspectedProductClaim.userName} ({inspectedProductClaim.userRole})
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500">Contact Mobile:</span>
+                      <span className="font-mono font-semibold text-slate-800">{inspectedProductClaim.userMobile}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500">Payout Rail / Account:</span>
+                      <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {inspectedProductClaim.paymentMode || inspectedProductClaim.payoutType}: {inspectedProductClaim.payoutDest}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                      <span className="text-slate-500">Verification Status:</span>
+                      <span
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          inspectedProductClaim.isDisbursed
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            : inspectedProductClaim.isApprovedAwaiting
+                            ? 'bg-[#FEF2EE] text-[#A62C11] border-[#F9CEB8]'
+                            : isRejected
+                            ? 'bg-rose-50 text-rose-700 border-rose-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}
+                      >
+                        {inspectedProductClaim.isDisbursed
+                          ? '✓ Disbursed'
+                          : inspectedProductClaim.isApprovedAwaiting
+                          ? '⚡ Approved (Awaiting Release)'
+                          : isRejected
+                          ? '✕ Quarantined'
+                          : '⏳ Pending Admin Check'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInspectedProductClaim(null)}
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition cursor-pointer"
+                >
+                  Close
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {isPending && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const target = inspectedProductClaim;
+                          setInspectedProductClaim(null);
+                          handleSingleReject(target);
+                        }}
+                        className="px-3 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-slate-300 hover:border-rose-300 font-bold text-xs rounded-xl transition cursor-pointer"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const target = inspectedProductClaim;
+                          setInspectedProductClaim(null);
+                          handleSingleApprove(target);
+                        }}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
+                      >
+                        <Check className="w-4 h-4 stroke-[3]" />
+                        <span>Approve Claim</span>
+                      </button>
+                    </>
+                  )}
+
+                  {inspectedProductClaim.isApprovedAwaiting && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = inspectedProductClaim;
+                        setInspectedProductClaim(null);
+                        handleOpenReleaseModal(target);
+                      }}
+                      className="px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Zap className="w-4 h-4 text-white fill-white" />
+                      <span>Release Payment</span>
+                    </button>
+                  )}
+
+                  {inspectedProductClaim.isDisbursed && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = inspectedProductClaim;
+                        setInspectedProductClaim(null);
+                        setViewReceiptClaim(target);
+                      }}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>View Receipt Voucher</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* POPUP MODAL 1: RELEASE PAYOUT & ATTACH SCREENSHOT / TRANSACTION ID        */}

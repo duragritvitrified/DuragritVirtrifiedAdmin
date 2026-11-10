@@ -11,15 +11,15 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.9.8',
-    buildNumber: 168,
+    version: '4.9.9',
+    buildNumber: 169,
     timestamp: buildTime,
-    adminVersion: '4.9.8',
-    adminBuildNumber: 168,
-    vendorVersion: '4.9.8',
-    vendorBuildNumber: 168,
+    adminVersion: '4.9.9',
+    adminBuildNumber: 169,
+    vendorVersion: '4.9.9',
+    vendorBuildNumber: 169,
     apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
-    changelog: 'Dedicated Release Payment tab in Admin Mobile App with full disbursal redemption popup, payment mode selection, UTR auto-generator, proof screenshot attachment, and instant bidirectional Supabase cloud sync v4.9.8.'
+    changelog: 'Product inspection modal with SKU, packing size, category, MRP, and photo on Web Admin Cashback Requests page v4.9.9.'
   });
 }
