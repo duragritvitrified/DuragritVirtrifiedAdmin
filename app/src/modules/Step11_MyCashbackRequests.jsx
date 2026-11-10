@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import {
+  ClaimProofPreviewModal,
+  loadStoredClaimProofs,
+  saveStoredClaimProof,
+} from '../components/modals/ClaimProofPreviewModal';
+import { ClaimAuditDetailsModal } from '../components/modals/ClaimAuditDetailsModal';
 import {
   ArrowLeft,
   Clock,
@@ -16,7 +22,10 @@ import {
   ShieldCheck,
   X,
   Keyboard,
-  AlertTriangle
+  AlertTriangle,
+  MapPin,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
@@ -26,13 +35,63 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'inprocess' | 'completed' | 'rejected'
   const [toastMsg, setToastMsg] = useState('');
   const [copiedId, setCopiedId] = useState('');
-  const [previewReceipt, setPreviewReceipt] = useState(null);
+  const [proofModalClaim, setProofModalClaim] = useState(null);
+  const [geoAuditClaim, setGeoAuditClaim] = useState(null);
+  const [storedProofs, setStoredProofs] = useState(() => loadStoredClaimProofs());
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Manual claim modal state
+  // Manual claim modal state + Step B.3 proof attachment & GPS capture
   const [showManualModal, setShowManualModal] = useState(false);
   const [manualCode, setManualCode] = useState('');
+  const [manualProofFileName, setManualProofFileName] = useState('');
+  const [manualProofDataUrl, setManualProofDataUrl] = useState('');
+  const [manualGeoCoords, setManualGeoCoords] = useState({
+    lat: '22.8173° N',
+    lng: '70.8377° E',
+    siteLabel: 'Job Site #12',
+    dispatchNode: 'Morbi Yard 04 Hub',
+  });
   const [manualLoading, setManualLoading] = useState(false);
+  const manualFileInputRef = useRef(null);
+
+  const captureDeviceGps = () => {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const latStr = `${pos.coords.latitude.toFixed(4)}° N`;
+            const lngStr = `${pos.coords.longitude.toFixed(4)}° E`;
+            setManualGeoCoords((prev) => ({
+              ...prev,
+              lat: latStr,
+              lng: lngStr,
+            }));
+          },
+          () => {}
+        );
+      } catch (_) {}
+    }
+  };
+
+  const handleOpenManualModal = () => {
+    setShowManualModal(true);
+    captureDeviceGps();
+  };
+
+  const handleManualProofSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Proof file exceeds 5MB limit. Please choose a smaller PDF or JPG.');
+      return;
+    }
+    setManualProofFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setManualProofDataUrl(String(ev.target?.result || ''));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -118,14 +177,28 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
     if (!manualCode.trim()) return;
     setManualLoading(true);
     try {
+      const cleanSerial = manualCode.replace(/^#/, '').trim();
       const res = await submitScannedCode({
-        serialKey: manualCode.replace(/^#/, '').trim(),
+        serialKey: cleanSerial,
         user: currentUser,
+        proofImage: manualProofDataUrl || null,
       });
       if (res && res.success) {
-        showToast(`Claim logged successfully for ${res.serialKey}!`);
+        const key = res.claimCode || cleanSerial;
+        const savedMeta = saveStoredClaimProof(key, {
+          fileName: manualProofFileName || 'Invoice_DTA999_MOR.pdf',
+          dataUrl: manualProofDataUrl || '',
+          lat: manualGeoCoords.lat,
+          lng: manualGeoCoords.lng,
+          siteLabel: manualGeoCoords.siteLabel,
+          dispatchNode: manualGeoCoords.dispatchNode,
+        });
+        setStoredProofs((prev) => ({ ...prev, [key]: savedMeta, [cleanSerial]: savedMeta }));
+        showToast(`Claim logged successfully for ${res.serialKey || cleanSerial}!`);
         setShowManualModal(false);
         setManualCode('');
+        setManualProofFileName('');
+        setManualProofDataUrl('');
       } else {
         showToast(res?.message || 'Verification failed. Ensure batch exists.');
       }
@@ -226,7 +299,7 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
             </button>
 
             <button
-              onClick={() => setShowManualModal(true)}
+              onClick={handleOpenManualModal}
               className="bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer font-serif"
             >
               <Keyboard className="w-3.5 h-3.5 text-[#A6300F]" />
@@ -410,17 +483,60 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
                     </div>
                   </div>
 
-                  <div className="pt-1.5 border-t border-stone-100 flex items-center justify-between text-[11px]">
-                    <span className="text-stone-400 text-[10px]">
-                      Linked VPA: {claim.vpa || currentUser?.upi || 'Direct UPI'}
-                    </span>
-                    <button
-                      onClick={() => setPreviewReceipt(claim)}
-                      className="text-[#A10000] font-bold hover:underline cursor-pointer"
-                    >
-                      View details →
-                    </button>
-                  </div>
+                  {/* Step 11A & 11B Blueprint Specification: Proof Attachment Pill (View proof ->) & Geo-Tag Row (View details ->) */}
+                  {(() => {
+                    const serialKey = claim.qrSerial || claim.serialKey || '';
+                    const proofEntry = storedProofs[claimCode] || storedProofs[serialKey] || null;
+                    const defaultDocName =
+                      proofEntry?.fileName ||
+                      claim.proofFileName ||
+                      (String(claimCode).endsWith('8') || String(claimCode).includes('9018')
+                        ? 'Scan_Batch_Receipt_08.jpg'
+                        : 'Invoice_DTA999_MOR.pdf');
+                    const isJpgDoc = /\.(jpg|jpeg|png|webp)$/i.test(defaultDocName);
+
+                    return (
+                      <div className="pt-2 border-t border-stone-100 space-y-1.5 text-[11px]">
+                        {/* Row 1: Proof Attachment Pill + View proof -> */}
+                        <div className="flex items-center justify-between bg-[#FAF9F6] px-2.5 py-1.5 rounded-lg border border-[#ECEAE6]">
+                          <button
+                            type="button"
+                            onClick={() => setProofModalClaim(claim)}
+                            className="inline-flex items-center gap-1.5 text-[10.5px] font-mono font-bold text-stone-800 hover:text-[#A6300F] truncate cursor-pointer"
+                          >
+                            {isJpgDoc ? (
+                              <ImageIcon className="w-3.5 h-3.5 text-[#A6300F] shrink-0" />
+                            ) : (
+                              <FileText className="w-3.5 h-3.5 text-[#A6300F] shrink-0" />
+                            )}
+                            <span className="truncate">{defaultDocName}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProofModalClaim(claim)}
+                            className="text-[#A10000] font-bold text-[10.5px] hover:underline shrink-0 cursor-pointer ml-2"
+                          >
+                            View proof →
+                          </button>
+                        </div>
+
+                        {/* Row 2: Geo-tagged at Job Site #12 + View details -> */}
+                        <div className="flex items-center justify-between px-1 pt-0.5">
+                          <span className="text-stone-500 text-[10.5px] flex items-center gap-1 font-medium">
+                            <MapPin className="w-3 h-3 text-[#A6300F] shrink-0" />
+                            <span>◎ Geo-tagged at {proofEntry?.siteLabel || 'Job Site #12'}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setGeoAuditClaim(claim)}
+                            className="text-[#A10000] font-bold text-[10.5px] hover:underline cursor-pointer"
+                          >
+                            View details →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })
@@ -454,7 +570,7 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
         </section>
       </div>
 
-      {/* Manual Claim Modal */}
+      {/* Step B.3: Manual Claim Modal with Proof Attachment & Auto GPS Capture */}
       {showManualModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-5 max-w-sm w-full border border-stone-200 shadow-xl space-y-3 font-sans">
@@ -462,35 +578,75 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
               <h3 className="font-bold text-sm text-stone-900 font-serif">Manual Serial Ingest</h3>
               <button
                 onClick={() => setShowManualModal(false)}
-                className="text-stone-400 hover:text-stone-700"
+                className="text-stone-400 hover:text-stone-700 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <p className="text-xs text-stone-500">
-              Enter the unique serialized key printed under the DuraGrit tile adhesive packaging label.
+              Enter the unique serialized key printed under the DuraGrit tile adhesive packaging label and optionally attach your tax invoice or batch receipt.
             </p>
             <form onSubmit={handleManualClaimSubmit} className="space-y-3">
-              <input
-                type="text"
-                autoFocus
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                placeholder="DG-88410-B04"
-                className="w-full px-3 py-2 text-xs font-mono font-bold border border-stone-300 rounded-xl focus:border-[#A6300F] outline-none"
-              />
-              <div className="flex gap-2">
+              <div>
+                <label className="block text-[10.5px] font-bold text-stone-700 mb-1">
+                  Serialized QR Key <span className="text-[#A6300F]">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                  placeholder="DG-88410-B04"
+                  className="w-full px-3 py-2 text-xs font-mono font-bold border border-stone-300 rounded-xl focus:border-[#A6300F] outline-none"
+                />
+              </div>
+
+              {/* Optional Invoice PDF / Batch Receipt JPG Attachment */}
+              <div>
+                <input
+                  ref={manualFileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*"
+                  onChange={handleManualProofSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => manualFileInputRef.current?.click()}
+                  className="w-full py-2 px-3 bg-[#FAF9F6] hover:bg-stone-100 border border-dashed border-stone-300 rounded-xl text-xs font-bold text-stone-700 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#A6300F]" />
+                  <span className="truncate">
+                    {manualProofFileName
+                      ? `Attached: ${manualProofFileName}`
+                      : 'Attach Invoice PDF / Receipt JPG (Optional, max 5MB)'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Auto GPS Capture Pill */}
+              <div className="bg-[#F4F3F0] px-3 py-2 rounded-xl border border-[#ECEAE6] flex items-center justify-between text-[10px] font-mono text-stone-600">
+                <span className="flex items-center gap-1 font-bold text-stone-800">
+                  <MapPin className="w-3 h-3 text-[#A6300F]" />
+                  <span>{manualGeoCoords.siteLabel}</span>
+                </span>
+                <span>
+                  {manualGeoCoords.lat}, {manualGeoCoords.lng}
+                </span>
+              </div>
+
+              <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setShowManualModal(false)}
-                  className="flex-1 py-2 text-xs font-semibold bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl"
+                  className="flex-1 py-2 text-xs font-semibold bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={manualLoading || !manualCode.trim()}
-                  className="flex-1 py-2 text-xs font-bold bg-[#A6300F] hover:bg-[#8B230C] text-white rounded-xl shadow-xs"
+                  className="flex-1 py-2 text-xs font-bold bg-[#A6300F] hover:bg-[#8B230C] disabled:opacity-50 text-white rounded-xl shadow-xs cursor-pointer"
                 >
                   {manualLoading ? 'Logging...' : 'Submit Claim'}
                 </button>
@@ -500,52 +656,39 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
         </div>
       )}
 
-      {/* Detail / Receipt Modal */}
-      {previewReceipt && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-5 max-w-sm w-full border border-stone-200 shadow-xl space-y-3 font-sans">
-            <div className="flex items-center justify-between pb-2 border-b border-stone-100">
-              <span className="font-bold text-sm text-stone-900 font-serif">Claim Details</span>
-              <button
-                onClick={() => setPreviewReceipt(null)}
-                className="text-stone-400 hover:text-stone-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-stone-500">Serial Key:</span>
-                <span className="font-mono font-bold text-stone-800">{previewReceipt.qrSerial || previewReceipt.serialKey}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-stone-500">Product:</span>
-                <span className="font-bold text-stone-800">{previewReceipt.productName || 'Vitrified Item'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-stone-500">Amount:</span>
-                <span className="font-bold text-stone-900 font-serif text-sm">₹{previewReceipt.amount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-stone-500">Status:</span>
-                <span className="font-bold text-stone-800">{previewReceipt.status}</span>
-              </div>
-              {previewReceipt.transactionId && (
-                <div className="flex justify-between">
-                  <span className="text-stone-500">UTR:</span>
-                  <span className="font-mono text-emerald-700 font-bold">{previewReceipt.transactionId}</span>
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => setPreviewReceipt(null)}
-              className="w-full py-2 bg-stone-100 hover:bg-stone-200 font-bold text-xs rounded-xl text-stone-800"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Step B.1: Claim Proof Preview Modal (View proof ->) */}
+      <ClaimProofPreviewModal
+        isOpen={Boolean(proofModalClaim)}
+        claim={proofModalClaim}
+        proofMeta={
+          proofModalClaim
+            ? storedProofs[proofModalClaim.claimCode || proofModalClaim.requestId || proofModalClaim.id] ||
+              storedProofs[proofModalClaim.qrSerial || proofModalClaim.serialKey] ||
+              null
+            : null
+        }
+        currentUser={currentUser}
+        onClose={() => setProofModalClaim(null)}
+        onProofReplaced={(claimKey, updatedEntry) => {
+          setStoredProofs((prev) => ({ ...prev, [claimKey]: updatedEntry }));
+          showToast(`Updated proof attachment: ${updatedEntry.fileName}`);
+        }}
+      />
+
+      {/* Step B.2: Claim Geo-Tag & Escrow Audit Modal (View details ->) */}
+      <ClaimAuditDetailsModal
+        isOpen={Boolean(geoAuditClaim)}
+        claim={geoAuditClaim}
+        geoMeta={
+          geoAuditClaim
+            ? storedProofs[geoAuditClaim.claimCode || geoAuditClaim.requestId || geoAuditClaim.id] ||
+              storedProofs[geoAuditClaim.qrSerial || geoAuditClaim.serialKey] ||
+              manualGeoCoords
+            : null
+        }
+        onClose={() => setGeoAuditClaim(null)}
+        onOpenProof={(c) => setProofModalClaim(c)}
+      />
     </div>
   );
 };
