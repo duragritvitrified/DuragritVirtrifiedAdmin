@@ -836,7 +836,14 @@ export const DataProvider = ({ children }) => {
                   vendorMap.delete(vId);
                 } else if (event.vendor) {
                   const existing = vendorMap.get(vId) || {};
-                  vendorMap.set(vId, { ...existing, ...event.vendor });
+                  const eventTime = new Date(r.timestamp || r.created_at || Date.now()).getTime();
+                  vendorMap.set(vId, {
+                    ...existing,
+                    ...event.vendor,
+                    companyName: event.vendor.companyName || event.vendor.name || existing.companyName,
+                    name: event.vendor.companyName || event.vendor.name || existing.name,
+                    updatedAt: Math.max(Number(event.vendor.updatedAt || 0), eventTime)
+                  });
                 }
               }
             } else if (r.flag_reason) {
@@ -846,7 +853,14 @@ export const DataProvider = ({ children }) => {
                   const vId = String(v.vendorId || v.id || '').toUpperCase();
                   if (vId) {
                     const existing = vendorMap.get(vId) || {};
-                    vendorMap.set(vId, { ...existing, ...v });
+                    const eventTime = new Date(r.timestamp || r.created_at || Date.now()).getTime();
+                    vendorMap.set(vId, {
+                      ...existing,
+                      ...v,
+                      companyName: v.companyName || v.name || existing.companyName,
+                      name: v.companyName || v.name || existing.name,
+                      updatedAt: Math.max(Number(v.updatedAt || 0), eventTime)
+                    });
                   }
                 });
               }
@@ -975,12 +989,14 @@ export const DataProvider = ({ children }) => {
         (u) => normalizeMobile(u.mobile) || String(u.id || '').toUpperCase(),
         deletedSet
       );
-      const nextVendors = mergeCollections(
-        sbVendors,
-        bridge?.vendors ?? loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS),
-        (v) => String(v.vendorId || v.id || '').toUpperCase(),
-        deletedSet
-      );
+      const nextVendors = (sbConnected && sbVendors.length > 0)
+        ? sbVendors
+        : mergeCollections(
+            sbVendors,
+            bridge?.vendors ?? loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS),
+            (v) => String(v.vendorId || v.id || '').toUpperCase(),
+            deletedSet
+          );
       vendorsRef.current = nextVendors;
       setVendors(nextVendors);
       const nextBatches = registryBatches.length > 0
@@ -1818,7 +1834,8 @@ export const DataProvider = ({ children }) => {
         try {
           await supabase
             .from('vendors')
-            .update({
+            .upsert({
+              vendor_id: targetVendor.vendorId || targetVendor.id,
               company_name: targetVendor.companyName,
               category: toDbVendorCategory(targetVendor.category),
               location: targetVendor.location,
@@ -1827,8 +1844,7 @@ export const DataProvider = ({ children }) => {
               email: targetVendor.email || null,
               account_status: targetVendor.status === 'INACTIVE' || targetVendor.active === false ? 'Suspended' : 'Active',
               updated_at: new Date().toISOString(),
-            })
-            .eq('vendor_id', targetVendor.vendorId);
+            }, { onConflict: 'vendor_id' });
         } catch (_) {}
       }
     }

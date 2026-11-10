@@ -11,15 +11,15 @@ export default function handler(req, res) {
 
   const buildTime = new Date().toISOString();
   return res.status(200).json({
-    version: '4.9.9',
-    buildNumber: 169,
+    version: '5.0.0',
+    buildNumber: 170,
     timestamp: buildTime,
-    adminVersion: '4.9.9',
-    adminBuildNumber: 169,
-    vendorVersion: '4.9.9',
-    vendorBuildNumber: 169,
+    adminVersion: '5.0.0',
+    adminBuildNumber: 170,
+    vendorVersion: '5.0.0',
+    vendorBuildNumber: 170,
     apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
     pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
-    changelog: 'Product inspection modal with SKU, packing size, category, MRP, and photo on Web Admin Cashback Requests page v4.9.9.'
+    changelog: 'Vendor mobile header live sync icon, instant database reflection for company edits, and real-time vendor sync v5.0.0.'
   });
 }

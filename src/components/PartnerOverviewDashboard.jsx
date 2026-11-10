@@ -42,7 +42,7 @@ export const PartnerOverviewDashboard = ({
   onLogout,
   isVendorMode = false
 }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, updateCurrentUser } = useAuth();
   const { users = [], vendors = [], claims = [], dbStatus = {}, refreshAllData } = useData();
 
   const [copiedKey, setCopiedKey] = useState('');
@@ -161,32 +161,52 @@ export const PartnerOverviewDashboard = ({
   };
 
   const partner = {
-    id: currentUser?.vendorId || currentUser?.id || matchedVendor?.vendorId || matchedVendor?.id || matchedUser?.userId || matchedUser?.id || 'VND-101',
-    companyName: currentUser?.companyName || currentUser?.name || matchedVendor?.companyName || matchedVendor?.name || matchedUser?.companyName || 'DuraGrit Authorized Partner',
-    contactPerson: currentUser?.contactPerson || currentUser?.name || matchedVendor?.contactPerson || matchedUser?.name || 'Verified Partner',
-    name: currentUser?.name || currentUser?.companyName || matchedVendor?.contactPerson || matchedVendor?.companyName || 'Verified Partner',
-    phone: currentUser?.phone || currentUser?.mobile || matchedVendor?.phone || matchedVendor?.mobile || '',
-    email: currentUser?.email || matchedVendor?.email || '',
-    category: currentUser?.category || currentUser?.role || matchedVendor?.category || 'Vendor Partner',
-    role: currentUser?.role || matchedVendor?.category || 'Vendor',
+    id: matchedVendor?.vendorId || matchedVendor?.id || currentUser?.vendorId || currentUser?.id || matchedUser?.userId || matchedUser?.id || 'VND-101',
+    companyName: matchedVendor?.companyName || matchedVendor?.name || currentUser?.companyName || currentUser?.name || matchedUser?.companyName || 'DuraGrit Authorized Partner',
+    contactPerson: matchedVendor?.contactPerson || currentUser?.contactPerson || matchedVendor?.name || currentUser?.name || 'Verified Partner',
+    name: matchedVendor?.companyName || matchedVendor?.contactPerson || matchedVendor?.name || currentUser?.name || currentUser?.companyName || 'Verified Partner',
+    phone: matchedVendor?.phone || matchedVendor?.mobile || currentUser?.phone || currentUser?.mobile || '',
+    email: matchedVendor?.email || currentUser?.email || '',
+    category: matchedVendor?.category || currentUser?.category || currentUser?.role || 'Vendor Partner',
+    role: matchedVendor?.category || currentUser?.role || 'Vendor',
     city: matchedVendor?.city || matchedVendor?.location || matchedUser?.location || 'Morbi',
     state: matchedVendor?.state || 'Gujarat',
     location: matchedVendor?.city
       ? `${matchedVendor.city}, ${matchedVendor.state || 'Gujarat'}`
       : matchedVendor?.location || matchedUser?.location || 'Morbi, Gujarat',
-    status: currentUser?.status || matchedVendor?.status || matchedVendor?.accountStatus || matchedUser?.accountStatus || 'ACTIVE',
+    status: matchedVendor?.status || matchedVendor?.accountStatus || currentUser?.status || matchedUser?.accountStatus || 'ACTIVE',
     bankName: matchedVendor?.bankName || matchedUser?.bankName || '',
     accountNumber: matchedVendor?.accountNumber || matchedUser?.accountNo || '',
     ifsc: matchedVendor?.ifscCode || matchedVendor?.ifsc || matchedUser?.ifsc || '',
     upi: matchedVendor?.upi || matchedVendor?.upiId || matchedUser?.upi || '',
     tierLevel: matchedVendor?.tierLevel || matchedUser?.tierLevel || 'Gold Applicator (Tier 2)',
-    avatarUrl: currentUser?.avatarUrl || currentUser?.profileImage || matchedVendor?.avatarUrl || matchedVendor?.profileImage || matchedUser?.avatarUrl || '',
-    profileImage: currentUser?.avatarUrl || currentUser?.profileImage || matchedVendor?.avatarUrl || matchedVendor?.profileImage || matchedUser?.avatarUrl || '',
+    avatarUrl: matchedVendor?.avatarUrl || matchedVendor?.profileImage || currentUser?.avatarUrl || currentUser?.profileImage || matchedUser?.avatarUrl || '',
+    profileImage: matchedVendor?.avatarUrl || matchedVendor?.profileImage || currentUser?.avatarUrl || currentUser?.profileImage || matchedUser?.avatarUrl || '',
     activePurchaseOrders: matchedVendor?.activePurchaseOrders || 0,
     poValueLakhs: matchedVendor?.poValueLakhs || 0,
     releasedPayoutLakhs: matchedVendor?.releasedPayoutLakhs || 0,
     payoutHistory: matchedVendor?.payoutHistory || []
   };
+
+  // Auto-sync live matched vendor changes back into AuthContext session so session storage stays fresh
+  useEffect(() => {
+    if (matchedVendor && updateCurrentUser) {
+      if (
+        matchedVendor.companyName &&
+        currentUser?.companyName !== matchedVendor.companyName
+      ) {
+        updateCurrentUser({
+          companyName: matchedVendor.companyName,
+          name: matchedVendor.companyName || matchedVendor.name,
+          contactPerson: matchedVendor.contactPerson || currentUser?.contactPerson,
+          phone: matchedVendor.phone || matchedVendor.mobile || currentUser?.phone,
+          email: matchedVendor.email || currentUser?.email,
+          status: matchedVendor.status || matchedVendor.accountStatus || currentUser?.status,
+          location: matchedVendor.location || matchedVendor.city || currentUser?.location,
+        });
+      }
+    }
+  }, [matchedVendor, currentUser?.companyName, updateCurrentUser]);
 
   const displayName = partner.companyName || partner.contactPerson || partner.name;
   const vendorAvatarSrc =
@@ -367,9 +387,18 @@ export const PartnerOverviewDashboard = ({
           </div>
         </div>
 
-        {/* 4. Active Badge Only (Contractor Title & Sync Icon Removed per request) */}
-        <div className="flex items-center shrink-0">
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/90 px-2 sm:px-2.5 py-1 rounded-full shadow-2xs">
+        {/* 4. Active Badge & Instant Live Sync Icon */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isSyncing}
+            title="Instant Live Sync with Admin Panel"
+            className="p-1.5 sm:p-2 rounded-xl bg-[#FEF2EE] hover:bg-[#FCE3D9] text-[#A6300F] border border-[#F9CEB8] flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#A6300F] ${isSyncing ? 'animate-spin' : ''}`} />
+          </button>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/90 px-2 sm:px-2.5 py-1.5 rounded-xl shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             <span>{partner.status || 'Active'}</span>
           </span>

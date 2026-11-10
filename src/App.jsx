@@ -33,12 +33,31 @@ import {
   Rocket,
   Sparkles,
   ArrowRight,
+  RefreshCw,
   X
 } from 'lucide-react';
 
 export function App() {
   const { currentUser, logout } = useAuth();
-  const { claims = [], vendors = [] } = useData();
+  const { claims = [], vendors = [], refreshAllData } = useData();
+  const [isSyncingData, setIsSyncingData] = useState(false);
+
+  const handleManualSync = async () => {
+    if (isSyncingData) return;
+    setIsSyncingData(true);
+    setToastMsg('Syncing data with Admin Panel & Database...');
+    try {
+      if (refreshAllData) {
+        await refreshAllData();
+      }
+      setToastMsg('✓ Sync complete! Live data reflected.');
+    } catch (_) {
+      setToastMsg('Sync updated with local cache.');
+    } finally {
+      setTimeout(() => setIsSyncingData(false), 600);
+      setTimeout(() => setToastMsg(''), 3000);
+    }
+  };
 
   // Strict Port, Build-Flag, Native App ID & URL Separation:
   // Priority 1: Injected build flag (dedicated Admin Mobile APK vs Vendor APK)
@@ -388,18 +407,24 @@ export function App() {
               />
             </div>
 
-            {/* Right: Version Number, Sync Status Badge, and Logout Button */}
+            {/* Right: Version Number, Sync Icon Button, and Logout Button */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {/* Version Number */}
               <span className="text-[9.5px] sm:text-[10.5px] font-mono font-bold text-stone-300 bg-white/10 px-2 py-0.5 rounded-full border border-stone-700/80 shrink-0">
-                {updateStatus.installedVersion || 'v4.8.5'}
+                {updateStatus.installedVersion || 'v5.0.0'}
               </span>
 
-              {/* Sync Status Badge */}
-              <span className="inline-flex items-center gap-1 text-[8.5px] sm:text-[9px] font-bold text-emerald-400 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-500/40 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Sync ✓</span>
-              </span>
+              {/* Sync Icon Button (Right of Version Number) */}
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncingData}
+                title="Sync with Live Database & Admin Panel"
+                className="inline-flex items-center gap-1 text-[9px] sm:text-[9.5px] font-bold text-emerald-400 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 hover:border-emerald-400 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                <RefreshCw className={`w-3 h-3 text-emerald-400 ${isSyncingData ? 'animate-spin' : ''}`} />
+                <span>{isSyncingData ? 'Syncing...' : 'Sync'}</span>
+              </button>
 
               {/* Logout Button */}
               <button

@@ -1291,6 +1291,16 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
             <span className="text-[9.5px] font-mono font-bold text-cyan-300 shrink-0">
               {adminUpdateStatus.installedVersion}
             </span>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isSyncing}
+              title="Sync Live Moderation Queue with Database"
+              className="inline-flex items-center gap-1 text-[8.5px] font-bold text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-500/40 px-2 py-0.5 rounded-full transition active:scale-95 cursor-pointer ml-1"
+            >
+              <RefreshCw className={`w-2.5 h-2.5 text-cyan-300 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+            </button>
           </div>
         </div>
 

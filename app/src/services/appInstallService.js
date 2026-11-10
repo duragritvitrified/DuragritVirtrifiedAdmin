@@ -6,10 +6,10 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.9.9';
-export const CURRENT_BUILT_IN_BUILD = 169;
-export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.9';
-export const CURRENT_ADMIN_BUILT_IN_BUILD = 169;
+export const CURRENT_BUILT_IN_VERSION = 'v5.0.0';
+export const CURRENT_BUILT_IN_BUILD = 170;
+export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v5.0.0';
+export const CURRENT_ADMIN_BUILT_IN_BUILD = 170;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -32,14 +32,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-021',
+    version: 'v5.0.0',
+    buildNumber: 170,
+    releaseDate: '2026-11-10 11:30:00',
+    title: 'Vendor Header Live Sync & Real-Time Company Edit Reflection v5.0.0',
+    changelog: 'Dedicated live sync icon next to version number in vendor mobile app header, immediate database sync and reflection of company name edits from Web Admin Panel.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-vendorsyncv500build170',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-020',
     version: 'v4.9.9',
     buildNumber: 169,
     releaseDate: '2026-11-10 09:15:00',
     title: 'Product Inspection Modal & Action Link Release v4.9.9',
     changelog: 'Product inspection modal with SKU, packing size, category, MRP, and photo on Web Admin Cashback Requests page.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-vendorviewprod169',

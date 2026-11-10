@@ -144,22 +144,28 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           return;
         }
 
+        const vLive = (vendors || []).find((v) =>
+          String(v.id || v.vendorId || '').toUpperCase() === 'VND-101' ||
+          String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10) === '8826021114'
+        );
+
         loginUser({
           id: 'VND-101',
           vendorId: 'VND-101',
-          name: 'DuraGrit Authorized Partner',
-          companyName: 'DuraGrit Authorized Partner',
+          name: vLive?.companyName || vLive?.name || 'DuraGrit Authorized Partner',
+          companyName: vLive?.companyName || vLive?.name || 'DuraGrit Authorized Partner',
+          contactPerson: vLive?.contactPerson || 'Vendor Partner',
           mobile: '8826021114',
           phone: '8826021114',
-          email: 'duragrit07@gmail.com',
-          role: 'Vendor',
-          category: 'Tile Contractor / Applicator',
-          location: 'Morbi Central Hub, Gujarat',
-          status: 'ACTIVE',
-          accountStatus: 'Active',
+          email: vLive?.email || 'duragrit07@gmail.com',
+          role: vLive?.category || 'Vendor',
+          category: vLive?.category || 'Tile Contractor / Applicator',
+          location: vLive?.location || 'Morbi Central Hub, Gujarat',
+          status: vLive?.status || 'ACTIVE',
+          accountStatus: vLive?.accountStatus || 'Active',
           hub: yardLocation || 'YARD HUB 04 - MORBI GIDC',
-          avatarUrl: '',
-          profileImage: '',
+          avatarUrl: vLive?.avatarUrl || '',
+          profileImage: vLive?.profileImage || '',
           active: true,
         });
 
