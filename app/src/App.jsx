@@ -168,27 +168,15 @@ export function App() {
     
     // Check local status and also poll live server endpoint
     checkForLiveServerUpdate().then((status) => {
-      if (status) {
+      if (status && isMounted) {
         setUpdateStatus(status);
-        const isApplied = localStorage.getItem('duragrit_ota_applied_' + status.latestVersion) === 'true';
-        const isDismissed = sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true' ||
-                            localStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true';
-        if (status.hasUpdate && !isApplied && !isDismissed) {
-          setShowUpdateModal(true);
-        }
       }
     });
 
     const handleSync = () => {
       checkForLiveServerUpdate().then((status) => {
-        if (status) {
+        if (status && isMounted) {
           setUpdateStatus(status);
-          const isApplied = localStorage.getItem('duragrit_ota_applied_' + status.latestVersion) === 'true';
-          const isDismissed = sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true' ||
-                              localStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true';
-          if (status.hasUpdate && !isApplied && !isDismissed) {
-            setShowUpdateModal(true);
-          }
         }
       });
     };
@@ -199,21 +187,16 @@ export function App() {
 
     const interval = setInterval(() => {
       checkForLiveServerUpdate().then((status) => {
-        if (status?.hasUpdate) {
+        if (status?.hasUpdate && isMounted) {
           setUpdateStatus(status);
-          const isApplied = localStorage.getItem('duragrit_ota_applied_' + status.latestVersion) === 'true';
-          const isDismissed = sessionStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true' ||
-                              localStorage.getItem('duragrit_ota_dismissed_' + status.latestVersion) === 'true';
-          if (!isApplied && !isDismissed) {
-            setShowUpdateModal(true);
-          }
-        } else {
+        } else if (isMounted) {
           setUpdateStatus(prev => ({ ...prev, hasUpdate: false }));
         }
       });
-    }, 30000);
+    }, 60000);
 
     return () => {
+      isMounted = false;
       clearInterval(interval);
       window.removeEventListener('storage', handleSync);
       window.removeEventListener('duragrit:ota-release-pushed', handleSync);
@@ -309,7 +292,7 @@ export function App() {
           portalLabel="Vendor Partner Portal"
         />
       )}
-      <div className="w-full max-w-[440px] landscape:max-w-2xl bg-[#FAF9F6] h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-0 landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:min-h-0 rounded-none sm:rounded-[40px] landscape:rounded-none overflow-hidden shadow-2xl border-0 sm:border landscape:border-0 border-stone-200/90 flex flex-col relative">
+      <div className="w-full max-w-[480px] landscape:max-w-2xl bg-[#FAF9F6] h-[100dvh] max-h-[100dvh] sm:h-[min(900px,94vh)] sm:min-h-0 landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:min-h-0 rounded-none sm:rounded-[40px] landscape:rounded-none overflow-hidden shadow-2xl border-0 sm:border landscape:border-0 border-stone-200/90 flex flex-col relative">
         
         {/* Floating Toast Notification */}
         {toastMsg && (
@@ -358,13 +341,33 @@ export function App() {
               </div>
             </div>
 
-            <button
-              onClick={handleTriggerUpdate}
-              disabled={isUpdating}
-              className="px-3 py-1.5 bg-white hover:bg-amber-100 text-[#A62C11] font-black text-[10.5px] rounded-lg shadow-sm transition active:scale-95 cursor-pointer shrink-0 ml-2"
-            >
-              {isUpdating ? 'Updating...' : 'Update Now'}
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              <button
+                onClick={handleTriggerUpdate}
+                disabled={isUpdating}
+                className="px-3 py-1.5 bg-white hover:bg-amber-100 text-[#A62C11] font-black text-[10.5px] rounded-lg shadow-sm transition active:scale-95 cursor-pointer shrink-0"
+              >
+                {isUpdating ? 'Updating...' : 'Update Now'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const v = updateStatus.latestVersion;
+                  const clean = String(v).replace(/^v/i, '');
+                  localStorage.setItem('duragrit_ota_dismissed_' + v, 'true');
+                  localStorage.setItem('duragrit_ota_dismissed_' + clean, 'true');
+                  localStorage.setItem('duragrit_ota_dismissed_v' + clean, 'true');
+                  try {
+                    sessionStorage.setItem('duragrit_ota_dismissed_' + v, 'true');
+                  } catch (_) {}
+                  setUpdateStatus(prev => ({ ...prev, hasUpdate: false }));
+                }}
+                className="p-1 rounded-md text-white/80 hover:text-white hover:bg-white/10 cursor-pointer transition"
+                title="Dismiss update"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         )}
 

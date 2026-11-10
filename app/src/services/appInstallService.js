@@ -590,6 +590,10 @@ export const getClientInstalledVersion = () => {
   if (!saved || saved.startsWith('v3.') || saved === 'v4.8.2' || isVersionHigher(CURRENT_BUILT_IN_VERSION, saved)) {
     localStorage.setItem(CLIENT_VERSION_KEY, CURRENT_BUILT_IN_VERSION);
     localStorage.setItem('duragrit_client_installed_build', String(CURRENT_BUILT_IN_BUILD));
+    const cleanVer = CURRENT_BUILT_IN_VERSION.replace(/^v/i, '');
+    localStorage.setItem('duragrit_ota_applied_' + CURRENT_BUILT_IN_VERSION, 'true');
+    localStorage.setItem('duragrit_ota_applied_' + cleanVer, 'true');
+    localStorage.setItem('duragrit_ota_applied_v' + cleanVer, 'true');
     return CURRENT_BUILT_IN_VERSION;
   }
   return saved;
@@ -602,17 +606,29 @@ export const checkClientUpdateStatus = () => {
   const installedBuild = Number(localStorage.getItem('duragrit_client_installed_build') || CURRENT_BUILT_IN_BUILD);
   const latestBuild = Number(latestRelease?.buildNumber || CURRENT_BUILT_IN_BUILD);
 
+  const cleanInstalledVer = String(installedVer || '').replace(/^v/i, '').trim();
+  const cleanLatestVer = String(latestRelease?.version || '').replace(/^v/i, '').trim();
+
   const isHigherVer = isVersionHigher(latestRelease?.version, installedVer);
-  const isSameVer = String(latestRelease?.version || '').replace(/^v/i, '').trim() === String(installedVer || '').replace(/^v/i, '').trim();
+  const isSameVer = cleanLatestVer === cleanInstalledVer;
   const isHigherBuild = isSameVer && (latestBuild > installedBuild);
 
-  const cleanVer = String(latestRelease?.version || '').replace(/^v/i, '');
   const isApplied = typeof window !== 'undefined' && (
-    localStorage.getItem('duragrit_ota_applied_v' + cleanVer) === 'true' ||
-    localStorage.getItem('duragrit_ota_applied_' + cleanVer) === 'true'
+    localStorage.getItem('duragrit_ota_applied_v' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_ota_applied_' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_ota_applied_' + latestRelease?.version) === 'true'
   );
 
-  const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied);
+  const isDismissed = typeof window !== 'undefined' && (
+    localStorage.getItem('duragrit_ota_dismissed_v' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_ota_dismissed_' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_ota_dismissed_' + latestRelease?.version) === 'true' ||
+    sessionStorage.getItem('duragrit_ota_dismissed_v' + cleanLatestVer) === 'true' ||
+    sessionStorage.getItem('duragrit_ota_dismissed_' + cleanLatestVer) === 'true' ||
+    sessionStorage.getItem('duragrit_ota_dismissed_' + latestRelease?.version) === 'true'
+  );
+
+  const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied && !isDismissed && !(isSameVer && installedBuild >= latestBuild));
 
   return {
     hasUpdate,
@@ -642,19 +658,32 @@ export const checkForLiveServerUpdate = async (appType = 'auto') => {
       const isAdmin = (appType === 'admin' || (typeof window !== 'undefined' && window.DURAGRIT_APP_TYPE === 'admin'));
       const installedVer = isAdmin ? getAdminInstalledVersion() : getClientInstalledVersion();
       const cleanInstalledVer = String(installedVer || '').startsWith('v') ? installedVer : `v${installedVer}`;
-      const installedBuild = Number(localStorage.getItem(isAdmin ? 'duragrit_admin_installed_build' : 'duragrit_client_installed_build') || CURRENT_BUILT_IN_BUILD);
+      const installedBuild = Number(localStorage.getItem(isAdmin ? 'duragrit_admin_installed_build' : 'duragrit_client_installed_build') || (isAdmin ? CURRENT_ADMIN_BUILT_IN_BUILD : CURRENT_BUILT_IN_BUILD));
+
+      const normServerVer = cleanServerVer.replace(/^v/i, '').trim();
+      const normInstalledVer = cleanInstalledVer.replace(/^v/i, '').trim();
 
       const isHigherVer = isVersionHigher(cleanServerVer, cleanInstalledVer);
-      const isSameVer = cleanServerVer.replace(/^v/i, '').trim() === cleanInstalledVer.replace(/^v/i, '').trim();
+      const isSameVer = normServerVer === normInstalledVer;
       const isHigherBuild = isSameVer && (serverBuild > installedBuild);
 
-      const cleanVer = cleanServerVer.replace(/^v/i, '');
+      const prefix = isAdmin ? 'duragrit_admin_ota_' : 'duragrit_ota_';
       const isApplied = typeof window !== 'undefined' && (
-        localStorage.getItem((isAdmin ? 'duragrit_admin_ota_applied_v' : 'duragrit_ota_applied_v') + cleanVer) === 'true' ||
-        localStorage.getItem((isAdmin ? 'duragrit_admin_ota_applied_' : 'duragrit_ota_applied_') + cleanVer) === 'true'
+        localStorage.getItem(prefix + 'applied_v' + normServerVer) === 'true' ||
+        localStorage.getItem(prefix + 'applied_' + normServerVer) === 'true' ||
+        localStorage.getItem(prefix + 'applied_' + cleanServerVer) === 'true'
       );
 
-      const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied);
+      const isDismissed = typeof window !== 'undefined' && (
+        localStorage.getItem(prefix + 'dismissed_v' + normServerVer) === 'true' ||
+        localStorage.getItem(prefix + 'dismissed_' + normServerVer) === 'true' ||
+        localStorage.getItem(prefix + 'dismissed_' + cleanServerVer) === 'true' ||
+        sessionStorage.getItem(prefix + 'dismissed_v' + normServerVer) === 'true' ||
+        sessionStorage.getItem(prefix + 'dismissed_' + normServerVer) === 'true' ||
+        sessionStorage.getItem(prefix + 'dismissed_' + cleanServerVer) === 'true'
+      );
+
+      const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied && !isDismissed && !(isSameVer && installedBuild >= serverBuild));
 
       return {
         hasUpdate,
@@ -1150,6 +1179,10 @@ export const getAdminInstalledVersion = () => {
     const fresh = CURRENT_ADMIN_BUILT_IN_VERSION;
     localStorage.setItem(ADMIN_VERSION_KEY, fresh);
     localStorage.setItem('duragrit_admin_installed_build', String(CURRENT_ADMIN_BUILT_IN_BUILD));
+    const cleanVer = fresh.replace(/^v/i, '');
+    localStorage.setItem('duragrit_admin_ota_applied_' + fresh, 'true');
+    localStorage.setItem('duragrit_admin_ota_applied_' + cleanVer, 'true');
+    localStorage.setItem('duragrit_admin_ota_applied_v' + cleanVer, 'true');
     return fresh;
   }
   return saved;
@@ -1161,17 +1194,29 @@ export const checkAdminUpdateStatus = () => {
   const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || CURRENT_ADMIN_BUILT_IN_BUILD);
   const latestBuild = Number(latestRelease?.buildNumber || CURRENT_ADMIN_BUILT_IN_BUILD);
 
+  const cleanInstalledVer = String(installedVer || '').replace(/^v/i, '').trim();
+  const cleanLatestVer = String(latestRelease?.version || '').replace(/^v/i, '').trim();
+
   const isHigherVer = isVersionHigher(latestRelease?.version, installedVer);
-  const isSameVer = String(latestRelease?.version || '').replace(/^v/i, '').trim() === String(installedVer || '').replace(/^v/i, '').trim();
+  const isSameVer = cleanLatestVer === cleanInstalledVer;
   const isHigherBuild = isSameVer && (latestBuild > installedBuild);
 
-  const cleanVer = String(latestRelease?.version || '').replace(/^v/i, '');
   const isApplied = typeof window !== 'undefined' && (
-    localStorage.getItem('duragrit_admin_ota_applied_v' + cleanVer) === 'true' ||
-    localStorage.getItem('duragrit_admin_ota_applied_' + cleanVer) === 'true'
+    localStorage.getItem('duragrit_admin_ota_applied_v' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_admin_ota_applied_' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_admin_ota_applied_' + latestRelease?.version) === 'true'
   );
 
-  const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied);
+  const isDismissed = typeof window !== 'undefined' && (
+    localStorage.getItem('duragrit_admin_ota_dismissed_v' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_admin_ota_dismissed_' + cleanLatestVer) === 'true' ||
+    localStorage.getItem('duragrit_admin_ota_dismissed_' + latestRelease?.version) === 'true' ||
+    sessionStorage.getItem('duragrit_admin_ota_dismissed_v' + cleanLatestVer) === 'true' ||
+    sessionStorage.getItem('duragrit_admin_ota_dismissed_' + cleanLatestVer) === 'true' ||
+    sessionStorage.getItem('duragrit_admin_ota_dismissed_' + latestRelease?.version) === 'true'
+  );
+
+  const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied && !isDismissed && !(isSameVer && installedBuild >= latestBuild));
 
   return {
     hasUpdate,
@@ -1195,17 +1240,37 @@ export const checkForLiveAdminUpdate = async () => {
     const res = await fetch(`${origin}/api/version?t=${Date.now()}&app=admin`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      const serverVer = data.adminVersion || data.version || '4.8.7';
+      const serverVer = data.adminVersion || data.version || CURRENT_ADMIN_BUILT_IN_VERSION;
       const cleanServerVer = String(serverVer).startsWith('v') ? serverVer : `v${serverVer}`;
-      const serverBuild = Number(data.adminBuildNumber || data.buildNumber) || 157;
+      const serverBuild = Number(data.adminBuildNumber || data.buildNumber) || CURRENT_ADMIN_BUILT_IN_BUILD;
 
       const installedVer = getAdminInstalledVersion();
       const cleanInstalledVer = String(installedVer || '').startsWith('v') ? installedVer : `v${installedVer}`;
-      const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || 0);
+      const installedBuild = Number(localStorage.getItem('duragrit_admin_installed_build') || CURRENT_ADMIN_BUILT_IN_BUILD);
+
+      const normServerVer = cleanServerVer.replace(/^v/i, '').trim();
+      const normInstalledVer = cleanInstalledVer.replace(/^v/i, '').trim();
 
       const isHigherVer = isVersionHigher(cleanServerVer, cleanInstalledVer);
-      const isHigherBuild = serverBuild > installedBuild;
-      const hasUpdate = Boolean(isHigherVer || isHigherBuild);
+      const isSameVer = normServerVer === normInstalledVer;
+      const isHigherBuild = isSameVer && (serverBuild > installedBuild);
+
+      const isApplied = typeof window !== 'undefined' && (
+        localStorage.getItem('duragrit_admin_ota_applied_v' + normServerVer) === 'true' ||
+        localStorage.getItem('duragrit_admin_ota_applied_' + normServerVer) === 'true' ||
+        localStorage.getItem('duragrit_admin_ota_applied_' + cleanServerVer) === 'true'
+      );
+
+      const isDismissed = typeof window !== 'undefined' && (
+        localStorage.getItem('duragrit_admin_ota_dismissed_v' + normServerVer) === 'true' ||
+        localStorage.getItem('duragrit_admin_ota_dismissed_' + normServerVer) === 'true' ||
+        localStorage.getItem('duragrit_admin_ota_dismissed_' + cleanServerVer) === 'true' ||
+        sessionStorage.getItem('duragrit_admin_ota_dismissed_v' + normServerVer) === 'true' ||
+        sessionStorage.getItem('duragrit_admin_ota_dismissed_' + normServerVer) === 'true' ||
+        sessionStorage.getItem('duragrit_admin_ota_dismissed_' + cleanServerVer) === 'true'
+      );
+
+      const hasUpdate = Boolean((isHigherVer || isHigherBuild) && !isApplied && !isDismissed && !(isSameVer && installedBuild >= serverBuild));
 
       return {
         hasUpdate,
@@ -1231,15 +1296,23 @@ export const checkForLiveAdminUpdate = async () => {
 
 export const applyAdminAppUpdate = async (targetVersion) => {
   const latestRelease = getLatestAdminRelease();
-  const ver = targetVersion || latestRelease?.version || CURRENT_ADMIN_BUILT_IN_VERSION;
+  const rawVer = targetVersion || latestRelease?.version || CURRENT_ADMIN_BUILT_IN_VERSION;
+  const ver = String(rawVer).startsWith('v') ? String(rawVer) : `v${rawVer}`;
+  const cleanVer = ver.replace(/^v/i, '');
   const targetBuild = Number(latestRelease?.buildNumber) || CURRENT_ADMIN_BUILT_IN_BUILD;
 
   localStorage.setItem(ADMIN_VERSION_KEY, ver);
   localStorage.setItem('duragrit_admin_installed_build', String(targetBuild));
   localStorage.setItem('duragrit_admin_ota_applied_' + ver, 'true');
+  localStorage.setItem('duragrit_admin_ota_applied_' + cleanVer, 'true');
+  localStorage.setItem('duragrit_admin_ota_applied_v' + cleanVer, 'true');
   localStorage.setItem('duragrit_admin_ota_dismissed_' + ver, 'true');
+  localStorage.setItem('duragrit_admin_ota_dismissed_' + cleanVer, 'true');
+  localStorage.setItem('duragrit_admin_ota_dismissed_v' + cleanVer, 'true');
   try {
     sessionStorage.setItem('duragrit_admin_ota_dismissed_' + ver, 'true');
+    sessionStorage.setItem('duragrit_admin_ota_dismissed_' + cleanVer, 'true');
+    sessionStorage.setItem('duragrit_admin_ota_dismissed_v' + cleanVer, 'true');
   } catch (_) {}
 
   if (typeof window !== 'undefined' && 'caches' in window) {
