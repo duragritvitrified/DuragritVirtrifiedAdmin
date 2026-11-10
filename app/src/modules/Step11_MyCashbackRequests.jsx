@@ -288,19 +288,11 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
             </div>
           </div>
 
-          {/* Dual Action Buttons matching PDF Page 11 */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button
-              onClick={onNavigateScan}
-              className="bg-[#A6300F] hover:bg-[#8B230C] text-white py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer font-serif"
-            >
-              <QrCode className="w-3.5 h-3.5" />
-              <span>Scan Next QR</span>
-            </button>
-
+          {/* Action Button: Manual Claim */}
+          <div className="pt-1">
             <button
               onClick={handleOpenManualModal}
-              className="bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer font-serif"
+              className="w-full bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer font-serif"
             >
               <Keyboard className="w-3.5 h-3.5 text-[#A6300F]" />
               <span>Manual Claim</span>
@@ -381,11 +373,19 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
             currentList.map((claim) => {
               const claimCode = claim.claimCode || claim.requestId || claim.id;
               const statusBucket = getBucket(claim);
+              const statusBorderClass =
+                statusBucket === 'completed'
+                  ? 'border-emerald-300 border-l-4 border-l-emerald-500'
+                  : statusBucket === 'rejected'
+                  ? 'border-rose-300 border-l-4 border-l-rose-500'
+                  : statusBucket === 'inprocess'
+                  ? 'border-blue-300 border-l-4 border-l-blue-500'
+                  : 'border-amber-300 border-l-4 border-l-amber-500';
 
               return (
                 <div
                   key={claim.id}
-                  className="bg-white rounded-2xl p-4 border border-[#ECEAE6] shadow-xs space-y-2.5"
+                  className={`bg-white rounded-2xl p-4 border shadow-xs space-y-2.5 transition ${statusBorderClass}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">

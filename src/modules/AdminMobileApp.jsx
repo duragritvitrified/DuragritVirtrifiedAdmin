@@ -2187,11 +2187,18 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     : Number(claim.amount || claim.cashbackAmount || 150);
                   const vInfo = resolveVendorInfo(claim);
                   const rejectionReason = claim.flagReason || claim.remarks || claim.reason || 'Flagged during audit verification';
+                  const statusBorderClass = isDisbursed
+                    ? 'border-emerald-400 border-l-4 border-l-emerald-600'
+                    : isRejected
+                    ? 'border-rose-400 border-l-4 border-l-rose-600'
+                    : isApproved
+                    ? 'border-blue-400 border-l-4 border-l-blue-600'
+                    : 'border-amber-400 border-l-4 border-l-amber-500';
 
                   return (
                     <article
                       key={claim.id}
-                      className="bg-white rounded-xl border border-slate-200/90 p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5"
+                      className={`bg-white rounded-xl border p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5 ${statusBorderClass}`}
                     >
                       {/* Row 1: Header - Vendor Firm & Amount + Status */}
                       <div className="flex items-start justify-between gap-2">
@@ -2502,11 +2509,18 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     ? Number(claim.disbursedAmount || claim.netDisbursed || claim.amount || claim.cashbackAmount || 150)
                     : Number(claim.amount || claim.cashbackAmount || 150);
                   const rejectionReason = claim.flagReason || claim.remarks || claim.reason || 'Flagged during audit verification';
+                  const statusBorderClass = isDisbursed
+                    ? 'border-emerald-400 border-l-4 border-l-emerald-600'
+                    : isRejected
+                    ? 'border-rose-400 border-l-4 border-l-rose-600'
+                    : isApproved
+                    ? 'border-blue-400 border-l-4 border-l-blue-600'
+                    : 'border-amber-400 border-l-4 border-l-amber-500';
 
                   return (
                     <article
                       key={claim.id}
-                      className="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5"
+                      className={`bg-white rounded-xl border p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5 ${statusBorderClass}`}
                     >
                       {/* Row 1: Header - Vendor Firm & Amount + Status */}
                       <div className="flex items-start justify-between gap-2">

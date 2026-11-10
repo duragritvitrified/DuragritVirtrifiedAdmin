@@ -492,29 +492,27 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 3: Disbursed / Paid Kitna */}
             <div
               onClick={() => setClaimFilter('disbursed')}
-              className={`bg-gradient-to-br from-emerald-50/90 via-emerald-50/70 to-teal-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-emerald-50/90 via-emerald-50/70 to-teal-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
                 claimFilter === 'disbursed'
                   ? 'border-emerald-500 ring-2 ring-emerald-200/80'
                   : 'border-emerald-200/90 hover:border-emerald-300'
               }`}
             >
-              <div className="flex items-center justify-between gap-1.5">
-                <div className="flex items-center gap-1.5 text-emerald-800 min-w-0">
-                  <div className="w-5 h-5 rounded-lg bg-emerald-100/90 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  </div>
-                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-emerald-900">
-                    Paid
-                  </span>
+              <div className="flex items-center gap-1.5 text-emerald-800">
+                <div className="w-5 h-5 rounded-lg bg-emerald-100/90 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 </div>
-                <span className="text-[9.5px] font-mono font-bold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0 shadow-2xs">
-                  {disbursedCount} Paid ✓
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-emerald-900">
+                  Paid
                 </span>
               </div>
-              <div className="flex items-baseline justify-between gap-1 pt-0.5">
-                <div className="text-base sm:text-lg font-black text-emerald-700 font-mono leading-none tracking-tight">
-                  ₹{disbursedAmount.toLocaleString('en-IN')}
-                </div>
+              <div className="text-base sm:text-lg font-black text-emerald-700 font-mono leading-tight tracking-tight">
+                ₹{disbursedAmount.toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between gap-1 flex-wrap">
+                <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                  {disbursedCount} Paid ✓
+                </span>
                 <span className="text-[9px] font-semibold text-emerald-600/80">
                   Settled UPI
                 </span>
@@ -524,29 +522,27 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 4: Approve Kitna */}
             <div
               onClick={() => setClaimFilter('approved')}
-              className={`bg-gradient-to-br from-blue-50/90 via-blue-50/70 to-indigo-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-blue-50/90 via-blue-50/70 to-indigo-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
                 claimFilter === 'approved'
                   ? 'border-blue-500 ring-2 ring-blue-200/80'
                   : 'border-blue-200/90 hover:border-blue-300'
               }`}
             >
-              <div className="flex items-center justify-between gap-1.5">
-                <div className="flex items-center gap-1.5 text-blue-800 min-w-0">
-                  <div className="w-5 h-5 rounded-lg bg-blue-100/90 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
-                  </div>
-                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-blue-900">
-                    Approved
-                  </span>
+              <div className="flex items-center gap-1.5 text-blue-800">
+                <div className="w-5 h-5 rounded-lg bg-blue-100/90 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                 </div>
-                <span className="text-[9.5px] font-mono font-bold text-blue-800 bg-white/90 px-2 py-0.5 rounded-full border border-blue-200 shrink-0 shadow-2xs">
-                  {approvedCount} Queued
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-blue-900">
+                  Approved
                 </span>
               </div>
-              <div className="flex items-baseline justify-between gap-1 pt-0.5">
-                <div className="text-base sm:text-lg font-black text-blue-700 font-mono leading-none tracking-tight">
-                  ₹{approvedAmount.toLocaleString('en-IN')}
-                </div>
+              <div className="text-base sm:text-lg font-black text-blue-700 font-mono leading-tight tracking-tight">
+                ₹{approvedAmount.toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between gap-1 flex-wrap">
+                <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-blue-800 bg-white/90 px-2 py-0.5 rounded-full border border-blue-200 shadow-2xs">
+                  {approvedCount} Queued
+                </span>
                 <span className="text-[9px] font-semibold text-blue-600/80">
                   Verified
                 </span>
@@ -556,29 +552,27 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 5: Pending Kitna Hai */}
             <div
               onClick={() => setClaimFilter('pending')}
-              className={`bg-gradient-to-br from-amber-50/90 via-amber-50/70 to-orange-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-amber-50/90 via-amber-50/70 to-orange-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
                 claimFilter === 'pending'
                   ? 'border-amber-500 ring-2 ring-amber-200/80'
                   : 'border-amber-200/90 hover:border-amber-300'
               }`}
             >
-              <div className="flex items-center justify-between gap-1.5">
-                <div className="flex items-center gap-1.5 text-amber-800 min-w-0">
-                  <div className="w-5 h-5 rounded-lg bg-amber-100/90 flex items-center justify-center shrink-0">
-                    <Clock className="w-3.5 h-3.5 text-amber-600" />
-                  </div>
-                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-amber-900">
-                    Pending
-                  </span>
+              <div className="flex items-center gap-1.5 text-amber-800">
+                <div className="w-5 h-5 rounded-lg bg-amber-100/90 flex items-center justify-center shrink-0">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
                 </div>
-                <span className="text-[9.5px] font-mono font-bold text-amber-800 bg-white/90 px-2 py-0.5 rounded-full border border-amber-200 shrink-0 shadow-2xs">
-                  {pendingCount} Review
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-amber-900">
+                  Pending
                 </span>
               </div>
-              <div className="flex items-baseline justify-between gap-1 pt-0.5">
-                <div className="text-base sm:text-lg font-black text-amber-800 font-mono leading-none tracking-tight">
-                  ₹{pendingAmount.toLocaleString('en-IN')}
-                </div>
+              <div className="text-base sm:text-lg font-black text-amber-800 font-mono leading-tight tracking-tight">
+                ₹{pendingAmount.toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between gap-1 flex-wrap">
+                <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-amber-800 bg-white/90 px-2 py-0.5 rounded-full border border-amber-200 shadow-2xs">
+                  {pendingCount} Review
+                </span>
                 <span className="text-[9px] font-semibold text-amber-700/80">
                   In Queue
                 </span>
@@ -588,29 +582,27 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 6: Reject Kitna Hai */}
             <div
               onClick={() => setClaimFilter('rejected')}
-              className={`bg-gradient-to-br from-rose-50/90 via-rose-50/70 to-red-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-rose-50/90 via-rose-50/70 to-red-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
                 claimFilter === 'rejected'
                   ? 'border-rose-500 ring-2 ring-rose-200/80'
                   : 'border-rose-200/90 hover:border-rose-300'
               }`}
             >
-              <div className="flex items-center justify-between gap-1.5">
-                <div className="flex items-center gap-1.5 text-rose-800 min-w-0">
-                  <div className="w-5 h-5 rounded-lg bg-rose-100/90 flex items-center justify-center shrink-0">
-                    <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                  </div>
-                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-rose-900">
-                    Rejected
-                  </span>
+              <div className="flex items-center gap-1.5 text-rose-800">
+                <div className="w-5 h-5 rounded-lg bg-rose-100/90 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
                 </div>
-                <span className="text-[9.5px] font-mono font-bold text-rose-800 bg-white/90 px-2 py-0.5 rounded-full border border-rose-200 shrink-0 shadow-2xs">
-                  {rejectedCount} Rejected
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-rose-900">
+                  Rejected
                 </span>
               </div>
-              <div className="flex items-baseline justify-between gap-1 pt-0.5">
-                <div className="text-base sm:text-lg font-black text-rose-700 font-mono leading-none tracking-tight">
-                  ₹{rejectedAmount.toLocaleString('en-IN')}
-                </div>
+              <div className="text-base sm:text-lg font-black text-rose-700 font-mono leading-tight tracking-tight">
+                ₹{rejectedAmount.toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between gap-1 flex-wrap">
+                <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-rose-800 bg-white/90 px-2 py-0.5 rounded-full border border-rose-200 shadow-2xs">
+                  {rejectedCount} Rejected
+                </span>
                 <span className="text-[9px] font-semibold text-rose-600/80">
                   Flagged
                 </span>
@@ -620,28 +612,9 @@ export const PartnerOverviewDashboard = ({
         </section>
 
         {/* ===================================================================== */}
-        {/* 4. DUAL PRIMARY ACTION BUTTONS (Scan QR & Claim + View Request List) */}
+        {/* 4. PRIMARY ACTION BUTTON (View Request List)                          */}
         {/* ===================================================================== */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-          {/* Action 1: Scan QR & Claim */}
-          <button
-            onClick={onNavigateScan}
-            className="w-full btn-shimmer text-white py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-md hover:brightness-105 active:scale-[0.98] transition cursor-pointer font-bold text-xs"
-          >
-            <div className="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center">
-              <QrCode className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-left">
-              <span className="block leading-tight font-extrabold text-[12px] tracking-wide">
-                Scan QR &amp; Claim
-              </span>
-              <span className="block text-[9.5px] text-white/80 font-normal">
-                Instant UPI Cashback Payout
-              </span>
-            </div>
-          </button>
-
-          {/* Action 2: View Request List */}
+        <section className="pt-0.5">
           <button
             onClick={onNavigateRequests}
             className="w-full bg-white hover:bg-stone-50 border-2 border-stone-200 text-stone-800 py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98] transition cursor-pointer font-bold text-xs"

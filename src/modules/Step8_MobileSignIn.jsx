@@ -564,6 +564,18 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   return (
     <div className="w-full max-w-[420px] mx-auto h-full min-h-[100dvh] bg-[#FAF9F6] px-4 flex flex-col items-center justify-center font-serif overflow-hidden">
       <div className="w-full">
+        {/* Centered Official DuraGrit Vitrified Logo */}
+        <div className="flex justify-center mb-6">
+          <img
+            src="/logo.png"
+            alt="DuraGrit Vitrified"
+            className="h-10 sm:h-12 w-auto object-contain"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+
         {/* Main Sign-In Card (Minimalistic & Centered) */}
         <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">
           <form onSubmit={handleSignIn} className="space-y-4">
