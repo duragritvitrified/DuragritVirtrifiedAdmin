@@ -540,6 +540,11 @@ export const DataProvider = ({ children }) => {
     const filtered = (raw || []).filter((s) => !deletedKeysRef.current.has(String(s.skuCode || s.id || '').toUpperCase()));
     return filtered.length > 0 ? filtered : DEFAULT_LIVE_SKUS;
   });
+  const skusRef = useRef(skus);
+  useEffect(() => {
+    skusRef.current = skus;
+  }, [skus]);
+
   const [users, setUsers] = useState(() => loadStorage(STORAGE_KEYS.USERS, []));
   const [vendors, setVendors] = useState(() => {
     const list = loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS);
@@ -551,10 +556,20 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     vendorsRef.current = vendors;
   }, [vendors]);
+
   const [batches, setBatches] = useState(() => loadStorage(STORAGE_KEYS.BATCHES, []));
+  const batchesRef = useRef(batches);
+  useEffect(() => {
+    batchesRef.current = batches;
+  }, [batches]);
+
   const [claims, setClaims] = useState(() =>
     (loadStorage(STORAGE_KEYS.CLAIMS, []) || []).filter((c) => !isTestOrInternalClaim(c, deletedKeysRef.current))
   );
+  const claimsRef = useRef(claims);
+  useEffect(() => {
+    claimsRef.current = claims;
+  }, [claims]);
   const [smtpConfig, setSmtpConfig] = useState(() => getSmtpConfig());
 
   const [dbStatus, setDbStatus] = useState({
@@ -775,50 +790,115 @@ export const DataProvider = ({ children }) => {
           }
         });
 
-        // B. Process Authoritative SKUs Registry from Supabase
-        const latestSkuRow = allClaimsRows.find(
-          (c) => c.qr_serial === 'DURAGRIT_SKUS_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_SKUS_'))
-        );
-        if (latestSkuRow?.flag_reason) {
-          try {
-            const parsed = JSON.parse(latestSkuRow.flag_reason);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              registrySkus = parsed;
-            }
-          } catch (_) {}
+        // B. Process Authoritative SKUs Registry from Supabase (Merge all chronological snapshots + in-memory ref)
+        const skuMap = new Map();
+        if (prodRes.status === 'fulfilled' && !prodRes.value.error) {
+          sbConnected = true;
+          (prodRes.value.data || []).map(mapProductFromDb).forEach((s) => {
+            const sCode = String(s.skuCode || s.id || '').toUpperCase();
+            if (sCode && !deletedSet.has(sCode)) skuMap.set(sCode, s);
+          });
         }
 
+        const skuRows = allClaimsRows
+          .filter((c) => c.qr_serial === 'DURAGRIT_SKUS_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_SKUS_')))
+          .sort((a, b) => new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
+
+        skuRows.forEach((row) => {
+          if (row?.flag_reason) {
+            try {
+              const parsed = JSON.parse(row.flag_reason);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                sbConnected = true;
+                parsed.forEach((s) => {
+                  const sCode = String(s.skuCode || s.id || '').toUpperCase();
+                  if (sCode && s.name && !deletedSet.has(sCode) && !deletedSet.has(String(s.id || '').toUpperCase())) {
+                    const existing = skuMap.get(sCode) || {};
+                    skuMap.set(sCode, { ...existing, ...s });
+                  }
+                });
+              }
+            } catch (_) {}
+          }
+        });
+
+        skusRef.current.forEach((s) => {
+          const sCode = String(s.skuCode || s.id || '').toUpperCase();
+          if (sCode && s.name && !deletedSet.has(sCode) && !skuMap.has(sCode)) {
+            skuMap.set(sCode, s);
+          }
+        });
+
+        registrySkus = Array.from(skuMap.values());
         if (registrySkus.length > 0) {
           sbConnected = true;
-          sbSkus = registrySkus.filter((s) => !deletedSet.has(String(s.skuCode || s.id || '').toUpperCase()));
-        } else if (prodRes.status === 'fulfilled' && !prodRes.value.error) {
-          sbConnected = true;
-          sbSkus = (prodRes.value.data || [])
-            .map(mapProductFromDb)
-            .filter((s) => !deletedSet.has(String(s.skuCode || s.id || '').toUpperCase()));
+          sbSkus = registrySkus;
         }
 
-        // C. Process Authoritative Batches Registry from Supabase
-        const latestBatchRow = allClaimsRows.find(
-          (c) => c.qr_serial === 'DURAGRIT_BATCHES_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_BATCHES_'))
-        );
-        if (latestBatchRow?.flag_reason) {
-          try {
-            const parsed = JSON.parse(latestBatchRow.flag_reason);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              registryBatches = parsed;
-            }
-          } catch (_) {}
-        }
-
+        // C. Process Authoritative Batches Registry from Supabase (Merge all valid chronological snapshots + in-memory ref)
+        const batchMap = new Map();
         const tokenRows = tokRes.status === 'fulfilled' && !tokRes.value.error ? (tokRes.value.data || []) : [];
         if (batchRes.status === 'fulfilled' && !batchRes.value.error) {
           sbConnected = true;
-          sbBatches = (batchRes.value.data || []).map((b) => mapBatchFromDb(b, tokenRows));
+          (batchRes.value.data || []).map((b) => mapBatchFromDb(b, tokenRows)).forEach((b) => {
+            const bId = String(b.batchId || b.id || '').toUpperCase();
+            if (bId && !deletedSet.has(bId)) batchMap.set(bId, b);
+          });
         }
+
+        const batchRows = allClaimsRows
+          .filter((c) => {
+            const isBatchEvent = c.qr_serial === 'DURAGRIT_BATCHES_REGISTRY' || (c.request_id && String(c.request_id).startsWith('SYNC_BATCHES_'));
+            if (!isBatchEvent) return false;
+            const ts = String(c.timestamp || c.created_at || '');
+            return !ts || ts >= '2026-11-10';
+          })
+          .sort((a, b) => new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
+
+        batchRows.forEach((row) => {
+          if (row?.flag_reason) {
+            try {
+              const parsed = JSON.parse(row.flag_reason);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                sbConnected = true;
+                parsed.forEach((b) => {
+                  const bId = String(b.batchId || b.id || '').toUpperCase();
+                  const qty = Number(b.quantity || 0);
+                  if (bId && bId !== 'DG-BATCH-DA777' && qty > 0 && !deletedSet.has(bId)) {
+                    const existing = batchMap.get(bId) || {};
+                    const existingTokens = existing.tokens || existing.codes || [];
+                    const incomingTokens = b.tokens || b.codes || [];
+                    const mergedTokens = incomingTokens.length >= existingTokens.length ? incomingTokens : existingTokens;
+                    batchMap.set(bId, {
+                      ...existing,
+                      ...b,
+                      tokens: mergedTokens,
+                      codes: mergedTokens,
+                    });
+                  }
+                });
+              }
+            } catch (_) {}
+          }
+        });
+
+        batchesRef.current.forEach((b) => {
+          const bId = String(b.batchId || b.id || '').toUpperCase();
+          const qty = Number(b.quantity || 0);
+          if (bId && bId !== 'DG-BATCH-DA777' && qty > 0 && !deletedSet.has(bId) && !batchMap.has(bId)) {
+            batchMap.set(bId, b);
+          }
+        });
+
+        registryBatches = Array.from(batchMap.values()).sort((a, b) => {
+          const tA = new Date(a.createdAt || a.date || a.timestamp || 0).getTime() || Number(a.updatedAt || 0);
+          const tB = new Date(b.createdAt || b.date || b.timestamp || 0).getTime() || Number(b.updatedAt || 0);
+          return tB - tA;
+        });
+
         if (registryBatches.length > 0) {
           sbConnected = true;
-          sbBatches = mergeCollections(sbBatches, registryBatches, (b) => String(b.batchId || b.id || '').toUpperCase(), deletedSet);
+          sbBatches = registryBatches;
         }
 
         // D. Process Profiles / Users
@@ -989,6 +1069,43 @@ export const DataProvider = ({ children }) => {
               }
             } catch (_) {}
           });
+
+          // Cross-reference scanned serials from sbClaims against sbBatches so scanned counts & token states stay 100% synced
+          if (sbBatches.length > 0 && sbClaims.length > 0) {
+            const claimedSerialMap = new Map();
+            sbClaims.forEach((c) => {
+              const sKey = QREngineV24.extractSerialKey(c.serialKey || c.qrSerial || c.batchCode);
+              if (sKey) claimedSerialMap.set(sKey, c);
+            });
+            sbBatches = sbBatches.map((b) => {
+              const rawTokens = b.tokens || b.codes || [];
+              let changed = false;
+              const syncedTokens = rawTokens.map((t) => {
+                const tKey = QREngineV24.extractSerialKey(t.serialKey || t.serial || t.code);
+                const matchedClaim = tKey ? claimedSerialMap.get(tKey) : null;
+                if (matchedClaim && !t.isScanned) {
+                  changed = true;
+                  return {
+                    ...t,
+                    isScanned: true,
+                    scannedBy: matchedClaim.userName || matchedClaim.vendorName || 'Partner',
+                    scannedAt: matchedClaim.submittedAt || matchedClaim.date || new Date().toISOString(),
+                  };
+                }
+                return t;
+              });
+              const scannedCount = syncedTokens.filter((t) => t.isScanned).length;
+              if (changed || b.scannedCount !== scannedCount) {
+                return {
+                  ...b,
+                  tokens: syncedTokens,
+                  codes: syncedTokens,
+                  scannedCount,
+                };
+              }
+              return b;
+            });
+          }
         }
 
         // G. Process OTA Release Events from Supabase
@@ -1073,6 +1190,11 @@ export const DataProvider = ({ children }) => {
             (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
             deletedSet
           ).filter((c) => !isTestOrInternalClaim(c, deletedSet));
+
+      skusRef.current = nextSkus;
+      vendorsRef.current = nextVendors;
+      batchesRef.current = nextBatches;
+      claimsRef.current = nextClaims;
 
       setSkus(nextSkus);
       setUsers(nextUsers);
@@ -1220,13 +1342,12 @@ export const DataProvider = ({ children }) => {
       if (data?.id) newSku.supabaseId = data.id;
     }
 
-    setSkus((prev) => {
-      const filtered = prev.filter((s) => String(s.skuCode).toUpperCase() !== skuCode);
-      const updated = [newSku, ...filtered];
-      pushDevSync({ skus: updated, deletedKeys: Array.from(deletedKeysRef.current) });
-      pushSkusToSupabase(updated);
-      return updated;
-    });
+    const filteredSkus = skusRef.current.filter((s) => String(s.skuCode).toUpperCase() !== skuCode);
+    const updatedSkus = [newSku, ...filteredSkus];
+    skusRef.current = updatedSkus;
+    setSkus(updatedSkus);
+    pushDevSync({ skus: updatedSkus, deletedKeys: Array.from(deletedKeysRef.current) });
+    await pushSkusToSupabase(updatedSkus);
 
     return newSku;
   }, [handleSbError, pushDevSync, pushSkusToSupabase]);
@@ -1235,32 +1356,31 @@ export const DataProvider = ({ children }) => {
     const nowTs = Date.now();
     let targetSku = null;
 
-    setSkus((prev) => {
-      const updated = prev.map((s) => {
-        if (s.id === skuIdOrCode || s.skuCode === skuIdOrCode || s.supabaseId === skuIdOrCode) {
-          const mrp = Number(updates.mrp ?? s.mrp ?? 0);
-          const cashbackAmount = Number(updates.cashbackAmount ?? updates.cashbackReward ?? s.cashbackAmount ?? 0);
-          targetSku = {
-            ...s,
-            ...updates,
-            mrp,
-            baseMrp: mrp,
-            cashbackAmount,
-            cashbackReward: cashbackAmount,
-            rewardPoints: Number(updates.rewardPoints ?? cashbackAmount * 4),
-            packSize: updates.packSize || updates.packWeight || s.packSize,
-            packWeight: updates.packWeight || updates.packSize || s.packWeight,
-            isActive: (updates.status || s.status) !== 'Discontinued',
-            updatedAt: nowTs,
-          };
-          return targetSku;
-        }
-        return s;
-      });
-      pushDevSync({ skus: updated });
-      pushSkusToSupabase(updated);
-      return updated;
+    const updatedSkus = skusRef.current.map((s) => {
+      if (s.id === skuIdOrCode || s.skuCode === skuIdOrCode || s.supabaseId === skuIdOrCode) {
+        const mrp = Number(updates.mrp ?? s.mrp ?? 0);
+        const cashbackAmount = Number(updates.cashbackAmount ?? updates.cashbackReward ?? s.cashbackAmount ?? 0);
+        targetSku = {
+          ...s,
+          ...updates,
+          mrp,
+          baseMrp: mrp,
+          cashbackAmount,
+          cashbackReward: cashbackAmount,
+          rewardPoints: Number(updates.rewardPoints ?? cashbackAmount * 4),
+          packSize: updates.packSize || updates.packWeight || s.packSize,
+          packWeight: updates.packWeight || updates.packSize || s.packWeight,
+          isActive: (updates.status || s.status) !== 'Discontinued',
+          updatedAt: nowTs,
+        };
+        return targetSku;
+      }
+      return s;
     });
+    skusRef.current = updatedSkus;
+    setSkus(updatedSkus);
+    pushDevSync({ skus: updatedSkus });
+    await pushSkusToSupabase(updatedSkus);
 
     if (SB_ONLINE && targetSku) {
       const dbUpdate = {
@@ -1290,24 +1410,23 @@ export const DataProvider = ({ children }) => {
   }, [handleSbError, pushDevSync, pushSkusToSupabase]);
 
   const deleteSKU = useCallback(async (skuIdOrCode) => {
-    const target = skus.find((s) => s.id === skuIdOrCode || s.skuCode === skuIdOrCode || s.supabaseId === skuIdOrCode);
+    const target = skusRef.current.find((s) => s.id === skuIdOrCode || s.skuCode === skuIdOrCode || s.supabaseId === skuIdOrCode);
     if (target?.skuCode) markDeletedKey(target.skuCode);
     if (target?.id) markDeletedKey(target.id);
     if (skuIdOrCode) markDeletedKey(skuIdOrCode);
 
-    setSkus((prev) => {
-      const updated = prev.filter((s) => s.id !== skuIdOrCode && s.skuCode !== skuIdOrCode && s.supabaseId !== skuIdOrCode);
-      pushDevSync({ skus: updated });
-      pushSkusToSupabase(updated);
-      return updated;
-    });
+    const updatedSkus = skusRef.current.filter((s) => s.id !== skuIdOrCode && s.skuCode !== skuIdOrCode && s.supabaseId !== skuIdOrCode);
+    skusRef.current = updatedSkus;
+    setSkus(updatedSkus);
+    pushDevSync({ skus: updatedSkus });
+    await pushSkusToSupabase(updatedSkus);
 
     if (SB_ONLINE && target) {
       const { error } = await supabase.from('products').delete().eq('sku_code', target.skuCode);
       if (error) handleSbError('deleteSKU', error);
     }
     return { success: true };
-  }, [skus, markDeletedKey, pushDevSync, pushSkusToSupabase, handleSbError]);
+  }, [markDeletedKey, pushDevSync, pushSkusToSupabase, handleSbError]);
 
   // ==================================================================
   // 2. QR BATCHES & CRYPTOGRAPHIC TOKENS — Admin <-> App <-> Supabase
@@ -1440,45 +1559,45 @@ export const DataProvider = ({ children }) => {
       }
     }
 
-    setBatches((prev) => {
-      const filtered = prev.filter((b) => b.batchId !== finalBatch.batchId);
-      const updated = [finalBatch, ...filtered];
-      pushDevSync({ batches: updated, deletedKeys: Array.from(deletedKeysRef.current) });
-      pushBatchesToSupabase(updated);
-      return updated;
-    });
+    const filteredBatches = batchesRef.current.filter((b) => b.batchId !== finalBatch.batchId);
+    const updatedBatches = [finalBatch, ...filteredBatches];
+    batchesRef.current = updatedBatches;
+    setBatches(updatedBatches);
+    pushDevSync({ batches: updatedBatches, deletedKeys: Array.from(deletedKeysRef.current) });
 
-    setSkus((prev) => {
-      const updated = prev.map((s) =>
-        s.skuCode === finalBatch.skuCode || s.id === finalBatch.skuId
-          ? { ...s, batchesCount: (s.batchesCount || 0) + 1, activeBatchesCount: (s.activeBatchesCount || 0) + 1, updatedAt: nowTs }
-          : s
-      );
-      pushDevSync({ skus: updated });
-      pushSkusToSupabase(updated);
-      return updated;
-    });
+    const updatedSkus = skusRef.current.map((s) =>
+      s.skuCode === finalBatch.skuCode || s.id === finalBatch.skuId
+        ? { ...s, batchesCount: (s.batchesCount || 0) + 1, activeBatchesCount: (s.activeBatchesCount || 0) + 1, updatedAt: nowTs }
+        : s
+    );
+    skusRef.current = updatedSkus;
+    setSkus(updatedSkus);
+    pushDevSync({ skus: updatedSkus });
+
+    await Promise.allSettled([
+      pushBatchesToSupabase(updatedBatches),
+      pushSkusToSupabase(updatedSkus),
+    ]);
 
     return finalBatch;
   }, [skus, handleSbError, pushDevSync, pushBatchesToSupabase, pushSkusToSupabase]);
 
   const deleteBatch = useCallback(async (batchId) => {
     markDeletedKey(batchId);
-    const target = batches.find((b) => b.batchId === batchId || b.id === batchId);
+    const target = batchesRef.current.find((b) => b.batchId === batchId || b.id === batchId);
 
-    setBatches((prev) => {
-      const updated = prev.filter((b) => b.batchId !== batchId && b.id !== batchId);
-      pushDevSync({ batches: updated });
-      pushBatchesToSupabase(updated);
-      return updated;
-    });
+    const updatedBatches = batchesRef.current.filter((b) => b.batchId !== batchId && b.id !== batchId);
+    batchesRef.current = updatedBatches;
+    setBatches(updatedBatches);
+    pushDevSync({ batches: updatedBatches });
+    await pushBatchesToSupabase(updatedBatches);
 
     if (SB_ONLINE && target) {
       const { error } = await supabase.from('qr_batches').delete().eq('batch_identifier', target.batchId);
       if (error) handleSbError('deleteBatch', error);
     }
     return { success: true };
-  }, [batches, markDeletedKey, pushDevSync, pushBatchesToSupabase, handleSbError]);
+  }, [markDeletedKey, pushDevSync, pushBatchesToSupabase, handleSbError]);
 
   // ==================================================================
   // 3. USER DIRECTORY CRUD — Admin <-> Mobile Sign-In <-> Supabase
@@ -2254,21 +2373,22 @@ export const DataProvider = ({ children }) => {
       }
     }
 
-    // Update local + dev-sync Batches (mark token scanned)
-    setBatches((prev) => {
-      const hasBatch = prev.some((b) => matchedBatch && b.batchId === matchedBatch.batchId);
-      if (!hasBatch && matchedBatch) {
-        const newBatchWithToken = {
-          ...matchedBatch,
-          tokens: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
-          scannedCount: 1,
-          updatedAt: nowTs,
-        };
-        const next = [newBatchWithToken, ...prev];
-        pushDevSync({ batches: next });
-        return next;
-      }
-      const updated = prev.map((b) => {
+    // Update local + dev-sync + Supabase Batches (mark token scanned)
+    const prevBatches = batchesRef.current;
+    const hasBatch = prevBatches.some((b) => matchedBatch && b.batchId === matchedBatch.batchId);
+    let updatedBatches = prevBatches;
+    if (!hasBatch && matchedBatch && Number(matchedBatch.quantity || 0) > 0) {
+      const newBatchWithToken = {
+        ...matchedBatch,
+        tokens: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
+        codes: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
+        quantity: matchedBatch.quantity,
+        scannedCount: 1,
+        updatedAt: nowTs,
+      };
+      updatedBatches = [newBatchWithToken, ...prevBatches];
+    } else if (hasBatch) {
+      updatedBatches = prevBatches.map((b) => {
         if (matchedBatch && b.batchId === matchedBatch.batchId) {
           const nextTokens = (b.tokens || b.codes || []).map((t) =>
             QREngineV24.extractSerialKey(t.serialKey || t.serial) === cleanKey
@@ -2285,16 +2405,17 @@ export const DataProvider = ({ children }) => {
         }
         return b;
       });
-      pushDevSync({ batches: updated });
-      return updated;
-    });
+    }
+    batchesRef.current = updatedBatches;
+    setBatches(updatedBatches);
+    pushDevSync({ batches: updatedBatches });
+    pushBatchesToSupabase(updatedBatches);
 
     // Update Claims
-    setClaims((prev) => {
-      const updated = [newClaim, ...prev];
-      pushDevSync({ claims: updated });
-      return updated;
-    });
+    const updatedClaims = [newClaim, ...claimsRef.current];
+    claimsRef.current = updatedClaims;
+    setClaims(updatedClaims);
+    pushDevSync({ claims: updatedClaims });
 
     // Update User Escrow & Scan Count
     setUsers((prev) => {
@@ -2324,7 +2445,7 @@ export const DataProvider = ({ children }) => {
       cashbackAmount: claimAmount,
       claimCode: requestId,
     };
-  }, [claims, batches, skus, users, handleSbError, pushDevSync]);
+  }, [claims, batches, skus, users, vendors, handleSbError, pushDevSync, pushBatchesToSupabase]);
 
   // Step 1 Approval (Pending -> Approved / Completed Tab awaiting Release)
   const approveClaimStep1 = useCallback(async (claimId) => {
@@ -2332,27 +2453,26 @@ export const DataProvider = ({ children }) => {
     const approvedIso = new Date().toISOString();
     let targetClaim = null;
 
-    setClaims((prev) => {
-      const updated = prev.map((c) => {
-        if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
-          targetClaim = {
-            ...c,
-            status: 'Approved',
-            payoutStatus: 'Pending Release',
-            approvedAt: approvedIso,
-            decisionAt: approvedIso,
-            updatedAt: nowTs,
-          };
-          return targetClaim;
-        }
-        return c;
-      });
-      pushDevSync({ claims: updated });
-      return updated;
+    const updatedClaims = claimsRef.current.map((c) => {
+      if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
+        targetClaim = {
+          ...c,
+          status: 'Approved',
+          payoutStatus: 'Pending Release',
+          approvedAt: approvedIso,
+          decisionAt: approvedIso,
+          updatedAt: nowTs,
+        };
+        return targetClaim;
+      }
+      return c;
     });
+    claimsRef.current = updatedClaims;
+    setClaims(updatedClaims);
+    pushDevSync({ claims: updatedClaims });
 
     if (SB_ONLINE && targetClaim) {
-      pushClaimActionToSupabase({
+      await pushClaimActionToSupabase({
         claimId: targetClaim.id,
         requestId: targetClaim.requestId,
         status: 'Approved',
@@ -2364,9 +2484,8 @@ export const DataProvider = ({ children }) => {
       const q = targetClaim.supabaseId
         ? supabase.from('cashback_requests').update({ status: 'Approved', updated_at: approvedIso }).eq('id', targetClaim.supabaseId)
         : supabase.from('cashback_requests').update({ status: 'Approved', updated_at: approvedIso }).eq('request_id', targetClaim.requestId || targetClaim.id);
-      q.then(({ error }) => {
-        if (error) handleSbError('approveClaimStep1', error);
-      });
+      const { error } = await q;
+      if (error) handleSbError('approveClaimStep1', error);
     }
 
     return { success: true, claim: targetClaim };
@@ -2375,7 +2494,7 @@ export const DataProvider = ({ children }) => {
   // Step 2 Payout Release (Approved -> Disbursed with Amount, Screenshot, Transaction ID, Remarks)
   const releaseClaimPayout = useCallback(async (claimId, { disbursedAmount, transactionId, paymentMode = 'UPI', remarks = '', paymentProofUrl = null } = {}) => {
     const nowTs = Date.now();
-    const existing = claims.find((c) => c.id === claimId || c.requestId === claimId || c.supabaseId === claimId);
+    const existing = claimsRef.current.find((c) => c.id === claimId || c.requestId === claimId || c.supabaseId === claimId);
     if (!existing) return { success: false, message: 'Claim not found' };
 
     const finalAmount = Number(disbursedAmount ?? existing.amount ?? 0);
@@ -2383,33 +2502,32 @@ export const DataProvider = ({ children }) => {
     const disbursedIso = new Date().toISOString();
 
     let updatedClaim = null;
-    setClaims((prev) => {
-      const updated = prev.map((c) => {
-        if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
-          updatedClaim = {
-            ...c,
-            status: 'Disbursed',
-            payoutStatus: 'Disbursed',
-            disbursedAmount: finalAmount,
-            netDisbursed: finalAmount,
-            paymentMode,
-            payoutMethod: paymentMode,
-            transactionId: finalTxnId,
-            npciRrn: finalTxnId,
-            utr: finalTxnId,
-            remarks,
-            paymentProofUrl: paymentProofUrl || c.paymentProofUrl || null,
-            approvedAt: c.approvedAt || c.decisionAt || new Date(nowTs - 60000).toISOString(),
-            disbursedAt: disbursedIso,
-            updatedAt: nowTs,
-          };
-          return updatedClaim;
-        }
-        return c;
-      });
-      pushDevSync({ claims: updated });
-      return updated;
+    const updatedClaims = claimsRef.current.map((c) => {
+      if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
+        updatedClaim = {
+          ...c,
+          status: 'Disbursed',
+          payoutStatus: 'Disbursed',
+          disbursedAmount: finalAmount,
+          netDisbursed: finalAmount,
+          paymentMode,
+          payoutMethod: paymentMode,
+          transactionId: finalTxnId,
+          npciRrn: finalTxnId,
+          utr: finalTxnId,
+          remarks,
+          paymentProofUrl: paymentProofUrl || c.paymentProofUrl || null,
+          approvedAt: c.approvedAt || c.decisionAt || new Date(nowTs - 60000).toISOString(),
+          disbursedAt: disbursedIso,
+          updatedAt: nowTs,
+        };
+        return updatedClaim;
+      }
+      return c;
     });
+    claimsRef.current = updatedClaims;
+    setClaims(updatedClaims);
+    pushDevSync({ claims: updatedClaims });
 
     // Move User Wallet: Escrow -> Approved Reward Balance
     const cleanMobile = normalizeMobile(existing.mobile || existing.userMobile);
@@ -2436,7 +2554,7 @@ export const DataProvider = ({ children }) => {
     });
 
     if (SB_ONLINE) {
-      pushClaimActionToSupabase({
+      await pushClaimActionToSupabase({
         claimId: existing.id,
         requestId: existing.requestId,
         status: 'Disbursed',
@@ -2551,20 +2669,19 @@ export const DataProvider = ({ children }) => {
   const flagClaim = useCallback(async (claimId, reason = 'Manual review flagged by Admin') => {
     const nowTs = Date.now();
     let target = null;
-    setClaims((prev) => {
-      const updated = prev.map((c) => {
-        if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
-          target = { ...c, status: 'Flagged', payoutStatus: 'Flagged', flagReason: reason, remarks: reason, updatedAt: nowTs };
-          return target;
-        }
-        return c;
-      });
-      pushDevSync({ claims: updated });
-      return updated;
+    const updatedClaims = claimsRef.current.map((c) => {
+      if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
+        target = { ...c, status: 'Flagged', payoutStatus: 'Flagged', flagReason: reason, remarks: reason, updatedAt: nowTs };
+        return target;
+      }
+      return c;
     });
+    claimsRef.current = updatedClaims;
+    setClaims(updatedClaims);
+    pushDevSync({ claims: updatedClaims });
 
     if (SB_ONLINE && target) {
-      pushClaimActionToSupabase({
+      await pushClaimActionToSupabase({
         claimId: target.id,
         requestId: target.requestId,
         status: 'Flagged',

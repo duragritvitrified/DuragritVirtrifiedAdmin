@@ -285,3 +285,4 @@ export const ClaimProofPreviewModal = ({
     </div>
   );
 };
+

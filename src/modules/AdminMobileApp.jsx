@@ -615,7 +615,8 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
   // Metrics Counters & Financial Escrow
   const pendingCount = cleanClaims.filter((c) => c.status === 'Pending').length;
-  const approvedCount = cleanClaims.filter((c) => c.status === 'Approved' || c.status === 'Disbursed').length;
+  const approvedCount = cleanClaims.filter((c) => c.status === 'Approved' && c.payoutStatus !== 'Disbursed').length;
+  const disbursedCount = cleanClaims.filter((c) => c.status === 'Disbursed' || c.payoutStatus === 'Disbursed').length;
   const rejectedCount = cleanClaims.filter((c) => c.status === 'Rejected' || c.status === 'Flagged').length;
   const totalRequestsCount = cleanClaims.length;
 
@@ -623,12 +624,17 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     .filter((c) => c.status === 'Pending')
     .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 150), 0);
   const approvedAmount = cleanClaims
-    .filter((c) => c.status === 'Approved' || c.status === 'Disbursed')
+    .filter((c) => c.status === 'Approved' && c.payoutStatus !== 'Disbursed')
     .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 150), 0);
+  const disbursedAmount = cleanClaims
+    .filter((c) => c.status === 'Disbursed' || c.payoutStatus === 'Disbursed')
+    .reduce((sum, c) => sum + Number(c.disbursedAmount || c.netDisbursed || c.amount || c.cashbackAmount || 150), 0);
   const rejectedAmount = cleanClaims
     .filter((c) => c.status === 'Rejected' || c.status === 'Flagged')
     .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 150), 0);
-  const totalAmount = pendingAmount + approvedAmount + rejectedAmount;
+  const totalAmount = pendingAmount + approvedAmount + disbursedAmount + rejectedAmount;
+  const combinedApprovedCount = approvedCount + disbursedCount;
+  const combinedApprovedAmount = approvedAmount + disbursedAmount;
 
   // Payout Disbursal Filter Lists & Counters
   const awaitingReleaseClaims = useMemo(() => {
@@ -757,7 +763,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   const [chartActiveSlice, setChartActiveSlice] = useState(null);
 
   const isAmountMode = chartMetricMode === 'amount';
-  const metricApproved = isAmountMode ? approvedAmount : approvedCount;
+  const metricApproved = isAmountMode ? combinedApprovedAmount : combinedApprovedCount;
   const metricPending = isAmountMode ? pendingAmount : pendingCount;
   const metricRejected = isAmountMode ? rejectedAmount : rejectedCount;
   const metricTotal = isAmountMode
@@ -832,8 +838,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   // Filtered Claims (Always sorted with Latest Request on TOP)
   const filteredClaims = cleanClaims
     .filter((c) => {
+      const isDisbursedClaim = c.status === 'Disbursed' || c.payoutStatus === 'Disbursed';
       if (filterTab === 'pending' && c.status !== 'Pending') return false;
-      if (filterTab === 'approved' && c.status !== 'Approved' && c.status !== 'Disbursed') return false;
+      if (filterTab === 'approved' && !(c.status === 'Approved' && !isDisbursedClaim)) return false;
+      if (filterTab === 'disbursed' && !isDisbursedClaim) return false;
       if (filterTab === 'rejected' && c.status !== 'Rejected' && c.status !== 'Flagged') return false;
 
       if (searchQuery.trim()) {
@@ -1461,7 +1469,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   <span className="text-slate-500">•</span>
                   <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Disbursed Payout: ₹{approvedAmount.toLocaleString('en-IN')}
+                    Disbursed Payout: ₹{disbursedAmount.toLocaleString('en-IN')} ({disbursedCount})
                   </span>
                 </div>
               </div>
@@ -1504,15 +1512,17 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 </div>
               </div>
 
-              {/* Status Counters Grid with Pulsing Indicators */}
-              <div className="grid grid-cols-3 gap-2 pt-0.5">
+              {/* Status Counters Grid with Pulsing Indicators (4 KPIs: Pending, Approved, Disbursed, Rejected) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
                 <div
                   onClick={() => {
                     setFilterTab('pending');
-                    setActiveTab('requests');
                     playRejectChime();
+                    showHapticHUD('Filtered: Pending Claims');
                   }}
-                  className="bg-[#FAFBFD] hover:bg-amber-50/60 border border-slate-200/80 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0"
+                  className={`bg-[#FAFBFD] hover:bg-amber-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'pending' ? 'border-amber-400 ring-1 ring-amber-300 bg-amber-50/40' : 'border-slate-200/80'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Pending</span>
@@ -1529,10 +1539,12 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 <div
                   onClick={() => {
                     setFilterTab('approved');
-                    setActiveTab('requests');
                     playApproveChime();
+                    showHapticHUD('Filtered: Approved Claims');
                   }}
-                  className="bg-[#FAFBFD] hover:bg-emerald-50/60 border border-slate-200/80 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0"
+                  className={`bg-[#FAFBFD] hover:bg-emerald-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'approved' ? 'border-emerald-400 ring-1 ring-emerald-300 bg-emerald-50/40' : 'border-slate-200/80'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Approved</span>
@@ -1548,11 +1560,35 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
 
                 <div
                   onClick={() => {
-                    setFilterTab('rejected');
-                    setActiveTab('requests');
-                    playRejectChime();
+                    setFilterTab('disbursed');
+                    playApproveChime();
+                    showHapticHUD('Filtered: Disbursed Claims');
                   }}
-                  className="bg-[#FAFBFD] hover:bg-rose-50/60 border border-slate-200/80 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0"
+                  className={`bg-[#FAFBFD] hover:bg-teal-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'disbursed' ? 'border-teal-400 ring-1 ring-teal-300 bg-teal-50/40' : 'border-slate-200/80'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Disbursed</span>
+                    <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0 ml-1"></span>
+                  </div>
+                  <div className="mt-1.5 min-w-0">
+                    <div className="text-xs sm:text-sm font-black text-slate-900 font-mono truncate">{disbursedCount}</div>
+                    <div className="text-[8.5px] sm:text-[9.5px] font-mono text-teal-700 font-semibold mt-0.5 truncate">
+                      ₹{disbursedAmount.toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => {
+                    setFilterTab('rejected');
+                    playRejectChime();
+                    showHapticHUD('Filtered: Rejected Claims');
+                  }}
+                  className={`bg-[#FAFBFD] hover:bg-rose-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'rejected' ? 'border-rose-400 ring-1 ring-rose-300 bg-rose-50/40' : 'border-slate-200/80'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Rejected</span>
@@ -1800,7 +1836,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                             {Math.round(pctApproved * 100)}%
                           </div>
                           <span className="text-[8.5px] text-slate-500 font-mono font-semibold block truncate max-w-[68px]">
-                            {isAmountMode ? `₹${approvedAmount.toLocaleString('en-IN')}` : `${approvedCount} claims`}
+                            {isAmountMode ? `₹${combinedApprovedAmount.toLocaleString('en-IN')}` : `${combinedApprovedCount} claims`}
                           </span>
                         </div>
                       ) : chartActiveSlice === 'pending' ? (
@@ -1869,7 +1905,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                             <CheckCircle2 className="w-3 h-3 text-emerald-600 inline" />
                           </div>
                           <div className="text-[9px] text-slate-500 font-mono truncate">
-                            {approvedCount} claims • ₹{approvedAmount.toLocaleString('en-IN')}
+                            {combinedApprovedCount} claims (Approved: {approvedCount} • Disbursed: {disbursedCount}) • ₹{combinedApprovedAmount.toLocaleString('en-IN')}
                           </div>
                         </div>
                       </div>
@@ -2063,6 +2099,17 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 </button>
 
                 <button
+                  onClick={() => setFilterTab('disbursed')}
+                  className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${filterTab === 'disbursed'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                  <span>Disbursed ({disbursedCount})</span>
+                </button>
+
+                <button
                   onClick={() => setFilterTab('rejected')}
                   className={`px-2 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1 transition cursor-pointer ${filterTab === 'rejected'
                       ? 'bg-rose-600 text-white shadow-xs'
@@ -2083,6 +2130,8 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     ? 'Pending Verification'
                     : filterTab === 'approved'
                     ? 'Approved Claims'
+                    : filterTab === 'disbursed'
+                    ? 'Disbursed Claims'
                     : filterTab === 'rejected'
                     ? 'Rejected Claims'
                     : 'Recent Claims Activity'}
@@ -2114,8 +2163,12 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
               ) : (
                 (filterTab === 'all' ? filteredClaims.slice(0, 5) : filteredClaims).map((claim) => {
                   const isPending = claim.status === 'Pending';
-                  const isApproved = claim.status === 'Approved' || claim.status === 'Disbursed';
+                  const isDisbursed = claim.status === 'Disbursed' || claim.payoutStatus === 'Disbursed';
+                  const isApproved = claim.status === 'Approved' && !isDisbursed;
                   const isRejected = claim.status === 'Rejected' || claim.status === 'Flagged';
+                  const displayAmount = isDisbursed
+                    ? Number(claim.disbursedAmount || claim.netDisbursed || claim.amount || claim.cashbackAmount || 150)
+                    : Number(claim.amount || claim.cashbackAmount || 150);
                   const vInfo = resolveVendorInfo(claim);
                   const rejectionReason = claim.flagReason || claim.remarks || claim.reason || 'Flagged during audit verification';
 
@@ -2147,11 +2200,13 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         {/* Amount & Status Badge */}
                         <div className="text-right shrink-0">
                           <span className="text-xs sm:text-sm font-black text-slate-900 font-mono block">
-                            ₹{Number(claim.amount || claim.cashbackAmount || 0).toLocaleString('en-IN')}
+                            ₹{displayAmount.toLocaleString('en-IN')}
                           </span>
                           <span
                             className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${
-                              isApproved
+                              isDisbursed
+                                ? 'bg-teal-50 text-teal-800 border-teal-200'
+                                : isApproved
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : isRejected
                                 ? 'bg-rose-50 text-rose-700 border-rose-200'
@@ -2160,10 +2215,16 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${
-                                isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                                isDisbursed
+                                  ? 'bg-teal-500'
+                                  : isApproved
+                                  ? 'bg-emerald-500'
+                                  : isRejected
+                                  ? 'bg-rose-500'
+                                  : 'bg-amber-500 animate-pulse'
                               }`}
                             />
-                            <span>{isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}</span>
+                            <span>{isDisbursed ? 'Disbursed' : isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}</span>
                           </span>
                         </div>
                       </div>
@@ -2209,14 +2270,14 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         </div>
                       )}
 
-                      {/* Row 4 (Conditional): UTR for Approved */}
-                      {isApproved && (claim.npciRrn || claim.transactionId || claim.utr) && (
+                      {/* Row 4 (Conditional): UTR for Disbursed / Settled */}
+                      {(isDisbursed || isApproved) && (claim.npciRrn || claim.transactionId || claim.utr || isDisbursed) && (
                         <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
-                          <span className="text-emerald-700 font-bold flex items-center gap-1">
-                            <Check className="w-3 h-3 text-emerald-600" /> Settled via UPI
+                          <span className="text-teal-700 font-bold flex items-center gap-1">
+                            <Check className="w-3 h-3 text-teal-600" /> Settled via {claim.paymentMode || claim.payoutMethod || 'UPI'}
                           </span>
                           <span className="text-slate-600 font-medium truncate ml-2">
-                            UTR: <strong className="text-slate-800">{claim.npciRrn || claim.transactionId || claim.utr}</strong>
+                            UTR: <strong className="text-slate-800">{claim.transactionId || claim.npciRrn || claim.utr || 'SETTLED'}</strong>
                           </span>
                         </div>
                       )}
@@ -2244,7 +2305,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         </div>
                       )}
 
-                      {claim.status === 'Approved' && claim.payoutStatus !== 'Disbursed' && (
+                      {isApproved && (
                         <div className="pt-0.5">
                           <button
                             type="button"
@@ -2253,6 +2314,19 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                           >
                             <Zap className="w-3.5 h-3.5 fill-white" />
                             <span>Release Payment &amp; Disburse</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {isDisbursed && (
+                        <div className="pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setViewReceiptClaim(claim)}
+                            className="w-full py-1.5 px-3 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-[10.5px] font-bold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-teal-700" />
+                            <span>View Settlement Voucher &amp; Receipt</span>
                           </button>
                         </div>
                       )}
@@ -2345,6 +2419,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   { id: 'all', label: 'All', count: totalRequestsCount },
                   { id: 'pending', label: 'Pending', count: pendingCount },
                   { id: 'approved', label: 'Approved', count: approvedCount },
+                  { id: 'disbursed', label: 'Disbursed', count: disbursedCount },
                   { id: 'rejected', label: 'Rejected', count: rejectedCount }
                 ].map((tab) => (
                   <button
@@ -2385,8 +2460,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         : filterTab === 'pending'
                           ? 'All pending cashback requests have been reviewed.'
                           : filterTab === 'approved'
-                            ? 'No approved cashback claims in this queue.'
-                            : 'There are currently no cashback claims logged.'}
+                            ? 'No approved cashback claims awaiting disbursal in this queue.'
+                            : filterTab === 'disbursed'
+                              ? 'No disbursed cashback claims settled yet.'
+                              : 'There are currently no cashback claims logged.'}
                   </p>
                   {searchQuery && (
                     <button
@@ -2402,8 +2479,12 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 filteredClaims.map((claim) => {
                   const vInfo = resolveVendorInfo(claim);
                   const isPending = claim.status === 'Pending';
-                  const isApproved = claim.status === 'Approved' || claim.status === 'Disbursed';
+                  const isDisbursed = claim.status === 'Disbursed' || claim.payoutStatus === 'Disbursed';
+                  const isApproved = claim.status === 'Approved' && !isDisbursed;
                   const isRejected = claim.status === 'Rejected' || claim.status === 'Flagged';
+                  const displayAmount = isDisbursed
+                    ? Number(claim.disbursedAmount || claim.netDisbursed || claim.amount || claim.cashbackAmount || 150)
+                    : Number(claim.amount || claim.cashbackAmount || 150);
                   const rejectionReason = claim.flagReason || claim.remarks || claim.reason || 'Flagged during audit verification';
 
                   return (
@@ -2434,11 +2515,13 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         {/* Amount & Status Badge */}
                         <div className="text-right shrink-0">
                           <span className="text-xs sm:text-sm font-black text-slate-900 font-mono block">
-                            ₹{Number(claim.amount || claim.cashbackAmount || 0).toLocaleString('en-IN')}
+                            ₹{displayAmount.toLocaleString('en-IN')}
                           </span>
                           <span
                             className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${
-                              isApproved
+                              isDisbursed
+                                ? 'bg-teal-50 text-teal-800 border-teal-200'
+                                : isApproved
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : isRejected
                                 ? 'bg-rose-50 text-rose-700 border-rose-200'
@@ -2447,10 +2530,16 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${
-                                isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                                isDisbursed
+                                  ? 'bg-teal-500'
+                                  : isApproved
+                                  ? 'bg-emerald-500'
+                                  : isRejected
+                                  ? 'bg-rose-500'
+                                  : 'bg-amber-500 animate-pulse'
                               }`}
                             />
-                            <span>{isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}</span>
+                            <span>{isDisbursed ? 'Disbursed' : isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}</span>
                           </span>
                         </div>
                       </div>
@@ -2496,14 +2585,14 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         </div>
                       )}
 
-                      {/* Row 4 (Conditional): UTR for Approved */}
-                      {isApproved && (claim.npciRrn || claim.transactionId || claim.utr) && (
+                      {/* Row 4 (Conditional): UTR for Disbursed / Approved */}
+                      {(isDisbursed || isApproved) && (claim.npciRrn || claim.transactionId || claim.utr || isDisbursed) && (
                         <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
-                          <span className="text-emerald-700 font-bold flex items-center gap-1">
-                            <Check className="w-3 h-3 text-emerald-600" /> Settled via UPI
+                          <span className="text-teal-700 font-bold flex items-center gap-1">
+                            <Check className="w-3 h-3 text-teal-600" /> Settled via {claim.paymentMode || claim.payoutMethod || 'UPI'}
                           </span>
                           <span className="text-slate-600 font-medium truncate ml-2">
-                            UTR: <strong className="text-slate-800">{claim.npciRrn || claim.transactionId || claim.utr}</strong>
+                            UTR: <strong className="text-slate-800">{claim.transactionId || claim.npciRrn || claim.utr || 'SETTLED'}</strong>
                           </span>
                         </div>
                       )}
@@ -2531,7 +2620,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                         </div>
                       )}
 
-                      {claim.status === 'Approved' && claim.payoutStatus !== 'Disbursed' && (
+                      {isApproved && (
                         <div className="pt-0.5">
                           <button
                             type="button"
@@ -2540,6 +2629,19 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                           >
                             <Zap className="w-3.5 h-3.5 fill-white" />
                             <span>Release Payment &amp; Disburse</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {isDisbursed && (
+                        <div className="pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setViewReceiptClaim(claim)}
+                            className="w-full py-1.5 px-3 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-[10.5px] font-bold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-teal-700" />
+                            <span>View Settlement Voucher &amp; Receipt</span>
                           </button>
                         </div>
                       )}
@@ -3096,7 +3198,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   <span className="text-emerald-600 font-bold">✓ CLOUD-GATEWAY:</span> Connected to Supabase Cloud &amp; Vercel Live Production.
                 </div>
                 <div className="p-2 rounded bg-slate-50 border border-slate-100">
-                  <span className="text-blue-600 font-bold">ℹ DB-SYNC:</span> {cleanClaims.length} live requests active ({pendingCount} Pending, {approvedCount} Approved).
+                  <span className="text-blue-600 font-bold">ℹ DB-SYNC:</span> {cleanClaims.length} live requests active ({pendingCount} Pending, {approvedCount} Approved, {disbursedCount} Disbursed).
                 </div>
                 <div className="p-2 rounded bg-slate-50 border border-slate-100">
                   <span className="text-amber-600 font-bold">⚡ REALTIME-BUS:</span> Live database node online (fykxjzvdslvxablmjlfw.supabase.co).
@@ -3321,7 +3423,8 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
         const pInfo = resolveProductInfo(inspectedProductClaim);
         const vInfo = resolveVendorInfo(inspectedProductClaim);
         const isPending = inspectedProductClaim.status === 'Pending';
-        const isApproved = inspectedProductClaim.status === 'Approved' || inspectedProductClaim.status === 'Disbursed';
+        const isDisbursed = inspectedProductClaim.status === 'Disbursed' || inspectedProductClaim.payoutStatus === 'Disbursed';
+        const isApproved = inspectedProductClaim.status === 'Approved' && !isDisbursed;
         const isRejected = inspectedProductClaim.status === 'Rejected' || inspectedProductClaim.status === 'Flagged';
 
         return (
@@ -3450,7 +3553,9 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     <span className="text-slate-500 text-[11px]">Status:</span>
                     <span
                       className={`inline-flex items-center gap-1 text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
-                        isApproved
+                        isDisbursed
+                          ? 'bg-teal-50 text-teal-800 border-teal-200'
+                          : isApproved
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : isRejected
                           ? 'bg-rose-50 text-rose-700 border-rose-200'
@@ -3459,10 +3564,16 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                          isDisbursed
+                            ? 'bg-teal-500'
+                            : isApproved
+                            ? 'bg-emerald-500'
+                            : isRejected
+                            ? 'bg-rose-500'
+                            : 'bg-amber-500 animate-pulse'
                         }`}
                       />
-                      <span>{isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending Verification'}</span>
+                      <span>{isDisbursed ? 'Disbursed' : isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending Verification'}</span>
                     </span>
                   </div>
                 </div>
