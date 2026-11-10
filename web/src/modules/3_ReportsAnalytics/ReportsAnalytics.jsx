@@ -3,9 +3,16 @@ import {
   Users, QrCode, Wallet, Calendar, Download,
   RefreshCw, ShieldCheck, Search, Sparkles, X,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2, FileText
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import {
+  exportAuditedMonthlyLedgerPdf,
+  exportReconciliationLedgerCsv,
+  exportMonthlyBreakdownTableCsv,
+} from '../../utils/reportLedgerExport';
+import { ScheduleAutoReportModal } from '../../components/modals/ScheduleAutoReportModal';
+import { MonthlyDetailedListDrawer } from '../../components/modals/MonthlyDetailedListDrawer';
 
 const MONTHS_META = [
   { idx: 0, name: 'January', short: 'JAN', mm: '01' },
@@ -112,10 +119,11 @@ export function ReportsAnalytics() {
 
       return {
         monthIdx: m.idx,
+        mm: m.mm,
         month: `${m.name} ${selectedYear}`,
         shortMonth: m.short,
         isCurrent: String(now.getFullYear()) === selectedYear && now.getMonth() === m.idx,
-        batchId: `BAT-${selectedYear}-${m.mm}-LIVE`,
+        batchId: `BAT-${selectedYear}-${m.mm}-MREG`,
         uniqueUsers: userSet.size,
         contractorsCount: contractorSet.size,
         dealersCount: dealerSet.size,
@@ -229,43 +237,79 @@ export function ReportsAnalytics() {
     showToast(`Live ledger synchronized for ${selectedMonth === 'All' ? `Year ${selectedYear}` : selectedMonth}!`);
   };
 
-  const handleExportMonthlyLedger = () => {
-    showToast('Exporting Live Monthly Cashback Ledger CSV...');
-    setTimeout(() => {
-      const header = [
-        'Month / Period',
-        'Ledger Batch ID',
-        'Unique Users Applied',
-        'Contractors',
-        'Dealers',
-        'Approved / Disbursed Apps',
-        'Pending Apps',
-        'Rejected / Flagged',
-        'Total Amount Paid (INR)',
-        'Success Rate (%)',
-      ];
-      const rows = monthlyLedger.map((m) => [
-        `"${m.month}"`,
-        m.batchId,
-        m.uniqueUsers,
-        m.contractorsCount,
-        m.dealersCount,
-        m.approvedApps,
-        m.pendingApps,
-        m.rejectedApps,
-        m.totalAmountPaid,
-        `${m.successRate}%`,
-      ]);
-      const csvContent = 'data:text/csv;charset=utf-8,' + [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement('a');
-      link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `DuraGrit_Monthly_Cashback_Ledger_${selectedYear}_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast('Monthly Ledger CSV exported successfully.');
-    }, 300);
+  const mapRowToBreakdown = (r) => ({
+    month: r.month,
+    shortMonth: r.shortMonth,
+    mm: r.mm || '03',
+    batchId: r.batchId,
+    uniqueUsers: r.uniqueUsers,
+    contractors: r.contractorsCount,
+    dealers: r.dealersCount,
+    approved: r.approvedApps,
+    pending: r.pendingApps,
+    rejected: r.rejectedApps,
+    paidAmount: r.totalAmountPaid,
+    rate: r.successRate,
+  });
+
+  const mappedClaimRows = useMemo(() => {
+    return matchingClaims.map((c) => {
+      const dt = new Date(c.submittedAt || c.createdAt || Date.now());
+      const mMeta = !Number.isNaN(dt.getTime()) ? MONTHS_META[dt.getMonth()] : MONTHS_META[2];
+      return {
+        id: c.id || c.claimId,
+        userId: c.userId || c.userMobile || c.mobile || 'USR-8820',
+        userName: c.userName || 'Verified Applicant',
+        userType: c.userRole || 'Contractor',
+        sku: c.skuCode || c.productName || 'DG-VT-600X600',
+        qrSerial: c.qrSerial || c.tokenSerial || c.couponCode,
+        payoutMethod: c.paymentMode || c.payoutMethod || 'UPI Instant Escrow',
+        value: Number(c.disbursedAmount || c.netDisbursed || c.amount || 0),
+        status: c.status || 'Disbursed',
+        date: `${mMeta ? mMeta.name : 'March'} ${selectedYear}`,
+        disbursedAt: c.disbursedAt || c.submittedAt || `${mMeta ? mMeta.name : 'March'} ${selectedYear}`,
+      };
+    });
+  }, [matchingClaims, selectedYear]);
+
+  const handleExportMonthlyLedger = (mode = 'both') => {
+    const activeFilters = {
+      selectedYear,
+      selectedMonth,
+      roleFilter,
+      channelFilter,
+    };
+    const breakdownRows = filteredTableRows.map(mapRowToBreakdown);
+    const kpiPayload = {
+      uniqueUsers: kpiSummary.uniqueUsers,
+      contractorsCount: kpiSummary.contractorsCount,
+      dealersCount: kpiSummary.dealersCount,
+      totalScans: kpiSummary.totalScans,
+      avgScans: kpiSummary.avgScans,
+      disbursedTotal: kpiSummary.disbursedTotal,
+      upiTotal: kpiSummary.upiTotal,
+      bankTotal: kpiSummary.bankTotal,
+    };
+
+    if (mode === 'pdf' || mode === 'both') {
+      exportAuditedMonthlyLedgerPdf(activeFilters, kpiPayload, breakdownRows);
+    }
+    if (mode === 'csv' || mode === 'both') {
+      exportReconciliationLedgerCsv(activeFilters, breakdownRows, mappedClaimRows);
+    }
+    showToast(
+      mode === 'pdf'
+        ? 'Audited Monthly Reconciliation PDF Ledger exported!'
+        : mode === 'csv'
+        ? 'Monthly Reconciliation CSV Ledger exported!'
+        : 'Audited Monthly Ledger (PDF + CSV) exported respecting active filters!'
+    );
+  };
+
+  const handleExportBreakdownTableCsv = () => {
+    const breakdownRows = filteredTableRows.map(mapRowToBreakdown);
+    const fname = exportMonthlyBreakdownTableCsv(breakdownRows, selectedYear);
+    showToast(`Exported Monthly Activity Breakdown to ${fname}`);
   };
 
   return (
@@ -315,7 +359,7 @@ export function ReportsAnalytics() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5 shrink-0 self-start lg:self-auto">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start lg:self-auto">
           <button
             onClick={() => setScheduleModalOpen(true)}
             className="flex items-center space-x-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
@@ -325,11 +369,12 @@ export function ReportsAnalytics() {
           </button>
 
           <button
-            onClick={handleExportMonthlyLedger}
+            onClick={() => handleExportMonthlyLedger('both')}
             className="flex items-center space-x-2 px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-sm shadow-[#C84826]/20 transition cursor-pointer active:scale-98"
+            title="Exports Audited PDF Ledger & Reconciliation CSV respecting the 4 active filters"
           >
             <Download className="w-4 h-4 stroke-[2.5]" />
-            <span>Export Monthly Ledger (CSV)</span>
+            <span>↓ Export Monthly Ledger (CSV / PDF)</span>
           </button>
         </div>
       </div>
@@ -625,11 +670,12 @@ export function ReportsAnalytics() {
             </div>
 
             <button
-              onClick={handleExportMonthlyLedger}
+              onClick={handleExportBreakdownTableCsv}
               className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer shrink-0"
+              title="Download DuraGrit_Monthly_Breakdown_2026.csv"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Export CSV</span>
+              <span>↓ Export Table CSV</span>
             </button>
           </div>
         </div>
@@ -715,7 +761,7 @@ export function ReportsAnalytics() {
                       onClick={() => setSelectedMonthDetail(row)}
                       className="text-xs font-bold text-[#C84826] hover:text-[#A62C11] hover:underline cursor-pointer inline-flex items-center space-x-1"
                     >
-                      <span>View Summary</span>
+                      <span>View Detailed List</span>
                       <span>&rarr;</span>
                     </button>
                   </td>
@@ -760,161 +806,25 @@ export function ReportsAnalytics() {
         </div>
       </section>
 
-      {/* MODAL 1: MONTHLY AUDIT LEDGER DRILL-DOWN */}
-      {selectedMonthDetail && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col border border-slate-200 overflow-hidden">
-            <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-[#A62C11] to-[#C84826] text-white flex items-center justify-between shrink-0">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h3 className="text-sm sm:text-base font-bold text-white">
-                    {selectedMonthDetail.month} — Monthly Audit Ledger
-                  </h3>
-                  <span className="text-[10px] font-mono bg-white/20 text-white px-2 py-0.5 rounded">
-                    {selectedMonthDetail.batchId}
-                  </span>
-                </div>
-                <p className="text-xs text-white/80 mt-0.5">
-                  Consolidated live reconciliation &amp; escrow payout summary.
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedMonthDetail(null)}
-                className="text-white/80 hover:text-white transition p-1 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* DRAWER 1: MONTHLY DETAILED LIST DRAWER (Step B.4 Blueprint Specification) */}
+      <MonthlyDetailedListDrawer
+        isOpen={Boolean(selectedMonthDetail)}
+        monthRow={selectedMonthDetail ? mapRowToBreakdown(selectedMonthDetail) : null}
+        claims={mappedClaimRows}
+        onClose={() => setSelectedMonthDetail(null)}
+        onExportSuccess={(filename) => showToast(`Exported detailed monthly scans to ${filename}`)}
+      />
 
-            <div className="p-4 sm:p-6 space-y-5 text-xs text-slate-700 overflow-y-auto">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Gross Disbursed</span>
-                  <div className="text-base font-black text-slate-900 font-mono mt-0.5">
-                    {selectedMonthDetail.displayAmount}
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Total Applications</span>
-                  <div className="text-base font-black text-slate-900 font-mono mt-0.5">
-                    {selectedMonthDetail.totalScans}
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Success Rate</span>
-                  <div className="text-base font-black text-emerald-600 font-mono mt-0.5">
-                    {selectedMonthDetail.successRate}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl">
-                  <span className="text-[10px] font-bold text-[#A62C11] uppercase block">Contractors &amp; Masons</span>
-                  <span className="text-lg font-black text-slate-900 font-mono">
-                    {selectedMonthDetail.contractorsCount}
-                  </span>
-                </div>
-                <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl">
-                  <span className="text-[10px] font-bold text-blue-800 uppercase block">Authorized Dealers</span>
-                  <span className="text-lg font-black text-blue-950 font-mono">
-                    {selectedMonthDetail.dealersCount}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2">
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-600">Approved &amp; Disbursed:</span>
-                  <span className="font-bold font-mono text-emerald-700">{selectedMonthDetail.approvedApps} Scans</span>
-                </div>
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-600">Pending Review:</span>
-                  <span className="font-bold font-mono text-amber-700">{selectedMonthDetail.pendingApps} Scans</span>
-                </div>
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-600">Rejected / Quarantined:</span>
-                  <span className="font-bold font-mono text-rose-700">{selectedMonthDetail.rejectedApps} Scans</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end space-x-2">
-              <button
-                onClick={() => setSelectedMonthDetail(null)}
-                className="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-700 text-xs font-semibold cursor-pointer"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  handleExportMonthlyLedger();
-                  setSelectedMonthDetail(null);
-                }}
-                className="px-4 py-1.5 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-xl text-xs font-bold cursor-pointer"
-              >
-                Download CSV
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: SCHEDULE AUTO-REPORT */}
-      {scheduleModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 bg-gradient-to-r from-[#A62C11] to-[#C84826] text-white flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-white" />
-                <h3 className="text-sm font-bold text-white">Schedule Automated Monthly Report</h3>
-              </div>
-              <button
-                onClick={() => setScheduleModalOpen(false)}
-                className="text-white/80 hover:text-white transition p-1 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4 text-xs text-slate-700">
-              <p className="text-slate-500 text-[11px]">
-                Receive the finalized month-end cashback reconciliation directly in your executive mailbox.
-              </p>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Recipient Email Address</label>
-                <input
-                  type="email"
-                  value={scheduleEmail}
-                  onChange={(e) => setScheduleEmail(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#C84826]"
-                />
-              </div>
-            </div>
-
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end space-x-2">
-              <button
-                onClick={() => setScheduleModalOpen(false)}
-                className="px-3 py-1.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-700 text-xs font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setScheduleModalOpen(false);
-                  showToast(`Automated report schedule saved for ${scheduleEmail}!`);
-                }}
-                className="px-4 py-1.5 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-xl text-xs font-bold cursor-pointer"
-              >
-                Save Schedule
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODAL 2: SCHEDULE AUTO-REPORT (Step B.3 Blueprint Specification) */}
+      <ScheduleAutoReportModal
+        isOpen={scheduleModalOpen}
+        onClose={() => setScheduleModalOpen(false)}
+        onSaved={(cfg) =>
+          showToast(
+            `Auto-Report scheduled (${cfg.cadence} • ${cfg.format}) for ${cfg.recipientEmails}!`
+          )
+        }
+      />
     </div>
   );
 }

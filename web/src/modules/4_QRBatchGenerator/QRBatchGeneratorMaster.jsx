@@ -3,10 +3,18 @@ import { useData } from '../../context/DataContext';
 import QRCode from 'qrcode';
 import { jsPDF } from 'jspdf';
 import {
+  THERMAL_PRINTER_SPEC,
+  generateSerializedBatchTokens,
+  exportThermal40x40Pdf,
+  exportThermal40x40SvgSheet,
+  exportThermalZplStream,
+  exportSerializedBatchManifestCsv,
+} from '../../utils/thermalPrintExport';
+import {
   QrCode, ShieldCheck, Download, Printer,
   Copy, Check, Lock, RefreshCw, X, Info, Plus, Trash2,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2, FileText, FileSpreadsheet
 } from 'lucide-react';
 
 function createSimpleQRSvg() {
@@ -59,6 +67,27 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
   };
 
   useEffect(() => {
+    try {
+      const pendingRaw = localStorage.getItem('duragrit_pending_qr_sku');
+      if (pendingRaw) {
+        const pendingSku = JSON.parse(pendingRaw);
+        localStorage.removeItem('duragrit_pending_qr_sku');
+        const match = skus.find(
+          (s) => s.skuCode === pendingSku.skuCode || s.id === pendingSku.id
+        );
+        const targetId = match ? (match.id || match.skuCode) : (pendingSku.id || pendingSku.skuCode);
+        if (targetId) setSelectedSkuId(targetId);
+        if (pendingSku.cashbackReward || pendingSku.cashbackAmount) {
+          setCashbackReward(Number(pendingSku.cashbackReward ?? pendingSku.cashbackAmount));
+        }
+        if (pendingSku.minBatchQty || pendingSku.initialBatchQuantity) {
+          setQuantity(Number(pendingSku.minBatchQty || pendingSku.initialBatchQuantity || 25));
+        }
+        showToast(`Loaded SKU ${pendingSku.skuCode} into Step 04 Print Queue (${THERMAL_PRINTER_SPEC.port} Online)`);
+        return;
+      }
+    } catch (_) {}
+
     if (skus.length > 0 && (!selectedSkuId || !skus.some((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId))) {
       setSelectedSkuId(skus[0].id || skus[0].skuCode);
     }
@@ -129,17 +158,14 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
       const batchId = `DG-BATCH-${cleanSku}-${batchNum}`;
       const datePart = currentMonthYear.replace(/[^A-Z0-9]/g, '');
 
-      const tokensList = Array.from({ length: qtyNum }).map((_, i) => {
-        const serialSeq = String(i + 1).padStart(6, '0');
-        const tokenSerial = `DG-${cleanSku}-${datePart}-${serialSeq}`;
-        return {
-          serialKey: tokenSerial,
-          dualSha128: `SHA128-${cleanSku}-${serialSeq}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-          cashbackAmount: Number(cashbackReward),
-          lotNumber: String(batchNum),
-          qrPayloadUrl: `https://verify.duragritvitrified.com/qr/${tokenSerial}`,
-          isScanned: false,
-        };
+      const tokensList = generateSerializedBatchTokens({
+        skuCode: selectedSku.skuCode,
+        batchPrefix,
+        quantity: qtyNum,
+        cashbackReward: Number(cashbackReward),
+        discountTier: Number(discountTier),
+        validityPeriod,
+        lotNumber: String(batchNum),
       });
 
       const created = await createBatch({
@@ -162,11 +188,72 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
       });
 
       setGeneratedBatchModal({ ...created, escrowVaultValue: qtyNum * Number(cashbackReward), datePart });
-      showToast(`Batch ${batchId} (${qtyNum} QR codes) generated & synced to Supabase!`);
+      showToast(`Batch ${batchId} (${qtyNum} QR codes) generated & queued on ${THERMAL_PRINTER_SPEC.port} (Online)!`);
     } catch (err) {
       showToast(`Error: ${err.message}`);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const buildBatchExportMeta = (batch) => ({
+    batchId: batch.batchId || 'DG-BATCH',
+    skuCode: batch.skuCode || selectedSku?.skuCode || 'SKU',
+    productName: batch.productName || selectedSku?.name || 'DuraGrit Product',
+    batchPrefix: batch.prefix || batchPrefix,
+    cashbackAmount: Number(batch.cashbackAmount ?? cashbackReward ?? 50),
+    discountTier: batch.discountTier || `${discountTier}%`,
+    validityPeriod: batch.validityPeriod || validityPeriod,
+  });
+
+  const handleExportThermal40x40Pdf = async (batch) => {
+    const targetBatch = batch || generatedBatchModal || printStickersModal;
+    if (!targetBatch) return;
+    setIsGeneratingPdf(true);
+    try {
+      const toks = getFullTokensForBatch(targetBatch);
+      const fname = await exportThermal40x40Pdf(toks, buildBatchExportMeta(targetBatch));
+      showToast(`Exported 300 DPI 40×40mm Thermal Vector PDF: ${fname}`);
+    } catch (err) {
+      showToast(`Thermal PDF Error: ${err.message}`);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleExportThermal40x40Svg = async (batch) => {
+    const targetBatch = batch || generatedBatchModal || printStickersModal;
+    if (!targetBatch) return;
+    try {
+      const toks = getFullTokensForBatch(targetBatch);
+      const fname = await exportThermal40x40SvgSheet(toks, buildBatchExportMeta(targetBatch));
+      showToast(`Exported 300 DPI 40×40mm Vector Roll Sheet (.svg): ${fname}`);
+    } catch (err) {
+      showToast(`SVG Export Error: ${err.message}`);
+    }
+  };
+
+  const handleExportThermalZpl = (batch, format = 'zpl') => {
+    const targetBatch = batch || generatedBatchModal || printStickersModal;
+    if (!targetBatch) return;
+    try {
+      const toks = getFullTokensForBatch(targetBatch);
+      const res = exportThermalZplStream(toks, buildBatchExportMeta(targetBatch), format);
+      showToast(`Dispatched ${res.filename} (${res.dpi} DPI) to ${res.dispatchedTo}!`);
+    } catch (err) {
+      showToast(`ZPL Stream Error: ${err.message}`);
+    }
+  };
+
+  const handleExportBatchManifestCsv = (batch) => {
+    const targetBatch = batch || generatedBatchModal || printStickersModal;
+    if (!targetBatch) return;
+    try {
+      const toks = getFullTokensForBatch(targetBatch);
+      const fname = exportSerializedBatchManifestCsv(toks, buildBatchExportMeta(targetBatch));
+      showToast(`Downloaded Serialized Batch Manifest (.csv): ${fname}`);
+    } catch (err) {
+      showToast(`CSV Manifest Error: ${err.message}`);
     }
   };
 
@@ -346,9 +433,15 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-bold font-mono self-start xl:self-auto">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>ACTIVE BATCHES: {batches.length}</span>
+        <div className="flex flex-wrap items-center gap-2 self-start xl:self-auto">
+          <div className="flex items-center space-x-2 bg-stone-900 text-white border border-stone-800 px-3 py-1.5 rounded-xl text-xs font-bold font-mono">
+            <Printer className="w-3.5 h-3.5 text-[#F59B7F]" />
+            <span>{THERMAL_PRINTER_SPEC.port} ({THERMAL_PRINTER_SPEC.status}) • 300 DPI</span>
+          </div>
+          <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-bold font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>ACTIVE BATCHES: {batches.length}</span>
+          </div>
         </div>
       </div>
 
@@ -661,13 +754,27 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                       <td className="py-3.5 px-4 font-mono font-bold text-[#A62C11]">
                         ₹{Number(b.cashbackAmount || 0)}
                       </td>
-                      <td className="py-3.5 px-4 text-right space-x-1.5">
+                      <td className="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
                         <button
-                          onClick={() => handleDownloadBatchPDF(b)}
-                          title="Download Batch Stickers PDF"
-                          className="p-1.5 text-stone-600 hover:text-[#A62C11] hover:bg-[#FEF2EE] rounded-lg transition cursor-pointer"
+                          onClick={() => handleExportThermal40x40Pdf(b)}
+                          title="40×40mm 300 DPI Vector PDF Roll Sheet"
+                          className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-[#FEF2EE] text-stone-700 hover:text-[#A62C11] border border-stone-200 rounded-lg transition cursor-pointer"
                         >
-                          <Download className="w-3.5 h-3.5" />
+                          40×40 PDF
+                        </button>
+                        <button
+                          onClick={() => handleExportThermalZpl(b, 'zpl')}
+                          title="Godex / Zebra Raw Thermal Stream (.zpl) @ 300 DPI"
+                          className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-[#FEF2EE] text-stone-700 hover:text-[#A62C11] border border-stone-200 rounded-lg transition cursor-pointer"
+                        >
+                          .ZPL
+                        </button>
+                        <button
+                          onClick={() => handleExportBatchManifestCsv(b)}
+                          title="Download Serialized Batch Manifest (.csv)"
+                          className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-emerald-700 border border-stone-200 rounded-lg transition cursor-pointer"
+                        >
+                          .CSV
                         </button>
                         <button
                           onClick={() => setPrintStickersModal(b)}
@@ -740,14 +847,61 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            {/* 300 DPI Thermal Label Vector & Serialized Batch Exports */}
+            <div className="bg-stone-50 border border-[#E7E5E0] rounded-2xl p-3.5 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">
+                  300 DPI Thermal &amp; Manifest Exports (40×40mm / 472×472px)
+                </span>
+                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                  {THERMAL_PRINTER_SPEC.port} ({THERMAL_PRINTER_SPEC.status})
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleExportThermal40x40Pdf(generatedBatchModal)}
+                  disabled={isGeneratingPdf}
+                  className="py-2 px-3 bg-white hover:bg-[#FEF2EE] border border-[#E7E5E0] text-[#1C1917] rounded-xl text-[11px] font-bold flex items-center justify-center space-x-1.5 transition cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5 text-[#C84826]" />
+                  <span>40×40mm Vector PDF (300 DPI)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportThermal40x40Svg(generatedBatchModal)}
+                  className="py-2 px-3 bg-white hover:bg-[#FEF2EE] border border-[#E7E5E0] text-[#1C1917] rounded-xl text-[11px] font-bold flex items-center justify-center space-x-1.5 transition cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#C84826]" />
+                  <span>40×40mm Vector SVG Sheet</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportThermalZpl(generatedBatchModal, 'zpl')}
+                  className="py-2 px-3 bg-white hover:bg-[#FEF2EE] border border-[#E7E5E0] text-[#1C1917] rounded-xl text-[11px] font-bold flex items-center justify-center space-x-1.5 transition cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5 text-[#C84826]" />
+                  <span>Godex / Zebra Stream (.zpl)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportBatchManifestCsv(generatedBatchModal)}
+                  className="py-2 px-3 bg-white hover:bg-emerald-50 border border-[#E7E5E0] text-emerald-800 rounded-xl text-[11px] font-bold flex items-center justify-center space-x-1.5 transition cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Serialized Manifest (.csv)</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
               <button
                 onClick={() => handleDownloadBatchPDF(generatedBatchModal)}
                 disabled={isGeneratingPdf}
                 className="flex-1 py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-[#F59B7F]" />
-                <span>{isGeneratingPdf ? 'Generating...' : 'Download Batch PDF'}</span>
+                <span>{isGeneratingPdf ? 'Generating...' : 'Download A4 Sticker Sheet PDF'}</span>
               </button>
               <button
                 onClick={() => {
@@ -807,28 +961,58 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                 ))}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100 shrink-0">
-                <button
-                  onClick={() => setPrintStickersModal(null)}
-                  className="px-3.5 py-2 border border-[#E7E5E0] text-stone-700 rounded-xl text-xs font-bold hover:bg-stone-50 cursor-pointer"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => handleDownloadBatchPDF(printStickersModal)}
-                  disabled={isGeneratingPdf}
-                  className="px-4 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download PDF</span>
-                </button>
-                <button
-                  onClick={() => handlePrintAllStickers(printStickersModal)}
-                  className="px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print All {modalTokens.length}</span>
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-stone-100 shrink-0">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={() => handleExportThermal40x40Pdf(printStickersModal)}
+                    disabled={isGeneratingPdf}
+                    className="px-3 py-1.5 bg-stone-100 hover:bg-[#FEF2EE] text-stone-800 hover:text-[#A62C11] border border-stone-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                  >
+                    40×40mm PDF
+                  </button>
+                  <button
+                    onClick={() => handleExportThermal40x40Svg(printStickersModal)}
+                    className="px-3 py-1.5 bg-stone-100 hover:bg-[#FEF2EE] text-stone-800 hover:text-[#A62C11] border border-stone-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                  >
+                    40×40mm SVG
+                  </button>
+                  <button
+                    onClick={() => handleExportThermalZpl(printStickersModal, 'zpl')}
+                    className="px-3 py-1.5 bg-stone-100 hover:bg-[#FEF2EE] text-stone-800 hover:text-[#A62C11] border border-stone-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                  >
+                    Godex/Zebra .ZPL
+                  </button>
+                  <button
+                    onClick={() => handleExportBatchManifestCsv(printStickersModal)}
+                    className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                  >
+                    Manifest .CSV
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPrintStickersModal(null)}
+                    className="px-3.5 py-2 border border-[#E7E5E0] text-stone-700 rounded-xl text-xs font-bold hover:bg-stone-50 cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => handleDownloadBatchPDF(printStickersModal)}
+                    disabled={isGeneratingPdf}
+                    className="px-4 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>A4 Sheet PDF</span>
+                  </button>
+                  <button
+                    onClick={() => handlePrintAllStickers(printStickersModal)}
+                    className="px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print All {modalTokens.length}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

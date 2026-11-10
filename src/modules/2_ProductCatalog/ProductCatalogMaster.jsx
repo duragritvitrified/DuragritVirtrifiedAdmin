@@ -4,6 +4,10 @@ import { ProductPackagingVisual } from './ProductPackagingVisual';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import {
+  exportFilteredCatalogCsv,
+  THERMAL_PRINTER_SPEC,
+} from '../../utils/thermalPrintExport';
+import {
   Plus, Search, Download, Printer, ArrowLeft, RotateCcw,
   Package, QrCode, Wallet, TrendingUp, ShieldCheck, Check,
   Edit3, Trash2, Upload, AlertCircle,
@@ -131,44 +135,67 @@ export function ProductCatalogMaster({ onNavigateQR }) {
     showToast('Form cleared.');
   };
 
-  const handleSaveProduct = async (e) => {
-    e.preventDefault();
+  const persistCurrentSkuForm = async () => {
     if (!formData.name.trim() || !formData.skuCode.trim()) {
       showToast('Please enter both Product Name and SKU Code.');
-      return;
+      return null;
     }
 
     const mrpVal = Number(formData.mrp || 0);
     const baseVal = Number(formData.base || Math.round(mrpVal * 0.75));
     const rewardVal = Number(formData.cashbackReward || 0);
+    const savedPayload = {
+      ...formData,
+      mrp: mrpVal,
+      base: baseVal,
+      dealerPrice: baseVal,
+      cashbackAmount: rewardVal,
+      cashbackReward: rewardVal,
+      packSize: formData.packWeight,
+      minBatchQty: Number(formData.initialBatchQuantity) || 100,
+      status: 'Active',
+    };
 
     if (editingSku) {
-      await updateSKU(editingSku.id || editingSku.skuCode, {
-        ...formData,
-        mrp: mrpVal,
-        base: baseVal,
-        dealerPrice: baseVal,
-        cashbackAmount: rewardVal,
-        cashbackReward: rewardVal,
-        packSize: formData.packWeight,
-      });
+      await updateSKU(editingSku.id || editingSku.skuCode, savedPayload);
       showToast(`SKU ${formData.skuCode} updated & synced to Supabase.`);
     } else {
-      await addSKU({
-        ...formData,
-        mrp: mrpVal,
-        base: baseVal,
-        dealerPrice: baseVal,
-        cashbackAmount: rewardVal,
-        cashbackReward: rewardVal,
-        packSize: formData.packWeight,
-        minBatchQty: Number(formData.initialBatchQuantity) || 100,
-        status: 'Active',
-      });
+      await addSKU(savedPayload);
       showToast(`Product ${formData.skuCode} added & synced to Supabase!`);
     }
+    return savedPayload;
+  };
 
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
+    const saved = await persistCurrentSkuForm();
+    if (!saved) return;
     setViewMode('list');
+  };
+
+  const handleSaveAndGenerateQR = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const saved = await persistCurrentSkuForm();
+    if (!saved) return;
+    try {
+      localStorage.setItem('duragrit_pending_qr_sku', JSON.stringify(saved));
+    } catch (_) {}
+    showToast(`SKU ${saved.skuCode} saved — routing to Step 04 QR Batch Print Queue (PRN-PORT-08)...`);
+    if (onNavigateQR) {
+      onNavigateQR(saved);
+    } else {
+      setViewMode('list');
+    }
+  };
+
+  const handleExportCatalogCsv = () => {
+    const targetList = filteredProducts.length > 0 ? filteredProducts : skus;
+    if (targetList.length === 0) {
+      showToast('No products in catalog yet. Add a product first to export.');
+      return;
+    }
+    const filename = exportFilteredCatalogCsv(targetList, batches);
+    showToast(`Exported ${targetList.length} filtered SKUs to ${filename}`);
   };
 
   const handleConfirmDelete = async () => {
@@ -357,11 +384,21 @@ export function ProductCatalogMaster({ onNavigateQR }) {
               </button>
 
               <button
-                onClick={handleExportCatalog}
+                onClick={handleExportCatalogCsv}
                 className="flex items-center space-x-2 px-3.5 py-2 bg-white border border-[#E7E5E0] hover:bg-stone-50 text-stone-700 text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                title="Export current filtered SKUs as CSV"
               >
-                <Download className="w-4 h-4 text-stone-500" />
-                <span>Export Catalog (PDF)</span>
+                <Download className="w-4 h-4 text-[#C84826]" />
+                <span>↓ Export Catalog</span>
+              </button>
+
+              <button
+                onClick={handleExportCatalog}
+                className="flex items-center space-x-1.5 px-3 py-2 bg-white border border-[#E7E5E0] hover:bg-stone-50 text-stone-600 text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                title="Export official PDF catalog"
+              >
+                <Download className="w-3.5 h-3.5 text-stone-500" />
+                <span>PDF</span>
               </button>
 
               <button
@@ -615,7 +652,12 @@ export function ProductCatalogMaster({ onNavigateQR }) {
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => onNavigateQR && onNavigateQR()}
+                                onClick={() => {
+                                  try {
+                                    localStorage.setItem('duragrit_pending_qr_sku', JSON.stringify(prod));
+                                  } catch (_) {}
+                                  if (onNavigateQR) onNavigateQR(prod);
+                                }}
                                 title="Generate QR code batch for this SKU"
                                 className="p-1.5 text-[#C84826] hover:text-[#A62C11] hover:bg-[#FEF2EE] rounded-lg transition cursor-pointer"
                               >
@@ -972,7 +1014,7 @@ export function ProductCatalogMaster({ onNavigateQR }) {
                     <span>Clear form</span>
                   </button>
 
-                  <div className="flex items-center space-x-2.5">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       type="button"
                       onClick={() => setViewMode('list')}
@@ -982,16 +1024,24 @@ export function ProductCatalogMaster({ onNavigateQR }) {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md shadow-[#C84826]/20 transition cursor-pointer active:scale-98"
+                      className="px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
                     >
-                      {viewMode === 'edit' ? 'Update Product SKU' : 'Save Product & Sync to Supabase'}
+                      {viewMode === 'edit' ? 'Update SKU Only' : 'Save Product Only'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveAndGenerateQR}
+                      className="flex items-center space-x-1.5 px-5 py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md shadow-[#C84826]/20 transition cursor-pointer active:scale-98"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Save Product &amp; Generate QR Rules</span>
                     </button>
                   </div>
                 </div>
               </form>
             </div>
 
-            {/* Right Column: Live Pack Asset Preview */}
+            {/* Right Column: Live Pack Asset Preview & QR Security Governance Card */}
             <div className="lg:col-span-4 space-y-4">
               <div className="bg-white rounded-2xl border border-[#E7E5E0] shadow-xs p-5">
                 <div className="flex items-center justify-between pb-3 border-b border-stone-100">
@@ -1040,13 +1090,54 @@ export function ProductCatalogMaster({ onNavigateQR }) {
                 </div>
               </div>
 
+              {/* QR Security Governance Card (Step 03 Blueprint Specification) */}
+              <div className="bg-white rounded-2xl border border-[#E7E5E0] shadow-xs p-5 space-y-3.5">
+                <div className="flex items-center justify-between pb-2.5 border-b border-stone-100">
+                  <div className="flex items-center space-x-2">
+                    <ShieldCheck className="w-4 h-4 text-[#C84826]" />
+                    <span className="text-xs font-black text-[#1C1917] uppercase tracking-wider">
+                      QR Security Governance
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center space-x-1 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-black px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>{THERMAL_PRINTER_SPEC.port} ({THERMAL_PRINTER_SPEC.status})</span>
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 rounded-xl bg-[#FAF9F6] border border-[#E7E5E0] flex items-start space-x-2.5">
+                    <Printer className="w-4 h-4 text-[#C84826] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-[#1C1917] block">
+                        Thermal Foil Print Spec ({THERMAL_PRINTER_SPEC.mediaSpec})
+                      </span>
+                      <span className="text-[11px] text-stone-500 block mt-0.5 font-mono">
+                        40×40mm Die-Cut Roll • {THERMAL_PRINTER_SPEC.dpi} DPI (12 dots/mm) • 472×472px
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200/80">
+                      <span className="text-[10px] text-stone-400 font-bold uppercase block">Token Signature</span>
+                      <span className="font-mono font-bold text-stone-800">128-bit SHA-256</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200/80">
+                      <span className="text-[10px] text-stone-400 font-bold uppercase block">Print Queue Port</span>
+                      <span className="font-mono font-bold text-emerald-700">PRN-PORT-08</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-[#FEF2EE] rounded-2xl border border-[#C84826]/25 p-4 text-xs text-[#681B0A] space-y-1.5">
                 <div className="flex items-center space-x-1.5 font-bold text-[#A62C11]">
                   <AlertCircle className="w-4 h-4 text-[#C84826] shrink-0" />
-                  <span>Next Step After Saving</span>
+                  <span>Direct Print Queue Handshake</span>
                 </div>
                 <p className="text-[11px] leading-relaxed font-medium">
-                  Once saved, open <strong>QR Batch Generator</strong> to create serialized QR tokens for this SKU that Contractors and Dealers can scan in the Mobile App.
+                  Clicking <strong>Save Product &amp; Generate QR Rules</strong> persists this SKU and forwards its payload directly into the Step 04 QR Batch Generator print queue.
                 </p>
               </div>
             </div>
