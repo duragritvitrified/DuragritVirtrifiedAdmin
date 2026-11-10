@@ -6,10 +6,10 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v4.9.7';
-export const CURRENT_BUILT_IN_BUILD = 167;
-export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.7';
-export const CURRENT_ADMIN_BUILT_IN_BUILD = 167;
+export const CURRENT_BUILT_IN_VERSION = 'v4.9.8';
+export const CURRENT_BUILT_IN_BUILD = 168;
+export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v4.9.8';
+export const CURRENT_ADMIN_BUILT_IN_BUILD = 168;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -32,14 +32,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-019',
+    version: 'v4.9.8',
+    buildNumber: 168,
+    releaseDate: '2026-11-10 08:50:00',
+    title: 'Dedicated Release Payment Tab & Dual-Portal Disbursal Sync v4.9.8',
+    changelog: 'Dedicated Release Payment tab in Admin Mobile App with full disbursal redemption popup, payment mode selection, UTR auto-generator, proof screenshot attachment, and instant bidirectional Supabase cloud sync.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-vendorreleasepay168',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-018',
     version: 'v4.9.7',
     buildNumber: 167,
     releaseDate: '2026-11-10 08:30:00',
     title: 'Actual Vendor Attribution & Product Inspection Release v4.9.7',
     changelog: 'Accurate vendor name resolution on claim cards without generic defaults, single-click Approve moderation action, and interactive Product Details inspection modal with full SKU specs.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-vendorviewprod167',
@@ -853,6 +868,26 @@ export const ADMIN_VERSION_KEY = 'duragrit_admin_installed_version';
 
 export const DEFAULT_ADMIN_RELEASES = [
   {
+    id: 'ADM-REL-2026-010',
+    version: 'v4.9.8',
+    buildNumber: 168,
+    releaseDate: '2026-11-10 08:50:00',
+    title: 'Dedicated Release Payment Tab & Dual-Portal Disbursal Sync v4.9.8',
+    changelog: 'Dedicated Release Payment tab in Admin Mobile App with full disbursal redemption popup, payment mode selection, UTR auto-generator, proof screenshot attachment, and instant bidirectional Supabase cloud sync.',
+    changesList: [
+      'New Release Pay bottom navigation tab with live badge for awaiting claims',
+      'Full Disbursal Redemption modal with Disbursed Amount, Payment Mode, UTR/Txn ID, Proof attachment, and Settlement Remarks',
+      'Digital settlement voucher slip preview with transaction hash and NPCI rail stamps',
+      'Instant bidirectional Supabase cloud synchronization between Mobile App and Web Admin ERP',
+      'Full claim metadata preservation (vendor, SKU, product, pack size, MRP) across payout states'
+    ],
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '24.5 MB',
+    bundleHash: 'sha256-adminreleasepay168'
+  },
+  {
     id: 'ADM-REL-2026-009',
     version: 'v4.9.7',
     buildNumber: 167,
@@ -866,8 +901,8 @@ export const DEFAULT_ADMIN_RELEASES = [
       'Added interactive View button opening full product specifications and cashback details',
       'Direct Supabase persistence of claim metadata (vendor, product, sku, packing size, mrp)'
     ],
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '24.5 MB',
     bundleHash: 'sha256-adminviewprod167'

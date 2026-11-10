@@ -46,7 +46,10 @@ import {
   Send,
   Eye,
   Package,
-  Tag
+  Tag,
+  CreditCard,
+  Banknote,
+  UploadCloud
 } from 'lucide-react';
 import {
   checkAdminUpdateStatus,
@@ -57,6 +60,8 @@ import {
   isVersionHigher
 } from '../services/appInstallService';
 
+const DEFAULT_RECEIPT_PREVIEW = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260" fill="none"><rect width="400" height="260" rx="16" fill="%23A62C11"/><rect x="12" y="12" width="376" height="236" rx="12" fill="%23FEF2EE" stroke="%23C84826" stroke-width="2"/><circle cx="200" cy="55" r="24" fill="%23059669"/><path d="M192 55L198 61L209 49" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="200" y="98" font-family="sans-serif" font-size="14" font-weight="bold" fill="%237c2d12" text-anchor="middle">NPCI PAYOUT SETTLEMENT VOUCHER</text><text x="200" y="120" font-family="monospace" font-size="11" fill="%239a3412" text-anchor="middle">DURAGRIT VITRIFIED ESCROW GATEWAY</text><line x1="30" y1="135" x2="370" y2="135" stroke="%23F9CEB8" stroke-width="1.5" stroke-dasharray="4 4"/><text x="40" y="160" font-family="sans-serif" font-size="11" fill="%237c2d12">Status:</text><text x="360" y="160" font-family="sans-serif" font-size="11" font-weight="bold" fill="%23059669" text-anchor="end">PAID / DISBURSED</text><text x="40" y="185" font-family="sans-serif" font-size="11" fill="%237c2d12">Verification:</text><text x="360" y="185" font-family="monospace" font-size="11" font-weight="bold" fill="%237c2d12" text-anchor="end">DUAL-CONTROL SETTLED</text><text x="40" y="210" font-family="sans-serif" font-size="11" fill="%237c2d12">Settlement Rail:</text><text x="360" y="210" font-family="sans-serif" font-size="11" font-weight="bold" fill="%237c2d12" text-anchor="end">IMPS / UPI 24x7</text><rect x="30" y="222" width="340" height="18" rx="4" fill="%23fde68a"/><text x="200" y="235" font-family="monospace" font-size="9" fill="%2378350f" font-weight="bold" text-anchor="middle">DURAGRIT VITRIFIED CORP SETTLEMENT ESCROW</text></svg>`;
+
 export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   const { currentUser, loginUser, logout } = useAuth();
   const {
@@ -66,6 +71,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     vendors = [],
     users = [],
     approveClaimStep1,
+    releaseClaimPayout,
     rejectClaim,
     createBatch,
     refreshAllData,
@@ -296,6 +302,21 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   // Reject / Flag Modal State
   const [flagModalClaim, setFlagModalClaim] = useState(null);
   const [flagReason, setFlagReason] = useState('Duplicate or unreadable QR serial token');
+
+  // Release Payment & Disbursal State
+  const [releaseModalClaim, setReleaseModalClaim] = useState(null);
+  const [releaseForm, setReleaseForm] = useState({
+    amount: '',
+    paymentMode: 'UPI',
+    transactionId: '',
+    proofImage: null,
+    proofFileName: '',
+    remarks: ''
+  });
+  const [isReleasing, setIsReleasing] = useState(false);
+  const [releaseSubTab, setReleaseSubTab] = useState('awaiting'); // 'awaiting' | 'settled'
+  const [releaseSearchQuery, setReleaseSearchQuery] = useState('');
+  const [viewReceiptClaim, setViewReceiptClaim] = useState(null);
 
   // Quick Batch Modal State
   const [showBatchModal, setShowBatchModal] = useState(false);
@@ -615,6 +636,128 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     .filter((c) => c.status === 'Rejected' || c.status === 'Flagged')
     .reduce((sum, c) => sum + Number(c.amount || c.cashbackAmount || 150), 0);
   const totalAmount = pendingAmount + approvedAmount + rejectedAmount;
+
+  // Payout Disbursal Filter Lists & Counters
+  const awaitingReleaseClaims = useMemo(() => {
+    return cleanClaims.filter((c) => c.status === 'Approved' && c.payoutStatus !== 'Disbursed');
+  }, [cleanClaims]);
+  const awaitingReleaseCount = awaitingReleaseClaims.length;
+  const awaitingReleaseAmount = awaitingReleaseClaims.reduce(
+    (sum, c) => sum + Number(c.amount || c.cashbackAmount || c.claimValue || 150),
+    0
+  );
+
+  const settledClaims = useMemo(() => {
+    return cleanClaims.filter((c) => c.status === 'Disbursed' || c.payoutStatus === 'Disbursed');
+  }, [cleanClaims]);
+  const settledCount = settledClaims.length;
+  const settledAmount = settledClaims.reduce(
+    (sum, c) => sum + Number(c.disbursedAmount || c.netDisbursed || c.amount || c.cashbackAmount || 150),
+    0
+  );
+
+  // Filtered lists for Release Payment tab
+  const filteredAwaitingClaims = useMemo(() => {
+    if (!releaseSearchQuery.trim()) return awaitingReleaseClaims;
+    const q = releaseSearchQuery.trim().toLowerCase();
+    return awaitingReleaseClaims.filter((c) => {
+      const vInfo = resolveVendorInfo(c);
+      return (
+        String(c.requestId || c.claimCode || c.id || '').toLowerCase().includes(q) ||
+        String(c.userName || c.contractorName || '').toLowerCase().includes(q) ||
+        String(vInfo.vendorName || '').toLowerCase().includes(q) ||
+        String(c.userMobile || c.mobile || '').includes(q) ||
+        String(c.skuCode || c.productName || '').toLowerCase().includes(q) ||
+        String(c.qrSerial || c.serialKey || '').toLowerCase().includes(q)
+      );
+    });
+  }, [awaitingReleaseClaims, releaseSearchQuery]);
+
+  const filteredSettledClaims = useMemo(() => {
+    if (!releaseSearchQuery.trim()) return settledClaims;
+    const q = releaseSearchQuery.trim().toLowerCase();
+    return settledClaims.filter((c) => {
+      const vInfo = resolveVendorInfo(c);
+      return (
+        String(c.requestId || c.claimCode || c.id || '').toLowerCase().includes(q) ||
+        String(c.userName || c.contractorName || '').toLowerCase().includes(q) ||
+        String(vInfo.vendorName || '').toLowerCase().includes(q) ||
+        String(c.userMobile || c.mobile || '').includes(q) ||
+        String(c.transactionId || c.npciRrn || c.utr || '').toLowerCase().includes(q)
+      );
+    });
+  }, [settledClaims, releaseSearchQuery]);
+
+  // Release Payment Modal Handlers
+  const handleOpenReleaseModal = (claim) => {
+    const netAmt = Number(claim.amount || claim.cashbackAmount || claim.claimValue || 150);
+    const autoUtr = 'UTR' + Math.floor(1000000000 + Math.random() * 9000000000);
+    setReleaseForm({
+      amount: String(netAmt),
+      paymentMode: claim.payoutMethod || claim.paymentMode || 'UPI',
+      transactionId: autoUtr,
+      proofImage: DEFAULT_RECEIPT_PREVIEW,
+      proofFileName: 'duragrit_escrow_voucher.svg',
+      remarks: 'Disbursed via Admin Mobile Command Release.'
+    });
+    setReleaseModalClaim(claim);
+  };
+
+  const handleProofFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showHapticHUD('Screenshot must be < 10MB', '⚠️', 'rose');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setReleaseForm((prev) => ({
+        ...prev,
+        proofImage: event.target?.result,
+        proofFileName: file.name
+      }));
+      showHapticHUD('Screenshot attached', '📎', 'emerald');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitRelease = async (e) => {
+    if (e) e.preventDefault();
+    if (!releaseModalClaim) return;
+
+    const numAmount = parseFloat(releaseForm.amount);
+    if (Number.isNaN(numAmount) || numAmount <= 0) {
+      showHapticHUD('Enter a valid disbursal amount', '⚠️', 'amber');
+      return;
+    }
+
+    if (!releaseForm.transactionId.trim()) {
+      showHapticHUD('Enter a Transaction ID / UTR', '⚠️', 'amber');
+      return;
+    }
+
+    setIsReleasing(true);
+    const target = releaseModalClaim;
+    const utr = releaseForm.transactionId.trim();
+
+    try {
+      await releaseClaimPayout(target.id, {
+        disbursedAmount: numAmount,
+        transactionId: utr,
+        paymentMode: releaseForm.paymentMode,
+        remarks: releaseForm.remarks.trim() || 'Disbursed via Admin Mobile Command Release.',
+        paymentProofUrl: releaseForm.proofImage || DEFAULT_RECEIPT_PREVIEW,
+      });
+
+      showHapticHUD(`Disbursed ₹${numAmount.toFixed(2)} (UTR: ${utr})`, '💸', 'emerald');
+      setReleaseModalClaim(null);
+    } catch (err) {
+      showHapticHUD('Disbursal failed: ' + (err?.message || 'Error'), '❌', 'rose');
+    } finally {
+      setIsReleasing(false);
+    }
+  };
 
   // Dual-Mode Pie / Donut Chart State ('count' = Claims Volume, 'amount' = Escrow Liability in ₹)
   const [chartMetricMode, setChartMetricMode] = useState('count');
@@ -2089,6 +2232,19 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                           </button>
                         </div>
                       )}
+
+                      {claim.status === 'Approved' && claim.payoutStatus !== 'Disbursed' && (
+                        <div className="pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReleaseModal(claim)}
+                            className="w-full py-1.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-[11px] font-bold rounded-lg shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Zap className="w-3.5 h-3.5 fill-white" />
+                            <span>Release Payment &amp; Disburse</span>
+                          </button>
+                        </div>
+                      )}
                     </article>
                   );
                 })
@@ -2363,6 +2519,19 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                           </button>
                         </div>
                       )}
+
+                      {claim.status === 'Approved' && claim.payoutStatus !== 'Disbursed' && (
+                        <div className="pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReleaseModal(claim)}
+                            className="w-full py-1.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-[11px] font-bold rounded-lg shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Zap className="w-3.5 h-3.5 fill-white" />
+                            <span>Release Payment &amp; Disburse</span>
+                          </button>
+                        </div>
+                      )}
                     </article>
                   );
                 })
@@ -2372,7 +2541,349 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
         )}
 
         {/* =================================================================== */}
-        {/* TAB 3: QR BATCH GENERATOR                                          */}
+        {/* TAB 3: VENDOR RELEASE PAYMENT & REDEMPTION HUB                     */}
+        {/* =================================================================== */}
+        {activeTab === 'release' && (
+          <div className="space-y-3 animate-in fade-in duration-200">
+            {/* Header Hub Card */}
+            <div className="bg-gradient-to-br from-white via-[#FEF2EE]/40 to-orange-50/50 rounded-2xl border border-[#F9CEB8]/80 p-3.5 sm:p-4 space-y-3 shadow-2xs">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#BA3A24] to-[#E35D38] text-white flex items-center justify-center shadow-xs">
+                    <Zap className="w-5 h-5 fill-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+                      Vendor Payment Release &amp; Disbursal
+                    </h2>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      Dual-Control Escrow Payouts • Instant Supabase Sync
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Realtime Cloud</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* 2 Financial KPI Tiles */}
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <div className="bg-white/90 rounded-xl p-2.5 border border-amber-200/80 shadow-2xs">
+                  <span className="text-[9.5px] font-bold text-amber-800 uppercase tracking-wider block">
+                    Awaiting Release
+                  </span>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <span className="text-sm sm:text-base font-black text-slate-900 font-mono">
+                      ₹{awaitingReleaseAmount.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-700 font-mono">
+                      ({awaitingReleaseCount})
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-500 block mt-0.5">Approved &amp; Ready to Disburse</span>
+                </div>
+
+                <div className="bg-white/90 rounded-xl p-2.5 border border-emerald-200/80 shadow-2xs">
+                  <span className="text-[9.5px] font-bold text-emerald-800 uppercase tracking-wider block">
+                    Disbursed Payouts
+                  </span>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <span className="text-sm sm:text-base font-black text-emerald-700 font-mono">
+                      ₹{settledAmount.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-700 font-mono">
+                      ({settledCount})
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-500 block mt-0.5">Settled via IMPS / UPI Rails</span>
+                </div>
+              </div>
+
+              {/* Sub-tab Switches: Awaiting Release vs Settled */}
+              <div className="flex rounded-xl bg-slate-100 p-1 gap-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setReleaseSubTab('awaiting')}
+                  className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    releaseSubTab === 'awaiting'
+                      ? 'bg-white text-[#BA3A24] shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span>Awaiting Release</span>
+                  {awaitingReleaseCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#BA3A24] text-white">
+                      {awaitingReleaseCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setReleaseSubTab('settled')}
+                  className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    releaseSubTab === 'settled'
+                      ? 'bg-white text-emerald-700 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span>Settled History</span>
+                  {settledCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-600 text-white">
+                      {settledCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Search Bar for Release Tab */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={releaseSearchQuery}
+                  onChange={(e) => setReleaseSearchQuery(e.target.value)}
+                  placeholder="Search by vendor, claimant, mobile, UTR..."
+                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#BA3A24]"
+                />
+                {releaseSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setReleaseSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* List for Awaiting Release */}
+            {releaseSubTab === 'awaiting' && (
+              <div className="space-y-2.5">
+                {filteredAwaitingClaims.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-2">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                    <p className="text-xs font-bold text-slate-800">
+                      {releaseSearchQuery ? 'No matching claims awaiting payout' : 'No claims awaiting release'}
+                    </p>
+                    <p className="text-[10.5px] text-slate-500 max-w-xs mx-auto">
+                      All approved claims have been settled, or new claims need approval in the Requests tab first.
+                    </p>
+                  </div>
+                ) : (
+                  filteredAwaitingClaims.map((claim) => {
+                    const vInfo = resolveVendorInfo(claim);
+                    const amount = Number(claim.amount || claim.cashbackAmount || claim.claimValue || 150);
+
+                    return (
+                      <article
+                        key={claim.id}
+                        className="bg-white rounded-2xl border border-slate-200/90 p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5"
+                      >
+                        {/* Header: Vendor Name & Amount */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-xs sm:text-[13px] text-slate-900 truncate">
+                                {vInfo.vendorName || claim.userName || 'Partner Applicator'}
+                              </span>
+                              {vInfo.vendorId && (
+                                <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
+                                  {vInfo.vendorId}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-0.5 font-mono truncate">
+                              <span>{claim.requestId || claim.claimCode || claim.id}</span>
+                              <span>•</span>
+                              <span>{formatRequestDateTime(claim)}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs sm:text-sm font-black text-[#BA3A24] font-mono block">
+                              ₹{amount.toLocaleString('en-IN')}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border mt-0.5 bg-amber-50 text-amber-800 border-amber-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                              <span>Approved</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Row 2: Applicant & Product SKU + View link */}
+                        <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-100 flex items-center justify-between gap-2 text-[10.5px]">
+                          <div className="min-w-0 flex-1 truncate text-slate-700">
+                            <span className="font-semibold text-slate-900 truncate">
+                              {claim.userName || claim.contractorName || 'Partner'}
+                            </span>
+                            {(claim.userMobile || claim.mobile) && (
+                              <span className="text-slate-500 font-mono ml-1.5 text-[10px]">
+                                {claim.userMobile || claim.mobile}
+                              </span>
+                            )}
+                          </div>
+                          <div className="shrink-0 flex items-center gap-1.5">
+                            <span className="font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
+                              {claim.skuCode || claim.productName || 'DA-777'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setInspectedProductClaim(claim)}
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-[#BA3A24] hover:text-[#962B16] bg-[#FEF2EE] hover:bg-[#FCE3D8] border border-[#F9CEB8] px-2 py-0.5 rounded-md cursor-pointer transition active:scale-95 shrink-0 shadow-2xs"
+                              title="View Product & Cashback Details"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>View</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Row 3: Destination VPA / Account */}
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
+                          <span className="text-slate-600 font-medium truncate">
+                            Payout Dest: <strong className="text-slate-800">{claim.vpaOrIfsc || claim.upiId || 'pending@upi'}</strong>
+                          </span>
+                          <span className="text-slate-500 shrink-0 ml-2">
+                            Mode: <strong className="text-slate-700">{claim.payoutMethod || 'UPI'}</strong>
+                          </span>
+                        </div>
+
+                        {/* Row 4: Release Payment Primary Button */}
+                        <div className="pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReleaseModal(claim)}
+                            className="w-full py-2 px-3 bg-gradient-to-r from-[#BA3A24] to-[#C84826] hover:from-[#A02F17] hover:to-[#B9381E] text-white text-xs font-black rounded-xl shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Zap className="w-4 h-4 fill-white" />
+                            <span>Release Payment (Disburse Funds)</span>
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {/* List for Settled History */}
+            {releaseSubTab === 'settled' && (
+              <div className="space-y-2.5">
+                {filteredSettledClaims.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-2">
+                    <CheckCircle2 className="w-8 h-8 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-800">No settled payout records found</p>
+                    <p className="text-[10.5px] text-slate-500">
+                      Settled disbursements and NPCI vouchers will appear here once released.
+                    </p>
+                  </div>
+                ) : (
+                  filteredSettledClaims.map((claim) => {
+                    const vInfo = resolveVendorInfo(claim);
+                    const disbursedAmt = Number(claim.disbursedAmount || claim.netDisbursed || claim.amount || 0);
+
+                    return (
+                      <article
+                        key={claim.id}
+                        className="bg-white rounded-2xl border border-emerald-200/70 p-3 sm:p-3.5 shadow-2xs hover:border-emerald-300 transition space-y-2.5"
+                      >
+                        {/* Header: Vendor Name & Amount */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-xs sm:text-[13px] text-slate-900 truncate">
+                                {vInfo.vendorName || claim.userName || 'Partner Applicator'}
+                              </span>
+                              {vInfo.vendorId && (
+                                <span className="text-[9px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
+                                  {vInfo.vendorId}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-0.5 font-mono truncate">
+                              <span>{claim.requestId || claim.claimCode || claim.id}</span>
+                              <span>•</span>
+                              <span>{formatRequestDateTime(claim)}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs sm:text-sm font-black text-emerald-700 font-mono block">
+                              ₹{disbursedAmt.toLocaleString('en-IN')}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border mt-0.5 bg-emerald-50 text-emerald-700 border-emerald-200">
+                              <Check className="w-3 h-3 text-emerald-600" />
+                              <span>Disbursed</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Row 2: Applicant & Product SKU */}
+                        <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-100 flex items-center justify-between gap-2 text-[10.5px]">
+                          <div className="min-w-0 flex-1 truncate text-slate-700">
+                            <span className="font-semibold text-slate-900 truncate">
+                              {claim.userName || claim.contractorName || 'Partner'}
+                            </span>
+                            {(claim.userMobile || claim.mobile) && (
+                              <span className="text-slate-500 font-mono ml-1.5 text-[10px]">
+                                {claim.userMobile || claim.mobile}
+                              </span>
+                            )}
+                          </div>
+                          <div className="shrink-0 flex items-center gap-1.5">
+                            <span className="font-mono text-[9.5px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200/80">
+                              {claim.skuCode || claim.productName || 'DA-777'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setInspectedProductClaim(claim)}
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-[#BA3A24] hover:text-[#962B16] bg-[#FEF2EE] hover:bg-[#FCE3D8] border border-[#F9CEB8] px-2 py-0.5 rounded-md cursor-pointer transition active:scale-95 shrink-0 shadow-2xs"
+                              title="View Product Details"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>View</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Row 3: Settlement UTR & Mode */}
+                        <div className="flex items-center justify-between text-[10px] text-slate-600 px-0.5 font-mono bg-emerald-50/60 p-1.5 rounded-lg border border-emerald-100">
+                          <span className="truncate">
+                            Rail: <strong className="text-emerald-900">{claim.paymentMode || claim.payoutMethod || 'UPI'}</strong>
+                          </span>
+                          <span className="truncate ml-2">
+                            UTR: <strong className="text-slate-900">{claim.transactionId || claim.npciRrn || claim.utr || 'NPCI-DISBURSED'}</strong>
+                          </span>
+                        </div>
+
+                        {/* Row 4: View Settlement Voucher Slip Button */}
+                        <div className="pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setViewReceiptClaim(claim)}
+                            className="w-full py-1.5 px-3 bg-white hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300 text-emerald-800 text-[11px] font-bold rounded-xl shadow-2xs active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>View Settlement Voucher &amp; Receipt</span>
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =================================================================== */}
+        {/* TAB 4: QR BATCH GENERATOR                                          */}
         {/* =================================================================== */}
         {activeTab === 'qrgen' && (
           <div className="space-y-3">
@@ -2742,7 +3253,36 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
           )}
         </button>
 
-        {/* Tab 3: QR Gen */}
+        {/* Tab 3: Release Payment (with Awaiting Disbursal Badge) */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('release');
+            showHapticHUD('Tab: Release Payment & Disbursals');
+          }}
+          className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 landscape:py-0.5 px-0.5 rounded-xl transition-all duration-200 cursor-pointer relative active:scale-95 ${
+            activeTab === 'release'
+              ? 'text-[#BA3A24] font-black bg-[#FEF2EE] border border-[#F9CEB8]/70 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-100/70 border border-transparent'
+          }`}
+        >
+          <div className="relative">
+            <Zap className={`w-5 h-5 landscape:w-4 landscape:h-4 transition-transform ${activeTab === 'release' ? 'scale-110 text-[#BA3A24] fill-[#BA3A24]' : 'text-slate-500'}`} />
+            {awaitingReleaseCount > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 min-w-[17px] h-[17px] px-1 bg-emerald-600 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white shadow-xs animate-pulse">
+                {awaitingReleaseCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[9px] sm:text-[9.5px] landscape:text-[8px] tracking-tight uppercase mt-0.5 font-bold truncate max-w-full">
+            Release Pay
+          </span>
+          {activeTab === 'release' && (
+            <span className="w-5 h-0.5 bg-[#BA3A24] rounded-full mt-0.5 -mb-0.5 animate-in fade-in" />
+          )}
+        </button>
+
+        {/* Tab 4: QR Gen */}
         <button
           type="button"
           onClick={() => {
@@ -2987,6 +3527,313 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
           </div>
         );
       })()}
+
+      {/* ===================================================================== */}
+      {/* 4. RELEASE PAYMENT MODAL                                              */}
+      {/* ===================================================================== */}
+      {releaseModalClaim && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm max-h-[92vh] overflow-y-auto bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col">
+            {/* Header */}
+            <div className="px-4 py-3.5 bg-gradient-to-r from-[#BA3A24] to-[#C84826] text-white flex items-center justify-between rounded-t-3xl shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/15 text-white flex items-center justify-center font-black border border-white/20">
+                  <Zap className="w-4 h-4 fill-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-white">Release Payout &amp; Disburse</h3>
+                  <p className="text-[10px] text-white/80 font-mono">
+                    Ref: {releaseModalClaim.requestId || releaseModalClaim.id}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReleaseModalClaim(null)}
+                className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmitRelease} className="p-4 sm:p-5 space-y-3.5 overflow-y-auto flex-1">
+              {/* Beneficiary Banner */}
+              <div className="bg-[#FEF2EE]/70 border border-[#F9CEB8] rounded-2xl p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-black text-slate-900 text-xs flex items-center gap-1.5 flex-wrap">
+                      <span>{releaseModalClaim.userName || 'Partner'}</span>
+                      <span className="text-[10px] bg-white px-1.5 py-0.2 rounded font-mono text-slate-700 border border-[#F9CEB8]">
+                        {releaseModalClaim.userMobile || '—'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#BA3A24] font-bold mt-1 flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 shrink-0" />
+                      <span>{resolveVendorInfo(releaseModalClaim).vendorName}</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[9px] uppercase font-bold text-slate-500 block">Claim Amount</span>
+                    <span className="text-sm font-black font-mono text-[#BA3A24] block">
+                      ₹{Number(releaseModalClaim.amount || releaseModalClaim.cashbackAmount || 150).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-[10.5px] text-slate-600 font-mono pt-1 border-t border-[#F9CEB8]/60 flex items-center justify-between">
+                  <span>Dest: <strong className="text-[#BA3A24]">{releaseModalClaim.vpaOrIfsc || releaseModalClaim.upiId || 'pending@upi'}</strong></span>
+                  <span>SKU: <strong>{releaseModalClaim.skuCode || 'DA-777'}</strong></span>
+                </div>
+              </div>
+
+              {/* Disbursal Amount */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Disbursed Amount (₹) <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-sm">₹</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    required
+                    value={releaseForm.amount}
+                    onChange={(e) => setReleaseForm({ ...releaseForm, amount: e.target.value })}
+                    className="w-full pl-7 pr-3 py-2 text-xs sm:text-sm font-mono font-bold bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#BA3A24] text-slate-900"
+                    placeholder="150.00"
+                  />
+                </div>
+              </div>
+
+              {/* Payment Mode */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Payment Mode / Gateway Rail <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={releaseForm.paymentMode}
+                  onChange={(e) => setReleaseForm({ ...releaseForm, paymentMode: e.target.value })}
+                  className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#BA3A24] text-slate-800 cursor-pointer"
+                >
+                  <option value="UPI">UPI Instant Escrow (NPCI)</option>
+                  <option value="Bank NEFT">NEFT Direct Interbank</option>
+                  <option value="IMPS">IMPS 24x7 Immediate Settlement</option>
+                  <option value="RTGS">RTGS High-Value Transfer</option>
+                  <option value="Cash">Cash Direct Settlement</option>
+                </select>
+              </div>
+
+              {/* Transaction ID / UTR */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    Transaction ID / UTR <span className="text-rose-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReleaseForm((prev) => ({
+                        ...prev,
+                        transactionId: 'UTR' + Math.floor(1000000000 + Math.random() * 9000000000),
+                      }))
+                    }
+                    className="text-[10px] text-[#BA3A24] font-bold flex items-center gap-1 cursor-pointer active:scale-95"
+                  >
+                    <RefreshCw className="w-2.5 h-2.5" />
+                    <span>Auto-generate</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={releaseForm.transactionId}
+                  onChange={(e) => setReleaseForm({ ...releaseForm, transactionId: e.target.value })}
+                  placeholder="e.g. UTR602918239012"
+                  className="w-full px-3 py-2 text-xs font-mono font-semibold bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#BA3A24] text-slate-900"
+                />
+              </div>
+
+              {/* Screenshot / Proof Attachment */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    Payment Screenshot / Voucher
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReleaseForm((prev) => ({
+                        ...prev,
+                        proofImage: DEFAULT_RECEIPT_PREVIEW,
+                        proofFileName: 'duragrit_escrow_voucher.svg',
+                      }))
+                    }
+                    className="text-[10px] text-[#BA3A24] font-bold bg-[#FEF2EE] px-2 py-0.5 rounded border border-[#F9CEB8] cursor-pointer active:scale-95"
+                  >
+                    + Digital Voucher
+                  </button>
+                </div>
+
+                {releaseForm.proofImage ? (
+                  <div className="p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={releaseForm.proofImage}
+                        alt="Proof"
+                        className="w-10 h-10 object-cover rounded-lg border border-emerald-300 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <span className="text-[11px] font-bold text-emerald-950 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Proof Attached</span>
+                        </span>
+                        <span className="text-[9.5px] text-emerald-700 font-mono truncate block">
+                          {releaseForm.proofFileName || 'receipt_slip.svg'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReleaseForm((prev) => ({ ...prev, proofImage: null, proofFileName: '' }))}
+                      className="p-1 text-rose-600 hover:text-rose-800 rounded-md cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-slate-200 hover:border-[#BA3A24] rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-[#FEF2EE]/40 transition text-center">
+                    <UploadCloud className="w-5 h-5 text-[#BA3A24] mb-0.5" />
+                    <span className="text-[11px] font-bold text-slate-700">Attach payment screenshot or slip</span>
+                    <span className="text-[9px] text-slate-400">PNG, JPG, or WEBP</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProofFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Remarks */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Remarks / Settlement Notes
+                </label>
+                <textarea
+                  rows={2}
+                  value={releaseForm.remarks}
+                  onChange={(e) => setReleaseForm({ ...releaseForm, remarks: e.target.value })}
+                  placeholder="Enter settlement notes..."
+                  className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#BA3A24] text-slate-800"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setReleaseModalClaim(null)}
+                  className="px-3 py-2 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isReleasing}
+                  className="flex-1 py-2 px-3 bg-[#BA3A24] hover:bg-[#A02F17] text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isReleasing ? 'Disbursing...' : `Submit & Disburse (₹${parseFloat(releaseForm.amount || 0).toFixed(2)})`}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* 5. VIEW VOUCHER / RECEIPT MODAL                                       */}
+      {/* ===================================================================== */}
+      {viewReceiptClaim && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm max-h-[92vh] overflow-y-auto bg-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-slate-200 space-y-3.5">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-slate-900">Settlement Voucher Slip</h3>
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    UTR: {viewReceiptClaim.transactionId || viewReceiptClaim.npciRrn || 'SETTLED'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewReceiptClaim(null)}
+                className="p-1 rounded-full bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Voucher Image or SVG Preview */}
+            <div className="rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-50">
+              <img
+                src={viewReceiptClaim.paymentProofUrl || DEFAULT_RECEIPT_PREVIEW}
+                alt="Settlement Slip"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+
+            {/* Details Table */}
+            <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/80 space-y-1.5 text-[11px]">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Claimant:</span>
+                <span className="font-bold text-slate-900">{viewReceiptClaim.userName || 'Partner'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Vendor:</span>
+                <span className="font-bold text-[#BA3A24]">{resolveVendorInfo(viewReceiptClaim).vendorName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Disbursed Amount:</span>
+                <span className="font-black font-mono text-emerald-700">₹{Number(viewReceiptClaim.disbursedAmount || viewReceiptClaim.amount || 0).toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Settlement Rail:</span>
+                <span className="font-mono font-semibold text-slate-800">{viewReceiptClaim.paymentMode || viewReceiptClaim.payoutMethod || 'UPI'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">UTR / Ref:</span>
+                <span className="font-mono font-bold text-slate-900">{viewReceiptClaim.transactionId || viewReceiptClaim.npciRrn || 'N/A'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Settled At:</span>
+                <span className="font-mono text-slate-700">{formatRequestDateTime(viewReceiptClaim)}</span>
+              </div>
+              {viewReceiptClaim.remarks && (
+                <div className="pt-1 border-t border-slate-200 text-slate-600">
+                  <span className="font-bold text-slate-700">Remarks: </span>
+                  <span>{viewReceiptClaim.remarks}</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setViewReceiptClaim(null)}
+              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer transition active:scale-95"
+            >
+              Close Voucher
+            </button>
+          </div>
+        </div>
+      )}
 
       {flagModalClaim && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">

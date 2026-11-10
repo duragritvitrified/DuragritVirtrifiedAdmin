@@ -2364,12 +2364,39 @@ export const DataProvider = ({ children }) => {
         remarks,
       });
 
+      // Preserve JSON metadata in flag_reason
+      let updatedFlagReason = remarks || null;
+      try {
+        const metaPayload = {
+          vendorName: existing.vendorName,
+          vendorId: existing.vendorId,
+          userName: existing.userName,
+          userMobile: existing.userMobile,
+          userRole: existing.userRole,
+          productName: existing.productName,
+          skuCode: existing.skuCode,
+          packSize: existing.packSize || '20 kg',
+          category: existing.category || 'Adhesives',
+          subCategory: existing.subCategory || 'High-Polymer Vitrified',
+          mrp: existing.mrp || 650,
+          claimValue: existing.amount || finalAmount,
+          serialKey: existing.serialKey || existing.qrSerial,
+          remarks: remarks || 'Disbursed via Admin Escrow Release.',
+          paymentMode,
+          transactionId: finalTxnId,
+          disbursedAmount: finalAmount,
+          disbursedAt: disbursedIso,
+          payoutStatus: 'Disbursed'
+        };
+        updatedFlagReason = JSON.stringify(metaPayload);
+      } catch (_) {}
+
       const dbClaimPatch = {
         status: 'Disbursed',
         payout_method: toDbPayoutMethod(paymentMode),
         npci_rrn: finalTxnId,
         net_disbursed: finalAmount,
-        flag_reason: remarks || null,
+        flag_reason: updatedFlagReason,
         disbursed_at: disbursedIso,
         updated_at: disbursedIso,
       };
