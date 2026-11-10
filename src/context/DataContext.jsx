@@ -664,7 +664,8 @@ export const DataProvider = ({ children }) => {
         claim_value: Number(action.disbursedAmount || action.amount || 1),
         status: action.status || 'Approved',
         payout_method: 'UPI',
-        flag_reason: JSON.stringify(action)
+        flag_reason: JSON.stringify(action),
+        timestamp: new Date().toISOString()
       });
     } catch (e) {
       console.warn('pushClaimActionToSupabase failed:', e);
@@ -915,21 +916,34 @@ export const DataProvider = ({ children }) => {
           sbClaims = realClaimRows.map(mapClaimFromDb);
 
           // Apply claim action events (Approvals, Rejections, Payouts)
-          allClaimsRows.forEach((row) => {
-            if (row.request_id && String(row.request_id).startsWith('CLAIM_ACTION_EVENT_')) {
-              try {
-                const action = JSON.parse(row.flag_reason || '{}');
-                const target = sbClaims.find((c) => c.id === action.claimId || c.requestId === action.claimId || c.supabaseId === action.claimId);
-                if (target) {
-                  if (action.status) target.status = action.status;
-                  if (action.payoutStatus) target.payoutStatus = action.payoutStatus;
-                  if (action.transactionId) target.transactionId = action.transactionId;
-                  if (action.disbursedAmount) target.disbursedAmount = action.disbursedAmount;
-                  if (action.flagReason) target.flagReason = action.flagReason;
-                  if (action.remarks) target.remarks = action.remarks;
+          // Sort chronologically ascending (oldest to newest) so newer decisions (e.g. Disbursed)
+          // always take precedence over earlier steps (e.g. Approved/Pending)
+          const claimActionRows = allClaimsRows
+            .filter((row) => row.request_id && String(row.request_id).startsWith('CLAIM_ACTION_EVENT_'))
+            .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+
+          claimActionRows.forEach((row) => {
+            try {
+              const action = JSON.parse(row.flag_reason || '{}');
+              const target = sbClaims.find((c) => c.id === action.claimId || c.requestId === action.claimId || c.supabaseId === action.claimId);
+              if (target) {
+                if (action.status) target.status = action.status;
+                if (action.payoutStatus) target.payoutStatus = action.payoutStatus;
+                if (action.transactionId) target.transactionId = action.transactionId;
+                if (action.disbursedAmount !== undefined && action.disbursedAmount !== null) {
+                  target.disbursedAmount = Number(action.disbursedAmount);
+                  target.netDisbursed = Number(action.disbursedAmount);
                 }
-              } catch (_) {}
-            }
+                if (action.disbursedAt) target.disbursedAt = action.disbursedAt;
+                if (action.approvedAt) target.approvedAt = action.approvedAt;
+                if (action.rejectedAt) target.rejectedAt = action.rejectedAt;
+                if (action.paymentProofUrl) target.paymentProofUrl = action.paymentProofUrl;
+                if (action.paymentMode) target.paymentMode = action.paymentMode;
+                if (action.flagReason) target.flagReason = action.flagReason;
+                if (action.remarks) target.remarks = action.remarks;
+                target.updatedAt = Math.max(Number(target.updatedAt || 0), new Date(row.timestamp || 0).getTime());
+              }
+            } catch (_) {}
           });
         }
 
@@ -1007,12 +1021,14 @@ export const DataProvider = ({ children }) => {
             (b) => String(b.batchId || b.id || '').toUpperCase(),
             deletedSet
           );
-      const nextClaims = mergeCollections(
-        sbClaims,
-        (bridge?.claims ?? loadStorage(STORAGE_KEYS.CLAIMS, [])).filter((c) => !isTestOrInternalClaim(c, deletedSet)),
-        (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
-        deletedSet
-      ).filter((c) => !isTestOrInternalClaim(c, deletedSet));
+      const nextClaims = (sbConnected && sbClaims.length > 0)
+        ? sbClaims
+        : mergeCollections(
+            sbClaims,
+            (bridge?.claims ?? loadStorage(STORAGE_KEYS.CLAIMS, [])).filter((c) => !isTestOrInternalClaim(c, deletedSet)),
+            (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
+            deletedSet
+          ).filter((c) => !isTestOrInternalClaim(c, deletedSet));
 
       setSkus(nextSkus);
       setUsers(nextUsers);

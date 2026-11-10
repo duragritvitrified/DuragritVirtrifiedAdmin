@@ -232,7 +232,7 @@ export const PartnerOverviewDashboard = ({
     const myIdClean = String(partner.id || '').toLowerCase().replace(/^(usr|vnd)-/i, '');
     const cEmail = String(c.userEmail || c.email || '').toLowerCase().trim();
     const myEmail = String(partner.email || '').toLowerCase().trim();
-    const cName = String(c.userName || c.contractorName || c.companyName || '').toLowerCase().trim();
+    const cName = String(c.userName || c.contractorName || c.companyName || c.vendorName || '').toLowerCase().trim();
     const myContact = String(partner.contactPerson || '').toLowerCase().trim();
     const myCompany = String(partner.companyName || '').toLowerCase().trim();
 
@@ -240,7 +240,7 @@ export const PartnerOverviewDashboard = ({
       (currentDigits.length === 10 && cDigits === currentDigits) ||
       (myIdClean && cUserId && (cUserId === myIdClean || myIdClean.includes(cUserId) || cUserId.includes(myIdClean))) ||
       (myEmail && cEmail && cEmail === myEmail) ||
-      (cName && (cName === myContact || cName === myCompany || cName.includes(myContact) || cName.includes(myCompany)))
+      (cName && (cName === myContact || cName === myCompany || cName.includes(myContact) || cName.includes(myCompany) || myCompany.includes(cName)))
     );
   });
 
@@ -251,30 +251,45 @@ export const PartnerOverviewDashboard = ({
   // 2. Kitna Payout Total (Total Payout Amount in ₹)
   const totalPayout = userClaims.reduce((sum, c) => sum + (Number(c.amount || c.claimValue) || 0), 0);
 
+  // Helper status checkers
+  const isClaimDisbursed = (c) => {
+    const s = String(c.status || '').toLowerCase();
+    const p = String(c.payoutStatus || '').toLowerCase();
+    return s === 'disbursed' || p === 'disbursed' || s === 'completed' || s === 'paid' || p === 'paid' || Number(c.disbursedAmount || 0) > 0;
+  };
+  const isClaimApproved = (c) => {
+    const s = String(c.status || '').toLowerCase();
+    const p = String(c.payoutStatus || '').toLowerCase();
+    return !isClaimDisbursed(c) && (s === 'approved' || p === 'pending release' || s === 'in process');
+  };
+  const isClaimRejected = (c) => {
+    const s = String(c.status || '').toLowerCase();
+    return s === 'rejected' || s === 'flagged';
+  };
+  const isClaimPending = (c) => {
+    return !isClaimDisbursed(c) && !isClaimApproved(c) && !isClaimRejected(c);
+  };
+
   // 3. Disbursed / Paid Kitna (Disbursed Claims Amount & Count)
-  const disbursedClaims = userClaims.filter((c) => c.status === 'Disbursed' || c.payoutStatus === 'Disbursed');
+  const disbursedClaims = userClaims.filter(isClaimDisbursed);
   const disbursedAmount = disbursedClaims.reduce(
-    (sum, c) => sum + (Number(c.disbursedAmount || c.amount || c.claimValue) || 0),
+    (sum, c) => sum + (Number(c.disbursedAmount || c.netDisbursed || c.amount || c.claimValue) || 0),
     0
   );
   const disbursedCount = disbursedClaims.length;
 
   // 4. Approve Kitna (Approved Claims Amount & Count - awaiting release)
-  const approvedClaims = userClaims.filter(
-    (c) => c.status === 'Approved' && c.payoutStatus !== 'Disbursed'
-  );
+  const approvedClaims = userClaims.filter(isClaimApproved);
   const approvedAmount = approvedClaims.reduce((sum, c) => sum + (Number(c.amount || c.claimValue) || 0), 0);
   const approvedCount = approvedClaims.length;
 
   // 5. Pending Kitna Hai (Pending Claims Amount & Count)
-  const pendingClaims = userClaims.filter(
-    (c) => c.status === 'Pending' || (!c.status && c.payoutStatus !== 'Disbursed')
-  );
+  const pendingClaims = userClaims.filter(isClaimPending);
   const pendingAmount = pendingClaims.reduce((sum, c) => sum + (Number(c.amount || c.claimValue) || 0), 0);
   const pendingCount = pendingClaims.length;
 
   // 6. Rejected / Flagged Claims
-  const rejectedClaims = userClaims.filter((c) => c.status === 'Rejected' || c.status === 'Flagged');
+  const rejectedClaims = userClaims.filter(isClaimRejected);
   const rejectedAmount = rejectedClaims.reduce((sum, c) => sum + (Number(c.amount || c.claimValue) || 0), 0);
   const rejectedCount = rejectedClaims.length;
 
@@ -308,10 +323,10 @@ export const PartnerOverviewDashboard = ({
 
   // Filtered claims for summary section
   const filteredClaims = userClaims.filter((c) => {
-    const isDisbursed = c.status === 'Disbursed' || c.payoutStatus === 'Disbursed';
-    const isApproved = c.status === 'Approved' && !isDisbursed;
-    const isRejected = c.status === 'Rejected' || c.status === 'Flagged';
-    const isPending = !isDisbursed && !isApproved && !isRejected;
+    const isDisbursed = isClaimDisbursed(c);
+    const isApproved = isClaimApproved(c);
+    const isRejected = isClaimRejected(c);
+    const isPending = isClaimPending(c);
 
     if (claimFilter === 'pending') return isPending;
     if (claimFilter === 'approved') return isApproved;

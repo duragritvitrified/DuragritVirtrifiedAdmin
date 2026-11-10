@@ -58,26 +58,28 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
     }
   };
 
-  // Filter claims strictly belonging to the signed-in user
-  const myDigits = String(currentUser?.mobile || '').replace(/\D/g, '').slice(-10);
-  const myId = String(currentUser?.userId || currentUser?.id || '').replace(/^USR-/i, '');
-  const myName = String(currentUser?.name || '').toLowerCase();
+  // Filter claims strictly belonging to the signed-in user or vendor
+  const myDigits = String(currentUser?.mobile || currentUser?.phone || '').replace(/\D/g, '').slice(-10);
+  const myId = String(currentUser?.vendorId || currentUser?.userId || currentUser?.id || '').toLowerCase().replace(/^(usr|vnd)-/i, '');
+  const myName = String(currentUser?.companyName || currentUser?.name || currentUser?.contactPerson || '').toLowerCase().trim();
 
   const userClaims = claims.filter((c) => {
     const cDigits = String(c.userMobile || c.contractorPhone || c.mobile || '').replace(/\D/g, '').slice(-10);
-    const cId = String(c.userId || c.contractorId || '').replace(/^USR-/i, '');
-    const cName = String(c.userName || c.contractorName || '').toLowerCase();
+    const cId = String(c.userId || c.contractorId || c.vendorId || '').toLowerCase().replace(/^(usr|vnd)-/i, '');
+    const cName = String(c.userName || c.contractorName || c.vendorName || c.companyName || '').toLowerCase().trim();
     return (
-      (myId && cId && cId === myId) ||
+      (myId && cId && (cId === myId || myId.includes(cId) || cId.includes(myId))) ||
       (myDigits.length === 10 && cDigits === myDigits) ||
-      (myName && cName && cName === myName)
+      (myName && cName && (cName === myName || myName.includes(cName) || cName.includes(myName)))
     );
   });
 
   const getBucket = (c) => {
-    if (c.status === 'Disbursed' || c.payoutStatus === 'Disbursed' || c.status === 'Completed') return 'completed';
-    if (c.status === 'Approved' || c.status === 'In Process') return 'inprocess';
-    if (c.status === 'Rejected' || c.status === 'Flagged') return 'rejected';
+    const s = String(c.status || '').toLowerCase();
+    const p = String(c.payoutStatus || '').toLowerCase();
+    if (s === 'disbursed' || p === 'disbursed' || s === 'completed' || s === 'paid' || p === 'paid' || Number(c.disbursedAmount || 0) > 0) return 'completed';
+    if (s === 'approved' || s === 'in process' || s === 'inprocess' || p === 'pending release') return 'inprocess';
+    if (s === 'rejected' || s === 'flagged' || p === 'rejected') return 'rejected';
     return 'pending';
   };
 
@@ -91,7 +93,7 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
     0
   );
   const disbursedTotal = completedList.reduce(
-    (sum, c) => sum + (Number(c.disbursedAmount || c.amount || c.claimValue) || 0),
+    (sum, c) => sum + (Number(c.disbursedAmount || c.netDisbursed || c.amount || c.claimValue) || 0),
     0
   );
 

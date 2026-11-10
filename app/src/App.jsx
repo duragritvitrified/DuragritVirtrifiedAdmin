@@ -9,6 +9,7 @@ import { Step11_MyCashbackRequests } from './modules/Step11_MyCashbackRequests';
 import { Step12_MobileModeration } from './modules/Step12_MobileModeration';
 import { AdminMobileApp } from './modules/AdminMobileApp';
 import { Step13_WelcomeDossier } from './modules/Step13_WelcomeDossier';
+import { Step14_VendorOrders } from './modules/Step14_VendorOrders';
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 import { PartnerVerificationPortal } from './components/PartnerVerificationPortal';
 import {
@@ -496,6 +497,13 @@ export function App() {
               onNavigateScan={() => setCurrentScreen('scan')}
             />
           )}
+
+          {currentScreen === 'orders' && (
+            <Step14_VendorOrders
+              onBack={() => setCurrentScreen('dashboard')}
+              onNavigateScan={() => setCurrentScreen('scan')}
+            />
+          )}
         </div>
 
         {/* Unified Bottom Navigation Bar (Permanently pinned at bottom, never hides on scroll) */}
@@ -547,8 +555,10 @@ export function App() {
 
             {/* Tab 4: Orders */}
             <button
-              onClick={() => setCurrentScreen('requests')}
-              className={`flex flex-col items-center gap-0.5 relative transition-all cursor-pointer text-stone-400 hover:text-stone-700`}
+              onClick={() => setCurrentScreen('orders')}
+              className={`flex flex-col items-center gap-0.5 relative transition-all cursor-pointer ${
+                currentScreen === 'orders' ? 'text-[#A6300F] font-bold' : 'text-stone-400 hover:text-stone-700'
+              }`}
             >
               <Package className="w-5 h-5" />
               <span className="text-[10px] tracking-tight">Orders</span>
