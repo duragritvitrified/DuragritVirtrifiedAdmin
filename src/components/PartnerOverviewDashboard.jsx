@@ -487,70 +487,134 @@ export const PartnerOverviewDashboard = ({
             </div>
           </div>
 
-          {/* Bottom 4 Detailed Status Metrics: Disbursed/Paid, Approved, Pending, Rejected */}
-          <div className="grid grid-cols-4 gap-1.5 relative z-10 pt-1">
+          {/* Bottom 4 Detailed Status Metrics: Disbursed/Paid, Approved, Pending, Rejected (2x2 Responsive Grid) */}
+          <div className="grid grid-cols-2 gap-2.5 relative z-10 pt-1">
             {/* KPI 3: Disbursed / Paid Kitna */}
-            <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-2 text-center">
-              <div className="flex items-center justify-center gap-1 text-emerald-800">
-                <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span className="text-[9px] font-extrabold uppercase tracking-tight truncate">
-                  Paid
+            <div
+              onClick={() => setClaimFilter('disbursed')}
+              className={`bg-gradient-to-br from-emerald-50/90 via-emerald-50/70 to-teal-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+                claimFilter === 'disbursed'
+                  ? 'border-emerald-500 ring-2 ring-emerald-200/80'
+                  : 'border-emerald-200/90 hover:border-emerald-300'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 text-emerald-800 min-w-0">
+                  <div className="w-5 h-5 rounded-lg bg-emerald-100/90 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-emerald-900">
+                    Paid
+                  </span>
+                </div>
+                <span className="text-[9.5px] font-mono font-bold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0 shadow-2xs">
+                  {disbursedCount} Paid ✓
                 </span>
               </div>
-              <div className="text-xs sm:text-sm font-black text-emerald-700 font-mono mt-1 leading-tight truncate">
-                ₹{disbursedAmount.toLocaleString('en-IN')}
+              <div className="flex items-baseline justify-between gap-1 pt-0.5">
+                <div className="text-base sm:text-lg font-black text-emerald-700 font-mono leading-none tracking-tight">
+                  ₹{disbursedAmount.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[9px] font-semibold text-emerald-600/80">
+                  Settled UPI
+                </span>
               </div>
-              <span className="inline-block mt-0.5 text-[8.5px] font-mono font-bold text-emerald-800 bg-white/80 px-1 py-0.2 rounded-full border border-emerald-200 truncate max-w-full">
-                {disbursedCount} Paid ✓
-              </span>
             </div>
 
             {/* KPI 4: Approve Kitna */}
-            <div className="bg-blue-50/70 border border-blue-200/90 rounded-2xl p-2 text-center">
-              <div className="flex items-center justify-center gap-1 text-blue-800">
-                <CheckCircle2 className="w-3 h-3 text-blue-600 shrink-0" />
-                <span className="text-[9px] font-extrabold uppercase tracking-tight truncate">
-                  Approved
+            <div
+              onClick={() => setClaimFilter('approved')}
+              className={`bg-gradient-to-br from-blue-50/90 via-blue-50/70 to-indigo-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+                claimFilter === 'approved'
+                  ? 'border-blue-500 ring-2 ring-blue-200/80'
+                  : 'border-blue-200/90 hover:border-blue-300'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 text-blue-800 min-w-0">
+                  <div className="w-5 h-5 rounded-lg bg-blue-100/90 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                  </div>
+                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-blue-900">
+                    Approved
+                  </span>
+                </div>
+                <span className="text-[9.5px] font-mono font-bold text-blue-800 bg-white/90 px-2 py-0.5 rounded-full border border-blue-200 shrink-0 shadow-2xs">
+                  {approvedCount} Queued
                 </span>
               </div>
-              <div className="text-xs sm:text-sm font-black text-blue-700 font-mono mt-1 leading-tight truncate">
-                ₹{approvedAmount.toLocaleString('en-IN')}
+              <div className="flex items-baseline justify-between gap-1 pt-0.5">
+                <div className="text-base sm:text-lg font-black text-blue-700 font-mono leading-none tracking-tight">
+                  ₹{approvedAmount.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[9px] font-semibold text-blue-600/80">
+                  Verified
+                </span>
               </div>
-              <span className="inline-block mt-0.5 text-[8.5px] font-mono font-bold text-blue-800 bg-white/80 px-1 py-0.2 rounded-full border border-blue-200 truncate max-w-full">
-                {approvedCount} Queued
-              </span>
             </div>
 
             {/* KPI 5: Pending Kitna Hai */}
-            <div className="bg-amber-50/70 border border-amber-200/90 rounded-2xl p-2 text-center">
-              <div className="flex items-center justify-center gap-1 text-amber-800">
-                <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                <span className="text-[9px] font-extrabold uppercase tracking-tight truncate">
-                  Pending
+            <div
+              onClick={() => setClaimFilter('pending')}
+              className={`bg-gradient-to-br from-amber-50/90 via-amber-50/70 to-orange-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+                claimFilter === 'pending'
+                  ? 'border-amber-500 ring-2 ring-amber-200/80'
+                  : 'border-amber-200/90 hover:border-amber-300'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 text-amber-800 min-w-0">
+                  <div className="w-5 h-5 rounded-lg bg-amber-100/90 flex items-center justify-center shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  </div>
+                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-amber-900">
+                    Pending
+                  </span>
+                </div>
+                <span className="text-[9.5px] font-mono font-bold text-amber-800 bg-white/90 px-2 py-0.5 rounded-full border border-amber-200 shrink-0 shadow-2xs">
+                  {pendingCount} Review
                 </span>
               </div>
-              <div className="text-xs sm:text-sm font-black text-amber-800 font-mono mt-1 leading-tight truncate">
-                ₹{pendingAmount.toLocaleString('en-IN')}
+              <div className="flex items-baseline justify-between gap-1 pt-0.5">
+                <div className="text-base sm:text-lg font-black text-amber-800 font-mono leading-none tracking-tight">
+                  ₹{pendingAmount.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[9px] font-semibold text-amber-700/80">
+                  In Queue
+                </span>
               </div>
-              <span className="inline-block mt-0.5 text-[8.5px] font-mono font-bold text-amber-800 bg-white/80 px-1 py-0.2 rounded-full border border-amber-200 truncate max-w-full">
-                {pendingCount} Review
-              </span>
             </div>
 
             {/* KPI 6: Reject Kitna Hai */}
-            <div className="bg-rose-50/70 border border-rose-200/90 rounded-2xl p-2 text-center">
-              <div className="flex items-center justify-center gap-1 text-rose-800">
-                <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
-                <span className="text-[9px] font-extrabold uppercase tracking-tight truncate">
-                  Rejected
+            <div
+              onClick={() => setClaimFilter('rejected')}
+              className={`bg-gradient-to-br from-rose-50/90 via-rose-50/70 to-red-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-2 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+                claimFilter === 'rejected'
+                  ? 'border-rose-500 ring-2 ring-rose-200/80'
+                  : 'border-rose-200/90 hover:border-rose-300'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 text-rose-800 min-w-0">
+                  <div className="w-5 h-5 rounded-lg bg-rose-100/90 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                  </div>
+                  <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-rose-900">
+                    Rejected
+                  </span>
+                </div>
+                <span className="text-[9.5px] font-mono font-bold text-rose-800 bg-white/90 px-2 py-0.5 rounded-full border border-rose-200 shrink-0 shadow-2xs">
+                  {rejectedCount} Rejected
                 </span>
               </div>
-              <div className="text-xs sm:text-sm font-black text-rose-700 font-mono mt-1 leading-tight truncate">
-                ₹{rejectedAmount.toLocaleString('en-IN')}
+              <div className="flex items-baseline justify-between gap-1 pt-0.5">
+                <div className="text-base sm:text-lg font-black text-rose-700 font-mono leading-none tracking-tight">
+                  ₹{rejectedAmount.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[9px] font-semibold text-rose-600/80">
+                  Flagged
+                </span>
               </div>
-              <span className="inline-block mt-0.5 text-[8.5px] font-mono font-bold text-rose-800 bg-white/80 px-1 py-0.2 rounded-full border border-rose-200 truncate max-w-full">
-                {rejectedCount} Rej
-              </span>
             </div>
           </div>
         </section>

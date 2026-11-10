@@ -1512,8 +1512,8 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 </div>
               </div>
 
-              {/* Status Counters Grid with Pulsing Indicators (4 KPIs: Pending, Approved, Disbursed, Rejected) */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+              {/* Status Counters Grid with Pulsing Indicators (4 KPIs: Pending, Approved, Disbursed, Rejected in 2x2 Grid) */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
                 <div
                   onClick={() => {
                     setFilterTab('pending');
