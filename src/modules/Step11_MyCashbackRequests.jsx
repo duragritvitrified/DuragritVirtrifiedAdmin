@@ -246,8 +246,8 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
       </header>
 
       <div className="px-3.5 pt-3 space-y-3 flex-1">
-        {/* CONTRACTOR ESCROW SNAPSHOT Card matching PDF Page 11 */}
-        <section className="bg-white rounded-2xl p-4 border-2 border-stone-200 hover:border-stone-300 shadow-xs space-y-3 font-sans">
+        {/* CONTRACTOR ESCROW SNAPSHOT Card with consistent colorful brand border */}
+        <section className="bg-white rounded-2xl p-4 border-2 border-[#C84826]/70 border-l-4 border-l-[#C84826] shadow-sm space-y-3 font-sans">
           <div className="flex items-center justify-between pb-1 border-b border-stone-100">
             <div className="flex items-center gap-1.5 text-stone-900 text-[10.5px] font-extrabold uppercase tracking-wider">
               <span className="w-2 h-2 rounded-full bg-[#A6300F]"></span>
@@ -259,13 +259,13 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
             </span>
           </div>
 
-          {/* 2 Recessed #F4F3F0 Sub-Cards */}
+          {/* 2 Recessed Sub-Cards with clean, colorful status borders */}
           <div className="grid grid-cols-2 gap-2.5 pt-1">
-            <div className="bg-[#F4F3F0] rounded-xl p-3 border border-[#ECEAE6]">
-              <span className="text-[10px] text-stone-500 font-medium block">
+            <div className="bg-gradient-to-br from-amber-50/80 via-amber-50/50 to-orange-50/30 rounded-xl p-3 border border-amber-300/80 shadow-2xs">
+              <span className="text-[10px] text-amber-800 font-bold block uppercase tracking-wider">
                 In-Review Claims
               </span>
-              <div className="text-2xl font-black text-stone-900 font-serif mt-0.5">
+              <div className="text-2xl font-black text-amber-900 font-serif mt-0.5">
                 ₹{inReviewAmount.toLocaleString('en-IN')}
               </div>
               <div className="text-[10px] text-[#C2410C] font-bold mt-1 flex items-center gap-1">
@@ -274,25 +274,25 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
               </div>
             </div>
 
-            <div className="bg-[#F4F3F0] rounded-xl p-3 border border-[#ECEAE6]">
-              <span className="text-[10px] text-stone-500 font-medium block">
+            <div className="bg-gradient-to-br from-emerald-50/80 via-emerald-50/50 to-teal-50/30 rounded-xl p-3 border border-emerald-300/80 shadow-2xs">
+              <span className="text-[10px] text-emerald-800 font-bold block uppercase tracking-wider">
                 Lifetime Disbursed
               </span>
               <div className="text-2xl font-black text-[#15803D] font-serif mt-0.5">
                 ₹{disbursedTotal.toLocaleString('en-IN')}
               </div>
-              <div className="text-[10px] text-stone-600 font-medium mt-1 flex items-center gap-1 truncate">
+              <div className="text-[10px] text-emerald-800 font-bold mt-1 flex items-center gap-1 truncate">
                 <span>🏛️</span>
                 <span>Bank/UPI Payouts</span>
               </div>
             </div>
           </div>
 
-          {/* Action Button: Manual Claim */}
+          {/* Action Button: Manual Claim with warm matching border */}
           <div className="pt-1">
             <button
               onClick={handleOpenManualModal}
-              className="w-full bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer font-serif"
+              className="w-full bg-gradient-to-r from-white via-[#FFFBF9] to-[#FFF5F0] hover:bg-stone-50 text-stone-900 border-2 border-[#C84826]/40 hover:border-[#C84826] py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] cursor-pointer font-serif"
             >
               <Keyboard className="w-3.5 h-3.5 text-[#A6300F]" />
               <span>Manual Claim</span>
@@ -344,8 +344,8 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
           </button>
         </div>
 
-        {/* Estimated Resolution Batch Strip matching PDF Page 11 */}
-        <div className="bg-[#F4F3F0] rounded-xl px-3 py-2 border border-[#ECEAE6] flex items-center justify-between text-[11px] text-stone-700 font-sans">
+        {/* Estimated Resolution Batch Strip with matching colorful accent border */}
+        <div className="bg-[#FFF8F5] rounded-xl px-3 py-2 border border-[#F9CEB8] border-l-4 border-l-[#A6300F] flex items-center justify-between text-[11px] text-stone-700 font-sans shadow-2xs">
           <div className="flex items-center gap-1.5">
             <span>🕒</span>
             <span className="font-medium">Est. resolution batch: <strong>Today, 18:00 IST</strong></span>

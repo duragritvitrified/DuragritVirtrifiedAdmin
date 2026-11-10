@@ -45,9 +45,9 @@ if (Test-Path $indexHtmlPath) {
         localStorage.setItem('duragrit_preferred_portal', 'admin');
         localStorage.removeItem('duragrit_admin_app_releases_v1');
         localStorage.removeItem('duragrit_admin_ota_last_broadcast');
-        localStorage.setItem('duragrit_admin_installed_version', 'v5.0.1');
-        localStorage.setItem('duragrit_admin_installed_build', '171');
-        ['v4.8.2', 'v4.8.3', 'v4.8.4', 'v4.8.5', 'v4.8.7', 'v4.8.8', 'v4.8.9', 'v4.9.0', 'v4.9.1', 'v4.9.2', 'v4.9.3', 'v4.9.4', 'v4.9.5', 'v4.9.9', 'v5.0.0'].forEach(function(ver) {
+        localStorage.setItem('duragrit_admin_installed_version', 'v5.0.2');
+        localStorage.setItem('duragrit_admin_installed_build', '172');
+        ['v4.8.2', 'v4.8.3', 'v4.8.4', 'v4.8.5', 'v4.8.7', 'v4.8.8', 'v4.8.9', 'v4.9.0', 'v4.9.1', 'v4.9.2', 'v4.9.3', 'v4.9.4', 'v4.9.5', 'v4.9.9', 'v5.0.0', 'v5.0.1'].forEach(function(ver) {
           localStorage.setItem('duragrit_admin_ota_applied_' + ver, 'true');
           localStorage.setItem('duragrit_admin_ota_dismissed_' + ver, 'true');
           localStorage.setItem('duragrit_admin_ota_applied_' + ver.replace('v',''), 'true');

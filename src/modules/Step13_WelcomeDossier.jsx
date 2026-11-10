@@ -246,15 +246,15 @@ export function Step13_WelcomeDossier({ onBack }) {
             </div>
 
             <div className="p-3.5 space-y-2.5">
-              {/* Primary Vendor Identity Row */}
+              {/* Primary Vendor Identity Row with matching colorful borders */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {/* 1. Vendor Name */}
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Vendor Name / Company</span>
+                <div className="bg-gradient-to-br from-white to-[#FFF9F6] rounded-xl p-2.5 border border-[#F9CEB8]/70 shadow-2xs">
+                  <span className="text-[9px] font-bold text-stone-500 uppercase tracking-wider block">Vendor Name / Company</span>
                   <span className="font-extrabold text-stone-900 text-xs sm:text-[13px] block mt-0.5 leading-tight">{vendorCompanyName}</span>
                 </div>
                 {/* 2. Vendor ID */}
-                <div className="bg-[#FEF2EE] rounded-xl p-2.5 border border-[#F9CEB8] flex items-center justify-between">
+                <div className="bg-[#FEF2EE] rounded-xl p-2.5 border border-[#F9CEB8] flex items-center justify-between shadow-2xs">
                   <div>
                     <span className="text-[9px] font-bold text-[#A62C11] uppercase tracking-wider block">Vendor ID</span>
                     <span className="font-mono font-black text-[#A62C11] text-xs sm:text-sm block mt-0.5 tracking-wider">{vendorId}</span>
@@ -270,15 +270,15 @@ export function Step13_WelcomeDossier({ onBack }) {
                 </div>
               </div>
 
-              {/* Secondary Details Row: Contact & Mobile */}
+              {/* Secondary Details Row: Contact & Mobile with matching colorful borders */}
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Authorized Contact</span>
+                <div className="bg-gradient-to-br from-white to-[#FFF9F6] rounded-xl p-2.5 border border-[#F9CEB8]/70 shadow-2xs">
+                  <span className="text-[9px] font-bold text-stone-500 uppercase tracking-wider block">Authorized Contact</span>
                   <span className="font-bold text-stone-900 text-xs block mt-0.5 truncate">{contactPerson}</span>
                 </div>
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex items-center justify-between">
+                <div className="bg-gradient-to-br from-white to-[#FFF9F6] rounded-xl p-2.5 border border-[#F9CEB8]/70 shadow-2xs flex items-center justify-between">
                   <div>
-                    <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Registered Mobile</span>
+                    <span className="text-[9px] font-bold text-stone-500 uppercase tracking-wider block">Registered Mobile</span>
                     <span className="font-mono font-bold text-stone-900 text-xs block mt-0.5">{partnerMobile}</span>
                   </div>
                   <button
@@ -292,11 +292,11 @@ export function Step13_WelcomeDossier({ onBack }) {
                 </div>
               </div>
 
-              {/* Profile Dossier Row: Email & Category */}
+              {/* Profile Dossier Row: Email & Category with matching colorful borders */}
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex items-center justify-between">
+                <div className="bg-gradient-to-br from-white to-[#FFF9F6] rounded-xl p-2.5 border border-[#F9CEB8]/70 shadow-2xs flex items-center justify-between">
                   <div className="min-w-0 flex-1 truncate pr-1">
-                    <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Business Email</span>
+                    <span className="text-[9px] font-bold text-stone-500 uppercase tracking-wider block">Business Email</span>
                     <span className="font-mono font-semibold text-stone-900 text-[11px] block mt-0.5 truncate">{partnerEmail}</span>
                   </div>
                   <button
@@ -308,18 +308,18 @@ export function Step13_WelcomeDossier({ onBack }) {
                     <Copy className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Partner Category</span>
+                <div className="bg-gradient-to-br from-white to-[#FFF9F6] rounded-xl p-2.5 border border-[#F9CEB8]/70 shadow-2xs">
+                  <span className="text-[9px] font-bold text-stone-500 uppercase tracking-wider block">Partner Category</span>
                   <span className="font-bold text-[#A62C11] bg-[#FEF2EE] px-2 py-0.5 rounded border border-[#F9CEB8] text-[10.5px] inline-block mt-0.5 truncate">
                     {vendorCategory}
                   </span>
                 </div>
               </div>
 
-              {/* Profile Dossier Row: Payout Account & KYC Status */}
+              {/* Profile Dossier Row: Payout Account & KYC Status with matching colorful borders */}
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Settlement Payout Account</span>
+                <div className="bg-gradient-to-br from-white to-[#FFF9F6] rounded-xl p-2.5 border border-[#F9CEB8]/70 shadow-2xs">
+                  <span className="text-[9px] font-bold text-stone-500 uppercase tracking-wider block">Settlement Payout Account</span>
                   <span className="font-mono font-bold text-stone-800 text-[11px] block mt-0.5 truncate">{partnerUpi || partnerBankName}</span>
                   {partnerAccountNumber && (
                     <span className="text-stone-400 font-sans block text-[9.5px]">
@@ -327,8 +327,8 @@ export function Step13_WelcomeDossier({ onBack }) {
                     </span>
                   )}
                 </div>
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">KYC &amp; Auth Status</span>
+                <div className="bg-gradient-to-br from-emerald-50/60 via-emerald-50/40 to-teal-50/20 rounded-xl p-2.5 border border-emerald-300/80 shadow-2xs">
+                  <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-wider block">KYC &amp; Auth Status</span>
                   <span className="font-bold text-[10.5px] text-emerald-700 flex items-center gap-1 mt-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span>Active Verified ✓</span>

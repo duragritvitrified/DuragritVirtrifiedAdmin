@@ -424,7 +424,7 @@ export const PartnerOverviewDashboard = ({
         {/* ===================================================================== */}
         {/* 3. KPI HEADER (Vendor Scans, Payout Total, Approve, Paid, Pending)    */}
         {/* ===================================================================== */}
-        <section className="bg-white rounded-3xl p-4 border border-[#ECEAE6] shadow-sm space-y-3 relative overflow-hidden">
+        <section className="bg-white rounded-3xl p-4 border-2 border-[#C84826]/70 border-l-4 border-l-[#C84826] shadow-sm space-y-3 relative overflow-hidden">
           {/* Subtle background luxury accent */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#FEF2EE] to-transparent rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
 
@@ -443,10 +443,10 @@ export const PartnerOverviewDashboard = ({
 
           {/* Top 2 Primary Metrics: Total Scans & Total Payout */}
           <div className="grid grid-cols-2 gap-2.5 relative z-10">
-            {/* KPI 1: Kitna Scan Kiya */}
-            <div className="bg-gradient-to-br from-stone-50 to-[#FAF9F6] border border-stone-200/90 rounded-2xl p-3 shadow-2xs">
+            {/* KPI 1: Kitna Scan Kiya with matching warm border */}
+            <div className="bg-gradient-to-br from-[#FFF8F5] to-white border border-[#F9CEB8] rounded-2xl p-3 shadow-2xs">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-stone-600 uppercase tracking-wider">
                   Total Scanned
                 </span>
                 <div className="w-6 h-6 rounded-lg bg-[#FEF2EE] text-[#A6300F] flex items-center justify-center">
@@ -612,21 +612,21 @@ export const PartnerOverviewDashboard = ({
         </section>
 
         {/* ===================================================================== */}
-        {/* 4. PRIMARY ACTION BUTTON (View Request List)                          */}
+        {/* 4. PRIMARY ACTION BUTTON (View Request List) with colorful border     */}
         {/* ===================================================================== */}
         <section className="pt-0.5">
           <button
             onClick={onNavigateRequests}
-            className="w-full bg-white hover:bg-stone-50 border-2 border-stone-200 text-stone-800 py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98] transition cursor-pointer font-bold text-xs"
+            className="w-full bg-gradient-to-r from-white via-[#FFFBF9] to-[#FFF5F0] hover:bg-stone-50 border-2 border-[#C84826]/50 hover:border-[#C84826] border-l-4 border-l-[#C84826] text-stone-900 py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98] transition cursor-pointer font-bold text-xs"
           >
-            <div className="w-7 h-7 rounded-xl bg-stone-100 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-[#FEF2EE] text-[#C84826] border border-[#F9CEB8] flex items-center justify-center">
               <ClipboardList className="w-4 h-4 text-[#A6300F]" />
             </div>
             <div className="text-left">
               <span className="block leading-tight font-extrabold text-[12px] text-stone-900">
                 View Request List
               </span>
-              <span className="block text-[9.5px] text-stone-500 font-mono">
+              <span className="block text-[9.5px] text-[#A6300F] font-mono font-bold">
                 {userClaims.length} Claims Recorded →
               </span>
             </div>
@@ -636,7 +636,7 @@ export const PartnerOverviewDashboard = ({
         {/* ===================================================================== */}
         {/* 5. VISUAL ANALYTICS: INTERACTIVE CIRCULAR PIE / DONUT CHART          */}
         {/* ===================================================================== */}
-        <section className="bg-white rounded-3xl p-4 border border-[#ECEAE6] shadow-sm space-y-3">
+        <section className="bg-white rounded-3xl p-4 border-2 border-[#C84826]/70 border-l-4 border-l-[#C84826] shadow-sm space-y-3">
           <div className="flex items-center justify-between pb-1 border-b border-stone-100">
             <div className="flex items-center gap-1.5">
               <PieChartIcon className="w-4 h-4 text-[#A6300F]" />
@@ -808,9 +808,9 @@ export const PartnerOverviewDashboard = ({
         </section>
 
         {/* ===================================================================== */}
-        {/* RECENT QR SCANS & CLAIMS SUMMARY (Pending, Approved, Paid, Reject)   */}
+        {/* RECENT QR SCANS & CLAIMS SUMMARY with consistent colorful brand border */}
         {/* ===================================================================== */}
-        <section className="bg-white rounded-3xl p-4 border-2 border-stone-200 hover:border-stone-300 shadow-sm space-y-3 font-sans">
+        <section className="bg-white rounded-3xl p-4 border-2 border-[#C84826]/70 border-l-4 border-l-[#C84826] shadow-sm space-y-3 font-sans">
           <div className="flex items-center justify-between pb-1 border-b border-stone-100">
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-[#A6300F]" />
@@ -851,7 +851,7 @@ export const PartnerOverviewDashboard = ({
             ))}
           </div>
 
-          {/* Claims List */}
+          {/* Claims List with matching status card borders */}
           {filteredClaims.length === 0 ? (
             <div className="py-7 text-center text-xs text-stone-400 space-y-2 bg-[#FAF9F6] rounded-2xl border border-stone-200/60 p-4">
               <QrCode className="w-8 h-8 mx-auto text-stone-300" />
@@ -869,7 +869,7 @@ export const PartnerOverviewDashboard = ({
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="space-y-2 pt-0.5">
               {filteredClaims.slice(0, 5).map((claim) => {
                 const isDisbursed = claim.status === 'Disbursed' || claim.payoutStatus === 'Disbursed';
                 const isApproved = claim.status === 'Approved' && !isDisbursed;
@@ -880,7 +880,15 @@ export const PartnerOverviewDashboard = ({
                   <div
                     key={claim.id}
                     onClick={() => setSelectedClaim(claim)}
-                    className="py-2.5 flex items-center justify-between gap-2 hover:bg-[#FAF9F6] rounded-xl px-1.5 transition cursor-pointer"
+                    className={`p-2.5 rounded-xl border bg-white transition cursor-pointer shadow-2xs flex items-center justify-between gap-2 ${
+                      isDisbursed
+                        ? 'border-emerald-300 border-l-4 border-l-emerald-500 hover:border-emerald-400'
+                        : isApproved
+                        ? 'border-blue-300 border-l-4 border-l-blue-500 hover:border-blue-400'
+                        : isRejected
+                        ? 'border-rose-300 border-l-4 border-l-rose-500 hover:border-rose-400'
+                        : 'border-amber-300 border-l-4 border-l-amber-500 hover:border-amber-400'
+                    }`}
                   >
                     <div className="min-w-0">
                       <div className="font-bold text-stone-900 text-xs flex items-center gap-1.5 truncate">

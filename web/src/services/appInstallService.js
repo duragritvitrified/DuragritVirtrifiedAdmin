@@ -6,10 +6,10 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v5.0.1';
-export const CURRENT_BUILT_IN_BUILD = 171;
-export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v5.0.1';
-export const CURRENT_ADMIN_BUILT_IN_BUILD = 171;
+export const CURRENT_BUILT_IN_VERSION = 'v5.0.2';
+export const CURRENT_BUILT_IN_BUILD = 172;
+export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v5.0.2';
+export const CURRENT_ADMIN_BUILT_IN_BUILD = 172;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -32,14 +32,29 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-023',
+    version: 'v5.0.2',
+    buildNumber: 172,
+    releaseDate: '2026-11-11 01:40:00',
+    title: 'Adaptive Launcher Icons & Consistent Brand Border System v5.0.2',
+    changelog: 'Fixed Vendor adaptive icon mapping in Android manifest & mipmap-anydpi-v26, added consistent warm colorful borders across Contractor Escrow, Recent Scans, and Account Dossier.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.4 MB',
+    bundleHash: 'sha256-vendoradaptivev502build172',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-022',
     version: 'v5.0.1',
     buildNumber: 171,
     releaseDate: '2026-11-10 19:30:00',
     title: 'Brand Logo & Adaptive Icons with Mobile UI Layout Optimization v5.0.1',
     changelog: 'Official DuraGrit logo on launcher icons with Admin and Vendor subtitle pills, relocated dossier to Account screen, and clean layout borders.',
-    status: 'LIVE',
-    isMandatory: true,
+    status: 'ARCHIVED',
+    isMandatory: false,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-vendorbrandiconsv501build171',

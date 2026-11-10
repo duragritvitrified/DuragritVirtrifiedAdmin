@@ -193,6 +193,18 @@ if (Test-Path $adminRes) {
 
         Write-Host "Generated Admin mipmap-$($d.Name)"
     }
+
+    $adminV26 = "$adminRes\mipmap-anydpi-v26"
+    if (-not (Test-Path $adminV26)) { New-Item -ItemType Directory -Path $adminV26 -Force | Out-Null }
+    $adaptiveAdminXml = @"
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+"@
+    Set-Content -Path "$adminV26\ic_launcher.xml" -Value $adaptiveAdminXml -Encoding utf8
+    Set-Content -Path "$adminV26\ic_launcher_round.xml" -Value $adaptiveAdminXml -Encoding utf8
 }
 
 Write-Host "--- Generating Android Vendor Launcher Mipmaps ---"
@@ -216,6 +228,19 @@ if (Test-Path $vendorRes) {
 
         Write-Host "Generated Vendor mipmap-$($d.Name)"
     }
+
+    # Ensure Vendor adaptive icon XMLs point to @mipmap/ic_launcher_foreground
+    $v26Folder = "$vendorRes\mipmap-anydpi-v26"
+    if (-not (Test-Path $v26Folder)) { New-Item -ItemType Directory -Path $v26Folder -Force | Out-Null }
+    $adaptiveXml = @"
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+"@
+    Set-Content -Path "$v26Folder\ic_launcher.xml" -Value $adaptiveXml -Encoding utf8
+    Set-Content -Path "$v26Folder\ic_launcher_round.xml" -Value $adaptiveXml -Encoding utf8
 }
 
 Write-Host "--- Generating Web / PWA Launcher Icons ---"
