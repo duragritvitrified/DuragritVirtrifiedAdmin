@@ -1504,9 +1504,9 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 </div>
 
                 {/* Gross Escrow Value Pill */}
-                <div className="text-right bg-slate-50 border border-slate-200/80 rounded-xl p-2 px-3 shadow-2xs">
-                  <div className="text-[9px] font-mono text-slate-500 uppercase font-bold">Gross Escrow Value</div>
-                  <div className="text-sm font-black text-slate-900 font-mono mt-0.5">
+                <div className="text-right bg-gradient-to-br from-orange-50/90 via-amber-50/70 to-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-2 px-3 shadow-2xs">
+                  <div className="text-[9px] font-mono text-[#9A3412] uppercase font-bold">Gross Escrow Value</div>
+                  <div className="text-sm font-black text-[#BA3A24] font-mono mt-0.5">
                     ₹{totalAmount.toLocaleString('en-IN')}
                   </div>
                 </div>
@@ -1520,17 +1520,21 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     playRejectChime();
                     showHapticHUD('Filtered: Pending Claims');
                   }}
-                  className={`bg-[#FAFBFD] hover:bg-amber-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
-                    filterTab === 'pending' ? 'border-amber-400 ring-1 ring-amber-300 bg-amber-50/40' : 'border-slate-200/80'
+                  className={`bg-gradient-to-br from-amber-50/95 via-amber-50/75 to-orange-50/60 hover:from-amber-100/90 hover:to-amber-50 border rounded-xl p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'pending'
+                      ? 'border-amber-500 ring-2 ring-amber-300/70 from-amber-100/95 to-amber-50'
+                      : 'border-amber-200/90'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Pending</span>
-                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 ml-1 animate-pulse"></span>
+                    <span className="text-[9.5px] sm:text-[10px] font-extrabold text-amber-900 uppercase tracking-tight truncate">
+                      Pending
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-amber-500 ring-2 ring-amber-200 shrink-0 ml-1 animate-pulse"></span>
                   </div>
-                  <div className="mt-1.5 min-w-0">
-                    <div className="text-xs sm:text-sm font-black text-slate-900 font-mono truncate">{pendingCount}</div>
-                    <div className="text-[8.5px] sm:text-[9.5px] font-mono text-amber-700 font-semibold mt-0.5 truncate">
+                  <div className="mt-1.5 flex items-baseline justify-between gap-1 min-w-0">
+                    <div className="text-sm sm:text-base font-black text-amber-950 font-mono truncate">{pendingCount}</div>
+                    <div className="text-[9px] sm:text-[9.5px] font-mono text-amber-800 bg-white/85 px-1.5 py-0.5 rounded-md border border-amber-200/80 font-bold truncate">
                       ₹{pendingAmount.toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -1542,17 +1546,21 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     playApproveChime();
                     showHapticHUD('Filtered: Approved Claims');
                   }}
-                  className={`bg-[#FAFBFD] hover:bg-emerald-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
-                    filterTab === 'approved' ? 'border-emerald-400 ring-1 ring-emerald-300 bg-emerald-50/40' : 'border-slate-200/80'
+                  className={`bg-gradient-to-br from-emerald-50/95 via-emerald-50/75 to-green-50/60 hover:from-emerald-100/90 hover:to-emerald-50 border rounded-xl p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'approved'
+                      ? 'border-emerald-500 ring-2 ring-emerald-300/70 from-emerald-100/95 to-emerald-50'
+                      : 'border-emerald-200/90'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Approved</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ml-1"></span>
+                    <span className="text-[9.5px] sm:text-[10px] font-extrabold text-emerald-900 uppercase tracking-tight truncate">
+                      Approved
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200 shrink-0 ml-1"></span>
                   </div>
-                  <div className="mt-1.5 min-w-0">
-                    <div className="text-xs sm:text-sm font-black text-slate-900 font-mono truncate">{approvedCount}</div>
-                    <div className="text-[8.5px] sm:text-[9.5px] font-mono text-emerald-700 font-semibold mt-0.5 truncate">
+                  <div className="mt-1.5 flex items-baseline justify-between gap-1 min-w-0">
+                    <div className="text-sm sm:text-base font-black text-emerald-950 font-mono truncate">{approvedCount}</div>
+                    <div className="text-[9px] sm:text-[9.5px] font-mono text-emerald-800 bg-white/85 px-1.5 py-0.5 rounded-md border border-emerald-200/80 font-bold truncate">
                       ₹{approvedAmount.toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -1564,17 +1572,21 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     playApproveChime();
                     showHapticHUD('Filtered: Disbursed Claims');
                   }}
-                  className={`bg-[#FAFBFD] hover:bg-teal-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
-                    filterTab === 'disbursed' ? 'border-teal-400 ring-1 ring-teal-300 bg-teal-50/40' : 'border-slate-200/80'
+                  className={`bg-gradient-to-br from-teal-50/95 via-cyan-50/75 to-sky-50/60 hover:from-teal-100/90 hover:to-cyan-50 border rounded-xl p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'disbursed'
+                      ? 'border-teal-500 ring-2 ring-teal-300/70 from-teal-100/95 to-cyan-50'
+                      : 'border-teal-200/90'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Disbursed</span>
-                    <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0 ml-1"></span>
+                    <span className="text-[9.5px] sm:text-[10px] font-extrabold text-teal-900 uppercase tracking-tight truncate">
+                      Disbursed
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-teal-500 ring-2 ring-teal-200 shrink-0 ml-1"></span>
                   </div>
-                  <div className="mt-1.5 min-w-0">
-                    <div className="text-xs sm:text-sm font-black text-slate-900 font-mono truncate">{disbursedCount}</div>
-                    <div className="text-[8.5px] sm:text-[9.5px] font-mono text-teal-700 font-semibold mt-0.5 truncate">
+                  <div className="mt-1.5 flex items-baseline justify-between gap-1 min-w-0">
+                    <div className="text-sm sm:text-base font-black text-teal-950 font-mono truncate">{disbursedCount}</div>
+                    <div className="text-[9px] sm:text-[9.5px] font-mono text-teal-800 bg-white/85 px-1.5 py-0.5 rounded-md border border-teal-200/80 font-bold truncate">
                       ₹{disbursedAmount.toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -1586,17 +1598,21 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     playRejectChime();
                     showHapticHUD('Filtered: Rejected Claims');
                   }}
-                  className={`bg-[#FAFBFD] hover:bg-rose-50/60 border rounded-xl p-2 sm:p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
-                    filterTab === 'rejected' ? 'border-rose-400 ring-1 ring-rose-300 bg-rose-50/40' : 'border-slate-200/80'
+                  className={`bg-gradient-to-br from-rose-50/95 via-rose-50/75 to-red-50/60 hover:from-rose-100/90 hover:to-rose-50 border rounded-xl p-2.5 flex flex-col justify-between transition active:scale-95 cursor-pointer shadow-2xs group min-w-0 ${
+                    filterTab === 'rejected'
+                      ? 'border-rose-500 ring-2 ring-rose-300/70 from-rose-100/95 to-rose-50'
+                      : 'border-rose-200/90'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase truncate">Rejected</span>
-                    <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 ml-1"></span>
+                    <span className="text-[9.5px] sm:text-[10px] font-extrabold text-rose-900 uppercase tracking-tight truncate">
+                      Rejected
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-rose-200 shrink-0 ml-1"></span>
                   </div>
-                  <div className="mt-1.5 min-w-0">
-                    <div className="text-xs sm:text-sm font-black text-slate-900 font-mono truncate">{rejectedCount}</div>
-                    <div className="text-[8.5px] sm:text-[9.5px] font-mono text-rose-700 font-semibold mt-0.5 truncate">
+                  <div className="mt-1.5 flex items-baseline justify-between gap-1 min-w-0">
+                    <div className="text-sm sm:text-base font-black text-rose-950 font-mono truncate">{rejectedCount}</div>
+                    <div className="text-[9px] sm:text-[9.5px] font-mono text-rose-800 bg-white/85 px-1.5 py-0.5 rounded-md border border-rose-200/80 font-bold truncate">
                       ₹{rejectedAmount.toLocaleString('en-IN')}
                     </div>
                   </div>
