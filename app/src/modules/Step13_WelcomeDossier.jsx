@@ -135,7 +135,7 @@ export function Step13_WelcomeDossier({ onBack }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAF9F6] text-stone-800 p-3.5 pb-24 relative font-sans">
+    <div className="flex-1 flex flex-col bg-[#FAF9F6] text-stone-800 p-3.5 pb-4 relative font-sans">
       {toastMsg && (
         <div className="fixed top-4 inset-x-4 z-50 bg-[#A62C11] text-white px-4 py-2.5 rounded-xl shadow-2xl border border-[#F9CEB8]/40 flex items-center space-x-2 text-xs font-semibold">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -277,62 +277,8 @@ export function Step13_WelcomeDossier({ onBack }) {
                   <span>{copiedKey ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
-
-              <div className="flex items-start gap-1.5 text-stone-500 text-[10px]">
-                <Lock className="w-3 h-3 text-[#C84826] shrink-0 mt-0.5" />
-                <p>Keep your passkey secure to protect your vendor wallet and cashback redemptions.</p>
-              </div>
             </div>
           </div>
-
-          {/* App Download & Version Management CTA */}
-          <div className="bg-white rounded-2xl border border-stone-200 p-4 text-center space-y-2.5 shadow-2xs font-sans">
-            <div className="flex items-center justify-between">
-              <span className="inline-block bg-[#FEF2EE] text-[#C84826] text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-[#F9CEB8]">
-                Official DuraGrit Mobile Suite
-              </span>
-              <span className="text-[10px] font-mono font-bold text-stone-500">
-                v{updateStatus.installedVersion}
-              </span>
-            </div>
-
-            <div className="py-1.5 px-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-2xs">
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Running Latest Production Version ({updateStatus.installedVersion || 'v4.9.9'})</span>
-            </div>
-
-            <h4 className="text-sm font-black text-stone-900 leading-snug">
-              Download Vendor / Partner Android APK
-            </h4>
-            <a
-              href="/apk/duragrit-vendor-v2.apk"
-              download="duragrit-vendor-v4.9.9.apk"
-              onClick={() => showToast('Downloading Official DuraGrit Vendor Android APK (v4.9.9)...')}
-              className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-white" />
-              <span>Download DuraGrit Vendor Partner App (.APK)</span>
-            </a>
-          </div>
-
-          {/* Support */}
-          <div className="bg-white border border-stone-200 rounded-xl p-3 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-[#C84826] shrink-0" />
-              <div>
-                <span className="font-bold text-stone-900 block text-[11px]">Need Support?</span>
-                <span className="text-[10px] text-stone-500">Morbi IT Desk Helpline</span>
-              </div>
-            </div>
-            <a href="tel:+917303967198" className="text-[10px] font-bold bg-[#C84826] text-white px-2.5 py-1.5 rounded-lg">
-              Call Desk
-            </a>
-          </div>
-        </div>
-
-        <div className="bg-stone-900 text-stone-300 p-4 text-center text-[10px] space-y-0.5">
-          <p>© 2026 DuraGrit Vitrified Pvt. Ltd. All rights reserved.</p>
-          <p className="text-stone-400">Morbi Kiln Cluster, Gujarat • info@duragritvitrified.com</p>
         </div>
       </div>
     </div>

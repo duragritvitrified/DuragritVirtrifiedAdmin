@@ -208,7 +208,7 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
   };
 
   return (
-    <div className="w-full max-w-[420px] mx-auto flex-1 flex flex-col font-serif select-none pb-8">
+    <div className="w-full max-w-[420px] mx-auto flex-1 flex flex-col font-serif select-none pb-3">
       {toastMsg && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 bg-[#A6300F] text-white px-4 py-2 rounded-xl shadow-2xl border border-stone-200/40 flex items-center space-x-2 text-xs font-semibold font-sans">
           <Sparkles className="w-3.5 h-3.5 text-white" />
@@ -542,32 +542,6 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
             })
           )}
         </div>
-
-        {/* Statutory Compliance Footer matching PDF Page 11 */}
-        <section className="bg-[#F4F3F0] rounded-2xl p-4 border border-[#ECEAE6] space-y-3 font-sans mt-4">
-          <p className="text-[10.5px] text-stone-600 leading-relaxed">
-            DuraGrit Central Factory Serialization Ledger within 24–48 working hours. Statutory tax deduction applicable under IT Act Sec 194R for cumulative annual rewards exceeding ₹20,000.
-          </p>
-
-          <div className="bg-white rounded-xl p-3 border border-[#ECEAE6] flex items-center justify-between shadow-2xs">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#FAF9F6] border border-[#ECEAE6] flex items-center justify-center shrink-0">
-                <Headphones className="w-4 h-4 text-[#A6300F]" />
-              </div>
-              <div>
-                <div className="text-[10px] text-stone-500 font-medium">Disbursement Desk</div>
-                <div className="font-bold text-xs text-stone-900 font-mono">+91 7303967198</div>
-              </div>
-            </div>
-            <a
-              href="tel:+917303967198"
-              className="px-3 py-1.5 bg-[#F4F3F0] hover:bg-stone-200 border border-[#DFDDD8] rounded-xl text-xs font-bold text-stone-800 flex items-center gap-1.5 shadow-2xs"
-            >
-              <PhoneCall className="w-3 h-3 text-[#A6300F]" />
-              <span>Call Desk</span>
-            </a>
-          </div>
-        </section>
       </div>
 
       {/* Step B.3: Manual Claim Modal with Proof Attachment & Auto GPS Capture */}

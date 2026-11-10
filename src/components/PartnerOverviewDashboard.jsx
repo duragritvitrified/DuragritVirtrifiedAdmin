@@ -336,7 +336,7 @@ export const PartnerOverviewDashboard = ({
   });
 
   return (
-    <div className="w-full max-w-[440px] mx-auto flex-1 flex flex-col font-sans select-none pb-12 text-stone-800 overflow-x-hidden">
+    <div className="w-full max-w-[440px] mx-auto flex-1 flex flex-col font-sans select-none pb-3 text-stone-800 overflow-x-hidden">
       <style>{`
         @keyframes fadeInSlideUp {
           from { opacity: 0; transform: translateY(8px); }
@@ -388,11 +388,11 @@ export const PartnerOverviewDashboard = ({
 
           {/* 2. Vendor Name & 3. Vendor ID */}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <h1 className="text-xs sm:text-[13px] font-black text-stone-900 leading-tight truncate">
+            <div className="flex items-start gap-1.5 min-w-0">
+              <h1 className="text-xs sm:text-[13px] font-black text-stone-900 leading-snug break-words whitespace-normal">
                 {partner.companyName || partner.contactPerson || 'Vendor Partner'}
               </h1>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="inline-flex items-center font-mono text-[9px] sm:text-[9.5px] font-black text-[#A6300F] bg-[#FEF2EE] px-1.5 py-0.5 rounded border border-[#F9CEB8] shrink-0 tracking-wider">
@@ -1140,39 +1140,6 @@ export const PartnerOverviewDashboard = ({
             </div>
           </section>
         )}
-
-        {/* ===================================================================== */}
-        {/* 9. TOLL-FREE DESK                                                     */}
-        {/* ===================================================================== */}
-        <section className="bg-[#F4F3F0] rounded-2xl p-3 border border-[#ECEAE6] flex items-center justify-between font-sans">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white border border-[#ECEAE6] flex items-center justify-center shrink-0">
-              <Headphones className="w-4 h-4 text-[#A6300F]" />
-            </div>
-            <div>
-              <div className="text-[10px] text-stone-500 font-medium">Toll-Free Partner Desk</div>
-              <div className="font-bold text-xs text-stone-900 font-mono">+91 7303967198</div>
-            </div>
-          </div>
-          <a
-            href="tel:+917303967198"
-            className="px-3 py-1.5 bg-white border border-[#ECEAE6] hover:bg-stone-100 rounded-xl text-xs font-bold text-stone-800 flex items-center gap-1.5 transition shadow-2xs"
-          >
-            <PhoneCall className="w-3 h-3 text-[#A6300F]" />
-            <span>Call Desk</span>
-          </a>
-        </section>
-
-        {/* Footer Security Badge */}
-        <div className="text-center pt-1 font-sans space-y-0.5">
-          <p className="text-[10px] text-stone-400 font-medium flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
-            <span>DuraGrit Direct Vitrified Serialization Audit Engine</span>
-          </p>
-          <p className="text-[9.5px] font-mono text-stone-400">
-            DuraGrit Field Suite {updateStatus.installedVersion} • {updateStatus.hasUpdate ? 'Update Available' : 'Up to Date ✓'}
-          </p>
-        </div>
       </main>
 
       {/* ===================================================================== */}

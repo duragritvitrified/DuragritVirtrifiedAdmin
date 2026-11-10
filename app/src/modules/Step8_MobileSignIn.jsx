@@ -562,133 +562,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="w-full max-w-[420px] mx-auto min-h-screen bg-[#FAF9F6] px-4 pt-[max(0.85rem,env(safe-area-inset-top))] pb-8 flex flex-col justify-between font-serif">
-      <div>
-
-        {/* Brand Header Bar - Anti-wrap Mobile Responsive */}
-        <div className="flex items-center justify-between mb-3.5 pt-1 gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <img
-              src="/logo.png"
-              alt="DuraGrit Vitrified"
-              className="h-7 sm:h-9 max-w-[130px] sm:max-w-[160px] w-auto object-contain shrink-0"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              const next = portalMode === 'vendor' ? 'contractor' : 'vendor';
-              setPortalMode(next);
-              setErrorMsg('');
-            }}
-            className="flex items-center gap-1.5 bg-[#E9E8E5] hover:bg-[#E0DED9] active:scale-95 text-stone-800 text-[9.5px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-full border border-[#DFDDD8] transition cursor-pointer font-sans shrink-0 whitespace-nowrap"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
-            <span className="whitespace-nowrap">
-              {portalMode === 'vendor'
-                ? 'VENDOR PORTAL'
-                : 'CONTRACTOR PORTAL'}
-            </span>
-          </button>
-        </div>
-
-        {/* 1-Tap Mobile App Install Banner - 100% Mobile Responsive */}
-        {!isInstalled && (
-          <div className="mb-3 bg-gradient-to-r from-stone-950 via-emerald-950 to-stone-900 text-white rounded-2xl p-2.5 sm:p-3 border border-emerald-500/40 shadow-sm font-sans">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
-                  <span className="text-base">📲</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 overflow-hidden">
-                    <span className="text-[11.5px] font-black tracking-tight text-white whitespace-nowrap truncate">
-                      Install DuraGrit App
-                    </span>
-                    <span className="text-[8px] bg-emerald-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full uppercase shrink-0 font-mono tracking-wider">
-                      1-Tap
-                    </span>
-                  </div>
-                  <p className="text-[9.5px] text-emerald-200/80 truncate mt-0.5">
-                    Fast camera &amp; offline QR verification
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleInstallClick}
-                className="px-2.5 sm:px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-stone-950 font-black text-[10.5px] rounded-xl shadow transition shrink-0 whitespace-nowrap cursor-pointer"
-              >
-                Install App
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Live Sync & Update Control Bar */}
-        <div className="mb-3 flex items-center justify-between bg-stone-100/90 rounded-2xl px-3 py-2 border border-stone-200/90 text-xs font-sans">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-            <span className="text-[10px] sm:text-[10.5px] font-bold text-stone-700 truncate">
-              DuraGrit v4.9.9 Live Sync
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={async () => {
-              showToast('🔄 Purging stale cache & syncing with server...');
-              try {
-                if (typeof window !== 'undefined' && 'caches' in window) {
-                  const keys = await caches.keys();
-                  await Promise.all(keys.map((k) => caches.delete(k)));
-                }
-                if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
-                  const regs = await navigator.serviceWorker.getRegistrations();
-                  await Promise.all(regs.map(r => r.unregister()));
-                }
-                localStorage.removeItem('duragrit_client_pwa_version');
-              } catch (_) { }
-              if (refreshAllData) await refreshAllData();
-              try {
-                window.dispatchEvent(new CustomEvent('duragrit:ota-release-pushed'));
-              } catch (_) { }
-              setTimeout(() => {
-                showToast('✓ Cache cleared! Loading fresh version...');
-                window.location.reload(true);
-              }, 400);
-            }}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-stone-50 active:scale-95 text-[#C84826] font-black text-[10px] rounded-lg border border-stone-200 shadow-2xs transition cursor-pointer shrink-0 whitespace-nowrap"
-          >
-            <span>⚡ Sync &amp; Update App</span>
-          </button>
-        </div>
-
-        {/* Main Sign-In Card matching PDF Page 8 */}
+    <div className="w-full max-w-[420px] mx-auto h-full min-h-[100dvh] bg-[#FAF9F6] px-4 flex flex-col items-center justify-center font-serif overflow-hidden">
+      <div className="w-full">
+        {/* Main Sign-In Card (Minimalistic & Centered) */}
         <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">
-          <div className={`flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider mb-2 font-sans ${portalMode === 'admin' ? 'text-blue-600' : 'text-[#C84826]'
-            }`}>
-            <ShieldCheck className="w-4 h-4" />
-            <span>
-              {portalMode === 'vendor'
-                ? 'SUPPLIER & DISTRIBUTOR ACCESS'
-                : portalMode === 'admin'
-                  ? 'ENTERPRISE SYSTEM ACCESS'
-                  : 'CONTRACTOR & MASON ACCESS'}
-            </span>
-          </div>
-
-          <h1 className="text-2xl font-black text-stone-900 tracking-tight font-serif mb-1.5">
-            {portalMode === 'vendor' ? 'Vendor Portal Sign In' : 'Partner Sign In'}
-          </h1>
-          <p className="text-xs text-stone-500 leading-relaxed mb-4 font-sans">
-            Sign in with your registered Vendor ID, mobile number, or email and the security passkey dispatched to your inbox.
-          </p>
-
-          <form onSubmit={handleSignIn} className="space-y-3.5">
+          <form onSubmit={handleSignIn} className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] font-bold text-stone-800 font-sans">
@@ -753,31 +631,6 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* Yard Selection Box matching PDF Page 8 */}
-            <div
-              onClick={() =>
-                setYardLocation((prev) =>
-                  prev.includes('MORBI') ? 'NORTH HUB - NEW DELHI' : 'YARD HUB 04 - MORBI GIDC'
-                )
-              }
-              className="bg-[#F4F3F0] border border-[#ECEAE6] rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-stone-100 transition"
-            >
-              <div className="flex items-center space-x-2.5">
-                <div className="w-7 h-7 rounded-lg bg-white text-[#C84826] flex items-center justify-center shrink-0 border border-[#ECEAE6]">
-                  <Building2 className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="font-bold text-xs text-stone-900 leading-tight font-sans">
-                    {yardLocation}
-                  </div>
-                  <div className="text-[10px] text-stone-500 font-sans">
-                    Geo-docking ready for QR batching
-                  </div>
-                </div>
-              </div>
-              <ArrowLeftRight className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-            </div>
-
             {(errorMsg || authError) && (
               <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 font-sans">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
@@ -800,90 +653,9 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                 </span>
               )}
             </button>
-
-            <button
-              type="button"
-              onClick={handleStartOtp}
-              disabled={otpLoading}
-              className="w-full bg-[#F4F3F0] hover:bg-[#ECEAE6] text-stone-700 font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer border border-[#DFDDD8] font-sans"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-stone-500" />
-              <span>{otpLoading ? 'Dispatching OTP...' : 'Login via OTP (SMS)'}</span>
-            </button>
-
-            {/* Direct 8-Digit Email Verification Link */}
-            <div className="pt-0.5 pb-1 text-center">
-              <button
-                type="button"
-                onClick={() => setShowManualVerifyModal(true)}
-                className="text-[11px] text-[#C84826] hover:text-[#A6300F] font-bold font-sans inline-flex items-center gap-1.5 cursor-pointer hover:underline"
-              >
-                <span>✉️ Verify Email with 8-Digit Code</span>
-                <span className="text-[8.5px] bg-[#C84826]/10 text-[#C84826] px-1.5 py-0.2 rounded font-mono font-black">PORTAL</span>
-              </button>
-            </div>
-
-            <div className="flex items-center justify-center gap-1.5 text-[10.5px] text-emerald-800 font-sans font-medium pt-0.5">
-              <span>🔒</span>
-              <span>Secured with Hardware Token &amp; E-Way Match</span>
-            </div>
-
-            <div className="bg-[#F4F3F0] rounded-xl p-2.5 text-center border border-[#ECEAE6] text-[11px] text-stone-600 space-y-0.5 font-sans">
-              <div className="text-stone-500 text-[10px]">Need vendor onboarding support?</div>
-              <a
-                href="tel:+917303967198"
-                className="flex items-center justify-center gap-1.5 font-bold text-stone-800 hover:text-[#C84826] transition"
-              >
-                <Headphones className="w-3 h-3 text-[#C84826]" />
-                <span>Call DuraGrit IT: +91 7303967198</span>
-              </a>
-            </div>
           </form>
         </div>
-
-        {/* Live Telemetry Cards matching PDF Page 8 */}
-        <div className="grid grid-cols-2 gap-2.5 mt-3">
-          <div className="bg-white rounded-2xl p-3 border border-[#ECEAE6] shadow-xs flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#F4F3F0] text-[#C84826] flex items-center justify-center shrink-0 border border-[#ECEAE6]">
-              <QrCode className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-stone-400 uppercase tracking-wider font-sans">
-                LIVE SERIALIZATION
-              </div>
-              <div className="text-xs font-black text-stone-900 font-mono">
-                {totalSerializedPcs.toLocaleString('en-IN')} Pcs
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-3 border border-[#ECEAE6] shadow-xs flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#F4F3F0] text-[#C84826] flex items-center justify-center shrink-0 border border-[#ECEAE6]">
-              <Truck className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-stone-400 uppercase tracking-wider font-sans">
-                ACTIVE IN-TRANSIT
-              </div>
-              <div className="text-xs font-black text-stone-900 font-mono">
-                {activeInTransitTrucks} Trucks
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-
-      {/* Statutory Footer matching PDF Page 8 */}
-      <footer className="pt-4 text-center font-sans space-y-1">
-        <div className="flex items-center justify-center gap-1.5 text-[10.5px] font-semibold text-emerald-800">
-          <span>🛡️</span>
-          <span>256-bit SSL Encrypted • ISO 27001 Certified</span>
-        </div>
-        <div className="text-[10px] text-stone-400">
-          DuraGrit Vitrified ERP Systems © 2025 • Node IN-GJ-AMD-01
-        </div>
-        <div className="w-32 h-1 bg-stone-300 rounded-full mx-auto mt-2"></div>
-      </footer>
 
       {/* OTP Entry Modal */}
       {showOtpModal && (
