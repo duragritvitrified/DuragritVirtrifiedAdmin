@@ -483,6 +483,7 @@ export const isTestOrInternalClaim = (c, deletedSet = new Set()) => {
     reqId.startsWith('SYNC') ||
     reqId.startsWith('VERIFY_EVENT') ||
     reqId.startsWith('CLAIM_ACTION_EVENT') ||
+    reqId.startsWith('DURAGRIT_VENDOR') ||
     reqId.startsWith('TEST') ||
     reqId.startsWith('CB-TEST') ||
     reqId.startsWith('CB-VERIFY') ||
@@ -727,7 +728,7 @@ export const DataProvider = ({ children }) => {
       let registryBatches = [];
 
       if (SB_ONLINE) {
-        const [prodRes, profRes, vendRes, batchRes, tokRes, realClaimRes, eventRes] = await Promise.allSettled([
+        const [prodRes, profRes, vendRes, batchRes, tokRes, realClaimRes, eventRes, smtpRes] = await Promise.allSettled([
           supabase.from('products').select('*').order('created_at', { ascending: false }),
           supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
           supabase.from('vendors').select('*').order('created_at', { ascending: false }),
@@ -738,18 +739,29 @@ export const DataProvider = ({ children }) => {
             .select('*, profiles(full_name, mobile, role, location)')
             .not('qr_serial', 'ilike', 'DURAGRIT_%')
             .not('request_id', 'ilike', 'SYNC_%')
+            .not('request_id', 'ilike', 'CLAIM_ACTION_%')
+            .not('request_id', 'ilike', 'VERIFY_EVENT_%')
+            .not('request_id', 'ilike', 'DURAGRIT_VENDOR_%')
             .order('timestamp', { ascending: false }),
-          // 2. High-speed event stream for SKU/Batch registries and live action events
+          // 2. High-speed event stream for SKU/Batch/Vendor registries and live action events (excluding SMTP flood)
           supabase.from('cashback_requests')
             .select('*')
-            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%')
+            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%')
+            .not('request_id', 'ilike', 'SYNC_SMTP_%')
             .order('timestamp', { ascending: false })
-            .limit(300),
+            .limit(500),
+          // 3. Latest SMTP config snapshot (limit 1 so historical SMTP events never crowd out event stream)
+          supabase.from('cashback_requests')
+            .select('*')
+            .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.ilike.SYNC_SMTP_%')
+            .order('timestamp', { ascending: false })
+            .limit(1),
         ]);
 
         const rawRealClaims = realClaimRes.status === 'fulfilled' && !realClaimRes.value.error ? (realClaimRes.value.data || []) : [];
         const rawEvents = eventRes.status === 'fulfilled' && !eventRes.value.error ? (eventRes.value.data || []) : [];
-        const allClaimsRows = [...rawRealClaims, ...rawEvents];
+        const rawSmtp = smtpRes.status === 'fulfilled' && !smtpRes.value.error ? (smtpRes.value.data || []) : [];
+        const allClaimsRows = [...rawRealClaims, ...rawEvents, ...rawSmtp];
 
         // A. Process Deleted Keys from Supabase
         allClaimsRows.forEach((row) => {
@@ -927,7 +939,10 @@ export const DataProvider = ({ children }) => {
         );
 
         // F. Process Real Claims & Claim Actions
-        if (claimRes.status === 'fulfilled' && !claimRes.value.error) {
+        if (
+          (realClaimRes.status === 'fulfilled' && !realClaimRes.value.error) ||
+          (eventRes.status === 'fulfilled' && !eventRes.value.error)
+        ) {
           sbConnected = true;
           const realClaimRows = allClaimsRows.filter(
             (c) => !isTestOrInternalClaim(c, deletedSet)
@@ -948,11 +963,21 @@ export const DataProvider = ({ children }) => {
               if (target) {
                 if (action.status) target.status = action.status;
                 if (action.payoutStatus) target.payoutStatus = action.payoutStatus;
-                if (action.transactionId) target.transactionId = action.transactionId;
+                if (action.transactionId) {
+                  target.transactionId = action.transactionId;
+                  target.utr = action.transactionId;
+                  target.npciRrn = action.transactionId;
+                }
+                if (action.utr) {
+                  target.utr = action.utr;
+                  target.transactionId = target.transactionId || action.utr;
+                }
                 if (action.disbursedAmount !== undefined && action.disbursedAmount !== null) {
                   target.disbursedAmount = Number(action.disbursedAmount);
                   target.netDisbursed = Number(action.disbursedAmount);
                 }
+                if (action.vendorId) target.vendorId = action.vendorId;
+                if (action.vendorName) target.vendorName = action.vendorName;
                 if (action.disbursedAt) target.disbursedAt = action.disbursedAt;
                 if (action.approvedAt) target.approvedAt = action.approvedAt;
                 if (action.rejectedAt) target.rejectedAt = action.rejectedAt;
