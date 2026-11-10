@@ -727,16 +727,29 @@ export const DataProvider = ({ children }) => {
       let registryBatches = [];
 
       if (SB_ONLINE) {
-        const [prodRes, profRes, vendRes, batchRes, tokRes, claimRes] = await Promise.allSettled([
+        const [prodRes, profRes, vendRes, batchRes, tokRes, realClaimRes, eventRes] = await Promise.allSettled([
           supabase.from('products').select('*').order('created_at', { ascending: false }),
           supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
           supabase.from('vendors').select('*').order('created_at', { ascending: false }),
           supabase.from('qr_batches').select('*, products(name, sku_code, pack_weight, base_mrp, cashback_reward)').order('created_at', { ascending: false }),
           supabase.from('qr_tokens').select('*').order('created_at', { ascending: true }),
-          supabase.from('cashback_requests').select('*, profiles(full_name, mobile, role, location)').order('timestamp', { ascending: false }),
+          // 1. Authoritative real cashback claims (isolated from internal event streams)
+          supabase.from('cashback_requests')
+            .select('*, profiles(full_name, mobile, role, location)')
+            .not('qr_serial', 'ilike', 'DURAGRIT_%')
+            .not('request_id', 'ilike', 'SYNC_%')
+            .order('timestamp', { ascending: false }),
+          // 2. High-speed event stream for SKU/Batch registries and live action events
+          supabase.from('cashback_requests')
+            .select('*')
+            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%')
+            .order('timestamp', { ascending: false })
+            .limit(300),
         ]);
 
-        const allClaimsRows = claimRes.status === 'fulfilled' && !claimRes.value.error ? (claimRes.value.data || []) : [];
+        const rawRealClaims = realClaimRes.status === 'fulfilled' && !realClaimRes.value.error ? (realClaimRes.value.data || []) : [];
+        const rawEvents = eventRes.status === 'fulfilled' && !eventRes.value.error ? (eventRes.value.data || []) : [];
+        const allClaimsRows = [...rawRealClaims, ...rawEvents];
 
         // A. Process Deleted Keys from Supabase
         allClaimsRows.forEach((row) => {
