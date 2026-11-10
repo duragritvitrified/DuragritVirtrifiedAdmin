@@ -945,12 +945,18 @@ export const DataProvider = ({ children }) => {
             if (parsedSmtp && typeof parsedSmtp === 'object') {
               // Hydrate locally only — do NOT re-push to cloud on every load
               const mergedSmtp = persistSmtpConfigLocal(parsedSmtp);
-              setSmtpConfig(mergedSmtp);
+              setSmtpConfig((prev) => {
+                if (JSON.stringify(prev) === JSON.stringify(mergedSmtp)) return prev;
+                return mergedSmtp;
+              });
             }
           } catch (_) {}
         } else if (bridge?.smtpConfig) {
           const mergedSmtp = persistSmtpConfigLocal(bridge.smtpConfig);
-          setSmtpConfig(mergedSmtp);
+          setSmtpConfig((prev) => {
+            if (JSON.stringify(prev) === JSON.stringify(mergedSmtp)) return prev;
+            return mergedSmtp;
+          });
         }
       }
 

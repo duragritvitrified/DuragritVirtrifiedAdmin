@@ -128,7 +128,7 @@ export default async function handler(req, res) {
         'DURAGRIT_SMTP_CONFIG'
       ])
       .order('timestamp', { ascending: false })
-      .limit(100);
+      .limit(300);
 
     const responseData = {
       skus: [],

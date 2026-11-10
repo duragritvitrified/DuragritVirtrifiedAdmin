@@ -50,26 +50,12 @@ export const DEFAULT_SMTP_CONFIG = {
 export const getSmtpConfig = () => {
   try {
     const raw = localStorage.getItem(SMTP_CONFIG_KEY);
-    if (!raw) return DEFAULT_SMTP_CONFIG;
+    if (!raw) return { ...DEFAULT_SMTP_CONFIG };
     const parsed = JSON.parse(raw);
-    // If previously saved as AWS SES sample placeholder, migrate cleanly to Gmail defaults
-    if (parsed.senderEmail === 'dispatch@duragritvitrified.com' || parsed.activeProvider === 'aws_ses') {
-      return {
-        ...DEFAULT_SMTP_CONFIG,
-        ...parsed,
-        activeProvider: 'gmail',
-        senderName: 'DuraGrit Vitrified Pvt. Ltd.',
-        senderEmail: 'duragrit07@gmail.com',
-        replyToEmail: 'duragrit07@gmail.com',
-        smtpHost: 'smtp.gmail.com',
-        smtpPort: '587',
-        smtpUser: 'duragrit07@gmail.com',
-        primaryRelayLabel: 'Google Gmail SMTP (smtp.gmail.com:587)'
-      };
-    }
+    if (!parsed || typeof parsed !== 'object') return { ...DEFAULT_SMTP_CONFIG };
     return { ...DEFAULT_SMTP_CONFIG, ...parsed };
   } catch (e) {
-    return DEFAULT_SMTP_CONFIG;
+    return { ...DEFAULT_SMTP_CONFIG };
   }
 };
 
@@ -79,7 +65,7 @@ export const fetchSmtpConfigFromSupabase = async () => {
       const { data: row } = await supabase
         .from('cashback_requests')
         .select('flag_reason')
-        .eq('qr_serial', 'DURAGRIT_SMTP_CONFIG')
+        .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.like.SYNC_SMTP_%')
         .order('timestamp', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -101,9 +87,10 @@ export const fetchSmtpConfigFromSupabase = async () => {
 // (prevents stray saves / fresh devices from wiping the stored password). Explicit factory
 // reset passes { allowEmptyPassword: true }.
 export const resolveSmtpConfig = (config, { allowEmptyPassword = false } = {}) => {
-  const merged = { ...DEFAULT_SMTP_CONFIG, ...config };
+  if (!config || typeof config !== 'object') return getSmtpConfig();
+  const existing = getSmtpConfig();
+  const merged = { ...DEFAULT_SMTP_CONFIG, ...existing, ...config };
   if (!allowEmptyPassword && !String(merged.smtpPassword || '').trim()) {
-    const existing = getSmtpConfig();
     if (String(existing.smtpPassword || '').trim()) {
       merged.smtpPassword = existing.smtpPassword;
     }

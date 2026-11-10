@@ -86,6 +86,10 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   const [copiedLink, setCopiedLink] = useState('');
   const [guidePlatform, setGuidePlatform] = useState('both'); // 'both' | 'android' | 'ios'
 
+  // Live version info fetched from /api/version
+  const [liveVersionInfo, setLiveVersionInfo] = useState(null);
+  const [versionLoading, setVersionLoading] = useState(true);
+
   const PROD_BASE = 'https://duragrit-virtrified-admin.vercel.app';
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : PROD_BASE;
   const isLocalHost = typeof window !== 'undefined' && 
@@ -103,9 +107,12 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   const adminPwaUrl = `${publicBaseUrl}/app/?app=admin`;
 
   // SMTP Settings State
-  const [config, setConfig] = useState(DEFAULT_SMTP_CONFIG);
+  const [config, setConfig] = useState(() => getSmtpConfig());
   const [autoEmail, setAutoEmail] = useState(getAutoEmailSetting());
-  const [testRecipient, setTestRecipient] = useState('duragrit07@gmail.com');
+  const [testRecipient, setTestRecipient] = useState(() => {
+    const saved = getSmtpConfig();
+    return saved?.senderEmail || 'duragrit07@gmail.com';
+  });
   const [isSendingLiveEmail, setIsSendingLiveEmail] = useState(false);
   const [liveSendResult, setLiveSendResult] = useState(null);
 
@@ -122,15 +129,24 @@ export function SystemSettings({ initialSubTab = 'general' }) {
 
   useEffect(() => {
     fetchSmtpConfigFromSupabase().then((loaded) => {
-      if (loaded) setConfig(loaded);
+      if (!isEditing && loaded) {
+        setConfig((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(loaded)) return prev;
+          return loaded;
+        });
+      }
     });
-  }, []);
+  }, [isEditing]);
 
   useEffect(() => {
+    if (isEditing) return; // NEVER overwrite while user is editing
     if (ctxSmtpConfig) {
-      setConfig((prev) => ({ ...prev, ...ctxSmtpConfig }));
+      setConfig((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(ctxSmtpConfig)) return prev;
+        return { ...prev, ...ctxSmtpConfig };
+      });
     }
-  }, [ctxSmtpConfig]);
+  }, [ctxSmtpConfig, isEditing]);
 
   useEffect(() => {
     setAdminCreds(getAdminCredentials());
@@ -170,6 +186,18 @@ export function SystemSettings({ initialSubTab = 'general' }) {
       .catch(err => console.error('Admin PWA QR error:', err));
   }, [apkDownloadUrl, mobilePwaUrl, adminApkDownloadUrl, adminPwaUrl]);
 
+  // Fetch live version info from /api/version on mount
+  useEffect(() => {
+    const PROD_VERSION_URL = `${PROD_BASE}/api/version`;
+    const versionUrl = (isLocalHost || !currentOrigin || currentOrigin.includes('localhost'))
+      ? PROD_VERSION_URL
+      : `${currentOrigin}/api/version`;
+    fetch(`${versionUrl}?t=${Date.now()}`, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => { setLiveVersionInfo(data); setVersionLoading(false); })
+      .catch(() => setVersionLoading(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleCopyLink = (text, key) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
@@ -185,7 +213,8 @@ export function SystemSettings({ initialSubTab = 'general' }) {
 
   const handleSave = async (e) => {
     if (e) e.preventDefault();
-    if (!config.senderEmail || !config.senderEmail.includes('@')) {
+    const cleanEmail = (config.senderEmail || '').trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       showToast('Please enter a valid Sender Email address.');
       return;
     }
@@ -197,6 +226,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     const cleanPassword = (config.smtpPassword || '').replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
     const activeConfig = {
       ...config,
+      senderEmail: cleanEmail,
+      replyToEmail: (config.replyToEmail || cleanEmail).trim(),
+      smtpUser: (config.smtpUser || cleanEmail).trim(),
       smtpPassword: cleanPassword
     };
 
@@ -206,8 +238,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
       } else {
         saveSmtpConfig(activeConfig);
       }
+      setConfig(activeConfig);
       setIsEditing(false);
-      showToast(`✅ SMTP Configuration permanently saved & synced to Supabase database! Outbound: ${config.senderEmail}`);
+      showToast(`✅ SMTP Configuration permanently saved & synced to Supabase database! Outbound: ${activeConfig.senderEmail}`);
     } catch (err) {
       showToast(`Error saving configuration: ${err.message}`);
     }
@@ -244,7 +277,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   };
 
   const handleResetDefaults = async () => {
-    if (window.confirm('WARNING: Are you sure you want to reset SMTP settings to factory defaults? This will erase your saved Google App Password.')) {
+    if (window.confirm('WARNING: Are you sure you want to reset SMTP settings to factory defaults (duragrit07@gmail.com)? This will overwrite your current settings.')) {
       setConfig(DEFAULT_SMTP_CONFIG);
       if (updateSmtpConfig) {
         await updateSmtpConfig(DEFAULT_SMTP_CONFIG, { allowEmptyPassword: true });
@@ -253,6 +286,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
       }
       setTestResult(null);
       setLiveSendResult(null);
+      setIsEditing(false);
       showToast('Restored default Gmail (duragrit07@gmail.com) SMTP settings.');
     }
   };
@@ -419,6 +453,14 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   </button>
                   <button
                     type="button"
+                    onClick={handleResetDefaults}
+                    className="px-3.5 py-2 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition cursor-pointer"
+                    title="Reset to factory default settings"
+                  >
+                    Reset Defaults
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleSave}
                     className="px-4 py-2 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                   >
@@ -427,14 +469,24 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   </button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 text-xs font-bold text-white bg-[#C84826] hover:bg-[#A62C11] rounded-xl transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-white" />
-                  <span>Edit SMTP</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={handleResetDefaults}
+                    className="px-3.5 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+                    title="Reset to factory default settings"
+                  >
+                    Reset Defaults
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="px-4 py-2 text-xs font-bold text-white bg-[#C84826] hover:bg-[#A62C11] rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Sliders className="w-3.5 h-3.5 text-white" />
+                    <span>Edit SMTP</span>
+                  </button>
+                </>
               )}
             </>
           )}
@@ -707,7 +759,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <h4 className="font-black text-slate-900 text-xs sm:text-sm uppercase tracking-wide">
-                    Google Gmail SMTP Configuration (duragrit07@gmail.com)
+                    {config.activeProvider === 'gmail' || config.smtpHost?.includes('gmail')
+                      ? `Google Gmail SMTP Configuration (${config.senderEmail || 'duragrit07@gmail.com'})`
+                      : `SMTP Relay Configuration (${config.senderEmail || 'Custom Endpoint'})`}
                   </h4>
                   <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
                     APP PASSWORD REQUIRED
@@ -756,7 +810,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <input
                       type="text"
                       disabled={!isEditing}
-                      value={config.senderName}
+                      value={config.senderName ?? ''}
                       onChange={(e) => setConfig({ ...config, senderName: e.target.value })}
                       placeholder="e.g. DuraGrit Vitrified Dispatch Gateway"
                       className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
@@ -770,9 +824,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <input
                       type="email"
                       disabled={!isEditing}
-                      value={config.senderEmail}
+                      value={config.senderEmail ?? ''}
                       onChange={(e) => setConfig({ ...config, senderEmail: e.target.value })}
-                      placeholder="dispatch@duragritvitrified.com"
+                      placeholder="e.g. notifications@yourdomain.com"
                       className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-mono text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                     />
                   </div>
@@ -784,9 +838,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <input
                       type="email"
                       disabled={!isEditing}
-                      value={config.replyToEmail}
+                      value={config.replyToEmail ?? ''}
                       onChange={(e) => setConfig({ ...config, replyToEmail: e.target.value })}
-                      placeholder="support@duragritvitrified.com"
+                      placeholder="e.g. support@yourdomain.com"
                       className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                     />
                   </div>
@@ -812,8 +866,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <input
                       type="text"
                       disabled={!isEditing}
-                      value={config.smtpHost}
+                      value={config.smtpHost ?? ''}
                       onChange={(e) => setConfig({ ...config, smtpHost: e.target.value })}
+                      placeholder="e.g. smtp.gmail.com"
                       className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                     />
                   </div>
@@ -825,8 +880,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <input
                       type="text"
                       disabled={!isEditing}
-                      value={config.smtpPort}
+                      value={config.smtpPort ?? ''}
                       onChange={(e) => setConfig({ ...config, smtpPort: e.target.value })}
+                      placeholder="587"
                       className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                     />
                   </div>
@@ -837,7 +893,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     </label>
                     <select
                       disabled={!isEditing}
-                      value={config.encryption}
+                      value={config.encryption ?? 'TLS'}
                       onChange={(e) => setConfig({ ...config, encryption: e.target.value })}
                       className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                     >
@@ -854,8 +910,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <input
                       type="text"
                       disabled={!isEditing}
-                      value={config.smtpUser}
+                      value={config.smtpUser ?? ''}
                       onChange={(e) => setConfig({ ...config, smtpUser: e.target.value })}
+                      placeholder="e.g. notifications@yourdomain.com or API Key"
                       className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                     />
                   </div>
@@ -884,16 +941,15 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
-                        value={config.smtpPassword || ''}
+                        disabled={!isEditing}
+                        value={config.smtpPassword ?? ''}
                         onChange={(e) => {
                           const val = e.target.value;
                           const cleanVal = val.replace(/[\u200B-\u200D\uFEFF]/g, '');
-                          const updated = { ...config, smtpPassword: cleanVal };
-                          setConfig(updated);
-                          saveSmtpConfig({ ...updated, smtpPassword: cleanVal.replace(/\s+/g, '') });
+                          setConfig({ ...config, smtpPassword: cleanVal });
                         }}
                         placeholder="e.g. abcd efgh ijkl mnop (16 letters)"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-xs text-slate-900 font-bold pr-16 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
+                        className="w-full px-3 py-2 bg-slate-50 disabled:bg-slate-100/70 border border-slate-300 disabled:border-slate-200 rounded-xl font-mono text-xs text-slate-900 font-bold pr-16 focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                       />
                       <div className="absolute right-2 top-2 flex items-center space-x-1">
                         <button
@@ -906,9 +962,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                         </button>
                       </div>
                     </div>
-                    {config.smtpPassword && config.smtpPassword.replace(/\s+/g, '').length !== 16 && (
+                    {config.smtpPassword && config.smtpHost === 'smtp.gmail.com' && config.smtpPassword.replace(/\s+/g, '').length !== 16 && (
                       <p className="text-[10.5px] text-amber-800 bg-amber-50/90 border border-amber-200 rounded-lg p-2 leading-relaxed">
-                        ⚠️ <strong>Important:</strong> Google App Passwords are exactly 16 letters (e.g. <code className="font-mono font-bold">abcd efgh ijkl mnop</code>). If you typed your standard Google account login password, Google will block it with <strong>error 535-5.7.8</strong>.
+                        ⚠️ <strong>Important for Gmail:</strong> Google App Passwords are exactly 16 letters (e.g. <code className="font-mono font-bold">abcd efgh ijkl mnop</code>). If you typed your standard Google account login password, Google will block it with <strong>error 535-5.7.8</strong>.
                       </p>
                     )}
                   </div>
@@ -921,7 +977,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                   {[
-                    { id: 'gmail', name: 'Google Gmail', host: 'smtp.gmail.com', port: '587', desc: 'duragrit07@gmail.com • Official Default' },
+                    { id: 'gmail', name: 'Google Gmail', host: 'smtp.gmail.com', port: '587', desc: 'Google Workspace / Gmail' },
                     { id: 'aws_ses', name: 'AWS SES', host: 'email-smtp.ap-south-1.amazonaws.com', port: '587', desc: 'Mumbai DC • High Deliverability' },
                     { id: 'sendgrid', name: 'SendGrid', host: 'smtp.sendgrid.net', port: '587', desc: 'Twilio Cloud Relay' },
                     { id: 'custom_smtp', name: 'Custom SMTP', host: 'mail.duragritvitrified.com', port: '465', desc: 'Self-hosted CPanel / Postfix' }
@@ -931,19 +987,15 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                       type="button"
                       disabled={!isEditing}
                       onClick={() => {
-                        setConfig({
-                          ...config,
+                        setConfig((prev) => ({
+                          ...prev,
                           activeProvider: prov.id,
                           smtpHost: prov.host,
                           smtpPort: prov.port,
                           primaryRelayLabel: prov.name,
-                          ...(prov.id === 'gmail' ? {
-                            senderEmail: 'duragrit07@gmail.com',
-                            smtpUser: 'duragrit07@gmail.com',
-                            replyToEmail: 'duragrit07@gmail.com'
-                          } : {})
-                        });
-                        showToast(`Applied ${prov.name} preset parameters.`);
+                          ...(prov.id === 'custom_smtp' ? { encryption: 'SSL' } : { encryption: 'TLS' })
+                        }));
+                        showToast(`Applied ${prov.name} host & port parameters.`);
                       }}
                       className={`p-3 rounded-xl border text-left transition ${
                         config.smtpHost === prov.host
@@ -965,6 +1017,62 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                   ))}
                 </div>
               </div>
+
+              {/* Form Bottom Action Bar */}
+              {isEditing ? (
+                <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-black text-emerald-950 uppercase tracking-wide">
+                        Editing Active — All Fields Unlocked
+                      </div>
+                      <div className="text-[11px] text-emerald-800">
+                        Edit sender email, host, or credentials freely. Click Save Changes to store permanently in Supabase and browser cache.
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfig(getSmtpConfig());
+                        setIsEditing(false);
+                      }}
+                      className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      onClick={handleSave}
+                      className="px-5 py-2 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>Save Changes</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">
+                      Want to replace default email or configure a custom SMTP server?
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Click Edit SMTP to unlock all fields, change email addresses, and save persistent credentials.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="px-4 py-2 text-xs font-bold text-white bg-[#C84826] hover:bg-[#A62C11] rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Sliders className="w-3.5 h-3.5 text-white" />
+                    <span>Edit SMTP</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-6">
@@ -990,11 +1098,11 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                     type="email"
                     value={testRecipient}
                     onChange={(e) => setTestRecipient(e.target.value)}
-                    placeholder="e.g. duragrit07@gmail.com"
+                    placeholder={config.senderEmail || 'e.g. your-email@domain.com'}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-xs text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#C84826]"
                   />
                   <span className="text-[10px] text-slate-400 block">
-                    Default is <code className="text-slate-600 font-bold">duragrit07@gmail.com</code>. You can change this to your personal email to test external inbox reception.
+                    Enter any recipient email address (e.g. your personal inbox) to verify real email delivery.
                   </span>
                 </div>
 
@@ -1472,18 +1580,66 @@ export function SystemSettings({ initialSubTab = 'general' }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1.5">
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span>APK v4.8.2 Live</span>
+                <span>APK v{versionLoading ? '...' : (liveVersionInfo?.vendorVersion || '4.9.9')} Live</span>
               </span>
               <span className="bg-stone-100 text-stone-800 border border-stone-200 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1.5">
                 <Compass className="w-3.5 h-3.5 text-stone-600" />
-                <span>Apple Safari PWA Ready</span>
+                <span>PWA v{versionLoading ? '...' : (liveVersionInfo?.vendorVersion || '4.9.9')} Safari Ready</span>
               </span>
             </div>
           </div>
 
+          {/* Live Version Summary Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Live Build Versions — from /api/version</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setVersionLoading(true);
+                  const url = (isLocalHost || !currentOrigin || currentOrigin.includes('localhost'))
+                    ? `${PROD_BASE}/api/version`
+                    : `${currentOrigin}/api/version`;
+                  fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' })
+                    .then(r => r.json())
+                    .then(data => { setLiveVersionInfo(data); setVersionLoading(false); })
+                    .catch(() => setVersionLoading(false));
+                }}
+                className="text-[10px] font-bold text-[#A62C11] hover:text-[#C84826] border border-[#F9CEB8] rounded-lg px-2.5 py-1 transition cursor-pointer"
+              >
+                ↻ Refresh
+              </button>
+            </div>
+            {versionLoading ? (
+              <div className="mt-3 text-[11px] text-slate-400 font-mono animate-pulse">Fetching live version data…</div>
+            ) : (
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center">
+                  <span className="text-[9.5px] text-emerald-600 font-bold uppercase block">Vendor APK</span>
+                  <span className="font-mono font-black text-emerald-900 text-xs mt-0.5 block">v{liveVersionInfo?.vendorVersion || '—'}</span>
+                  <span className="text-[9px] text-emerald-500 font-mono">Build {liveVersionInfo?.vendorBuildNumber || '—'}</span>
+                </div>
+                <div className="bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-center">
+                  <span className="text-[9.5px] text-stone-600 font-bold uppercase block">Vendor PWA</span>
+                  <span className="font-mono font-black text-stone-900 text-xs mt-0.5 block">v{liveVersionInfo?.vendorVersion || '—'}</span>
+                  <span className="text-[9px] text-stone-500 font-mono">Build {liveVersionInfo?.vendorBuildNumber || '—'}</span>
+                </div>
+                <div className="bg-red-950/5 border border-red-200 rounded-xl p-2.5 text-center">
+                  <span className="text-[9.5px] text-[#A62C11] font-bold uppercase block">Admin APK</span>
+                  <span className="font-mono font-black text-slate-900 text-xs mt-0.5 block">v{liveVersionInfo?.adminVersion || '—'}</span>
+                  <span className="text-[9px] text-slate-500 font-mono">Build {liveVersionInfo?.adminBuildNumber || '—'}</span>
+                </div>
+                <div className="bg-sky-50 border border-sky-200 rounded-xl p-2.5 text-center">
+                  <span className="text-[9.5px] text-sky-600 font-bold uppercase block">Admin PWA</span>
+                  <span className="font-mono font-black text-sky-900 text-xs mt-0.5 block">v{liveVersionInfo?.adminVersion || '—'}</span>
+                  <span className="text-[9px] text-sky-500 font-mono">Build {liveVersionInfo?.adminBuildNumber || '—'}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Dual Action Download & Launch Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Card 1: Android Companion APK (.apk) */}
             <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between space-y-5 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-50 rounded-bl-full pointer-events-none -z-0 opacity-70"></div>
 
@@ -1515,7 +1671,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 py-2">
                   <div className="bg-slate-50 rounded-xl p-2 border border-slate-200 text-center">
                     <span className="text-[10px] text-slate-400 font-bold block uppercase">Build Version</span>
-                    <span className="font-mono font-bold text-slate-900 text-xs mt-0.5 block">v4.8.2 (Prod)</span>
+                    <span className="font-mono font-bold text-slate-900 text-xs mt-0.5 block">
+                      {versionLoading ? 'Loading...' : `v${liveVersionInfo?.vendorVersion || '4.9.9'} · Build ${liveVersionInfo?.vendorBuildNumber || 169}`}
+                    </span>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-2 border border-slate-200 text-center">
                     <span className="text-[10px] text-slate-400 font-bold block uppercase">Package Size</span>
@@ -1530,7 +1688,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                 {/* Download Vendor APK Package Button */}
                 <a
                   href={apkDownloadUrl}
-                  download="duragrit-vendor-v4.8.2.apk"
+                  download={`duragrit-vendor-v${liveVersionInfo?.vendorVersion || '4.9.9'}.apk`}
                   onClick={() => showToast('Downloading Official DuraGrit Vendor Partner App (.APK)...')}
                   className="w-full py-3.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
                 >
@@ -1723,11 +1881,14 @@ export function SystemSettings({ initialSubTab = 'general' }) {
                 <span className="bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 rounded-xl text-[11px] font-mono font-bold">
                   STEP 12 ENGINE
                 </span>
+                <span className="bg-[#BA3A24]/20 text-[#E3643E] border border-[#BA3A24]/40 px-3 py-1 rounded-xl text-[11px] font-mono font-bold">
+                  {versionLoading ? 'v...' : `v${liveVersionInfo?.adminVersion || '4.9.9'}`}
+                </span>
               </div>
             </div>
 
             {/* Matrix of Specs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10 font-mono text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 relative z-10 font-mono text-xs">
               <div className="p-3 bg-slate-800/80 rounded-2xl border border-slate-700/70">
                 <span className="text-[9.5px] text-slate-400 font-sans font-bold uppercase block">Security HSM</span>
                 <span className="text-emerald-400 font-bold block mt-0.5">FIPS 140-2 Level 3</span>
@@ -1735,6 +1896,12 @@ export function SystemSettings({ initialSubTab = 'general' }) {
               <div className="p-3 bg-slate-800/80 rounded-2xl border border-slate-700/70">
                 <span className="text-[9.5px] text-slate-400 font-sans font-bold uppercase block">Admin Package</span>
                 <span className="text-white font-bold block mt-0.5">duragrit-admin-v2.apk</span>
+              </div>
+              <div className="p-3 bg-slate-800/80 rounded-2xl border border-slate-700/70">
+                <span className="text-[9.5px] text-slate-400 font-sans font-bold uppercase block">Build Version</span>
+                <span className="text-[#E3643E] font-bold block mt-0.5">
+                  {versionLoading ? '...' : `v${liveVersionInfo?.adminVersion || '4.9.9'} · #${liveVersionInfo?.adminBuildNumber || 169}`}
+                </span>
               </div>
               <div className="p-3 bg-slate-800/80 rounded-2xl border border-slate-700/70">
                 <span className="text-[9.5px] text-slate-400 font-sans font-bold uppercase block">Haptic Audio</span>
