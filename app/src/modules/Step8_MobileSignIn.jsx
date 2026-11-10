@@ -628,7 +628,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             <span className="text-[10px] sm:text-[10.5px] font-bold text-stone-700 truncate">
-              DuraGrit v4.8.5 Live Sync
+              DuraGrit v4.9.9 Live Sync
             </span>
           </div>
           <button

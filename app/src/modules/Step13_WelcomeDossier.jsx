@@ -296,43 +296,18 @@ export function Step13_WelcomeDossier({ onBack }) {
               </span>
             </div>
 
-            {updateStatus.hasUpdate && isVersionHigher(updateStatus.latestVersion, updateStatus.installedVersion) ? (
-              <div className="bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-3 text-left space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-xs text-[#A62C11] flex items-center gap-1.5">
-                    <Rocket className="w-3.5 h-3.5 text-[#C84826] animate-pulse" />
-                    <span>OTA Update {updateStatus.latestVersion} Ready</span>
-                  </span>
-                  <span className="bg-[#A62C11] text-white text-[8.5px] font-bold px-1.5 py-0.2 rounded font-mono">
-                    NEW RELEASE
-                  </span>
-                </div>
-                <p className="text-[10.5px] text-stone-600 leading-snug">
-                  {updateStatus.changelog}
-                </p>
-                <button
-                  onClick={handleApplyUpdate}
-                  disabled={isUpdating}
-                  className="w-full py-2 bg-[#A62C11] hover:bg-[#8B230C] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-                >
-                  <Rocket className="w-3.5 h-3.5 text-white" />
-                  <span>{isUpdating ? 'Applying Bundle...' : `Update Now to ${updateStatus.latestVersion}`}</span>
-                </button>
-              </div>
-            ) : (
-              <div className="py-1 px-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-bold rounded-lg flex items-center justify-center gap-1">
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Running Latest Production Version ({updateStatus.installedVersion})</span>
-              </div>
-            )}
+            <div className="py-1.5 px-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-2xs">
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Running Latest Production Version ({updateStatus.installedVersion || 'v4.9.9'})</span>
+            </div>
 
             <h4 className="text-sm font-black text-stone-900 leading-snug">
               Download Vendor / Partner Android APK
             </h4>
             <a
-              href="/apk/duragrit-vendor-v4.8.4.apk"
-              download="duragrit-vendor-v4.8.4.apk"
-              onClick={() => showToast('Downloading Official DuraGrit Vendor Android APK (v4.8.4)...')}
+              href="/apk/duragrit-vendor-v2.apk"
+              download="duragrit-vendor-v4.9.9.apk"
+              onClick={() => showToast('Downloading Official DuraGrit Vendor Android APK (v4.9.9)...')}
               className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-white" />

@@ -19,7 +19,7 @@
     <script>
       // Force clean any legacy stale PWA caches on version bump
       (function() {
-        var APP_VER = 'v4.9.5';
+        var APP_VER = 'v4.9.9';
         try {
           var last = localStorage.getItem('duragrit_client_pwa_version');
           if (last !== APP_VER) {
@@ -29,15 +29,19 @@
             localStorage.removeItem('duragrit_app_releases_v1');
             localStorage.removeItem('duragrit_ota_last_broadcast');
             localStorage.removeItem('duragrit_admin_ota_last_broadcast');
-            localStorage.setItem('duragrit_client_installed_version', 'v4.9.5');
-            localStorage.setItem('duragrit_client_installed_build', '165');
-            localStorage.setItem('duragrit_admin_installed_version', 'v4.9.5');
-            localStorage.setItem('duragrit_admin_installed_build', '165');
-            ['v4.8.2', 'v4.8.3', 'v4.8.4', 'v4.8.5', 'v4.8.7', 'v4.8.8', 'v4.8.9', 'v4.9.0', 'v4.9.1', 'v4.9.2', 'v4.9.3', 'v4.9.4'].forEach(function(ver) {
+            localStorage.setItem('duragrit_client_installed_version', 'v4.9.9');
+            localStorage.setItem('duragrit_client_installed_build', '169');
+            localStorage.setItem('duragrit_admin_installed_version', 'v4.9.9');
+            localStorage.setItem('duragrit_admin_installed_build', '169');
+            ['v4.8.2', 'v4.8.3', 'v4.8.4', 'v4.8.5', 'v4.8.7', 'v4.8.8', 'v4.8.9', 'v4.9.0', 'v4.9.1', 'v4.9.2', 'v4.9.3', 'v4.9.4', 'v4.9.5', 'v4.9.7', 'v4.9.8', 'v4.9.9'].forEach(function(ver) {
               localStorage.setItem('duragrit_ota_applied_' + ver, 'true');
               localStorage.setItem('duragrit_ota_dismissed_' + ver, 'true');
               localStorage.setItem('duragrit_ota_applied_' + ver.replace('v',''), 'true');
               localStorage.setItem('duragrit_ota_dismissed_' + ver.replace('v',''), 'true');
+              localStorage.setItem('duragrit_admin_ota_applied_' + ver, 'true');
+              localStorage.setItem('duragrit_admin_ota_dismissed_' + ver, 'true');
+              localStorage.setItem('duragrit_admin_ota_applied_' + ver.replace('v',''), 'true');
+              localStorage.setItem('duragrit_admin_ota_dismissed_' + ver.replace('v',''), 'true');
             });
             if ('caches' in window) {
               caches.keys().then(function(keys) {
