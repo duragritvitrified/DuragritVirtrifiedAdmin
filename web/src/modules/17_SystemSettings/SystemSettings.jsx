@@ -247,9 +247,9 @@ export function SystemSettings({ initialSubTab = 'general' }) {
     if (window.confirm('WARNING: Are you sure you want to reset SMTP settings to factory defaults? This will erase your saved Google App Password.')) {
       setConfig(DEFAULT_SMTP_CONFIG);
       if (updateSmtpConfig) {
-        await updateSmtpConfig(DEFAULT_SMTP_CONFIG);
+        await updateSmtpConfig(DEFAULT_SMTP_CONFIG, { allowEmptyPassword: true });
       } else {
-        saveSmtpConfig(DEFAULT_SMTP_CONFIG);
+        saveSmtpConfig(DEFAULT_SMTP_CONFIG, { allowEmptyPassword: true });
       }
       setTestResult(null);
       setLiveSendResult(null);

@@ -87,9 +87,7 @@ export const fetchSmtpConfigFromSupabase = async () => {
       if (row?.flag_reason) {
         const parsed = JSON.parse(row.flag_reason);
         if (parsed && typeof parsed === 'object') {
-          const merged = { ...DEFAULT_SMTP_CONFIG, ...parsed };
-          localStorage.setItem(SMTP_CONFIG_KEY, JSON.stringify(merged));
-          return merged;
+          return persistSmtpConfigLocal(parsed);
         }
       }
     }
@@ -99,9 +97,34 @@ export const fetchSmtpConfigFromSupabase = async () => {
   return getSmtpConfig();
 };
 
-export const saveSmtpConfig = (config) => {
+// Preserve an already-saved App Password when an incoming config carries an empty one
+// (prevents stray saves / fresh devices from wiping the stored password). Explicit factory
+// reset passes { allowEmptyPassword: true }.
+export const resolveSmtpConfig = (config, { allowEmptyPassword = false } = {}) => {
+  const merged = { ...DEFAULT_SMTP_CONFIG, ...config };
+  if (!allowEmptyPassword && !String(merged.smtpPassword || '').trim()) {
+    const existing = getSmtpConfig();
+    if (String(existing.smtpPassword || '').trim()) {
+      merged.smtpPassword = existing.smtpPassword;
+    }
+  }
+  return merged;
+};
+
+// Local-only persistence (no cloud push) — used when hydrating from Supabase on load.
+export const persistSmtpConfigLocal = (config) => {
   try {
-    const merged = { ...DEFAULT_SMTP_CONFIG, ...config };
+    const merged = resolveSmtpConfig(config);
+    localStorage.setItem(SMTP_CONFIG_KEY, JSON.stringify(merged));
+    return merged;
+  } catch (e) {
+    return { ...DEFAULT_SMTP_CONFIG, ...config };
+  }
+};
+
+export const saveSmtpConfig = (config, options = {}) => {
+  try {
+    const merged = resolveSmtpConfig(config, options);
     localStorage.setItem(SMTP_CONFIG_KEY, JSON.stringify(merged));
 
     // Asynchronously push to Supabase cashback_requests for permanent persistent storage

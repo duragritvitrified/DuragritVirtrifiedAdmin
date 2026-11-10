@@ -11,6 +11,8 @@ import {
   sendKycApprovalEmail,
   getSmtpConfig,
   saveSmtpConfig,
+  resolveSmtpConfig,
+  persistSmtpConfigLocal,
   DEFAULT_SMTP_CONFIG,
 } from '../services/emailService';
 
@@ -629,10 +631,10 @@ export const DataProvider = ({ children }) => {
     }
   }, []);
 
-  const updateSmtpConfig = useCallback(async (newConfig) => {
-    const merged = { ...DEFAULT_SMTP_CONFIG, ...newConfig };
+  const updateSmtpConfig = useCallback(async (newConfig, options = {}) => {
+    const merged = resolveSmtpConfig(newConfig, options);
     setSmtpConfig(merged);
-    saveSmtpConfig(merged);
+    saveSmtpConfig(merged, options);
     pushDevSync({ smtpConfig: merged });
 
     if (SB_ONLINE) {
@@ -941,14 +943,13 @@ export const DataProvider = ({ children }) => {
           try {
             const parsedSmtp = JSON.parse(latestSmtpRow.flag_reason);
             if (parsedSmtp && typeof parsedSmtp === 'object') {
-              const mergedSmtp = { ...DEFAULT_SMTP_CONFIG, ...parsedSmtp };
-              saveSmtpConfig(mergedSmtp);
+              // Hydrate locally only — do NOT re-push to cloud on every load
+              const mergedSmtp = persistSmtpConfigLocal(parsedSmtp);
               setSmtpConfig(mergedSmtp);
             }
           } catch (_) {}
         } else if (bridge?.smtpConfig) {
-          const mergedSmtp = { ...DEFAULT_SMTP_CONFIG, ...bridge.smtpConfig };
-          saveSmtpConfig(mergedSmtp);
+          const mergedSmtp = persistSmtpConfigLocal(bridge.smtpConfig);
           setSmtpConfig(mergedSmtp);
         }
       }
