@@ -1180,20 +1180,26 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       {/* ===================================================================== */}
       {/* 1. TOP APP HEADER (Executive Obsidian & Crimson Theme)               */}
       {/* ===================================================================== */}
-      <header className="h-12 sm:h-13 px-3.5 sm:px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] landscape:py-1.5 bg-[#0B0F19] border-b border-slate-800 text-white flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-md">
+      <header className="h-12 sm:h-13 px-3.5 sm:px-4 py-1.5 pt-[max(0.5rem,env(safe-area-inset-top))] landscape:py-1 bg-[#0B0F19] border-b border-slate-800 text-white flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-md">
         <div className="flex items-center space-x-2.5 min-w-0">
-          {/* Brand Icon Tile */}
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#BA3A24] flex items-center justify-center text-white shadow-sm shrink-0 ring-1 ring-[#BA3A24]/40">
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-              <path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"></path>
-            </svg>
-          </div>
-          <div className="flex items-center space-x-1.5 min-w-0">
-            <span className="font-bold text-white text-xs sm:text-sm tracking-tight truncate">DuraGrit</span>
-            <span className="bg-[#BA3A24] text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase shrink-0">
-              ADMIN
+          {/* Official DuraGrit Logo with clean 'Admin' label directly below */}
+          <div className="flex flex-col justify-center min-w-0 shrink-0">
+            <img
+              src="/logo-white.png"
+              alt="DuraGrit Vitrified"
+              className="h-4 sm:h-4.5 w-auto max-w-[105px] sm:max-w-[125px] object-contain shrink-0"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/logo.png';
+              }}
+            />
+            <span className="text-[8px] font-black uppercase tracking-wider text-[#FAA322] font-mono leading-none mt-0.5">
+              Admin
             </span>
-            <span className="text-[9.5px] font-mono font-bold text-cyan-300 shrink-0">
+          </div>
+
+          <div className="flex items-center space-x-1.5 min-w-0">
+            <span className="text-[9.5px] font-mono font-bold text-cyan-300 shrink-0 self-center">
               {adminUpdateStatus.installedVersion}
             </span>
             <button
@@ -1379,18 +1385,18 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#BA3A24] via-amber-400 via-emerald-400 to-[#BA3A24] animate-shimmer"
               />
 
-              <div className="flex items-start justify-between pt-0.5">
-                <div>
-                  <div className="flex items-center gap-1.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] tracking-wider uppercase font-black text-slate-500 font-mono">
                       EXECUTIVE MODERATION CONSOLE
                     </span>
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       LIVE
                     </span>
                   </div>
-                  <div className="flex items-baseline space-x-2 mt-1">
+                  <div className="flex items-baseline gap-2 mt-1 flex-wrap">
                     <span className="text-2xl font-black text-slate-900 tracking-tight font-mono">
                       {totalRequestsCount}
                     </span>
@@ -1401,9 +1407,9 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                 </div>
 
                 {/* Gross Escrow Value Pill */}
-                <div className="text-right bg-gradient-to-br from-orange-50/90 via-amber-50/70 to-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-2 px-3 shadow-2xs">
-                  <div className="text-[9px] font-mono text-[#9A3412] uppercase font-bold">Gross Escrow Value</div>
-                  <div className="text-sm font-black text-[#BA3A24] font-mono mt-0.5">
+                <div className="self-start sm:self-auto text-left sm:text-right bg-gradient-to-br from-orange-50/90 via-amber-50/70 to-[#FEF2EE] border border-[#F9CEB8] rounded-xl py-1.5 px-3 shadow-2xs shrink-0">
+                  <div className="text-[9px] font-mono text-[#9A3412] uppercase font-bold tracking-tight">Gross Escrow Value</div>
+                  <div className="text-sm sm:text-base font-black text-[#BA3A24] font-mono">
                     ₹{totalAmount.toLocaleString('en-IN')}
                   </div>
                 </div>
@@ -2578,9 +2584,6 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
                       Vendor Payment Release &amp; Disbursal
                     </h2>
-                    <p className="text-[10px] text-slate-500 font-medium">
-                      Dual-Control Escrow Payouts • Instant Supabase Sync
-                    </p>
                   </div>
                 </div>
 
@@ -2705,7 +2708,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     return (
                       <article
                         key={claim.id}
-                        className="bg-white rounded-2xl border border-slate-200/90 p-3 sm:p-3.5 shadow-2xs hover:border-slate-300 transition space-y-2.5"
+                        className="bg-white rounded-xl border border-amber-400 border-l-4 border-l-amber-500 p-3 sm:p-3.5 shadow-2xs hover:border-amber-500 transition space-y-2.5"
                       >
                         {/* Header: Vendor Name & Amount */}
                         <div className="flex items-start justify-between gap-2">
@@ -2813,7 +2816,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     return (
                       <article
                         key={claim.id}
-                        className="bg-white rounded-2xl border border-emerald-200/70 p-3 sm:p-3.5 shadow-2xs hover:border-emerald-300 transition space-y-2.5"
+                        className="bg-white rounded-xl border border-emerald-400 border-l-4 border-l-emerald-600 p-3 sm:p-3.5 shadow-2xs hover:border-emerald-500 transition space-y-2.5"
                       >
                         {/* Header: Vendor Name & Amount */}
                         <div className="flex items-start justify-between gap-2">
@@ -3005,7 +3008,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     return (
                       <div
                         key={b.batchId || b.id}
-                        className="p-3 bg-slate-50/90 hover:bg-slate-50 border border-slate-200 rounded-xl space-y-2 transition shadow-2xs"
+                        className="p-3 bg-white border border-emerald-400 border-l-4 border-l-emerald-600 rounded-xl space-y-2 transition shadow-2xs hover:border-emerald-500"
                       >
                         {/* Header: Batch ID & Status */}
                         <div className="flex items-center justify-between">

@@ -247,7 +247,7 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
 
       <div className="px-3.5 pt-3 space-y-3 flex-1">
         {/* CONTRACTOR ESCROW SNAPSHOT Card matching PDF Page 11 */}
-        <section className="bg-white rounded-2xl p-4 border border-[#ECEAE6] shadow-xs space-y-3 font-sans">
+        <section className="bg-white rounded-2xl p-4 border-2 border-stone-200 hover:border-stone-300 shadow-xs space-y-3 font-sans">
           <div className="flex items-center justify-between pb-1 border-b border-stone-100">
             <div className="flex items-center gap-1.5 text-stone-900 text-[10.5px] font-extrabold uppercase tracking-wider">
               <span className="w-2 h-2 rounded-full bg-[#A6300F]"></span>

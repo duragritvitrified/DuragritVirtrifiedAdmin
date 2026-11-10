@@ -15,7 +15,10 @@ import {
   CheckCircle,
   Lock,
   ArrowLeft,
-  Rocket
+  Rocket,
+  Building2,
+  Mail,
+  ShieldCheck
 } from 'lucide-react';
 
 export function Step13_WelcomeDossier({ onBack }) {
@@ -116,6 +119,20 @@ export function Step13_WelcomeDossier({ onBack }) {
     currentUser?.upi ||
     'duragrit07@okaxis';
 
+  const partnerEmail =
+    livePartner?.email ||
+    currentUser?.email ||
+    (myDigits === '8826021114' ? 'duragrit07@gmail.com' : 'partner@duragrit.com');
+
+  const partnerBankName =
+    livePartner?.bankName ||
+    currentUser?.bankName ||
+    'Direct UPI / IMPS';
+
+  const partnerAccountNumber =
+    livePartner?.accountNumber ||
+    currentUser?.accountNumber;
+
   const avatarSrc =
     livePartner?.avatarUrl ||
     livePartner?.profileImage ||
@@ -132,6 +149,12 @@ export function Step13_WelcomeDossier({ onBack }) {
     setCopiedKey(true);
     showToast('Security key copied to clipboard!');
     setTimeout(() => setCopiedKey(false), 2500);
+  };
+
+  const handleCopyText = (text, label) => {
+    if (!text) return;
+    navigator.clipboard.writeText(String(text));
+    showToast(`${label} copied to clipboard!`);
   };
 
   return (
@@ -205,17 +228,19 @@ export function Step13_WelcomeDossier({ onBack }) {
           </div>
         </div>
 
-        {/* Credentials Body */}
+        {/* Credentials & Dossier Body */}
         <div className="p-4 bg-[#FAF9F6] space-y-4">
-          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden">
-            <div className="bg-stone-50 px-4 py-2.5 border-b border-stone-200 flex items-center justify-between">
+          {/* Colorful yet simple professional border on Vendor Account & Credentials section */}
+          <div className="bg-white rounded-2xl border-2 border-[#C84826]/70 border-l-4 border-l-[#C84826] shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-orange-50 via-amber-50/70 to-rose-50/40 px-4 py-2.5 border-b border-orange-200/70 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-[#FEF2EE] text-[#C84826] flex items-center justify-center font-bold">
+                <div className="w-6 h-6 rounded-lg bg-[#FEF2EE] text-[#C84826] border border-[#F9CEB8] flex items-center justify-center font-bold">
                   <Key className="w-3.5 h-3.5" />
                 </div>
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-stone-900">Vendor Account &amp; Credentials</h4>
               </div>
-              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Verified
               </span>
             </div>
@@ -229,36 +254,89 @@ export function Step13_WelcomeDossier({ onBack }) {
                   <span className="font-extrabold text-stone-900 text-xs sm:text-[13px] block mt-0.5 leading-tight">{vendorCompanyName}</span>
                 </div>
                 {/* 2. Vendor ID */}
-                <div className="bg-[#FEF2EE] rounded-xl p-2.5 border border-[#F9CEB8]">
-                  <span className="text-[9px] font-bold text-[#A62C11] uppercase tracking-wider block">Vendor ID</span>
-                  <span className="font-mono font-black text-[#A62C11] text-xs sm:text-sm block mt-0.5 tracking-wider">{vendorId}</span>
+                <div className="bg-[#FEF2EE] rounded-xl p-2.5 border border-[#F9CEB8] flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] font-bold text-[#A62C11] uppercase tracking-wider block">Vendor ID</span>
+                    <span className="font-mono font-black text-[#A62C11] text-xs sm:text-sm block mt-0.5 tracking-wider">{vendorId}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText(vendorId, 'Vendor ID')}
+                    className="p-1 hover:bg-white/80 rounded text-[#A62C11] cursor-pointer"
+                    title="Copy Vendor ID"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
 
-              {/* Secondary Details Row */}
+              {/* Secondary Details Row: Contact & Mobile */}
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
                   <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Authorized Contact</span>
                   <span className="font-bold text-stone-900 text-xs block mt-0.5 truncate">{contactPerson}</span>
                 </div>
-                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Registered Mobile</span>
-                  <span className="font-mono font-bold text-stone-900 text-xs block mt-0.5">{partnerMobile}</span>
+                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Registered Mobile</span>
+                    <span className="font-mono font-bold text-stone-900 text-xs block mt-0.5">{partnerMobile}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText(partnerMobile, 'Registered Mobile')}
+                    className="p-1 hover:bg-stone-200/60 rounded text-stone-400 hover:text-stone-700 cursor-pointer"
+                    title="Copy Mobile"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
 
+              {/* Profile Dossier Row: Email & Category */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex items-center justify-between">
+                  <div className="min-w-0 flex-1 truncate pr-1">
+                    <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Business Email</span>
+                    <span className="font-mono font-semibold text-stone-900 text-[11px] block mt-0.5 truncate">{partnerEmail}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText(partnerEmail, 'Email')}
+                    className="p-1 hover:bg-stone-200/60 rounded text-stone-400 hover:text-stone-700 cursor-pointer shrink-0"
+                    title="Copy Email"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
+                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Partner Category</span>
+                  <span className="font-bold text-[#A62C11] bg-[#FEF2EE] px-2 py-0.5 rounded border border-[#F9CEB8] text-[10.5px] inline-block mt-0.5 truncate">
+                    {vendorCategory}
+                  </span>
+                </div>
+              </div>
+
+              {/* Profile Dossier Row: Payout Account & KYC Status */}
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Category &amp; Hub</span>
-                  <span className="font-bold text-stone-800 text-xs block mt-0.5 truncate">{vendorCategory}</span>
+                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Settlement Payout Account</span>
+                  <span className="font-mono font-bold text-stone-800 text-[11px] block mt-0.5 truncate">{partnerUpi || partnerBankName}</span>
+                  {partnerAccountNumber && (
+                    <span className="text-stone-400 font-sans block text-[9.5px]">
+                      (A/C ••{String(partnerAccountNumber).slice(-4)})
+                    </span>
+                  )}
                 </div>
                 <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100">
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Settlement UPI</span>
-                  <span className="font-mono font-bold text-stone-800 text-xs block mt-0.5 truncate">{partnerUpi}</span>
+                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">KYC &amp; Auth Status</span>
+                  <span className="font-bold text-[10.5px] text-emerald-700 flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Active Verified ✓</span>
+                  </span>
                 </div>
               </div>
 
-              {/* Passkey */}
+              {/* Passkey Card */}
               <div className="bg-[#FEF2EE] rounded-xl p-3 border border-[#F9CEB8] flex items-center justify-between gap-2">
                 <div>
                   <span className="text-[9px] font-bold text-[#A62C11] uppercase tracking-wider block">

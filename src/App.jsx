@@ -394,18 +394,21 @@ export function App() {
 
         {/* Top App Control Bar (Pinned at top, clean, uncluttered & 100% responsive) */}
         {currentScreen !== 'signin' && (
-          <header className="bg-[#1C1917] px-3.5 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2 text-white flex items-center justify-between text-xs border-b border-stone-800 shrink-0 font-sans sticky top-0 z-40 shadow-xs">
-            {/* Left: Branded Logo only (Text removed per user request) */}
-            <div className="flex items-center min-w-0">
+          <header className="bg-[#1C1917] px-3.5 pt-[max(0.65rem,env(safe-area-inset-top))] pb-1.5 text-white flex items-center justify-between text-xs border-b border-stone-800 shrink-0 font-sans sticky top-0 z-40 shadow-xs">
+            {/* Left: Official DuraGrit Logo with clean 'Vendor' label directly below */}
+            <div className="flex flex-col justify-center min-w-0 shrink-0">
               <img
                 src="/logo-white.png"
-                alt="DuraGrit"
-                className="h-6 sm:h-7 w-auto max-w-[130px] sm:max-w-[160px] object-contain shrink-0"
+                alt="DuraGrit Vitrified"
+                className="h-4 sm:h-4.5 w-auto max-w-[110px] sm:max-w-[130px] object-contain shrink-0"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = '/logo.png';
                 }}
               />
+              <span className="text-[8px] font-black uppercase tracking-wider text-[#FAA322] font-mono leading-none mt-0.5">
+                Vendor
+              </span>
             </div>
 
             {/* Right: Version Number, Sync Icon Button, and Logout Button */}
