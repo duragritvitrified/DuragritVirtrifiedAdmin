@@ -157,8 +157,22 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, count: inserts.length });
     }
 
-    // GET: Comprehensive live sync across Supabase database tables & events
-    const [prodRes, vendRes, profRes, batchRes, claimRes, eventRes, smtpRes] = await Promise.allSettled([
+    // GET: Comprehensive ultra-fast live sync across Supabase database tables & events
+    const [
+      prodRes,
+      vendRes,
+      profRes,
+      batchRes,
+      claimRes,
+      batchEventRes,
+      orderEventRes,
+      deletedEventRes,
+      skuEvtRes,
+      vendorEvtRes,
+      claimActRes,
+      verifyActRes,
+      smtpRes
+    ] = await Promise.allSettled([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('vendors').select('*').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
@@ -171,19 +185,66 @@ export default async function handler(req, res) {
         .not('request_id', 'ilike', 'VERIFY_EVENT_%')
         .not('request_id', 'ilike', 'DURAGRIT_VENDOR_%')
         .order('timestamp', { ascending: false })
-        .limit(200),
+        .limit(100),
       supabase.from('cashback_requests')
         .select('request_id, qr_serial, flag_reason, timestamp')
-        .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
-        .not('request_id', 'ilike', 'SYNC_SMTP_%')
+        .or('qr_serial.eq.DURAGRIT_BATCHES_REGISTRY,request_id.ilike.SYNC_BATCHES_%')
         .order('timestamp', { ascending: false })
-        .limit(300),
+        .limit(2),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .or('qr_serial.eq.DURAGRIT_VENDOR_ORDERS,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
+        .order('timestamp', { ascending: false })
+        .limit(15),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .or('qr_serial.eq.DURAGRIT_DELETED_KEYS,request_id.ilike.SYNC_DELETED_%')
+        .order('timestamp', { ascending: false })
+        .limit(2),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .or('qr_serial.eq.DURAGRIT_SKUS_REGISTRY,request_id.ilike.SYNC_SKUS_%')
+        .order('timestamp', { ascending: false })
+        .limit(2),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .or('qr_serial.eq.DURAGRIT_VENDORS_STORE_V1,request_id.ilike.SYNC_VENDORS_%,qr_serial.eq.DURAGRIT_VENDOR_EVENT,request_id.ilike.DURAGRIT_VENDOR_%')
+        .order('timestamp', { ascending: false })
+        .limit(15),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .like('request_id', 'CLAIM_ACTION_EVENT_%')
+        .order('timestamp', { ascending: false })
+        .limit(20),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .like('request_id', 'VERIFY_EVENT_%')
+        .order('timestamp', { ascending: false })
+        .limit(10),
       supabase.from('cashback_requests')
         .select('flag_reason')
         .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.ilike.SYNC_SMTP_%')
         .order('timestamp', { ascending: false })
         .limit(1)
     ]);
+
+    const rawBatchEvents = batchEventRes.status === 'fulfilled' && !batchEventRes.value.error ? (batchEventRes.value.data || []) : [];
+    const rawOrderEvents = orderEventRes.status === 'fulfilled' && !orderEventRes.value.error ? (orderEventRes.value.data || []) : [];
+    const rawDeletedEvents = deletedEventRes.status === 'fulfilled' && !deletedEventRes.value.error ? (deletedEventRes.value.data || []) : [];
+    const rawSkuEvents = skuEvtRes.status === 'fulfilled' && !skuEvtRes.value.error ? (skuEvtRes.value.data || []) : [];
+    const rawVendorEvents = vendorEvtRes.status === 'fulfilled' && !vendorEvtRes.value.error ? (vendorEvtRes.value.data || []) : [];
+    const rawClaimActs = claimActRes.status === 'fulfilled' && !claimActRes.value.error ? (claimActRes.value.data || []) : [];
+    const rawVerifyActs = verifyActRes.status === 'fulfilled' && !verifyActRes.value.error ? (verifyActRes.value.data || []) : [];
+
+    const eventRows = [
+      ...rawDeletedEvents,
+      ...rawBatchEvents,
+      ...rawOrderEvents,
+      ...rawSkuEvents,
+      ...rawVendorEvents,
+      ...rawClaimActs,
+      ...rawVerifyActs
+    ];
 
     const responseData = {
       skus: [],
@@ -198,7 +259,6 @@ export default async function handler(req, res) {
 
     // 1. Process Deleted Keys
     const deletedKeysSet = new Set();
-    const eventRows = eventRes.status === 'fulfilled' && !eventRes.value.error ? (eventRes.value.data || []) : [];
     eventRows.forEach((r) => {
       if (r.qr_serial === 'DURAGRIT_DELETED_KEYS' || (r.request_id && String(r.request_id).startsWith('SYNC_DELETED_'))) {
         try {
@@ -488,23 +548,39 @@ export default async function handler(req, res) {
         if (row.flag_reason && row.flag_reason.startsWith('{')) {
           try { meta = JSON.parse(row.flag_reason); } catch (_) {}
         }
+        const status = row.status || 'Pending';
+        let payoutStatus = meta.payoutStatus || 'Awaiting Approval';
+        if (status === 'Approved') payoutStatus = 'Pending Release';
+        else if (status === 'Disbursed') payoutStatus = 'Disbursed';
+        else if (status === 'Rejected' || status === 'Flagged') payoutStatus = 'Rejected';
+
+        const gross = Number(row.claim_value ?? meta.amount ?? 150);
+        const net = Number(row.net_disbursed || meta.disbursedAmount || meta.netDisbursed || gross);
+
         return {
           ...meta,
           id: row.request_id || row.id,
           requestId: row.request_id,
           claimNumber: row.request_id,
           supabaseId: row.id,
-          amount: Number(row.claim_value || meta.amount || 150),
-          claimValue: Number(row.claim_value || meta.amount || 150),
-          status: row.status || 'Pending',
-          payoutStatus: row.status === 'Disbursed' ? 'Disbursed' : (row.status === 'Approved' ? 'Pending Release' : 'Awaiting Approval'),
+          userId: meta.userId || (meta.userMobile ? `USR-${String(meta.userMobile).slice(-4)}` : ''),
+          userName: meta.userName || meta.vendorName || 'Registered Partner',
+          userMobile: meta.userMobile || row.mobile || '',
+          amount: gross,
+          claimValue: gross,
+          disbursedAmount: status === 'Disbursed' ? net : 0,
+          netDisbursed: status === 'Disbursed' ? net : 0,
+          status,
+          payoutStatus,
+          transactionId: row.npci_rrn || meta.transactionId || meta.utr || null,
+          npciRrn: row.npci_rrn || meta.npciRrn || meta.transactionId || meta.utr || null,
+          utr: row.npci_rrn || meta.utr || meta.transactionId || null,
           qrSerial: row.qr_serial,
           serialKey: row.qr_serial,
           vendorName: meta.vendorName || meta.companyName || 'DuraGrit Partner',
           vendorId: meta.vendorId || 'VND-101',
-          userMobile: meta.userMobile || row.mobile || '',
-          submittedAt: row.timestamp || row.created_at,
-          date: row.timestamp || row.created_at
+          submittedAt: row.timestamp || row.created_at || new Date().toISOString(),
+          date: row.timestamp || row.created_at || new Date().toISOString()
         };
       });
     }

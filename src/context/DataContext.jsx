@@ -874,6 +874,46 @@ export const DataProvider = ({ children }) => {
         if (res.ok) bridge = await res.json();
       } catch (_) {}
 
+      // Immediate authoritative hydration from bridge so mobile apps show live data in < 1 second!
+      if (bridge && (bridge.claims?.length || bridge.batches?.length || bridge.vendors?.length || bridge.skus?.length)) {
+        if (Array.isArray(bridge.skus) && bridge.skus.length > 0) {
+          skusRef.current = bridge.skus;
+          setSkus(bridge.skus);
+          try { localStorage.setItem(STORAGE_KEYS.SKUS, JSON.stringify(bridge.skus)); } catch (_) {}
+        }
+        if (Array.isArray(bridge.batches) && bridge.batches.length > 0) {
+          batchesRef.current = bridge.batches;
+          setBatches(bridge.batches);
+          try { localStorage.setItem(STORAGE_KEYS.BATCHES, JSON.stringify(bridge.batches)); } catch (_) {}
+        }
+        if (Array.isArray(bridge.vendors) && bridge.vendors.length > 0) {
+          vendorsRef.current = bridge.vendors;
+          setVendors(bridge.vendors);
+          try { localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(bridge.vendors)); } catch (_) {}
+        }
+        if (Array.isArray(bridge.users) && bridge.users.length > 0) {
+          setUsers(bridge.users);
+          try { localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(bridge.users)); } catch (_) {}
+        }
+        if (Array.isArray(bridge.orders) && bridge.orders.length > 0) {
+          ordersRef.current = bridge.orders;
+          setOrders(bridge.orders);
+          try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(bridge.orders)); } catch (_) {}
+        }
+        if (Array.isArray(bridge.claims) && bridge.claims.length > 0) {
+          claimsRef.current = bridge.claims;
+          setClaims(bridge.claims);
+          try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(bridge.claims)); } catch (_) {}
+        }
+        setDbStatus((prev) => ({
+          ...prev,
+          connected: true,
+          online: true,
+          loading: false,
+          lastSynced: new Date().toLocaleTimeString(),
+        }));
+      }
+
       if (Array.isArray(bridge?.deletedKeys)) {
         bridge.deletedKeys.forEach((k) => {
           const uk = String(k).toUpperCase();
@@ -899,7 +939,22 @@ export const DataProvider = ({ children }) => {
       let registryBatches = [];
 
       if (SB_ONLINE) {
-        const [prodRes, profRes, vendRes, batchRes, tokRes, realClaimRes, eventRes, smtpRes] = await Promise.allSettled([
+        const [
+          prodRes,
+          profRes,
+          vendRes,
+          batchRes,
+          tokRes,
+          realClaimRes,
+          batchEventRes,
+          orderEventRes,
+          deletedEventRes,
+          skuEvtRes,
+          vendorEvtRes,
+          claimActRes,
+          verifyActRes,
+          smtpRes
+        ] = await Promise.allSettled([
           supabase.from('products').select('*').order('created_at', { ascending: false }),
           supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
           supabase.from('vendors').select('*').order('created_at', { ascending: false }),
@@ -913,15 +968,45 @@ export const DataProvider = ({ children }) => {
             .not('request_id', 'ilike', 'CLAIM_ACTION_%')
             .not('request_id', 'ilike', 'VERIFY_EVENT_%')
             .not('request_id', 'ilike', 'DURAGRIT_VENDOR_%')
-            .order('timestamp', { ascending: false }),
-          // 2. High-speed event stream for SKU/Batch/Vendor registries and live action events (excluding SMTP flood)
-          supabase.from('cashback_requests')
-            .select('*')
-            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
-            .not('request_id', 'ilike', 'SYNC_SMTP_%')
             .order('timestamp', { ascending: false })
-            .limit(500),
-          // 3. Latest SMTP config snapshot (limit 1 so historical SMTP events never crowd out event stream)
+            .limit(100),
+          // 2. High-speed targeted event streams
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .or('qr_serial.eq.DURAGRIT_BATCHES_REGISTRY,request_id.ilike.SYNC_BATCHES_%')
+            .order('timestamp', { ascending: false })
+            .limit(2),
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .or('qr_serial.eq.DURAGRIT_VENDOR_ORDERS,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
+            .order('timestamp', { ascending: false })
+            .limit(15),
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .or('qr_serial.eq.DURAGRIT_DELETED_KEYS,request_id.ilike.SYNC_DELETED_%')
+            .order('timestamp', { ascending: false })
+            .limit(2),
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .or('qr_serial.eq.DURAGRIT_SKUS_REGISTRY,request_id.ilike.SYNC_SKUS_%')
+            .order('timestamp', { ascending: false })
+            .limit(2),
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .or('qr_serial.eq.DURAGRIT_VENDORS_STORE_V1,request_id.ilike.SYNC_VENDORS_%,qr_serial.eq.DURAGRIT_VENDOR_EVENT,request_id.ilike.DURAGRIT_VENDOR_%')
+            .order('timestamp', { ascending: false })
+            .limit(15),
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .like('request_id', 'CLAIM_ACTION_EVENT_%')
+            .order('timestamp', { ascending: false })
+            .limit(20),
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .like('request_id', 'VERIFY_EVENT_%')
+            .order('timestamp', { ascending: false })
+            .limit(10),
+          // 3. Latest SMTP config snapshot
           supabase.from('cashback_requests')
             .select('*')
             .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.ilike.SYNC_SMTP_%')
@@ -930,7 +1015,22 @@ export const DataProvider = ({ children }) => {
         ]);
 
         const rawRealClaims = realClaimRes.status === 'fulfilled' && !realClaimRes.value.error ? (realClaimRes.value.data || []) : [];
-        const rawEvents = eventRes.status === 'fulfilled' && !eventRes.value.error ? (eventRes.value.data || []) : [];
+        const rawBatchEvents = batchEventRes.status === 'fulfilled' && !batchEventRes.value.error ? (batchEventRes.value.data || []) : [];
+        const rawOrderEvents = orderEventRes.status === 'fulfilled' && !orderEventRes.value.error ? (orderEventRes.value.data || []) : [];
+        const rawDeletedEvents = deletedEventRes.status === 'fulfilled' && !deletedEventRes.value.error ? (deletedEventRes.value.data || []) : [];
+        const rawSkuEvents = skuEvtRes.status === 'fulfilled' && !skuEvtRes.value.error ? (skuEvtRes.value.data || []) : [];
+        const rawVendorEvents = vendorEvtRes.status === 'fulfilled' && !vendorEvtRes.value.error ? (vendorEvtRes.value.data || []) : [];
+        const rawClaimActs = claimActRes.status === 'fulfilled' && !claimActRes.value.error ? (claimActRes.value.data || []) : [];
+        const rawVerifyActs = verifyActRes.status === 'fulfilled' && !verifyActRes.value.error ? (verifyActRes.value.data || []) : [];
+        const rawEvents = [
+          ...rawDeletedEvents,
+          ...rawBatchEvents,
+          ...rawOrderEvents,
+          ...rawSkuEvents,
+          ...rawVendorEvents,
+          ...rawClaimActs,
+          ...rawVerifyActs
+        ];
         const rawSmtp = smtpRes.status === 'fulfilled' && !smtpRes.value.error ? (smtpRes.value.data || []) : [];
         const allClaimsRows = [...rawRealClaims, ...rawEvents, ...rawSmtp];
 
