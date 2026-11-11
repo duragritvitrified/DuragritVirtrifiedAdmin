@@ -25,7 +25,9 @@ import {
   Phone,
   ShieldCheck,
   Send,
-  Boxes
+  Boxes,
+  Trash2,
+  X
 } from 'lucide-react';
 
 export function Step14_VendorOrders({ onBack, onNavigateScan }) {
@@ -38,23 +40,11 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
 
-  // Search & Category Filters for Product Multi-Select
+  // Search filter for Product List (Optional quick finder)
   const [productSearch, setProductSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Selected Products State: { [skuCode]: { selected: boolean, quantity: number, unit: string, sku: object } }
   const [selectedItems, setSelectedItems] = useState({});
-
-  // Delivery / Dispatch Form State
-  const [deliveryHub, setDeliveryHub] = useState('Yard Hub 04 - Morbi GIDC');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
-  const [expectedDate, setExpectedDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 2);
-    return d.toISOString().split('T')[0];
-  });
-  const [orderNotes, setOrderNotes] = useState('');
 
   // Order history search & status filter
   const [historySearch, setHistorySearch] = useState('');
@@ -70,7 +60,7 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
     setIsSyncing(true);
     try {
       await refreshAllData();
-      showToast('✓ Live orders data synchronized with Admin Panel.');
+      showToast('✓ Live orders data synchronized with Admin Panel & Database.');
     } finally {
       setIsSyncing(false);
     }
@@ -96,41 +86,7 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
 
   const vendorName = matchedVendor?.companyName || matchedVendor?.name || currentUser?.companyName || 'DuraGrit Partner';
   const vendorId = matchedVendor?.vendorId || matchedVendor?.id || 'VND-101';
-  const vendorLocation = matchedVendor?.location || matchedVendor?.city || 'Morbi Hub, Gujarat';
-
-  // Prefill default delivery address if empty
-  React.useEffect(() => {
-    if (!deliveryAddress && (matchedVendor?.address || matchedVendor?.location)) {
-      setDeliveryAddress(matchedVendor.address || `${matchedVendor.companyName || vendorName}, ${vendorLocation}`);
-    }
-    if (!contactPhone && (matchedVendor?.phone || matchedVendor?.mobile || currentUser?.mobile)) {
-      setContactPhone(matchedVendor?.phone || matchedVendor?.mobile || currentUser?.mobile || '');
-    }
-  }, [matchedVendor, deliveryAddress, contactPhone, vendorLocation, vendorName, currentUser]);
-
-  // Available categories
-  const categories = useMemo(() => {
-    const cats = new Set(['All']);
-    skus.forEach((s) => {
-      if (s.category) cats.add(s.category);
-    });
-    return Array.from(cats);
-  }, [skus]);
-
-  // Filtered SKUs for multi-select
-  const filteredSkus = useMemo(() => {
-    return skus.filter((s) => {
-      if (selectedCategory !== 'All' && s.category !== selectedCategory) return false;
-      if (productSearch.trim()) {
-        const q = productSearch.toLowerCase();
-        const sName = String(s.name || '').toLowerCase();
-        const sCode = String(s.skuCode || s.id || '').toLowerCase();
-        const sCat = String(s.category || '').toLowerCase();
-        return sName.includes(q) || sCode.includes(q) || sCat.includes(q);
-      }
-      return true;
-    });
-  }, [skus, selectedCategory, productSearch]);
+  const vendorLocation = matchedVendor?.location || matchedVendor?.city || 'Morbi Central Hub, Gujarat';
 
   // Determine standard unit based on product
   const getProductUnit = (sku) => {
@@ -143,31 +99,47 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
     return 'Units';
   };
 
-  // Toggle SKU selection
-  const handleToggleProduct = (sku) => {
-    const sCode = sku.skuCode || sku.id;
-    setSelectedItems((prev) => {
-      const existing = prev[sCode];
-      if (existing?.selected) {
-        // Deselect
-        const next = { ...prev };
-        delete next[sCode];
-        return next;
-      } else {
-        // Select with default quantity of 50 bags or 20 buckets/cans
-        const unit = getProductUnit(sku);
-        const defaultQty = unit === 'Bags' ? 50 : 20;
-        return {
-          ...prev,
-          [sCode]: {
-            selected: true,
-            quantity: defaultQty,
-            unit,
-            sku,
-          },
-        };
-      }
+  // All available catalog products (no category tabs, directly accessible)
+  const allAvailableSkus = useMemo(() => {
+    const list = skus && skus.length > 0 ? skus : [];
+    if (!productSearch.trim()) return list;
+    const q = productSearch.toLowerCase();
+    return list.filter((s) => {
+      const sName = String(s.name || '').toLowerCase();
+      const sCode = String(s.skuCode || s.id || '').toLowerCase();
+      const sCat = String(s.category || '').toLowerCase();
+      return sName.includes(q) || sCode.includes(q) || sCat.includes(q);
     });
+  }, [skus, productSearch]);
+
+  // Add product to order
+  const handleAddProduct = (sku) => {
+    const sCode = sku.skuCode || sku.id;
+    const unit = getProductUnit(sku);
+    const defaultQty = unit === 'Bags' ? 50 : 20;
+
+    setSelectedItems((prev) => ({
+      ...prev,
+      [sCode]: {
+        selected: true,
+        quantity: prev[sCode]?.quantity || defaultQty,
+        unit,
+        sku,
+      },
+    }));
+    showToast(`✓ Added ${sku.name} to order`);
+  };
+
+  // Delete product from order
+  const handleDeleteProduct = (sCode, productName = '') => {
+    setSelectedItems((prev) => {
+      const next = { ...prev };
+      delete next[sCode];
+      return next;
+    });
+    if (productName) {
+      showToast(`✕ Removed ${productName} from order`);
+    }
   };
 
   // Adjust quantity of selected product
@@ -185,6 +157,21 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
     });
   };
 
+  // Quick increment quantity
+  const handleQuickAddQty = (sCode, increment) => {
+    setSelectedItems((prev) => {
+      if (!prev[sCode]) return prev;
+      const current = Number(prev[sCode].quantity || 0);
+      return {
+        ...prev,
+        [sCode]: {
+          ...prev[sCode],
+          quantity: current + increment,
+        },
+      };
+    });
+  };
+
   // Computed summary of selected items
   const selectedList = useMemo(() => {
     return Object.values(selectedItems).filter((item) => item.selected);
@@ -197,7 +184,7 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     if (selectedList.length === 0) {
-      showToast('⚠️ Please select at least one product to place an order.');
+      showToast('⚠️ Please add at least one product before submitting order.');
       return;
     }
 
@@ -211,23 +198,25 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
         packSize: item.sku.packWeight || item.sku.packSize || 'Standard',
         quantity: item.quantity,
         unit: item.unit,
+        mrp: item.sku.baseMrp || item.sku.mrp || 0,
       }));
 
+      // Auto-bundle default hub & logistics without requiring vendor to fill fields
       const newOrderPayload = {
         id: orderNumber,
         orderNumber,
         vendorId,
         vendorName,
-        vendorPhone: contactPhone || matchedVendor?.phone || currentDigits || '',
-        vendorEmail: matchedVendor?.email || currentUser?.email || '',
+        vendorPhone: matchedVendor?.phone || matchedVendor?.mobile || currentDigits || '8826021114',
+        vendorEmail: matchedVendor?.email || currentUser?.email || 'partner@duragrit.com',
         vendorLocation,
         items: itemsPayload,
         totalItems: itemsPayload.length,
         totalQuantity: totalQuantityUnits,
-        deliveryHub,
-        deliveryAddress: deliveryAddress || `${vendorName}, ${vendorLocation}`,
-        expectedDate,
-        notes: orderNotes.trim(),
+        deliveryHub: 'Morbi Central Hub',
+        deliveryAddress: matchedVendor?.address || `${vendorName}, ${vendorLocation}`,
+        expectedDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        notes: 'Quick Mobile Order Indent',
         status: 'Pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -240,7 +229,6 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
       showToast(`🎉 Order ${orderNumber} placed successfully!`);
       // Reset form
       setSelectedItems({});
-      setOrderNotes('');
       // Switch to My Orders view so vendor immediately sees their order
       setTimeout(() => {
         setActiveView('my-orders');
@@ -306,6 +294,13 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
             Delivered
           </span>
         );
+      case 'Cancelled':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <X className="w-3 h-3 text-rose-600" />
+            Cancelled
+          </span>
+        );
       case 'Pending':
       default:
         return (
@@ -344,7 +339,7 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-xs sm:text-[13px] font-black text-stone-900 leading-tight truncate">
-              Vendor Material Indent
+              Quick Order Indent
             </h1>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="font-mono text-[9px] font-bold text-[#C84826] bg-[#FEF2EE] px-1.5 py-0.2 rounded border border-[#F9CEB8]">
@@ -381,7 +376,7 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
             }`}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Place New Order</span>
+            <span>New Order Entry</span>
           </button>
           <button
             type="button"
@@ -400,64 +395,58 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
 
       <main className="p-3.5 space-y-4 flex-1">
         {/* =================================================================== */}
-        {/* VIEW 1: PLACE NEW ORDER FORM (MULTI-PRODUCT INDENT)                */}
+        {/* VIEW 1: FAST & EASY ORDER ENTRY FORM (ALL PRODUCTS VISIBLE)         */}
         {/* =================================================================== */}
         {activeView === 'new-order' && (
           <form onSubmit={handleSubmitOrder} className="space-y-4">
-            {/* Step 1: Multi-Select Products Card */}
+            {/* Multi-Select Products Section */}
             <div className="bg-white rounded-3xl p-4 border border-[#ECEAE6] shadow-sm space-y-3">
-              <div className="flex items-center justify-between pb-1 border-b border-stone-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-[#FEF2EE] text-[#C84826] flex items-center justify-center text-xs font-black">
-                    1
-                  </div>
-                  <div>
-                    <h2 className="text-xs font-black text-stone-900">Select Products (Multi-Select)</h2>
-                    <p className="text-[10px] text-stone-500">Tap products to add &amp; specify required quantities</p>
-                  </div>
+              <div className="flex items-center justify-between pb-1.5 border-b border-stone-100">
+                <div>
+                  <h2 className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+                    <span>Products Catalog</span>
+                    <span className="text-[10px] text-stone-400 font-normal">
+                      ({allAvailableSkus.length} Available)
+                    </span>
+                  </h2>
+                  <p className="text-[10px] text-stone-500 mt-0.5">
+                    Add required products &amp; adjust quantities directly
+                  </p>
                 </div>
+
                 {totalSelectedSkus > 0 && (
-                  <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-[#FEF2EE] text-[#C84826] border border-[#F9CEB8]">
-                    {totalSelectedSkus} Selected ({totalQuantityUnits} Units)
+                  <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-[#FEF2EE] text-[#C84826] border border-[#F9CEB8]">
+                    {totalSelectedSkus} Added • {totalQuantityUnits} Units
                   </span>
                 )}
               </div>
 
-              {/* Search Bar */}
+              {/* Quick Search Input */}
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Search tile adhesives, grouts, primers..."
+                  placeholder="Quick search product name or code..."
                   className="w-full pl-8 pr-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl placeholder:text-stone-400 focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] outline-none transition"
                 />
-              </div>
-
-              {/* Category Pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {categories.map((cat) => (
+                {productSearch && (
                   <button
-                    key={cat}
                     type="button"
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-2.5 py-1 text-[10px] font-bold rounded-lg shrink-0 transition ${
-                      selectedCategory === cat
-                        ? 'bg-[#C84826] text-white shadow-2xs'
-                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                    }`}
+                    onClick={() => setProductSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 text-xs p-1"
                   >
-                    {cat}
+                    ✕
                   </button>
-                ))}
+                )}
               </div>
 
-              {/* Products List */}
-              <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-                {filteredSkus.map((sku) => {
+              {/* All Products List (No category tabs, direct display) */}
+              <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+                {allAvailableSkus.map((sku) => {
                   const sCode = sku.skuCode || sku.id;
-                  const isSelected = Boolean(selectedItems[sCode]?.selected);
+                  const isAdded = Boolean(selectedItems[sCode]?.selected);
                   const currentQty = selectedItems[sCode]?.quantity || 50;
                   const unit = getProductUnit(sku);
 
@@ -465,71 +454,76 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
                     <div
                       key={sCode}
                       className={`p-3 rounded-2xl border transition-all ${
-                        isSelected
-                          ? 'border-2 border-[#C84826] bg-[#FEF2EE]/40 shadow-xs'
+                        isAdded
+                          ? 'border-2 border-[#C84826] bg-[#FEF2EE]/35 shadow-xs'
                           : 'border-stone-200 bg-white hover:border-stone-300'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        {/* Checkbox & Product Info */}
-                        <div
-                          onClick={() => handleToggleProduct(sku)}
-                          className="flex items-start gap-2.5 flex-1 cursor-pointer select-none"
-                        >
-                          <div
-                            className={`w-5 h-5 rounded-lg border mt-0.5 flex items-center justify-center transition shrink-0 ${
-                              isSelected
-                                ? 'bg-[#C84826] border-[#C84826] text-white shadow-xs'
-                                : 'border-stone-300 bg-stone-50'
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        {/* Product Details */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono text-[9.5px] font-bold text-[#C84826] bg-[#FEF2EE] px-1.5 py-0.5 rounded border border-[#F9CEB8]/70">
+                              {sCode}
+                            </span>
+                            <span className="text-[9.5px] text-stone-500 font-semibold px-1.5 py-0.5 rounded bg-stone-100">
+                              {sku.category || 'Vitrified'}
+                            </span>
+                            {isAdded && (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                <Check className="w-2.5 h-2.5 stroke-[3]" /> Added to Order
+                              </span>
+                            )}
                           </div>
 
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-[9px] font-bold text-[#C84826] bg-[#FEF2EE] px-1 rounded border border-[#F9CEB8]/70">
-                                {sCode}
-                              </span>
-                              <span className="text-[9.5px] text-stone-500 font-medium">
-                                {sku.category || 'Vitrified'}
-                              </span>
-                            </div>
-                            <h3 className="text-xs font-black text-stone-900 mt-0.5 leading-snug">
-                              {sku.name}
-                            </h3>
-                            <p className="text-[10px] text-stone-500 font-medium">
-                              Packaging: {sku.packWeight || sku.packSize || '20 kg'} • Base MRP: ₹{sku.baseMrp || sku.mrp || 650}
-                            </p>
-                          </div>
+                          <h3 className="text-xs font-black text-stone-900 mt-1 leading-snug">
+                            {sku.name}
+                          </h3>
+
+                          <p className="text-[10px] text-stone-500 font-medium mt-0.5">
+                            Pack: {sku.packWeight || sku.packSize || '20 kg'} • MRP: ₹{sku.baseMrp || sku.mrp || 650}
+                          </p>
                         </div>
 
-                        {/* Quick Selection Toggle Badge */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleProduct(sku)}
-                          className={`text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 cursor-pointer transition ${
-                            isSelected
-                              ? 'bg-[#C84826] text-white'
-                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                          }`}
-                        >
-                          {isSelected ? 'Selected' : '+ Select'}
-                        </button>
-                      </div>
-
-                      {/* Quantity Stepper (Shown only when selected) */}
-                      {isSelected && (
-                        <div className="mt-2.5 pt-2 border-t border-[#F9CEB8]/60 flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-stone-700">
-                            Order Quantity:
-                          </span>
-
-                          <div className="flex items-center gap-2">
+                        {/* Add / Added Action Button */}
+                        <div className="shrink-0 flex items-center">
+                          {!isAdded ? (
                             <button
                               type="button"
-                              onClick={() => handleUpdateQuantity(sCode, currentQty - 10)}
-                              className="w-7 h-7 rounded-lg bg-white border border-stone-300 hover:bg-stone-100 text-stone-800 flex items-center justify-center font-bold active:scale-95 shadow-2xs"
+                              onClick={() => handleAddProduct(sku)}
+                              className="px-3 py-1.5 rounded-xl bg-[#FEF2EE] hover:bg-[#FCE3D9] text-[#C84826] border border-[#F9CEB8] text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs flex items-center gap-1"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                              <span>Add</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProduct(sCode, sku.name)}
+                              className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs flex items-center gap-1"
+                              title="Delete from Order"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Delete</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quantity Stepper & Delete Row (Shown when Added) */}
+                      {isAdded && (
+                        <div className="mt-2.5 pt-2.5 border-t border-[#F9CEB8]/70 flex items-center justify-between flex-wrap gap-2">
+                          {/* Stepper Controls */}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-stone-700 mr-1">
+                              Qty:
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQuantity(sCode, Math.max(1, currentQty - 10))}
+                              className="w-7 h-7 rounded-lg bg-white border border-stone-300 hover:bg-stone-100 text-stone-800 flex items-center justify-center font-bold active:scale-95 shadow-2xs cursor-pointer"
+                              title="Decrease 10"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
@@ -539,20 +533,47 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
                               min="1"
                               value={currentQty}
                               onChange={(e) => handleUpdateQuantity(sCode, e.target.value)}
-                              className="w-16 px-1.5 py-1 text-center font-mono font-bold text-xs bg-white border border-[#C84826] rounded-lg text-stone-900 focus:outline-none"
+                              className="w-16 px-1.5 py-1 text-center font-mono font-bold text-xs bg-white border-2 border-[#C84826] rounded-lg text-stone-900 focus:outline-none shadow-2xs"
                             />
 
                             <button
                               type="button"
                               onClick={() => handleUpdateQuantity(sCode, currentQty + 10)}
-                              className="w-7 h-7 rounded-lg bg-white border border-stone-300 hover:bg-stone-100 text-stone-800 flex items-center justify-center font-bold active:scale-95 shadow-2xs"
+                              className="w-7 h-7 rounded-lg bg-white border border-stone-300 hover:bg-stone-100 text-stone-800 flex items-center justify-center font-bold active:scale-95 shadow-2xs cursor-pointer"
+                              title="Increase 10"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
 
-                            <span className="text-[10.5px] font-mono font-semibold text-stone-600 min-w-[45px]">
+                            <span className="text-[10.5px] font-mono font-bold text-stone-700 ml-0.5">
                               {unit}
                             </span>
+                          </div>
+
+                          {/* Quick Increment Chips & Delete Shortcut */}
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAddQty(sCode, 25)}
+                              className="px-1.5 py-0.5 text-[9px] font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-md border border-stone-200 transition"
+                            >
+                              +25
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAddQty(sCode, 50)}
+                              className="px-1.5 py-0.5 text-[9px] font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-md border border-stone-200 transition"
+                            >
+                              +50
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProduct(sCode, sku.name)}
+                              className="p-1 rounded-md text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition ml-1"
+                              title="Delete Product"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       )}
@@ -560,103 +581,16 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
                   );
                 })}
 
-                {filteredSkus.length === 0 && (
-                  <div className="p-6 text-center text-xs text-stone-400">
-                    No products matched your search.
+                {allAvailableSkus.length === 0 && (
+                  <div className="p-8 text-center text-xs text-stone-400 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
+                    No products matched "{productSearch}".
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Step 2: Logistics & Dispatch Details Card */}
-            <div className="bg-white rounded-3xl p-4 border border-[#ECEAE6] shadow-sm space-y-3">
-              <div className="flex items-center gap-2 pb-1 border-b border-stone-100">
-                <div className="w-6 h-6 rounded-md bg-[#FEF2EE] text-[#C84826] flex items-center justify-center text-xs font-black">
-                  2
-                </div>
-                <div>
-                  <h2 className="text-xs font-black text-stone-900">Delivery &amp; Logistics</h2>
-                  <p className="text-[10px] text-stone-500">Destination Yard Hub and Site Address</p>
-                </div>
-              </div>
-
-              <div className="space-y-2.5">
-                <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                    Fulfillment Kiln Yard / Logistics Hub <span className="text-[#C84826]">*</span>
-                  </label>
-                  <select
-                    value={deliveryHub}
-                    onChange={(e) => setDeliveryHub(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-medium text-stone-900 outline-none focus:bg-white focus:border-[#C84826]"
-                    required
-                  >
-                    <option value="Yard Hub 04 - Morbi GIDC">Yard Hub 04 - Morbi GIDC (Main Kiln Hub)</option>
-                    <option value="Ahmedabad Ring Road Depot">Ahmedabad Ring Road Depot</option>
-                    <option value="Surat Industrial Depot Hub">Surat Industrial Depot Hub</option>
-                    <option value="Rajkot Regional Logistics Yard">Rajkot Regional Logistics Yard</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                    Delivery Site / Godown Address <span className="text-[#C84826]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                    placeholder="Enter full godown or unloading site address"
-                    className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-medium text-stone-900 outline-none focus:bg-white focus:border-[#C84826]"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                      Contact Mobile <span className="text-[#C84826]">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                      placeholder="10-digit mobile"
-                      className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-mono text-stone-900 outline-none focus:bg-white focus:border-[#C84826]"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                      Required By Date
-                    </label>
-                    <input
-                      type="date"
-                      value={expectedDate}
-                      onChange={(e) => setExpectedDate(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl font-mono text-stone-900 outline-none focus:bg-white focus:border-[#C84826]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                    Special Dispatch Instructions / Transporter Notes (Optional)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={orderNotes}
-                    onChange={(e) => setOrderNotes(e.target.value)}
-                    placeholder="e.g. Call yard in-charge on arrival; morning dispatch slot requested."
-                    className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-200 rounded-xl text-stone-900 outline-none focus:bg-white focus:border-[#C84826] resize-none"
-                  ></textarea>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3: Order Review & Submit */}
-            <div className="bg-[#1C1917] rounded-3xl p-4 text-white shadow-md space-y-3">
+            {/* Order Indent Summary Box */}
+            <div className="bg-[#1C1917] rounded-3xl p-4 text-white shadow-md space-y-2.5">
               <div className="flex items-center justify-between pb-2 border-b border-stone-800">
                 <div className="flex items-center gap-2">
                   <Boxes className="w-4 h-4 text-[#FAA322]" />
@@ -664,37 +598,53 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
                     Order Indent Summary
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-[#FAA322] bg-white/10 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] font-mono text-[#FAA322] bg-white/10 px-2.5 py-0.5 rounded-full font-bold">
                   {totalSelectedSkus} SKUs • {totalQuantityUnits} Units
                 </span>
               </div>
 
               {selectedList.length > 0 ? (
                 <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                  {selectedList.map((item) => (
-                    <div
-                      key={item.sku.skuCode || item.sku.id}
-                      className="flex items-center justify-between text-xs py-1 border-b border-stone-800/60"
-                    >
-                      <span className="truncate pr-2 font-medium text-stone-300">
-                        {item.sku.name}
-                      </span>
-                      <span className="font-mono font-bold text-amber-300 shrink-0">
-                        {item.quantity} {item.unit}
-                      </span>
-                    </div>
-                  ))}
+                  {selectedList.map((item) => {
+                    const sCode = item.sku.skuCode || item.sku.id;
+                    return (
+                      <div
+                        key={sCode}
+                        className="flex items-center justify-between text-xs py-1 border-b border-stone-800/60"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProduct(sCode, item.sku.name)}
+                            className="text-stone-500 hover:text-rose-400 p-0.5 shrink-0"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                          <span className="truncate font-medium text-stone-300">
+                            {item.sku.name}
+                          </span>
+                        </div>
+                        <span className="font-mono font-bold text-amber-300 shrink-0">
+                          {item.quantity} {item.unit}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-xs text-stone-400 italic py-1">
-                  No products selected yet. Select products above to complete order.
+                  No products added yet. Click "+ Add" on the products above to prepare your order.
                 </p>
               )}
+            </div>
 
+            {/* SEPARATE SUBMIT BUTTON (OUTSIDE & BELOW ORDER SUMMARY) */}
+            <div className="space-y-2 pt-1">
               <button
                 type="submit"
                 disabled={isSubmitting || selectedList.length === 0}
-                className="w-full py-3 px-4 bg-[#C84826] hover:bg-[#b03d1e] active:scale-[0.99] text-white text-xs font-bold rounded-2xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 px-4 bg-[#A6300F] hover:bg-[#8B230C] active:scale-[0.99] text-white text-xs sm:text-sm font-black rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
@@ -703,22 +653,22 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
                   </>
                 ) : (
                   <>
-                    <span>Submit Material Order ({totalQuantityUnits} Units)</span>
-                    <Send className="w-3.5 h-3.5" />
+                    <Send className="w-4 h-4" />
+                    <span>Place Order Now ({totalQuantityUnits} Units)</span>
                   </>
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 font-medium pt-0.5">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                <span>Orders auto-sync directly to DuraGrit Production Console</span>
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-500 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Orders auto-sync directly with DuraGrit Web Admin Console</span>
               </div>
             </div>
           </form>
         )}
 
         {/* =================================================================== */}
-        {/* VIEW 2: MY ORDERS HISTORY (STATUS TRACKING)                         */}
+        {/* VIEW 2: MY ORDERS HISTORY (REALTIME STATUS FROM ADMIN PANEL)        */}
         {/* =================================================================== */}
         {activeView === 'my-orders' && (
           <div className="space-y-3">
@@ -753,104 +703,99 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
               </div>
             </div>
 
-            {/* Orders List */}
-            <div className="space-y-3">
-              {filteredHistoryOrders.map((ord) => (
-                <div
-                  key={ord.id}
-                  className="bg-white rounded-3xl p-4 border border-[#ECEAE6] shadow-sm space-y-3"
+            {/* Orders Feed */}
+            {filteredHistoryOrders.length > 0 ? (
+              <div className="space-y-2.5">
+                {filteredHistoryOrders.map((ord) => {
+                  const items = ord.items || [];
+                  const totalUnits = ord.totalQuantity || items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+                  const orderDate = ord.createdAt
+                    ? new Date(ord.createdAt).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : 'Recent';
+
+                  return (
+                    <div
+                      key={ord.id}
+                      className="bg-white rounded-2xl p-3.5 border border-[#ECEAE6] shadow-2xs space-y-2.5"
+                    >
+                      <div className="flex items-start justify-between gap-2 border-b border-stone-100 pb-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-black text-stone-900">
+                              {ord.orderNumber || ord.id}
+                            </span>
+                            {getStatusBadge(ord.status)}
+                          </div>
+                          <span className="text-[10px] text-stone-400 mt-0.5 block">
+                            Placed on {orderDate}
+                          </span>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-xs font-black text-[#C84826] font-mono">
+                            {totalUnits} Units
+                          </span>
+                          <span className="text-[9.5px] text-stone-400 block">
+                            {items.length} SKUs
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Items List */}
+                      <div className="space-y-1 bg-stone-50/80 rounded-xl p-2.5 border border-stone-100">
+                        {items.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                            <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                              <span className="font-mono text-[9px] font-bold text-[#C84826] bg-white px-1 py-0.2 rounded border border-[#F9CEB8]/60 shrink-0">
+                                {item.skuCode}
+                              </span>
+                              <span className="truncate text-stone-700 font-medium">
+                                {item.name}
+                              </span>
+                            </div>
+                            <span className="font-mono font-bold text-stone-900 shrink-0">
+                              {item.quantity} {item.unit || 'Units'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Admin Notes if provided */}
+                      {ord.adminNotes && (
+                        <div className="text-[10.5px] text-stone-600 bg-blue-50/70 border border-blue-100 rounded-xl p-2 flex items-start gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold text-blue-800">Admin Dispatch Note: </span>
+                            <span>{ord.adminNotes}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl p-8 text-center border border-[#ECEAE6] space-y-2">
+                <Package className="w-8 h-8 text-stone-300 mx-auto" />
+                <p className="text-xs font-bold text-stone-700">No orders found</p>
+                <p className="text-[10px] text-stone-400">
+                  {historySearch ? 'No orders match your search term' : 'You have not placed any orders yet.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveView('new-order')}
+                  className="mt-2 px-3 py-1.5 text-xs font-bold text-[#C84826] bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl hover:bg-[#FCE3D9] transition cursor-pointer"
                 >
-                  <div className="flex items-start justify-between gap-2 pb-2 border-b border-stone-100">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-black text-stone-900">
-                          {ord.orderNumber || ord.id}
-                        </span>
-                        {getStatusBadge(ord.status)}
-                      </div>
-                      <div className="text-[10px] text-stone-500 mt-0.5 flex items-center gap-1.5">
-                        <Calendar className="w-3 h-3 text-stone-400" />
-                        <span>
-                          {ord.createdAt
-                            ? new Date(ord.createdAt).toLocaleDateString('en-IN', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric',
-                              })
-                            : 'Recent'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <span className="text-[11px] font-mono font-bold bg-[#FEF2EE] text-[#C84826] px-2 py-0.5 rounded-full border border-[#F9CEB8]">
-                      {ord.totalQuantity || ord.items?.reduce((s, i) => s + (Number(i.quantity) || 0), 0) || 0} Units
-                    </span>
-                  </div>
-
-                  {/* Items Breakdown */}
-                  <div className="bg-stone-50 rounded-2xl p-2.5 space-y-1.5 border border-stone-100">
-                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
-                      Ordered Products ({ord.items?.length || 0})
-                    </span>
-                    {(ord.items || []).map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between text-xs py-0.5"
-                      >
-                        <span className="font-medium text-stone-800 truncate pr-2">
-                          {item.name || item.productName || item.skuCode}
-                        </span>
-                        <span className="font-mono font-bold text-[#C84826] shrink-0">
-                          {item.quantity} {item.unit || 'Units'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Logistics Info */}
-                  <div className="text-[10.5px] text-stone-600 space-y-1">
-                    <div className="flex items-start gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0 mt-0.5" />
-                      <span className="leading-tight">
-                        <strong>Hub:</strong> {ord.deliveryHub || 'Yard Hub 04 - Morbi GIDC'}
-                      </span>
-                    </div>
-                    {ord.deliveryAddress && (
-                      <div className="text-stone-500 text-[10px] pl-5 truncate">
-                        {ord.deliveryAddress}
-                      </div>
-                    )}
-                    {ord.notes && (
-                      <div className="text-amber-800 bg-amber-50/70 p-2 rounded-xl text-[10px] border border-amber-200/60 mt-1">
-                        <strong>Notes:</strong> {ord.notes}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {filteredHistoryOrders.length === 0 && (
-                <div className="bg-white rounded-3xl p-8 border border-stone-200 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-[#FEF2EE] text-[#C84826] mx-auto flex items-center justify-center">
-                    <ShoppingBag className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-stone-800">No Orders Placed Yet</h3>
-                    <p className="text-xs text-stone-500 mt-1">
-                      You haven't placed any material orders with this status.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveView('new-order')}
-                    className="px-4 py-2 bg-[#C84826] text-white text-xs font-bold rounded-xl shadow-xs inline-flex items-center gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Place Your First Order</span>
-                  </button>
-                </div>
-              )}
-            </div>
+                  Place Your First Order →
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>

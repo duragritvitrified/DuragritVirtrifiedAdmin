@@ -38,8 +38,15 @@ export function OrdersManagement() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [vendorFilter, setVendorFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [adminNoteInput, setAdminNoteInput] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+
+  React.useEffect(() => {
+    if (selectedOrder) {
+      setAdminNoteInput(selectedOrder.adminNotes || '');
+    }
+  }, [selectedOrder?.id]);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -144,10 +151,10 @@ export function OrdersManagement() {
   const handleUpdateStatus = async (orderId, newStatus) => {
     if (!updateOrderStatus) return;
     try {
-      await updateOrderStatus(orderId, newStatus);
+      await updateOrderStatus(orderId, newStatus, adminNoteInput);
       showToast(`✓ Order ${orderId} marked as ${newStatus}`);
       if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+        setSelectedOrder((prev) => ({ ...prev, status: newStatus, adminNotes: adminNoteInput }));
       }
     } catch (err) {
       showToast(`Error: ${err.message || 'Status update failed'}`);
@@ -790,15 +797,31 @@ export function OrdersManagement() {
               </div>
 
               {/* Status Update Action Bar */}
-              <div className="bg-[#1C1917] rounded-2xl p-4 text-white space-y-2.5 shadow-md">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 font-mono block">
-                  Update Order Fulfillment Status
-                </span>
-                <div className="flex flex-wrap gap-2">
+              <div className="bg-[#1C1917] rounded-2xl p-4 text-white space-y-3 shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 font-mono block">
+                    Update Order Fulfillment Status
+                  </span>
+                  <span className="text-[10px] text-stone-400">
+                    Syncs to Vendor Mobile App automatically
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={adminNoteInput}
+                    onChange={(e) => setAdminNoteInput(e.target.value)}
+                    placeholder="Dispatch / Fulfillment Note for Vendor (e.g. Dispatched via Truck GJ-36, LR #492)..."
+                    className="w-full px-3 py-2 text-xs bg-stone-900 border border-stone-700 rounded-xl text-white placeholder:text-stone-500 outline-none focus:border-amber-400 transition"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => handleUpdateStatus(selectedOrder.id, 'Confirmed')}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Confirm Order</span>
@@ -806,7 +829,7 @@ export function OrdersManagement() {
                   <button
                     type="button"
                     onClick={() => handleUpdateStatus(selectedOrder.id, 'Dispatched')}
-                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
                   >
                     <Truck className="w-3.5 h-3.5" />
                     <span>Mark Dispatched</span>
@@ -814,7 +837,7 @@ export function OrdersManagement() {
                   <button
                     type="button"
                     onClick={() => handleUpdateStatus(selectedOrder.id, 'Delivered')}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Mark Delivered</span>
@@ -822,7 +845,7 @@ export function OrdersManagement() {
                   <button
                     type="button"
                     onClick={() => handleUpdateStatus(selectedOrder.id, 'Cancelled')}
-                    className="px-3 py-1.5 bg-stone-700 hover:bg-rose-700 text-stone-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95 ml-auto"
+                    className="px-3.5 py-1.5 bg-stone-800 hover:bg-rose-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95 ml-auto"
                   >
                     <X className="w-3.5 h-3.5" />
                     <span>Cancel</span>
@@ -856,3 +879,4 @@ export function OrdersManagement() {
     </div>
   );
 }
+

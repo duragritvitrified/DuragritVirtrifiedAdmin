@@ -904,7 +904,7 @@ export const DataProvider = ({ children }) => {
           // 2. High-speed event stream for SKU/Batch/Vendor registries and live action events (excluding SMTP flood)
           supabase.from('cashback_requests')
             .select('*')
-            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%')
+            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%,request_id.ilike.ORDER_%')
             .not('request_id', 'ilike', 'SYNC_SMTP_%')
             .order('timestamp', { ascending: false })
             .limit(500),
@@ -1387,7 +1387,14 @@ export const DataProvider = ({ children }) => {
             const parsed = JSON.parse(row.flag_reason);
             if (parsed?.id) {
               const existing = orderMap.get(parsed.id) || {};
-              orderMap.set(parsed.id, { ...existing, ...parsed });
+              const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+              const incomingTime = new Date(parsed.updatedAt || parsed.createdAt || row.timestamp || row.created_at || 0).getTime();
+              orderMap.set(parsed.id, {
+                ...existing,
+                ...parsed,
+                status: (incomingTime >= existingTime && parsed.status) ? parsed.status : (existing.status || parsed.status),
+                updatedAt: Math.max(existingTime, incomingTime) ? new Date(Math.max(existingTime, incomingTime)).toISOString() : (parsed.updatedAt || existing.updatedAt),
+              });
             }
           } catch (_) {}
         }
