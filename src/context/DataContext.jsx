@@ -904,7 +904,7 @@ export const DataProvider = ({ children }) => {
           // 2. High-speed event stream for SKU/Batch/Vendor registries and live action events (excluding SMTP flood)
           supabase.from('cashback_requests')
             .select('*')
-            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%,request_id.ilike.ORDER_%')
+            .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
             .not('request_id', 'ilike', 'SYNC_SMTP_%')
             .order('timestamp', { ascending: false })
             .limit(500),
@@ -1373,13 +1373,19 @@ export const DataProvider = ({ children }) => {
 
       // C. Vendor Orders Synchronization
       const orderRows = allClaimsRows
-        .filter((c) => c.qr_serial === 'DURAGRIT_VENDOR_ORDERS' || (c.request_id && String(c.request_id).startsWith('ORDER_')))
+        .filter((c) => c.qr_serial === 'DURAGRIT_VENDOR_ORDERS' || (c.request_id && (String(c.request_id).startsWith('ORDER_') || String(c.request_id).startsWith('ORD_'))))
         .sort((a, b) => new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
 
       const orderMap = new Map();
       DEFAULT_INITIAL_ORDERS.forEach((o) => orderMap.set(o.id, o));
-      (loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS) || []).forEach((o) => orderMap.set(o.id, o));
-      ordersRef.current.forEach((o) => orderMap.set(o.id, o));
+      (loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS) || []).forEach((o) => {
+        if (o?.id) orderMap.set(o.id, { ...(orderMap.get(o.id) || {}), ...o });
+      });
+      if (Array.isArray(bridge?.orders)) {
+        bridge.orders.forEach((o) => {
+          if (o?.id) orderMap.set(o.id, { ...(orderMap.get(o.id) || {}), ...o });
+        });
+      }
 
       orderRows.forEach((row) => {
         if (row?.flag_reason) {
@@ -1387,16 +1393,21 @@ export const DataProvider = ({ children }) => {
             const parsed = JSON.parse(row.flag_reason);
             if (parsed?.id) {
               const existing = orderMap.get(parsed.id) || {};
-              const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
-              const incomingTime = new Date(parsed.updatedAt || parsed.createdAt || row.timestamp || row.created_at || 0).getTime();
               orderMap.set(parsed.id, {
                 ...existing,
                 ...parsed,
-                status: (incomingTime >= existingTime && parsed.status) ? parsed.status : (existing.status || parsed.status),
-                updatedAt: Math.max(existingTime, incomingTime) ? new Date(Math.max(existingTime, incomingTime)).toISOString() : (parsed.updatedAt || existing.updatedAt),
+                status: parsed.status || existing.status || 'Pending',
+                adminNotes: parsed.adminNotes !== undefined ? parsed.adminNotes : (existing.adminNotes || ''),
+                updatedAt: parsed.updatedAt || row.timestamp || row.created_at || new Date().toISOString(),
               });
             }
           } catch (_) {}
+        }
+      });
+
+      ordersRef.current.forEach((localOrder) => {
+        if (localOrder?.id && !orderMap.has(localOrder.id)) {
+          orderMap.set(localOrder.id, localOrder);
         }
       });
 
@@ -1464,11 +1475,22 @@ export const DataProvider = ({ children }) => {
     }, 3000);
 
     const onFocus = () => refreshAllData();
+    const onOrdersUpdated = () => refreshAllData();
+    const onStorageChange = (e) => {
+      if (e?.key === STORAGE_KEYS.ORDERS || e?.key === STORAGE_KEYS.VENDORS || e?.key === STORAGE_KEYS.CLAIMS) {
+        refreshAllData();
+      }
+    };
+
     window.addEventListener('focus', onFocus);
+    window.addEventListener('duragrit:orders-updated', onOrdersUpdated);
+    window.addEventListener('storage', onStorageChange);
 
     return () => {
       clearInterval(pollInterval);
       window.removeEventListener('focus', onFocus);
+      window.removeEventListener('duragrit:orders-updated', onOrdersUpdated);
+      window.removeEventListener('storage', onStorageChange);
       realtimeChannelRef.current?.unsubscribe?.();
     };
   }, [purgeLegacySeedsFromSupabase, refreshAllData]);
@@ -2319,20 +2341,23 @@ export const DataProvider = ({ children }) => {
       updatedAt: new Date().toISOString(),
     };
 
-    setOrders((prev) => {
-      const updated = [newOrder, ...prev.filter((o) => o.id !== orderId)];
-      try {
-        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
-      } catch (_) {}
-      return updated;
-    });
+    const updated = [newOrder, ...ordersRef.current.filter((o) => o.id !== orderId)];
+    ordersRef.current = updated;
+    setOrders(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+    } catch (_) {}
 
-    pushDevSync({ order: newOrder });
+    pushDevSync({ order: newOrder, orders: updated });
+    try {
+      window.dispatchEvent(new CustomEvent('duragrit:orders-updated', { detail: newOrder }));
+    } catch (_) {}
 
     if (SB_ONLINE) {
       try {
+        const reqId = `ORD_EVT_${orderId}_${Date.now()}`.slice(0, 50);
         await supabase.from('cashback_requests').insert({
-          request_id: `ORDER_EVENT_${orderId}_${Date.now()}`,
+          request_id: reqId,
           qr_serial: 'DURAGRIT_VENDOR_ORDERS',
           claim_value: newOrder.totalQuantity || newOrder.totalItems || 1,
           status: 'Approved',
@@ -2350,31 +2375,36 @@ export const DataProvider = ({ children }) => {
 
   const updateOrderStatus = useCallback(async (orderId, newStatus, adminNotes = '') => {
     let updatedOrder = null;
-    setOrders((prev) => {
-      const updated = prev.map((o) => {
-        if (o.id === orderId) {
-          updatedOrder = {
-            ...o,
-            status: newStatus,
-            adminNotes: adminNotes || o.adminNotes || '',
-            updatedAt: new Date().toISOString(),
-          };
-          return updatedOrder;
-        }
-        return o;
-      });
-      try {
-        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
-      } catch (_) {}
-      return updated;
+    const updated = ordersRef.current.map((o) => {
+      if (o.id === orderId) {
+        updatedOrder = {
+          ...o,
+          status: newStatus,
+          adminNotes: adminNotes !== undefined && adminNotes !== '' ? adminNotes : (o.adminNotes || ''),
+          updatedAt: new Date().toISOString(),
+        };
+        return updatedOrder;
+      }
+      return o;
     });
 
     if (updatedOrder) {
-      pushDevSync({ orderUpdate: updatedOrder });
+      ordersRef.current = updated;
+      setOrders(updated);
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+      } catch (_) {}
+
+      pushDevSync({ orderUpdate: updatedOrder, orders: updated });
+      try {
+        window.dispatchEvent(new CustomEvent('duragrit:orders-updated', { detail: updatedOrder }));
+      } catch (_) {}
+
       if (SB_ONLINE) {
         try {
+          const reqId = `ORD_ST_${orderId}_${Date.now()}`.slice(0, 50);
           await supabase.from('cashback_requests').insert({
-            request_id: `ORDER_STATUS_EVENT_${orderId}_${Date.now()}`,
+            request_id: reqId,
             qr_serial: 'DURAGRIT_VENDOR_ORDERS',
             claim_value: 1,
             status: 'Approved',

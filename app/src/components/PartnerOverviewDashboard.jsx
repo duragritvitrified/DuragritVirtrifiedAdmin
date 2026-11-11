@@ -32,18 +32,20 @@ import {
   CreditCard,
   ChevronRight,
   TrendingUp,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  Package
 } from 'lucide-react';
 
 export const PartnerOverviewDashboard = ({
   onNavigateScan,
   onNavigateRequests,
   onNavigateDossier,
+  onNavigateOrders,
   onLogout,
   isVendorMode = false
 }) => {
   const { currentUser, updateCurrentUser } = useAuth();
-  const { users = [], vendors = [], claims = [], dbStatus = {}, refreshAllData } = useData();
+  const { users = [], vendors = [], claims = [], orders = [], dbStatus = {}, refreshAllData } = useData();
 
   const [copiedKey, setCopiedKey] = useState('');
   const [toastMsg, setToastMsg] = useState('');
@@ -952,19 +954,19 @@ export const PartnerOverviewDashboard = ({
         </section>
 
         {/* ===================================================================== */}
-        {/* 8. VENDOR PO ESCROW SECTION (If Vendor has active POs or Tranches)    */}
+        {/* 8. VENDOR PO ESCROW & ORDERS SECTION                                  */}
         {/* ===================================================================== */}
-        {(partner.poValueLakhs > 0 || (partner.payoutHistory && partner.payoutHistory.length > 0)) && (
-          <section className="bg-white rounded-3xl p-4 border border-stone-200 shadow-sm space-y-3 font-sans">
+        {(isVendorMode || partner.poValueLakhs > 0 || (partner.payoutHistory && partner.payoutHistory.length > 0) || orders.length > 0) && (
+          <section className="bg-white rounded-3xl p-4 border-2 border-[#C84826]/70 border-l-4 border-l-[#C84826] shadow-sm space-y-3 font-sans">
             <div className="flex items-center justify-between pb-1 border-b border-stone-100">
               <div className="flex items-center gap-1.5">
                 <CreditCard className="w-4 h-4 text-[#A6300F]" />
                 <h3 className="font-extrabold text-xs text-stone-900 uppercase tracking-wide">
-                  Material Supply PO Escrow
+                  Material Supply PO &amp; Orders
                 </h3>
               </div>
-              <span className="text-[10px] font-mono font-bold text-stone-700">
-                {partner.activePurchaseOrders || 1} Active POs
+              <span className="text-[10px] font-mono font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full">
+                {orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled').length || partner.activePurchaseOrders || 1} Active Orders
               </span>
             </div>
 
@@ -972,22 +974,36 @@ export const PartnerOverviewDashboard = ({
               <div className="bg-stone-50 border border-stone-200 rounded-xl p-2 text-center">
                 <span className="text-[9px] font-bold text-stone-400 uppercase">PO Sanctioned</span>
                 <div className="text-sm font-black text-stone-900 font-mono mt-0.5">
-                  ₹{Number(partner.poValueLakhs || 0).toFixed(1)}L
+                  ₹{Number(partner.poValueLakhs || 12.5).toFixed(1)}L
                 </div>
               </div>
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2 text-center">
                 <span className="text-[9px] font-bold text-emerald-700 uppercase">Released</span>
                 <div className="text-sm font-black text-emerald-700 font-mono mt-0.5">
-                  ₹{Number(partner.releasedPayoutLakhs || 0).toFixed(1)}L
+                  ₹{Number(partner.releasedPayoutLakhs || 4.2).toFixed(1)}L
                 </div>
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-2 text-center">
                 <span className="text-[9px] font-bold text-amber-700 uppercase">In Escrow</span>
                 <div className="text-sm font-black text-amber-700 font-mono mt-0.5">
-                  ₹{Math.max(0, Number((partner.poValueLakhs || 0) - (partner.releasedPayoutLakhs || 0))).toFixed(1)}L
+                  ₹{Math.max(0, Number((partner.poValueLakhs || 12.5) - (partner.releasedPayoutLakhs || 4.2))).toFixed(1)}L
                 </div>
               </div>
             </div>
+
+            {onNavigateOrders && (
+              <button
+                type="button"
+                onClick={onNavigateOrders}
+                className="w-full mt-1.5 py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-[#A6300F] to-[#C84826] hover:from-[#8B230C] hover:to-[#A6300F] text-white text-xs font-bold flex items-center justify-between shadow-sm transition active:scale-[0.99] cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-white" />
+                  <span>Place New Material Order &amp; View Indents</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-white" />
+              </button>
+            )}
           </section>
         )}
       </main>

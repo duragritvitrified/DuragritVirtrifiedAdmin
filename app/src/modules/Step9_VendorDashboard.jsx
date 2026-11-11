@@ -6,6 +6,7 @@ export const Step9_VendorDashboard = ({
   onNavigateScan,
   onNavigateRequests,
   onNavigateDossier,
+  onNavigateOrders,
   onLogout
 }) => {
   return (
@@ -13,6 +14,7 @@ export const Step9_VendorDashboard = ({
       onNavigateScan={onNavigateScan}
       onNavigateRequests={onNavigateRequests}
       onNavigateDossier={onNavigateDossier}
+      onNavigateOrders={onNavigateOrders}
       onLogout={onLogout}
       isVendorMode={true}
     />

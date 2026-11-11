@@ -111,6 +111,38 @@ export default async function handler(req, res) {
         );
       }
 
+      if (payload.order && typeof payload.order === 'object') {
+        const o = payload.order;
+        const oId = o.id || `ORD-${Date.now().toString().slice(-6)}`;
+        inserts.push(
+          supabase.from('cashback_requests').insert({
+            request_id: `ORD_EVT_${oId}_${Date.now()}`.slice(0, 50),
+            qr_serial: 'DURAGRIT_VENDOR_ORDERS',
+            claim_value: o.totalQuantity || o.totalItems || 1,
+            status: 'Approved',
+            payout_method: 'UPI',
+            flag_reason: JSON.stringify(o),
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
+      if (payload.orderUpdate && typeof payload.orderUpdate === 'object') {
+        const u = payload.orderUpdate;
+        const oId = u.id || `ORD-${Date.now().toString().slice(-6)}`;
+        inserts.push(
+          supabase.from('cashback_requests').insert({
+            request_id: `ORD_ST_${oId}_${Date.now()}`.slice(0, 50),
+            qr_serial: 'DURAGRIT_VENDOR_ORDERS',
+            claim_value: 1,
+            status: 'Approved',
+            payout_method: 'UPI',
+            flag_reason: JSON.stringify(u),
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
       await Promise.allSettled(inserts);
       return res.status(200).json({ success: true, count: inserts.length });
     }
@@ -125,7 +157,8 @@ export default async function handler(req, res) {
         'DURAGRIT_VENDORS_STORE_V1',
         'DURAGRIT_VENDOR_EVENT',
         'DURAGRIT_DELETED_KEYS',
-        'DURAGRIT_SMTP_CONFIG'
+        'DURAGRIT_SMTP_CONFIG',
+        'DURAGRIT_VENDOR_ORDERS'
       ])
       .order('timestamp', { ascending: false })
       .limit(300);
@@ -134,11 +167,13 @@ export default async function handler(req, res) {
       skus: [],
       batches: [],
       vendors: [],
+      orders: [],
       deletedKeys: [],
       smtpConfig: null
     };
 
     const vendorEvents = [];
+    const orderEvents = [];
     (rows || []).forEach((r) => {
       try {
         const parsed = JSON.parse(r.flag_reason || '[]');
@@ -150,6 +185,8 @@ export default async function handler(req, res) {
           responseData.vendors = parsed;
         } else if (r.qr_serial === 'DURAGRIT_VENDOR_EVENT') {
           vendorEvents.push({ ...parsed, timestamp: r.timestamp });
+        } else if (r.qr_serial === 'DURAGRIT_VENDOR_ORDERS') {
+          orderEvents.push({ ...parsed, timestamp: r.timestamp });
         } else if (r.qr_serial === 'DURAGRIT_SMTP_CONFIG' && !responseData.smtpConfig && typeof parsed === 'object') {
           responseData.smtpConfig = parsed;
         } else if (r.qr_serial === 'DURAGRIT_DELETED_KEYS' && Array.isArray(parsed)) {
@@ -159,6 +196,19 @@ export default async function handler(req, res) {
         }
       } catch (_) {}
     });
+
+    // Fold order events chronologically into responseData.orders
+    if (orderEvents.length > 0) {
+      const oMap = new Map();
+      orderEvents.reverse().forEach((ev) => {
+        const id = ev.id || ev.orderNumber;
+        if (id) {
+          const prev = oMap.get(id) || {};
+          oMap.set(id, { ...prev, ...ev });
+        }
+      });
+      responseData.orders = Array.from(oMap.values());
+    }
 
     // Fold vendor events chronologically into responseData.vendors
     if (vendorEvents.length > 0) {

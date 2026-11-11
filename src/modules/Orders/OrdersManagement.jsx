@@ -48,6 +48,14 @@ export function OrdersManagement() {
     }
   }, [selectedOrder?.id]);
 
+  React.useEffect(() => {
+    refreshAllData?.();
+    const interval = setInterval(() => {
+      refreshAllData?.();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [refreshAllData]);
+
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 4000);
@@ -156,6 +164,7 @@ export function OrdersManagement() {
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder((prev) => ({ ...prev, status: newStatus, adminNotes: adminNoteInput }));
       }
+      setTimeout(() => refreshAllData?.(), 300);
     } catch (err) {
       showToast(`Error: ${err.message || 'Status update failed'}`);
     }

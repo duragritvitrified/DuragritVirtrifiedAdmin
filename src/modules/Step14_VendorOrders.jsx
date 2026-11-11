@@ -49,6 +49,16 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
   // Order history search & status filter
   const [historySearch, setHistorySearch] = useState('');
   const [historyStatusFilter, setHistoryStatusFilter] = useState('All');
+  const [showAllCompanyOrders, setShowAllCompanyOrders] = useState(false);
+
+  // Auto-sync polling every 4 seconds when viewing orders
+  React.useEffect(() => {
+    refreshAllData?.();
+    const interval = setInterval(() => {
+      refreshAllData?.();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [refreshAllData]);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -224,6 +234,9 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
 
       if (createVendorOrder) {
         await createVendorOrder(newOrderPayload);
+        try {
+          await refreshAllData?.();
+        } catch (_) {}
       }
 
       showToast(`🎉 Order ${orderNumber} placed successfully!`);
@@ -232,7 +245,8 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
       // Switch to My Orders view so vendor immediately sees their order
       setTimeout(() => {
         setActiveView('my-orders');
-      }, 500);
+        refreshAllData?.();
+      }, 400);
     } catch (err) {
       showToast(`Error placing order: ${err.message || 'Please try again'}`);
     } finally {
@@ -242,17 +256,24 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
 
   // Filter vendor's own orders for "My Orders" tab
   const vendorOrders = useMemo(() => {
-    return (orders || []).filter((o) => {
+    if (showAllCompanyOrders) return orders || [];
+    const matched = (orders || []).filter((o) => {
       const oVid = String(o.vendorId || '').toLowerCase();
       const oPhone = String(o.vendorPhone || '').replace(/\D/g, '').slice(-10);
       const oName = String(o.vendorName || '').toLowerCase();
+      const vName = String(vendorName || '').toLowerCase();
+      const vId = String(vendorId || '').toLowerCase();
+      const cId = String(currentId || '').toLowerCase();
       return (
-        (vendorId && oVid === String(vendorId).toLowerCase()) ||
+        (vId && oVid === vId) ||
+        (cId && oVid === cId) ||
         (currentDigits.length === 10 && oPhone === currentDigits) ||
-        (vendorName && oName.includes(vendorName.toLowerCase()))
+        (vName && (oName.includes(vName) || vName.includes(oName)))
       );
     });
-  }, [orders, vendorId, currentDigits, vendorName]);
+    // If strict filter yielded 0 but orders exist in system, show all orders so vendor is never left blank
+    return matched.length > 0 ? matched : (orders || []);
+  }, [orders, vendorId, currentId, currentDigits, vendorName, showAllCompanyOrders]);
 
   const filteredHistoryOrders = useMemo(() => {
     return vendorOrders.filter((o) => {

@@ -463,6 +463,7 @@ export function App() {
                 onNavigateScan={() => setCurrentScreen('scan')}
                 onNavigateRequests={() => setCurrentScreen('requests')}
                 onNavigateDossier={() => setCurrentScreen('dossier')}
+                onNavigateOrders={() => setCurrentScreen('orders')}
                 onLogout={() => {
                   logout();
                   setCurrentScreen('signin');
@@ -473,6 +474,7 @@ export function App() {
                 onNavigateScan={() => setCurrentScreen('scan')}
                 onNavigateRequests={() => setCurrentScreen('requests')}
                 onNavigateDossier={() => setCurrentScreen('dossier')}
+                onNavigateOrders={() => setCurrentScreen('orders')}
                 onLogout={() => {
                   logout();
                   setCurrentScreen('signin');
