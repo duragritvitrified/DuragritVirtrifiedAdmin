@@ -46,6 +46,7 @@ const STORAGE_KEYS = {
   BATCHES: 'duragrit_batches_v7',
   CLAIMS: 'duragrit_claims_v7',
   DELETED: 'duragrit_deleted_keys_v7',
+  ORDERS: 'duragrit_vendor_orders_v7',
 };
 
 // Legacy seed filters disabled — all Supabase records are preserved and synchronized
@@ -562,11 +563,120 @@ const DEFAULT_LIVE_SKUS = [
   }
 ];
 
+export const DEFAULT_INITIAL_ORDERS = [
+  {
+    id: 'ORD-882101',
+    orderNumber: 'ORD-882101',
+    vendorId: 'VND-101',
+    vendorName: 'Morbi Cerachem Tiles & Adhesives',
+    vendorPhone: '8826021114',
+    vendorEmail: 'duragrit07@gmail.com',
+    vendorLocation: 'Morbi Industrial Hub, Gujarat',
+    items: [
+      {
+        skuCode: 'DA-777',
+        name: 'DuraGrit DA 777 High Polymer Tile Adhesive',
+        category: 'Adhesives',
+        quantity: 300,
+        unit: 'Bags',
+        packSize: '20 kg Kraft Bag',
+      },
+      {
+        skuCode: 'EG-200',
+        name: 'DuraGrit Premium Epoxy Grout 2K',
+        category: 'Grouts',
+        quantity: 100,
+        unit: 'Buckets',
+        packSize: '5 kg Plastic Bucket',
+      }
+    ],
+    totalItems: 2,
+    totalQuantity: 400,
+    status: 'Confirmed',
+    deliveryAddress: 'Plot No. 42, GIDC Phase II, Morbi - 363642',
+    deliveryHub: 'Yard Hub 04 - Morbi GIDC',
+    notes: 'Please dispatch via morning batch truck. Contact godown manager before loading.',
+    createdAt: '2026-11-10T14:30:00.000Z',
+    updatedAt: '2026-11-10T16:00:00.000Z',
+  },
+  {
+    id: 'ORD-882102',
+    orderNumber: 'ORD-882102',
+    vendorId: 'VND-102',
+    vendorName: 'Gujarat Vitrified & Chemical Supplies',
+    vendorPhone: '9825100000',
+    vendorEmail: 'gujarat.vitrified@gmail.com',
+    vendorLocation: 'Ahmedabad Ring Road, Gujarat',
+    items: [
+      {
+        skuCode: 'WP-SBR',
+        name: 'DuraGrit SBR LatexFibre Waterproofing Primer',
+        category: 'Waterproofing',
+        quantity: 150,
+        unit: 'Cans',
+        packSize: '20 Liter Drum',
+      }
+    ],
+    totalItems: 1,
+    totalQuantity: 150,
+    status: 'Dispatched',
+    deliveryAddress: 'Ring Road Depot, Near Express Highway, Ahmedabad',
+    deliveryHub: 'Ahmedabad Ring Road Depot',
+    notes: 'Transport LR attached. Dispatch via Gujarat Fast Logistics.',
+    createdAt: '2026-11-09T11:15:00.000Z',
+    updatedAt: '2026-11-10T09:20:00.000Z',
+  },
+  {
+    id: 'ORD-882103',
+    orderNumber: 'ORD-882103',
+    vendorId: 'VND-103',
+    vendorName: 'Royal Vitrified Applicators & Tiles',
+    vendorPhone: '9825200000',
+    vendorEmail: 'royal.tiles@gmail.com',
+    vendorLocation: 'Surat Industrial Estate, Gujarat',
+    items: [
+      {
+        skuCode: 'DA-555',
+        name: 'DuraGrit DA 555 Premium Tile Adhesive',
+        category: 'Adhesives',
+        quantity: 250,
+        unit: 'Bags',
+        packSize: '20 kg Bag',
+      },
+      {
+        skuCode: 'WP-100',
+        name: 'DuraGrit Liquid Acrylic Waterproofing',
+        category: 'Waterproofing',
+        quantity: 80,
+        unit: 'Cans',
+        packSize: '10 Liter Can',
+      }
+    ],
+    totalItems: 2,
+    totalQuantity: 330,
+    status: 'Pending',
+    deliveryAddress: 'Gate 3, Surat Central Logistics Park, Surat',
+    deliveryHub: 'Surat Industrial Depot Hub',
+    notes: 'Urgent material requirement for township project. Earliest dispatch requested.',
+    createdAt: '2026-11-11T09:10:00.000Z',
+    updatedAt: '2026-11-11T09:10:00.000Z',
+  }
+];
+
 export const DataProvider = ({ children }) => {
   const deletedKeysRef = useRef(new Set([
     ...DEFAULT_DELETED_SEEDS,
     ...loadStorage(STORAGE_KEYS.DELETED, DEFAULT_DELETED_SEEDS)
   ]));
+
+  const [orders, setOrders] = useState(() => {
+    const loaded = loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS);
+    return Array.isArray(loaded) && loaded.length > 0 ? loaded : DEFAULT_INITIAL_ORDERS;
+  });
+  const ordersRef = useRef(orders);
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
 
   const [skus, setSkus] = useState(() => {
     const raw = loadStorage(STORAGE_KEYS.SKUS, DEFAULT_LIVE_SKUS);
@@ -1261,6 +1371,37 @@ export const DataProvider = ({ children }) => {
       batchesRef.current = nextBatches;
       claimsRef.current = nextClaims;
 
+      // C. Vendor Orders Synchronization
+      const orderRows = allClaimsRows
+        .filter((c) => c.qr_serial === 'DURAGRIT_VENDOR_ORDERS' || (c.request_id && String(c.request_id).startsWith('ORDER_')))
+        .sort((a, b) => new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
+
+      const orderMap = new Map();
+      DEFAULT_INITIAL_ORDERS.forEach((o) => orderMap.set(o.id, o));
+      (loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS) || []).forEach((o) => orderMap.set(o.id, o));
+      ordersRef.current.forEach((o) => orderMap.set(o.id, o));
+
+      orderRows.forEach((row) => {
+        if (row?.flag_reason) {
+          try {
+            const parsed = JSON.parse(row.flag_reason);
+            if (parsed?.id) {
+              const existing = orderMap.get(parsed.id) || {};
+              orderMap.set(parsed.id, { ...existing, ...parsed });
+            }
+          } catch (_) {}
+        }
+      });
+
+      const nextOrders = Array.from(orderMap.values()).sort(
+        (a, b) => new Date(b.createdAt || b.timestamp || 0) - new Date(a.createdAt || a.timestamp || 0)
+      );
+      ordersRef.current = nextOrders;
+      setOrders(nextOrders);
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(nextOrders));
+      } catch (_) {}
+
       setSkus(nextSkus);
       setUsers(nextUsers);
       setVendors(nextVendors);
@@ -1297,6 +1438,9 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(claims)); } catch (_) {}
   }, [claims]);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch (_) {}
+  }, [orders]);
 
   // Initial load + Realtime Supabase subscriptions + Cross-Port Polling
   useEffect(() => {
@@ -2155,6 +2299,92 @@ export const DataProvider = ({ children }) => {
   }, [vendors, updateVendor]);
 
   // ==================================================================
+  // 4B. VENDOR MATERIAL ORDERS (Indents, Statuses & Supabase Sync)
+  // ==================================================================
+  const createVendorOrder = useCallback(async (orderData) => {
+    const orderId = orderData.id || `ORD-${Date.now().toString().slice(-6)}`;
+    const newOrder = {
+      ...orderData,
+      id: orderId,
+      orderNumber: orderData.orderNumber || orderId,
+      status: orderData.status || 'Pending',
+      createdAt: orderData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setOrders((prev) => {
+      const updated = [newOrder, ...prev.filter((o) => o.id !== orderId)];
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+
+    pushDevSync({ order: newOrder });
+
+    if (SB_ONLINE) {
+      try {
+        await supabase.from('cashback_requests').insert({
+          request_id: `ORDER_EVENT_${orderId}_${Date.now()}`,
+          qr_serial: 'DURAGRIT_VENDOR_ORDERS',
+          claim_value: newOrder.totalQuantity || newOrder.totalItems || 1,
+          status: 'Approved',
+          payout_method: 'UPI',
+          flag_reason: JSON.stringify(newOrder),
+          timestamp: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.warn('Failed to push order to Supabase:', err);
+      }
+    }
+
+    return newOrder;
+  }, [pushDevSync]);
+
+  const updateOrderStatus = useCallback(async (orderId, newStatus, adminNotes = '') => {
+    let updatedOrder = null;
+    setOrders((prev) => {
+      const updated = prev.map((o) => {
+        if (o.id === orderId) {
+          updatedOrder = {
+            ...o,
+            status: newStatus,
+            adminNotes: adminNotes || o.adminNotes || '',
+            updatedAt: new Date().toISOString(),
+          };
+          return updatedOrder;
+        }
+        return o;
+      });
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+
+    if (updatedOrder) {
+      pushDevSync({ orderUpdate: updatedOrder });
+      if (SB_ONLINE) {
+        try {
+          await supabase.from('cashback_requests').insert({
+            request_id: `ORDER_STATUS_EVENT_${orderId}_${Date.now()}`,
+            qr_serial: 'DURAGRIT_VENDOR_ORDERS',
+            claim_value: 1,
+            status: 'Approved',
+            payout_method: 'UPI',
+            flag_reason: JSON.stringify(updatedOrder),
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
+          console.warn('Failed to push order status update to Supabase:', err);
+        }
+      }
+    }
+
+    return updatedOrder;
+  }, [pushDevSync]);
+
+  // ==================================================================
   // 5. QR SCAN & 2-STEP CASHBACK LIFECYCLE (Pending -> Approved -> Disbursed)
   // ==================================================================
   const submitScannedCode = useCallback(async ({ serialKey, user, proofImage, geoLat, geoLng }) => {
@@ -2849,6 +3079,7 @@ export const DataProvider = ({ children }) => {
     setVendors([]);
     setBatches([]);
     setClaims([]);
+    setOrders(DEFAULT_INITIAL_ORDERS);
     deletedKeysRef.current = new Set();
 
     try {
@@ -2882,6 +3113,7 @@ export const DataProvider = ({ children }) => {
         vendors,
         batches,
         claims,
+        orders,
         smtpConfig,
         updateSmtpConfig,
         dbStatus,
@@ -2904,6 +3136,8 @@ export const DataProvider = ({ children }) => {
         toggleVendorStatus,
         deleteVendor,
         releaseVendorPayout,
+        createVendorOrder,
+        updateOrderStatus,
         submitScannedCode,
         approveClaimStep1,
         releaseClaimPayout,

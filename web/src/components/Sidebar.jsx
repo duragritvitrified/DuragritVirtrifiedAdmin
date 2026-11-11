@@ -17,16 +17,18 @@ import {
   Settings,
   Smartphone,
   Truck,
-Eye,
+  Eye,
   FileText,
   X,
+  ShoppingBag,
 } from 'lucide-react';
 
 export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }) => {
   const { logout } = useAuth();
-  const { users = [], skus = [], vendors = [], claims = [] } = useData();
+  const { users = [], skus = [], vendors = [], claims = [], orders = [] } = useData();
 
   const pendingClaimsCount = claims.filter((c) => c.status === 'Pending').length;
+  const pendingOrdersCount = orders.filter((o) => o.status === 'Pending').length;
   const activeInstallsCount = getDeviceInstalls ? getDeviceInstalls().length : 0;
 
   const productSubItems = [
@@ -347,7 +349,32 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           </span>
         </button>
 
-        {/* 6. Email Reports & Template Audit (formerly 7, renumbered after hiding Onboarding & APK) */}
+        {/* 6. Vendor Orders Management */}
+        <button
+          onClick={() => handleNav('orders')}
+          className={navBtnClass(activeTab === 'orders')}
+        >
+          <div className="flex items-center space-x-3">
+            <ShoppingBag
+              className={`w-4 h-4 ${
+                activeTab === 'orders' ? 'text-[#C84826]' : 'text-stone-400'
+              }`}
+            />
+            <span>6. Orders</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {pendingOrdersCount > 0 && (
+              <span className="text-[9.5px] bg-[#C84826] text-white font-bold px-1.5 py-0.2 rounded-full font-mono animate-pulse">
+                {pendingOrdersCount} new
+              </span>
+            )}
+            <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded font-mono">
+              {orders.length}
+            </span>
+          </div>
+        </button>
+
+        {/* 7. Email Reports & Template Audit */}
         <div>
           <button
             onClick={() => toggleSection('email', 'email-templates')}
@@ -363,7 +390,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
                   isEmailSubActive ? 'text-[#C84826]' : 'text-stone-400'
                 }`}
               />
-              <span>6. Email Reports</span>
+              <span>7. Email Reports</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded">
@@ -417,7 +444,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           )}
         </div>
 
-        {/* 7. System Settings & Mobile Download Console (formerly 8) */}
+        {/* 8. System Settings & Mobile Download Console */}
         <div>
           <button
             onClick={() => toggleSection('settings', 'settings')}
@@ -433,7 +460,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
                   isSettingsSubActive ? 'text-[#C84826]' : 'text-stone-400'
                 }`}
               />
-              <span>7. System Settings</span>
+              <span>8. System Settings</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] bg-[#FEF2EE] text-[#C84826] font-bold px-1.5 py-0.5 rounded">

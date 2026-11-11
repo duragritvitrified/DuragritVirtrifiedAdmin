@@ -29,6 +29,7 @@ import { EmailReports } from './modules/16_EmailReports/EmailReports';
 import { SystemSettings } from './modules/17_SystemSettings/SystemSettings';
 import { AppInstallReports } from './modules/18_AppInstallReports/AppInstallReports';
 import { VendorManagement } from './modules/7_VendorDirectory/VendorManagement';
+import { OrdersManagement } from './modules/Orders/OrdersManagement';
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 import { PartnerVerificationPortal } from './components/PartnerVerificationPortal';
 
@@ -180,6 +181,7 @@ export function App() {
           ? 'Mobile Companion App APK & iPhone PWA Downloads'
           : 'System Settings & Supabase Sync Console';
       case 'app-installs': return 'Mobile App Installs & Device Telemetry Audit';
+      case 'orders': return 'Step 08 of 14: Vendor Orders & Dispatch Fulfillment';
       case 'vendor-manage':
       case 'vendors': return 'Step 07 of 14: Vendor Supply Chain Directory';
       default: return 'Step 11 of 14';
@@ -285,6 +287,7 @@ export function App() {
               {activeTab === 'reports-vendor' && <VendorSalesReport />}
               {activeTab === 'reports-financial' && <FinancialReports />}
               {(activeTab === 'vendor-manage' || activeTab === 'vendors') && <VendorManagement />}
+              {activeTab === 'orders' && <OrdersManagement />}
               {activeTab === 'onboarding' && (
                 <OnboardingDossier onNavigateToFieldApp={() => setDeviceMode('mobile')} />
               )}
