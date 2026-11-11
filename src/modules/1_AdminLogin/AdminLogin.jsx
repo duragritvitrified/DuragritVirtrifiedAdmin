@@ -179,25 +179,6 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
                 </p>
               </div>
 
-              {/* Quick Demo Helper */}
-              <div className="p-2.5 bg-blue-50/60 rounded-xl border border-blue-100/90 flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-[9.5px] text-blue-600 font-bold uppercase font-mono block">Master Admin Login</span>
-                  <span className="text-[11px] font-mono font-bold text-stone-800">admin@duragrit.com / 1234</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@duragrit.com');
-                    setPassword('1234');
-                    setLocalError('');
-                  }}
-                  className="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-[10.5px] font-bold font-mono transition cursor-pointer shadow-2xs active:scale-95"
-                >
-                  Auto-Fill
-                </button>
-              </div>
-
               {displayError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center space-x-2">
                   <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
@@ -205,7 +186,7 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-3.5">
+              <form onSubmit={handleSubmit} className="space-y-4 pt-1">
                 <div>
                   <label className="block text-xs font-bold text-stone-700 mb-1.5">
                     Official Email, Mobile or User ID <span className="text-blue-600">*</span>
@@ -216,21 +197,15 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@duragrit.com, mobile or USR-1001"
                     required
-                    className="w-full px-3.5 py-2.5 text-xs bg-white border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition font-medium"
+                    className="w-full px-3.5 py-2.5 sm:py-3 text-xs bg-white border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition font-medium"
                   />
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="mb-1.5">
                     <label className="block text-xs font-bold text-stone-700">
                       Password <span className="text-blue-600">*</span>
                     </label>
-                    <a
-                      href="mailto:info@duragritvitrified.com?subject=Admin%20Password%20Reset%20Request"
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                    >
-                      Forgot password?
-                    </a>
                   </div>
                   <div className="relative">
                     <input
@@ -239,7 +214,7 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="w-full px-3.5 pr-14 py-2.5 text-xs bg-white border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition font-medium"
+                      className="w-full px-3.5 pr-14 py-2.5 sm:py-3 text-xs bg-white border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition font-medium"
                     />
                     <button
                       type="button"
@@ -282,6 +257,10 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
                     </>
                   )}
                 </button>
+
+                <p className="text-[11px] sm:text-[11.5px] text-stone-500 text-center leading-relaxed font-sans pt-1">
+                  Authorized administrative personnel only. All access attempts, session activity, and operations are monitored and logged for security compliance.
+                </p>
               </form>
             </div>
 
