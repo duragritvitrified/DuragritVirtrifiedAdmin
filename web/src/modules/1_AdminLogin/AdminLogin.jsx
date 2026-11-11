@@ -66,14 +66,14 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
       <div className="w-full max-w-5xl mx-auto my-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7 items-stretch">
           
-          {/* Left Column: Full-Width Grand Creative Visual & Highlights */}
-          <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-5 sm:p-7 lg:p-7.5 flex flex-col justify-between h-full space-y-4">
-            {/* Grand Full-Width Creative Visual Showcase */}
-            <div className="relative group overflow-hidden rounded-2xl border border-stone-200/70 shadow-xs bg-[#FAF9F5] w-full flex-1 flex items-center justify-center p-2.5 sm:p-3.5">
+          {/* Left Column: Brand Creative Visual & Highlights */}
+          <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-5 sm:p-6 lg:p-7 flex flex-col justify-between">
+            {/* Centered Brand Emblem Badge (Clean Transparent PNG, No Grey Box) */}
+            <div className="flex flex-col items-center justify-center py-2 sm:py-4 my-auto">
               <img
-                src="/site-assets/admin-login-creative.jpg"
+                src="/site-assets/admin-login-creative.png"
                 alt="DuraGrit Vitrified Enterprise Architecture"
-                className="w-full h-auto max-h-[330px] sm:max-h-[370px] lg:max-h-[390px] object-contain drop-shadow-md rounded-2xl transform transition duration-500 group-hover:scale-[1.02]"
+                className="w-48 h-48 sm:w-56 sm:h-56 lg:w-60 lg:h-60 object-contain drop-shadow-[0_12px_24px_rgba(15,23,42,0.12)] transform transition duration-300 hover:scale-105"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = '/logo.png';
@@ -82,7 +82,7 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
             </div>
 
             {/* Feature Highlights */}
-            <div className="grid grid-cols-3 gap-2 pt-0.5">
+            <div className="grid grid-cols-3 gap-2 pt-3">
               <div className="p-2 rounded-xl bg-stone-50/80 border border-stone-200/80 shadow-2xs flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg bg-orange-50 text-[#C84826] border border-orange-200/60 flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -115,7 +115,7 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
             </div>
 
             {/* Bottom-Left Metadata Strip */}
-            <div className="text-[10.5px] text-stone-500 font-mono flex flex-wrap items-center justify-center sm:justify-between gap-1.5 pt-2.5 border-t border-stone-100">
+            <div className="text-[10.5px] text-stone-500 font-mono flex flex-wrap items-center justify-center sm:justify-between gap-1.5 pt-3 mt-3 border-t border-stone-100">
               <span>New Delhi, India</span>
               <span className="hidden sm:inline">•</span>
               <a href="mailto:info@duragritvitrified.com" className="hover:text-stone-800 transition">
@@ -128,8 +128,8 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
             </div>
           </div>
 
-          {/* Right Column: Matched Height Form Card */}
-          <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-5 sm:p-7 lg:p-7.5 flex flex-col justify-between h-full space-y-4">
+          {/* Right Column: Clean Compact Form Card */}
+          <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-5 sm:p-6 lg:p-7 flex flex-col justify-between">
             <div className="space-y-3.5">
               <div className="space-y-1">
                 <div className="inline-flex items-center space-x-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
