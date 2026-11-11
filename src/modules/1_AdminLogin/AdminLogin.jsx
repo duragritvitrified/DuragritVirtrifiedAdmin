@@ -66,31 +66,14 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
       <div className="w-full max-w-5xl mx-auto my-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7 items-stretch">
           
-          {/* Left Column: Brand, Centered Header Logo, Creative Visual & Highlights */}
+          {/* Left Column: Full-Width Grand Creative Visual & Highlights */}
           <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-5 sm:p-7 lg:p-7.5 flex flex-col justify-between h-full space-y-4">
-            {/* Top Centered Header Logo */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pb-0.5">
-              <img
-                src="/logo.png"
-                alt="DuraGrit Vitrified"
-                className="h-9 sm:h-11 w-auto object-contain"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/logo-white.png';
-                }}
-              />
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-stone-50 border border-stone-200 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Console v2.0
-              </span>
-            </div>
-
-            {/* Creative Visual Showcase */}
-            <div className="relative group overflow-hidden rounded-2xl border border-stone-200/80 shadow-xs bg-[#F7F6F2] w-full flex items-center justify-center p-2.5 sm:p-3.5 shrink-0">
+            {/* Grand Full-Width Creative Visual Showcase */}
+            <div className="relative group overflow-hidden rounded-2xl border border-stone-200/70 shadow-xs bg-[#FAF9F5] w-full flex-1 flex items-center justify-center p-2.5 sm:p-3.5">
               <img
                 src="/site-assets/admin-login-creative.jpg"
                 alt="DuraGrit Vitrified Enterprise Architecture"
-                className="h-44 sm:h-48 lg:h-52 w-auto aspect-square object-contain drop-shadow-md rounded-2xl transform transition duration-500 group-hover:scale-105"
+                className="w-full h-auto max-h-[330px] sm:max-h-[370px] lg:max-h-[390px] object-contain drop-shadow-md rounded-2xl transform transition duration-500 group-hover:scale-[1.02]"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = '/logo.png';
