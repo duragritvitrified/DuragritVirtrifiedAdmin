@@ -33,6 +33,10 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   const [toastMsg, setToastMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    refreshAllData?.();
+  }, [refreshAllData]);
+
   // OTP flow state
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
@@ -169,6 +173,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           active: true,
         });
 
+        refreshAllData?.();
         if (onLoginSuccess) onLoginSuccess('dashboard');
         return;
       }
@@ -384,6 +389,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           profileImage: targetVendor.avatarUrl || targetVendor.profileImage || '',
         });
 
+        refreshAllData?.();
         if (onLoginSuccess) onLoginSuccess('dashboard');
         return;
       }
@@ -448,6 +454,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         profileImage: matchedUser.avatarUrl || matchedUser.profileImage || '',
       });
 
+      refreshAllData?.();
       if (onLoginSuccess) onLoginSuccess('dashboard');
     } finally {
       setIsSubmitting(false);
@@ -538,6 +545,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           avatarUrl: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.avatarUrl || '',
           profileImage: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.profileImage || '',
         });
+        refreshAllData?.();
         setShowOtpModal(false);
         if (onLoginSuccess) onLoginSuccess('dashboard');
       } else {
@@ -553,6 +561,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           status: 'Active',
           hub: yardLocation,
         });
+        refreshAllData?.();
         setShowOtpModal(false);
         if (onLoginSuccess) onLoginSuccess('dashboard');
       }

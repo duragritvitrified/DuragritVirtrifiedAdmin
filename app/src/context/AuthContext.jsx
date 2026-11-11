@@ -12,6 +12,9 @@ const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
 
 export const getAppSessionKey = () => {
   if (typeof window !== 'undefined') {
+    if (window.DURAGRIT_APP_TYPE === 'admin' || window.Capacitor?.appId?.includes('admin')) {
+      return 'duragrit_admin_session_port3001';
+    }
     const port = String(window.location.port || '');
     if (port === '3001') {
       return 'duragrit_admin_session_port3001';

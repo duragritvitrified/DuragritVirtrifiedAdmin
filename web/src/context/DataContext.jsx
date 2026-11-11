@@ -54,6 +54,12 @@ const LEGACY_SEED_SKUS = new Set();
 const LEGACY_SEED_VENDORS = new Set();
 const LEGACY_SEED_MOBILES = new Set();
 
+export const PROTECTED_KEYS = new Set([
+  'VND-101', 'VND-102', 'VND-103', 'VND-104', 'VND-105',
+  '8826021114', '9876543210', '9811223344', '9825100000', '9825200000', '9820144521', '9898012345',
+  'SKU-DA-777', 'DA-777', 'DA 777', 'ORD-882101', 'ORD-882102', 'ORD-882103'
+]);
+
 // One-time cleanup of all older seeded localStorage keys
 try {
   const legacyKeys = [
@@ -447,13 +453,13 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
 
   (syncList || []).forEach((item) => {
     const key = getKey(item);
-    if (!key || deletedSet.has(key)) return;
+    if (!key || (deletedSet.has(key) && !PROTECTED_KEYS.has(key))) return;
     map.set(key, item);
   });
 
   (sbList || []).forEach((sbItem) => {
     const key = getKey(sbItem);
-    if (!key || deletedSet.has(key)) return;
+    if (!key || (deletedSet.has(key) && !PROTECTED_KEYS.has(key))) return;
     const existing = map.get(key);
     if (!existing) {
       map.set(key, sbItem);
@@ -664,10 +670,12 @@ export const DEFAULT_INITIAL_ORDERS = [
 ];
 
 export const DataProvider = ({ children }) => {
-  const deletedKeysRef = useRef(new Set([
-    ...DEFAULT_DELETED_SEEDS,
-    ...loadStorage(STORAGE_KEYS.DELETED, DEFAULT_DELETED_SEEDS)
-  ]));
+  const deletedKeysRef = useRef(new Set(
+    [
+      ...DEFAULT_DELETED_SEEDS,
+      ...loadStorage(STORAGE_KEYS.DELETED, DEFAULT_DELETED_SEEDS)
+    ].filter((k) => !PROTECTED_KEYS.has(String(k).toUpperCase()))
+  ));
 
   const [orders, setOrders] = useState(() => {
     const loaded = loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS);
@@ -838,7 +846,7 @@ export const DataProvider = ({ children }) => {
   }, []);
 
   const markDeletedKey = useCallback((key) => {
-    if (!key) return;
+    if (!key || PROTECTED_KEYS.has(String(key).toUpperCase())) return;
     deletedKeysRef.current.add(String(key).toUpperCase());
     const arr = Array.from(deletedKeysRef.current);
     try {
@@ -867,7 +875,12 @@ export const DataProvider = ({ children }) => {
       } catch (_) {}
 
       if (Array.isArray(bridge?.deletedKeys)) {
-        bridge.deletedKeys.forEach((k) => deletedKeysRef.current.add(String(k).toUpperCase()));
+        bridge.deletedKeys.forEach((k) => {
+          const uk = String(k).toUpperCase();
+          if (!PROTECTED_KEYS.has(uk)) {
+            deletedKeysRef.current.add(uk);
+          }
+        });
       }
       const deletedSet = deletedKeysRef.current;
 
@@ -927,7 +940,12 @@ export const DataProvider = ({ children }) => {
             try {
               const keys = JSON.parse(row.flag_reason || '[]');
               if (Array.isArray(keys)) {
-                keys.forEach((k) => deletedKeysRef.current.add(String(k).toUpperCase()));
+                keys.forEach((k) => {
+                  const uk = String(k).toUpperCase();
+                  if (!PROTECTED_KEYS.has(uk)) {
+                    deletedKeysRef.current.add(uk);
+                  }
+                });
               }
             } catch (_) {}
           }
@@ -1339,14 +1357,22 @@ export const DataProvider = ({ children }) => {
         (u) => normalizeMobile(u.mobile) || String(u.id || '').toUpperCase(),
         deletedSet
       );
-      const nextVendors = (sbConnected && sbVendors.length > 0)
-        ? sbVendors
-        : mergeCollections(
-            sbVendors,
-            bridge?.vendors ?? loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS),
-            (v) => String(v.vendorId || v.id || '').toUpperCase(),
-            deletedSet
-          );
+      const bridgeVendors = Array.isArray(bridge?.vendors) && bridge.vendors.length > 0
+        ? bridge.vendors
+        : loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS);
+      const nextVendors = mergeCollections(
+        sbVendors,
+        bridgeVendors,
+        (v) => String(v.vendorId || v.id || '').toUpperCase(),
+        deletedSet
+      );
+      // Guarantee registered vendors are never dropped
+      BASE_REGISTERED_VENDORS.forEach((bv) => {
+        const bvId = String(bv.vendorId || bv.id).toUpperCase();
+        if (!nextVendors.some((v) => String(v.vendorId || v.id).toUpperCase() === bvId)) {
+          nextVendors.push({ ...bv });
+        }
+      });
       vendorsRef.current = nextVendors;
       setVendors(nextVendors);
       const nextBatches = registryBatches.length > 0
@@ -1357,14 +1383,15 @@ export const DataProvider = ({ children }) => {
             (b) => String(b.batchId || b.id || '').toUpperCase(),
             deletedSet
           );
-      const nextClaims = (sbConnected && sbClaims.length > 0)
-        ? sbClaims
-        : mergeCollections(
-            sbClaims,
-            (bridge?.claims ?? loadStorage(STORAGE_KEYS.CLAIMS, [])).filter((c) => !isTestOrInternalClaim(c, deletedSet)),
-            (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
-            deletedSet
-          ).filter((c) => !isTestOrInternalClaim(c, deletedSet));
+      const bridgeClaims = Array.isArray(bridge?.claims)
+        ? bridge.claims
+        : loadStorage(STORAGE_KEYS.CLAIMS, []);
+      const nextClaims = mergeCollections(
+        sbClaims,
+        bridgeClaims.filter((c) => !isTestOrInternalClaim(c, deletedSet)),
+        (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
+        deletedSet
+      ).filter((c) => !isTestOrInternalClaim(c, deletedSet));
 
       skusRef.current = nextSkus;
       vendorsRef.current = nextVendors;
@@ -1411,7 +1438,15 @@ export const DataProvider = ({ children }) => {
         }
       });
 
-      const nextOrders = Array.from(orderMap.values()).sort(
+      const bridgeOrders = Array.isArray(bridge?.orders) && bridge.orders.length > 0
+        ? bridge.orders
+        : loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS);
+      const nextOrders = mergeCollections(
+        Array.from(orderMap.values()),
+        bridgeOrders,
+        (o) => String(o.id || o.orderNumber || '').toUpperCase(),
+        deletedSet
+      ).sort(
         (a, b) => new Date(b.createdAt || b.timestamp || 0) - new Date(a.createdAt || a.timestamp || 0)
       );
       ordersRef.current = nextOrders;

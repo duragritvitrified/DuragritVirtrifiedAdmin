@@ -153,8 +153,14 @@ export function App() {
   useEffect(() => {
     if (!currentUser?.isAuthenticated) {
       setCurrentScreen('signin');
+    } else {
+      refreshAllData?.();
     }
-  }, [currentUser]);
+  }, [currentUser?.isAuthenticated, refreshAllData]);
+
+  useEffect(() => {
+    refreshAllData?.();
+  }, [refreshAllData]);
 
   // Live Partner Session Invalidation when Admin Deactivates
   useEffect(() => {

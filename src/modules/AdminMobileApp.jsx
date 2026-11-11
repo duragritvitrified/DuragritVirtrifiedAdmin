@@ -63,6 +63,9 @@ import {
 const DEFAULT_RECEIPT_PREVIEW = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260" fill="none"><rect width="400" height="260" rx="16" fill="%23A62C11"/><rect x="12" y="12" width="376" height="236" rx="12" fill="%23FEF2EE" stroke="%23C84826" stroke-width="2"/><circle cx="200" cy="55" r="24" fill="%23059669"/><path d="M192 55L198 61L209 49" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="200" y="98" font-family="sans-serif" font-size="14" font-weight="bold" fill="%237c2d12" text-anchor="middle">NPCI PAYOUT SETTLEMENT VOUCHER</text><text x="200" y="120" font-family="monospace" font-size="11" fill="%239a3412" text-anchor="middle">DURAGRIT VITRIFIED ESCROW GATEWAY</text><line x1="30" y1="135" x2="370" y2="135" stroke="%23F9CEB8" stroke-width="1.5" stroke-dasharray="4 4"/><text x="40" y="160" font-family="sans-serif" font-size="11" fill="%237c2d12">Status:</text><text x="360" y="160" font-family="sans-serif" font-size="11" font-weight="bold" fill="%23059669" text-anchor="end">PAID / DISBURSED</text><text x="40" y="185" font-family="sans-serif" font-size="11" fill="%237c2d12">Verification:</text><text x="360" y="185" font-family="monospace" font-size="11" font-weight="bold" fill="%237c2d12" text-anchor="end">DUAL-CONTROL SETTLED</text><text x="40" y="210" font-family="sans-serif" font-size="11" fill="%237c2d12">Settlement Rail:</text><text x="360" y="210" font-family="sans-serif" font-size="11" font-weight="bold" fill="%237c2d12" text-anchor="end">IMPS / UPI 24x7</text><rect x="30" y="222" width="340" height="18" rx="4" fill="%23fde68a"/><text x="200" y="235" font-family="monospace" font-size="9" fill="%2378350f" font-weight="bold" text-anchor="middle">DURAGRIT VITRIFIED CORP SETTLEMENT ESCROW</text></svg>`;
 
 export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
+  if (typeof window !== 'undefined') {
+    window.DURAGRIT_APP_TYPE = 'admin';
+  }
   const { currentUser, loginUser, logout } = useAuth();
   const {
     claims = [],
@@ -435,6 +438,10 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       window.removeEventListener('duragrit:admin-ota-update-applied', handleSync);
     };
   }, []);
+
+  useEffect(() => {
+    refreshAllData?.();
+  }, [refreshAllData]);
 
   const handleTriggerAdminUpdate = () => {
     setShowAdminUpdateModal(false);
@@ -1022,6 +1029,8 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       location: 'Morbi Kiln HQ, Gujarat',
       status: 'Active'
     });
+
+    refreshAllData?.();
 
     setIsSubmittingLogin(false);
     playApproveChime();

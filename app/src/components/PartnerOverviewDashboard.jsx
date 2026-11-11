@@ -57,6 +57,10 @@ export const PartnerOverviewDashboard = ({
 
   // OTA Listeners
   useEffect(() => {
+    refreshAllData?.();
+  }, [refreshAllData]);
+
+  useEffect(() => {
     const handleSync = () => {
       setUpdateStatus(checkClientUpdateStatus());
     };
@@ -124,7 +128,7 @@ export const PartnerOverviewDashboard = ({
       (currentName && vName && (currentName === vName || currentName.includes(vName) || vName.includes(currentName))) ||
       (currentName && vContact && (currentName === vContact || currentName.includes(vContact) || vContact.includes(currentName)))
     );
-  }) || (vendors.length > 0 ? vendors[0] : null);
+  });
 
   const matchedUser = users.find((u) => {
     const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);

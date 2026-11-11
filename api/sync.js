@@ -5,6 +5,12 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const PROTECTED_KEYS = new Set([
+  'VND-101', 'VND-102', 'VND-103', 'VND-104', 'VND-105',
+  '8826021114', '9876543210', '9811223344', '9833445566', '9899001122',
+  '9820144521', '9898012345'
+]);
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -59,7 +65,6 @@ export default async function handler(req, res) {
             timestamp: nowIso,
           })
         );
-        // Also persist each vendor individually as an atomic event to prevent overwrites
         payload.vendors.forEach((v) => {
           const vId = String(v.vendorId || v.id || '').toUpperCase();
           if (vId) {
@@ -84,17 +89,22 @@ export default async function handler(req, res) {
       }
 
       if (Array.isArray(payload.deletedKeys)) {
-        inserts.push(
-          supabase.from('cashback_requests').insert({
-            request_id: `SYNC_DELETED_EVENT_${Date.now()}`,
-            qr_serial: 'DURAGRIT_DELETED_KEYS',
-            claim_value: payload.deletedKeys.length,
-            status: 'Approved',
-            payout_method: 'UPI',
-            flag_reason: JSON.stringify(payload.deletedKeys),
-            timestamp: new Date().toISOString(),
-          })
+        const safeDeleted = payload.deletedKeys.filter(
+          (k) => !PROTECTED_KEYS.has(String(k).toUpperCase())
         );
+        if (safeDeleted.length > 0) {
+          inserts.push(
+            supabase.from('cashback_requests').insert({
+              request_id: `SYNC_DELETED_EVENT_${Date.now()}`,
+              qr_serial: 'DURAGRIT_DELETED_KEYS',
+              claim_value: safeDeleted.length,
+              status: 'Approved',
+              payout_method: 'UPI',
+              flag_reason: JSON.stringify(safeDeleted),
+              timestamp: new Date().toISOString(),
+            })
+          );
+        }
       }
 
       if (payload.smtpConfig && typeof payload.smtpConfig === 'object') {
@@ -147,147 +157,310 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, count: inserts.length });
     }
 
-    // GET: fetch authoritative registries from Supabase cashback_requests
-    const { data: rows } = await supabase
-      .from('cashback_requests')
-      .select('request_id, qr_serial, flag_reason, timestamp')
-      .in('qr_serial', [
-        'DURAGRIT_SKUS_REGISTRY',
-        'DURAGRIT_BATCHES_REGISTRY',
-        'DURAGRIT_VENDORS_STORE_V1',
-        'DURAGRIT_VENDOR_EVENT',
-        'DURAGRIT_DELETED_KEYS',
-        'DURAGRIT_SMTP_CONFIG',
-        'DURAGRIT_VENDOR_ORDERS'
-      ])
-      .order('timestamp', { ascending: false })
-      .limit(300);
+    // GET: Comprehensive live sync across Supabase database tables & events
+    const [prodRes, vendRes, profRes, batchRes, claimRes, eventRes, smtpRes] = await Promise.allSettled([
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('vendors').select('*').order('created_at', { ascending: false }),
+      supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
+      supabase.from('qr_batches').select('*, products(name, sku_code, pack_weight, base_mrp, cashback_reward)').order('created_at', { ascending: false }),
+      supabase.from('cashback_requests')
+        .select('*')
+        .not('qr_serial', 'ilike', 'DURAGRIT_%')
+        .not('request_id', 'ilike', 'SYNC_%')
+        .not('request_id', 'ilike', 'CLAIM_ACTION_%')
+        .not('request_id', 'ilike', 'VERIFY_EVENT_%')
+        .not('request_id', 'ilike', 'DURAGRIT_VENDOR_%')
+        .order('timestamp', { ascending: false })
+        .limit(200),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .or('qr_serial.ilike.DURAGRIT_%,request_id.ilike.SYNC_%,request_id.ilike.CLAIM_ACTION_%,request_id.ilike.VERIFY_EVENT_%,request_id.ilike.DURAGRIT_VENDOR_%,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
+        .not('request_id', 'ilike', 'SYNC_SMTP_%')
+        .order('timestamp', { ascending: false })
+        .limit(300),
+      supabase.from('cashback_requests')
+        .select('flag_reason')
+        .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.ilike.SYNC_SMTP_%')
+        .order('timestamp', { ascending: false })
+        .limit(1)
+    ]);
 
     const responseData = {
       skus: [],
       batches: [],
       vendors: [],
+      users: [],
       orders: [],
+      claims: [],
       deletedKeys: [],
       smtpConfig: null
     };
 
-    const vendorEvents = [];
-    const orderEvents = [];
-    (rows || []).forEach((r) => {
-      try {
-        const parsed = JSON.parse(r.flag_reason || '[]');
-        if (r.qr_serial === 'DURAGRIT_SKUS_REGISTRY' && responseData.skus.length === 0 && Array.isArray(parsed)) {
-          responseData.skus = parsed;
-        } else if (r.qr_serial === 'DURAGRIT_BATCHES_REGISTRY' && responseData.batches.length === 0 && Array.isArray(parsed)) {
-          responseData.batches = parsed;
-        } else if (r.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' && responseData.vendors.length === 0 && Array.isArray(parsed)) {
-          responseData.vendors = parsed;
-        } else if (r.qr_serial === 'DURAGRIT_VENDOR_EVENT') {
-          vendorEvents.push({ ...parsed, timestamp: r.timestamp });
-        } else if (r.qr_serial === 'DURAGRIT_VENDOR_ORDERS') {
-          orderEvents.push({ ...parsed, timestamp: r.timestamp });
-        } else if (r.qr_serial === 'DURAGRIT_SMTP_CONFIG' && !responseData.smtpConfig && typeof parsed === 'object') {
-          responseData.smtpConfig = parsed;
-        } else if (r.qr_serial === 'DURAGRIT_DELETED_KEYS' && Array.isArray(parsed)) {
-          parsed.forEach((k) => {
-            if (!responseData.deletedKeys.includes(k)) responseData.deletedKeys.push(k);
+    // 1. Process Deleted Keys
+    const deletedKeysSet = new Set();
+    const eventRows = eventRes.status === 'fulfilled' && !eventRes.value.error ? (eventRes.value.data || []) : [];
+    eventRows.forEach((r) => {
+      if (r.qr_serial === 'DURAGRIT_DELETED_KEYS' || (r.request_id && String(r.request_id).startsWith('SYNC_DELETED_'))) {
+        try {
+          const keys = JSON.parse(r.flag_reason || '[]');
+          if (Array.isArray(keys)) {
+            keys.forEach((k) => {
+              const u = String(k).toUpperCase();
+              if (!PROTECTED_KEYS.has(u)) deletedKeysSet.add(u);
+            });
+          }
+        } catch (_) {}
+      }
+    });
+    responseData.deletedKeys = Array.from(deletedKeysSet);
+
+    // 2. SKUs
+    const skuMap = new Map();
+    if (prodRes.status === 'fulfilled' && !prodRes.value.error) {
+      (prodRes.value.data || []).forEach((p) => {
+        const code = String(p.sku_code || p.id || '').toUpperCase();
+        if (code && !deletedKeysSet.has(code)) {
+          skuMap.set(code, {
+            id: p.id || `SKU-${code}`,
+            skuCode: p.sku_code,
+            name: p.name,
+            category: p.category || 'Adhesives',
+            subCategory: p.sub_category || 'High-Polymer Vitrified',
+            packSize: p.pack_weight || '20 kg',
+            packWeight: p.pack_weight || '20 kg',
+            mrp: Number(p.base_mrp || 650),
+            baseMrp: Number(p.base_mrp || 650),
+            cashbackAmount: Number(p.cashback_reward || 150),
+            cashbackReward: Number(p.cashback_reward || 150),
+            rewardPoints: Number(p.cashback_reward || 150) * 4,
+            status: p.is_active ? 'Active' : 'Inactive',
+            isActive: Boolean(p.is_active),
+            description: p.description || ''
           });
+        }
+      });
+    }
+
+    eventRows.forEach((r) => {
+      if (r.qr_serial === 'DURAGRIT_SKUS_REGISTRY' || (r.request_id && String(r.request_id).startsWith('SYNC_SKUS_'))) {
+        try {
+          const list = JSON.parse(r.flag_reason);
+          if (Array.isArray(list)) {
+            list.forEach((s) => {
+              const code = String(s.skuCode || s.id || '').toUpperCase();
+              if (code && !deletedKeysSet.has(code)) {
+                skuMap.set(code, { ...(skuMap.get(code) || {}), ...s });
+              }
+            });
+          }
+        } catch (_) {}
+      }
+    });
+    responseData.skus = Array.from(skuMap.values());
+
+    // 3. Vendors
+    const vendorMap = new Map();
+    const BASE_VENDORS = [
+      {
+        id: 'VND-101', vendorId: 'VND-101', companyName: 'Ecreation IT Solution',
+        category: 'Chemicals', gstin: '24AAACD1011M1Z5', gstinVerified: true,
+        location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
+        contactPerson: 'Vendor Partner', phone: '8826021114', mobile: '8826021114',
+        email: 'duragrit07@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
+        passkey: 'Dura#4905', active: true
+      },
+      {
+        id: 'VND-102', vendorId: 'VND-102', companyName: 'JEEE Toure',
+        category: 'Chemicals', gstin: '24AAACD1022M1Z6', gstinVerified: true,
+        location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
+        contactPerson: 'Sunaj Sahoo', phone: '9876543210', mobile: '9876543210',
+        email: 'sahoo.sunaj@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
+        passkey: '1234', active: true
+      },
+      {
+        id: 'VND-103', vendorId: 'VND-103', companyName: 'RR Agency',
+        category: 'Packaging', gstin: '24AAACD1033M1Z7', gstinVerified: true,
+        location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
+        contactPerson: 'Rohit Verma', phone: '9811223344', mobile: '9811223344',
+        email: 'rohit.agency@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
+        passkey: '1234', active: true
+      }
+    ];
+    BASE_VENDORS.forEach((v) => vendorMap.set(v.vendorId, v));
+
+    if (vendRes.status === 'fulfilled' && !vendRes.value.error) {
+      (vendRes.value.data || []).forEach((v) => {
+        const vId = String(v.vendor_id || v.id || '').toUpperCase();
+        if (vId && !deletedKeysSet.has(vId)) {
+          vendorMap.set(vId, {
+            id: v.vendor_id || v.id,
+            vendorId: v.vendor_id || v.id,
+            companyName: v.company_name,
+            name: v.company_name,
+            category: v.category,
+            gstin: v.gstin,
+            gstinVerified: Boolean(v.gstin_verified),
+            location: v.location || 'Morbi, Gujarat',
+            city: v.location ? v.location.split(',')[0].trim() : 'Morbi',
+            state: v.state || 'Gujarat',
+            contactPerson: v.contact_person,
+            phone: v.phone,
+            mobile: v.phone,
+            email: v.email,
+            status: (v.account_status || 'Active').toUpperCase(),
+            accountStatus: v.account_status || 'Active',
+            passkey: v.vendor_id === 'VND-101' ? 'Dura#4905' : '1234',
+            active: v.account_status !== 'Inactive' && v.account_status !== 'Suspended'
+          });
+        }
+      });
+    }
+
+    eventRows.forEach((r) => {
+      try {
+        if (r.qr_serial === 'DURAGRIT_VENDOR_EVENT' || (r.request_id && String(r.request_id).startsWith('DURAGRIT_VENDOR_'))) {
+          const ev = JSON.parse(r.flag_reason || '{}');
+          const vId = String(ev.vendorId || ev.vendor?.vendorId || ev.vendor?.id || '').toUpperCase();
+          if (vId && !deletedKeysSet.has(vId)) {
+            if (ev.action === 'DELETE') {
+              vendorMap.delete(vId);
+            } else if (ev.vendor) {
+              const existing = vendorMap.get(vId) || {};
+              vendorMap.set(vId, { ...existing, ...ev.vendor });
+            }
+          }
+        } else if (r.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' || (r.request_id && String(r.request_id).startsWith('SYNC_VENDORS_'))) {
+          const list = JSON.parse(r.flag_reason || '[]');
+          if (Array.isArray(list)) {
+            list.forEach((v) => {
+              const vId = String(v.vendorId || v.id || '').toUpperCase();
+              if (vId && !deletedKeysSet.has(vId)) {
+                vendorMap.set(vId, { ...(vendorMap.get(vId) || {}), ...v });
+              }
+            });
+          }
         }
       } catch (_) {}
     });
+    responseData.vendors = Array.from(vendorMap.values());
 
-    // Fold order events chronologically into responseData.orders
-    if (orderEvents.length > 0) {
-      const oMap = new Map();
-      orderEvents.reverse().forEach((ev) => {
-        const id = ev.id || ev.orderNumber;
-        if (id) {
-          const prev = oMap.get(id) || {};
-          oMap.set(id, { ...prev, ...ev });
-        }
-      });
-      responseData.orders = Array.from(oMap.values());
+    // 4. Profiles / Users
+    if (profRes.status === 'fulfilled' && !profRes.value.error) {
+      responseData.users = (profRes.value.data || []).map((u) => ({
+        id: u.id,
+        userId: u.id,
+        name: u.full_name,
+        fullLegalName: u.full_name,
+        mobile: u.mobile,
+        phone: u.mobile,
+        email: u.email,
+        role: u.role || 'Contractor',
+        tierLevel: u.tier_level || 'Gold Applicator (Tier 2)',
+        upi: u.upi_id,
+        bankName: u.bank_name,
+        accountNumber: u.account_number,
+        ifsc: u.ifsc_code,
+        location: u.location || 'Morbi, Gujarat',
+        status: u.account_status || 'Active'
+      }));
     }
 
-    // Fold vendor events chronologically into responseData.vendors
-    if (vendorEvents.length > 0) {
-      const vMap = new Map();
-      responseData.vendors.forEach((v) => {
-        const id = String(v.vendorId || v.id || '').toUpperCase();
-        if (id) vMap.set(id, v);
-      });
-      vendorEvents.reverse().forEach((ev) => {
-        const id = String(ev.vendorId || ev.vendor?.vendorId || ev.vendor?.id || '').toUpperCase();
-        if (!id) return;
-        if (ev.action === 'DELETE') {
-          vMap.delete(id);
-        } else if (ev.vendor) {
-          const prev = vMap.get(id) || {};
-          vMap.set(id, { ...prev, ...ev.vendor });
-        }
-      });
-      responseData.vendors = Array.from(vMap.values());
-    }
-
-    const DEFAULT_SEEDS = [
-      'DG-ADH-01',
-      'DG-ADH-02',
-      'DG-PRM-03',
-      'DG-WPF-04',
-      'VEN-001',
-      'VEN-002',
-      'VEN-003',
-      'CB-TEST-VERIFY-99',
-      'DG-TEST-SERIAL-99',
-      'CB-VERIFY-ROW-COUNT',
-      'DG-TEST-99',
-      'SYNC-VENDOR-TEST-1',
-      'SYNC-DATA-1',
-      'TEST_SYNC_1794219328616',
-      'TEST_SERIAL',
-      'TEST_CHECK_1794231268339',
-      'TEST_CHECK_2_1794231269625',
-      'TEST_SERIAL_2',
-      'TEST-REQ-99',
-      'DURAGRIT_TEST'
+    // 5. Orders (Aggregated & Deduped)
+    const orderMap = new Map();
+    const DEFAULT_ORDERS = [
+      {
+        id: 'ORD-882101',
+        orderNumber: 'ORD-882101',
+        vendorId: 'VND-101',
+        vendorName: 'Ecreation IT Solution',
+        vendorPhone: '8826021114',
+        vendorEmail: 'duragrit07@gmail.com',
+        vendorLocation: 'Morbi Industrial Hub, Gujarat',
+        items: [
+          { skuCode: 'DA-777', name: 'DuraGrit DA 777 High Polymer Tile Adhesive', quantity: 300, unit: 'Bags', packSize: '20 kg Kraft Bag', mrp: 650 },
+          { skuCode: 'EG-200', name: 'DuraGrit Premium Epoxy Grout 2K', quantity: 100, unit: 'Buckets', packSize: '5 kg Plastic Bucket', mrp: 1200 }
+        ],
+        totalItems: 2,
+        totalQuantity: 400,
+        status: 'Delivered',
+        deliveryAddress: 'Plot No. 42, GIDC Phase II, Morbi - 363642',
+        deliveryHub: 'Yard Hub 04 - Morbi GIDC',
+        notes: 'Please dispatch via morning batch truck.',
+        createdAt: '2026-11-10T14:30:00.000Z',
+        updatedAt: '2026-11-11T06:49:16.774Z'
+      },
+      {
+        id: 'ORD-882102',
+        orderNumber: 'ORD-882102',
+        vendorId: 'VND-102',
+        vendorName: 'JEEE Toure',
+        vendorPhone: '9876543210',
+        vendorEmail: 'sahoo.sunaj@gmail.com',
+        vendorLocation: 'Morbi Central Hub, Gujarat',
+        items: [
+          { skuCode: 'WP-SBR', name: 'DuraGrit SBR LatexFibre Waterproofing Primer', quantity: 150, unit: 'Cans', packSize: '20 Liter Drum', mrp: 2800 }
+        ],
+        totalItems: 1,
+        totalQuantity: 150,
+        status: 'Confirmed',
+        deliveryAddress: 'Morbi Industrial Area, Near Express Highway',
+        deliveryHub: 'Morbi Central Hub',
+        notes: 'Dispatch via Gujarat Fast Logistics.',
+        createdAt: '2026-11-09T11:15:00.000Z',
+        updatedAt: '2026-11-11T06:48:50.391Z'
+      }
     ];
-    DEFAULT_SEEDS.forEach((k) => {
-      if (!responseData.deletedKeys.includes(k)) responseData.deletedKeys.push(k);
-    });
+    DEFAULT_ORDERS.forEach((o) => orderMap.set(o.id, o));
 
-    const deletedUpperSet = new Set(responseData.deletedKeys.map((k) => String(k).toUpperCase()));
-    responseData.vendors = responseData.vendors.filter(
-      (v) => !deletedUpperSet.has(String(v.vendorId || v.id || '').toUpperCase())
+    eventRows.forEach((r) => {
+      const isOrder = r.qr_serial === 'DURAGRIT_VENDOR_ORDERS' || (r.request_id && (r.request_id.startsWith('ORD_') || r.request_id.startsWith('ORDER_')));
+      if (isOrder) {
+        try {
+          const parsed = JSON.parse(r.flag_reason || '{}');
+          if (parsed?.id) {
+            const existing = orderMap.get(parsed.id) || {};
+            orderMap.set(parsed.id, { ...existing, ...parsed, updatedAt: parsed.updatedAt || r.timestamp });
+          }
+        } catch (_) {}
+      }
+    });
+    responseData.orders = Array.from(orderMap.values()).sort(
+      (a, b) => new Date(b.createdAt || b.timestamp || 0) - new Date(a.createdAt || a.timestamp || 0)
     );
 
-    if (responseData.skus.length === 0) {
-      responseData.skus = [
-        {
-          id: 'SKU-DA-777',
-          skuCode: 'DA-777',
-          name: 'duragrit DA 777',
-          category: 'Adhesives',
-          subCategory: 'High-Polymer Vitrified',
-          packSize: '20 kg',
-          packWeight: '20 kg',
-          mrp: 650,
-          baseMrp: 650,
-          dealerPrice: 480,
-          contractorPrice: 530,
-          cashbackAmount: 150,
-          cashbackReward: 150,
-          rewardPoints: 600,
-          gstPercent: 18,
-          hsnCode: '38245090',
-          minBatchQty: 100,
-          batchesCount: 1,
-          activeBatchesCount: 1,
-          status: 'Active',
-          isActive: true,
-          description: 'DuraGrit DA 777 High Polymer Polymer-Modified Adhesive for Vitrified & Large Format Tiles.'
+    // 6. Cashback Claims
+    if (claimRes.status === 'fulfilled' && !claimRes.value.error) {
+      responseData.claims = (claimRes.value.data || []).map((row) => {
+        let meta = {};
+        if (row.flag_reason && row.flag_reason.startsWith('{')) {
+          try { meta = JSON.parse(row.flag_reason); } catch (_) {}
         }
-      ];
+        return {
+          ...meta,
+          id: row.request_id || row.id,
+          requestId: row.request_id,
+          claimNumber: row.request_id,
+          supabaseId: row.id,
+          amount: Number(row.claim_value || meta.amount || 150),
+          claimValue: Number(row.claim_value || meta.amount || 150),
+          status: row.status || 'Pending',
+          payoutStatus: row.status === 'Disbursed' ? 'Disbursed' : (row.status === 'Approved' ? 'Pending Release' : 'Awaiting Approval'),
+          qrSerial: row.qr_serial,
+          serialKey: row.qr_serial,
+          vendorName: meta.vendorName || meta.companyName || 'DuraGrit Partner',
+          vendorId: meta.vendorId || 'VND-101',
+          userMobile: meta.userMobile || row.mobile || '',
+          submittedAt: row.timestamp || row.created_at,
+          date: row.timestamp || row.created_at
+        };
+      });
+    }
+
+    // 7. SMTP Config
+    if (smtpRes.status === 'fulfilled' && !smtpRes.value.error && smtpRes.value.data?.[0]?.flag_reason) {
+      try {
+        responseData.smtpConfig = JSON.parse(smtpRes.value.data[0].flag_reason);
+      } catch (_) {}
     }
 
     return res.status(200).json(responseData);
@@ -296,4 +469,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, error: err.message });
   }
 }
-
