@@ -564,14 +564,15 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
   return (
     <div className="w-full max-w-[420px] mx-auto h-full min-h-[100dvh] bg-[#FAF9F6] px-4 flex flex-col items-center justify-center font-serif overflow-hidden">
       <div className="w-full">
-        {/* Centered Official DuraGrit Vitrified Logo */}
-        <div className="flex justify-center mb-8 sm:mb-9">
+        {/* Centered Official DuraGrit Vitrified Vendor Badge */}
+        <div className="flex justify-center mb-6 sm:mb-7">
           <img
-            src="/logo.png"
-            alt="DuraGrit Vitrified"
-            className="h-10 sm:h-12 w-auto object-contain"
+            src="/site-assets/vendor-signin-logo.png"
+            alt="DuraGrit Vitrified Vendor Partner"
+            className="w-28 sm:w-32 h-auto max-h-28 sm:max-h-32 object-contain drop-shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-transform duration-200 hover:scale-105"
             onError={(e) => {
-              e.target.style.display = 'none';
+              e.target.onerror = null;
+              e.target.src = '/logo.png';
             }}
           />
         </div>
