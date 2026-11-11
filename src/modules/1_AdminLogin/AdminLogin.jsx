@@ -5,7 +5,8 @@ import {
   AlertTriangle,
   ArrowRight,
   ShieldCheck,
-  Smartphone
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 
 export const AdminLogin = ({ onSuccessfulLogin }) => {
@@ -67,30 +68,91 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
         {/* Center Vertical 1px Divider */}
         <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-[#E0DFDB]"></div>
 
-        {/* Left Half: Clean Architectural Brand Pane directly on #F8F7F3 */}
-        <div className="p-5 sm:p-8 lg:p-16 flex flex-col justify-between">
-          {/* Top-Left Brand Mark */}
-          <div className="flex items-center space-x-3.5">
-            <img
-              src="/logo.png"
-              alt="DuraGrit Vitrified"
-              className="h-9 sm:h-12 w-auto object-contain"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
+        {/* Left Half: Clean Architectural Brand Pane with Creative Illustration */}
+        <div className="p-5 sm:p-8 lg:p-14 flex flex-col justify-between">
+          <div>
+            {/* Top-Left Brand Mark & System Status Pill */}
+            <div className="flex items-center justify-between">
+              <img
+                src="/logo.png"
+                alt="DuraGrit Vitrified"
+                className="h-10 sm:h-12 w-auto object-contain"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/logo-white.png';
+                }}
+              />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-white border border-stone-200 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Console v2.0
+              </span>
+            </div>
 
-          {/* Clean Middle Architectural Space (Empty per PDF Page 1) */}
-          <div className="flex-1 my-12 hidden lg:flex items-center justify-center">
-            {/* Architectural subtle brand watermark */}
-            <div className="text-stone-300/40 text-8xl font-black tracking-widest select-none pointer-events-none">
-              DURAGRIT
+            {/* Creative Illustration Card below Logo */}
+            <div className="mt-5 sm:mt-7 space-y-4">
+              <div className="relative group overflow-hidden rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-md bg-stone-900">
+                <img
+                  src="/site-assets/admin-login-creative.jpg"
+                  alt="DuraGrit Vitrified Enterprise Architecture"
+                  className="w-full h-44 sm:h-60 lg:h-76 object-cover object-center transform transition duration-700 group-hover:scale-105"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/site-assets/slider1.jpg';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/20 to-transparent pointer-events-none"></div>
+                <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 flex items-center justify-between text-white pointer-events-none">
+                  <div>
+                    <span className="text-[9.5px] sm:text-[10.5px] font-bold uppercase tracking-wider text-[#FAA322] font-mono block">
+                      Ceramic Technology &amp; Supply Network
+                    </span>
+                    <span className="text-xs sm:text-sm font-black font-serif text-white tracking-tight block">
+                      Enterprise Vitrified Operations
+                    </span>
+                  </div>
+                  <span className="hidden sm:inline-flex items-center text-[9.5px] font-mono font-bold bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-white/30 text-white shadow-2xs">
+                    256-Bit Escrow
+                  </span>
+                </div>
+              </div>
+
+              {/* Feature Highlights beneath Creative Image */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-0.5">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-orange-50 text-[#C84826] border border-orange-200/60 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10.5px] font-extrabold text-stone-900 block truncate">Anti-Fraud</span>
+                    <span className="text-[9px] text-stone-400 block truncate">NPCI Moderation</span>
+                  </div>
+                </div>
+
+                <div className="p-2 sm:p-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10.5px] font-extrabold text-stone-900 block truncate">QR Registry</span>
+                    <span className="text-[9px] text-stone-400 block truncate">Unique Serialization</span>
+                  </div>
+                </div>
+
+                <div className="p-2 sm:p-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs flex items-center gap-2 col-span-2 sm:col-span-1">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10.5px] font-extrabold text-stone-900 block truncate">Live Payouts</span>
+                    <span className="text-[9px] text-stone-400 block truncate">Instant UPI/Bank</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Bottom-Left Metadata Strip */}
-          <div className="text-xs text-stone-500 font-mono flex flex-wrap items-center gap-2 pt-4 sm:pt-6 border-t border-[#E0DFDB]/60">
+          <div className="text-xs text-stone-500 font-mono flex flex-wrap items-center gap-2 pt-4 sm:pt-6 mt-6 border-t border-[#E0DFDB]/60">
             <span>New Delhi, India</span>
             <span>•</span>
             <a href="mailto:info@duragritvitrified.com" className="hover:text-stone-800 transition">
@@ -104,32 +166,9 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
         </div>
 
         {/* Right Half: Form Pane with Rounded White Card matching PDF Page 1 */}
-        <div className="p-4 sm:p-8 lg:p-16 flex items-center justify-center">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-sm p-6 sm:p-10 space-y-6">
+        <div className="p-4 sm:p-8 lg:p-14 flex items-center justify-center">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-sm p-6 sm:p-9 space-y-6">
             
-            {/* Dedicated Vendor / Contractor Mobile Portal Switcher Banner */}
-            <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl flex items-center justify-between shadow-2xs">
-              <div className="flex items-center space-x-2.5">
-                <div className="p-2 rounded-xl bg-[#C84826] text-white shrink-0 shadow-xs">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-stone-900 block leading-tight">
-                    Vendor Partner Portal
-                  </span>
-                  <span className="text-[10px] text-stone-500 block mt-0.5">
-                    For Masons, Dealers &amp; Contractors
-                  </span>
-                </div>
-              </div>
-              <a
-                href="/app/?app=vendor"
-                className="px-3 py-1.5 bg-[#C84826] hover:bg-[#A62C11] text-white text-[11px] font-bold rounded-xl transition shadow-xs active:scale-95 shrink-0 ml-2 font-sans"
-              >
-                Open Vendor App →
-              </a>
-            </div>
-
             <div className="space-y-2">
               <div className="inline-flex items-center space-x-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-semibold">
                 <Lock className="w-3.5 h-3.5 text-blue-600" />
