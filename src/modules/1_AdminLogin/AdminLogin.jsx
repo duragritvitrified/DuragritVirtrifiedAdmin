@@ -86,30 +86,16 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
             </div>
 
             {/* Creative Visual Showcase */}
-            <div className="relative group overflow-hidden rounded-2xl border border-stone-200/90 shadow-sm bg-stone-900 w-full h-44 sm:h-48 lg:h-52 shrink-0">
+            <div className="relative group overflow-hidden rounded-2xl border border-stone-200/80 shadow-xs bg-[#F7F6F2] w-full flex items-center justify-center p-2.5 sm:p-3.5 shrink-0">
               <img
                 src="/site-assets/admin-login-creative.jpg"
                 alt="DuraGrit Vitrified Enterprise Architecture"
-                className="w-full h-full object-cover object-center transform transition duration-700 group-hover:scale-105"
+                className="h-44 sm:h-48 lg:h-52 w-auto aspect-square object-contain drop-shadow-md rounded-2xl transform transition duration-500 group-hover:scale-105"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = '/site-assets/slider1.jpg';
+                  e.target.src = '/logo.png';
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/20 to-transparent pointer-events-none"></div>
-              <div className="absolute bottom-2.5 left-3 right-3 sm:bottom-3 sm:left-3.5 sm:right-3.5 flex items-center justify-between text-white pointer-events-none">
-                <div>
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#FAA322] font-mono block">
-                    Ceramic Technology &amp; Supply Network
-                  </span>
-                  <span className="text-xs sm:text-sm font-black font-serif text-white tracking-tight block">
-                    Enterprise Vitrified Operations
-                  </span>
-                </div>
-                <span className="hidden sm:inline-flex items-center text-[9px] font-mono font-bold bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/30 text-white shadow-2xs">
-                  256-Bit Escrow
-                </span>
-              </div>
             </div>
 
             {/* Feature Highlights */}
