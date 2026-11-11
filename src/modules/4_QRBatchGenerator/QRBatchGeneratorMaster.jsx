@@ -42,6 +42,31 @@ function createSimpleQRSvg() {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+function TokenQrPreview({ url, fallbackSvg }) {
+  const [svgData, setSvgData] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    const qrLib = QRCode?.default || QRCode;
+    if (qrLib && typeof qrLib.toString === 'function') {
+      qrLib.toString(url, { type: 'svg', margin: 0, width: 72 })
+        .then((res) => { if (active) setSvgData(res); })
+        .catch(() => {});
+    }
+    return () => { active = false; };
+  }, [url]);
+
+  if (svgData) {
+    return (
+      <div
+        className="w-16 h-16 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+        dangerouslySetInnerHTML={{ __html: svgData }}
+      />
+    );
+  }
+  return <img src={fallbackSvg} alt="QR" className="w-16 h-16" />;
+}
+
 export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
   const { skus = [], batches = [], createBatch, deleteBatch } = useData();
 
@@ -59,6 +84,9 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [generatedBatchModal, setGeneratedBatchModal] = useState(null);
   const [printStickersModal, setPrintStickersModal] = useState(null);
+  const [stickerPage, setStickerPage] = useState(1);
+  const [stickerSearch, setStickerSearch] = useState('');
+  const [stickerPageSize, setStickerPageSize] = useState(24);
   const [toastMsg, setToastMsg] = useState('');
 
   const showToast = (msg) => {
@@ -136,7 +164,42 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
 
   const getFullTokensForBatch = (batch) => {
     if (!batch) return [];
-    return Array.isArray(batch.tokens) ? batch.tokens : Array.isArray(batch.codes) ? batch.codes : [];
+    let list = Array.isArray(batch.tokens) ? batch.tokens : Array.isArray(batch.codes) ? batch.codes : [];
+    const targetQty = Number(batch.quantity || list.length || 0);
+
+    if (targetQty > 0 && list.length < targetQty) {
+      const cleanSku = String(batch.skuCode || selectedSku?.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const lotNum = String(batch.lotNumber || (batch.batchId ? String(batch.batchId).split('-').pop() : '') || '1001');
+      const prefix = batch.prefix || `BATCH-${cleanSku}-${currentMonthYear}`;
+      const dateMatch = String(prefix).match(/(20\d{2})[-_]?(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i);
+      const yyyymmm = dateMatch ? `${dateMatch[1]}${dateMatch[2].toUpperCase()}` : currentMonthYear.replace(/[^A-Z0-9]/g, '');
+      const reward = Number(batch.cashbackAmount ?? batch.cashbackReward ?? cashbackReward ?? 50);
+
+      const synthesized = [];
+      for (let i = 0; i < targetQty; i++) {
+        const existing = list[i];
+        if (existing && (existing.serialKey || existing.serial)) {
+          synthesized.push(existing);
+        } else {
+          const seq = String(i + 1).padStart(6, '0');
+          const serial = `DG-${cleanSku}-${yyyymmm}-${seq}`;
+          synthesized.push({
+            serialKey: serial,
+            serial: serial,
+            serial_token_id: serial,
+            verification_url: `https://verify.duragritvitrified.com/qr/${serial}`,
+            qrPayloadUrl: `https://verify.duragritvitrified.com/qr/${serial}`,
+            sku_code: cleanSku,
+            cashback_inr: reward,
+            cashbackAmount: reward,
+            lotNumber: lotNum,
+            isScanned: false,
+          });
+        }
+      }
+      list = synthesized;
+    }
+    return list;
   };
 
   const handleGenerateBatch = async (e) => {
@@ -212,8 +275,9 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     setIsGeneratingPdf(true);
     try {
       const toks = getFullTokensForBatch(targetBatch);
-      const fname = await exportThermal40x40Pdf(toks, buildBatchExportMeta(targetBatch));
-      showToast(`Exported 300 DPI 40×40mm Thermal Vector PDF: ${fname}`);
+      const meta = buildBatchExportMeta(targetBatch);
+      const fname = await exportThermal40x40Pdf(toks, { ...meta, quantity: toks.length });
+      showToast(`Exported 300 DPI 40×40mm Thermal Vector PDF (${toks.length} labels): ${fname}`);
     } catch (err) {
       showToast(`Thermal PDF Error: ${err.message}`);
     } finally {
@@ -226,8 +290,9 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     if (!targetBatch) return;
     try {
       const toks = getFullTokensForBatch(targetBatch);
-      const fname = await exportThermal40x40SvgSheet(toks, buildBatchExportMeta(targetBatch));
-      showToast(`Exported 300 DPI 40×40mm Vector Roll Sheet (.svg): ${fname}`);
+      const meta = buildBatchExportMeta(targetBatch);
+      const fname = await exportThermal40x40SvgSheet(toks, { ...meta, quantity: toks.length });
+      showToast(`Exported 300 DPI 40×40mm Vector Roll Sheet (${toks.length} labels): ${fname}`);
     } catch (err) {
       showToast(`SVG Export Error: ${err.message}`);
     }
@@ -238,8 +303,9 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     if (!targetBatch) return;
     try {
       const toks = getFullTokensForBatch(targetBatch);
-      const res = exportThermalZplStream(toks, buildBatchExportMeta(targetBatch), format);
-      showToast(`Dispatched ${res.filename} (${res.dpi} DPI) to ${res.dispatchedTo}!`);
+      const meta = buildBatchExportMeta(targetBatch);
+      const res = exportThermalZplStream(toks, { ...meta, quantity: toks.length }, format);
+      showToast(`Dispatched ${res.fileName} (${toks.length} labels @ 300 DPI) to ${res.port}!`);
     } catch (err) {
       showToast(`ZPL Stream Error: ${err.message}`);
     }
@@ -250,8 +316,9 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     if (!targetBatch) return;
     try {
       const toks = getFullTokensForBatch(targetBatch);
-      const fname = exportSerializedBatchManifestCsv(toks, buildBatchExportMeta(targetBatch));
-      showToast(`Downloaded Serialized Batch Manifest (.csv): ${fname}`);
+      const meta = buildBatchExportMeta(targetBatch);
+      const fname = exportSerializedBatchManifestCsv(toks, { ...meta, quantity: toks.length });
+      showToast(`Downloaded Serialized Batch Manifest (${toks.length} records): ${fname}`);
     } catch (err) {
       showToast(`CSV Manifest Error: ${err.message}`);
     }
@@ -266,34 +333,62 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     }
   };
 
-  const handlePrintAllStickers = (batch) => {
+  const handlePrintAllStickers = async (batch) => {
     const targetBatch = batch || printStickersModal || generatedBatchModal;
     if (!targetBatch) return;
 
     const allTokens = getFullTokensForBatch(targetBatch);
+    showToast(`Generating crisp vector print run for all ${allTokens.length} stickers...`);
+
+    const qrLib = QRCode?.default || QRCode;
+
+    // Generate inline SVG QR codes for all tokens in parallel chunks of 50
+    const svgMap = [];
+    const chunkSize = 50;
+    for (let i = 0; i < allTokens.length; i += chunkSize) {
+      const slice = allTokens.slice(i, i + chunkSize);
+      const chunkSvgs = await Promise.all(
+        slice.map(async (t) => {
+          const url = t.qrPayloadUrl || `https://verify.duragritvitrified.com/qr/${t.serialKey}`;
+          try {
+            if (qrLib && typeof qrLib.toString === 'function') {
+              return await qrLib.toString(url, { type: 'svg', margin: 0 });
+            }
+          } catch (_) {}
+          return '';
+        })
+      );
+      svgMap.push(...chunkSvgs);
+    }
+
     const printWindow = window.open('', '_blank', 'width=950,height=750');
     if (!printWindow) {
       showToast('Popup blocked. Allow popups to print stickers.');
       return;
     }
 
-    const fallbackQr = liveQrDataUrl || createSimpleQRSvg();
     const stickersHtml = allTokens
-      .map(
-        (t) => `
-      <div class="sticker">
-        <div class="sticker-header">DURAGRIT VITRIFIED</div>
-        <div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.qrPayloadUrl || ('https://verify.duragritvitrified.com/qr/' + t.serialKey))}" class="qr-img" alt="QR" onerror="this.src='${fallbackQr}'" /></div>
-        <div class="serial-key">${t.serialKey}</div>
-      </div>`
-      )
+      .map((t, idx) => {
+        const svgContent = svgMap[idx];
+        const qrDisplay = svgContent
+          ? svgContent
+          : `<img src="${liveQrDataUrl}" class="qr-img" alt="QR" />`;
+
+        return `
+        <div class="sticker">
+          <div class="sticker-header">DURAGRIT VITRIFIED</div>
+          <div class="qr-container">${qrDisplay}</div>
+          <div class="serial-key">${t.serialKey}</div>
+          <div class="cashback-badge">₹${Number(t.cashbackAmount || targetBatch.cashbackAmount || 50)} Cashback</div>
+        </div>`;
+      })
       .join('');
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>DuraGrit_${targetBatch.batchId}</title>
+          <title>DuraGrit_${targetBatch.batchId}_All_${allTokens.length}</title>
           <style>
             @page { size: A4 portrait; margin: 8mm; }
             * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
@@ -301,20 +396,23 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
             .header-banner { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1.5px solid #E7E5E0; display: flex; justify-content: space-between; font-size: 11px; }
             .header-banner strong { font-size: 13px; color: #A62C11; }
             .sticker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; justify-items: center; }
-            .sticker { width: 44mm; height: 44mm; border: 1.5px solid #1C1917; border-radius: 4px; padding: 2.5mm 2mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; page-break-inside: avoid; }
+            .sticker { width: 44mm; height: 44mm; border: 1.5px solid #1C1917; border-radius: 4px; padding: 2mm 1.5mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; page-break-inside: avoid; }
             .sticker-header { width: 100%; background: #C84826; color: #fff; font-size: 7px; font-weight: 900; padding: 1.5px 0; border-radius: 2px; }
+            .qr-container { width: 25mm; height: 25mm; display: flex; align-items: center; justify-content: center; }
+            .qr-container svg { width: 100%; height: 100%; display: block; }
             .qr-img { width: 25mm; height: 25mm; display: block; }
             .serial-key { font-family: monospace; font-size: 7px; font-weight: 800; color: #1C1917; }
+            .cashback-badge { font-size: 6px; font-weight: 700; color: #C84826; }
             @media print { .no-print { display: none !important; } }
           </style>
         </head>
         <body>
           <div class="header-banner no-print">
-            <div><strong>DURAGRIT VITRIFIED — BATCH STICKER PRINT RUN</strong><div>Batch: ${targetBatch.batchId} • ${targetBatch.productName}</div></div>
+            <div><strong>DURAGRIT VITRIFIED — COMPLETE BATCH PRINT RUN</strong><div>Batch: ${targetBatch.batchId} • ${targetBatch.productName}</div></div>
             <div>Total: <strong>${allTokens.length} Stickers</strong></div>
           </div>
           <div class="sticker-grid">${stickersHtml}</div>
-          <script>window.onload = function() { setTimeout(function() { window.print(); }, 400); };</script>
+          <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); };</script>
         </body>
       </html>
     `);
@@ -328,32 +426,66 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     setIsGeneratingPdf(true);
     try {
       const allTokens = getFullTokensForBatch(targetBatch);
+      showToast(`Building complete A4 sticker manifest for all ${allTokens.length} tokens...`);
+
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-      doc.setFillColor(200, 72, 38); // PDF Red #C84826
-      doc.rect(0, 0, 210, 26, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.setTextColor(255, 255, 255);
-      doc.text('DURAGRIT VITRIFIED', 15, 12);
-      doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(254, 242, 238);
-      doc.text(`QR BATCH MANIFEST: ${targetBatch.batchId} (${allTokens.length} TOKENS)`, 15, 19);
-
       const qrLib = QRCode?.default || QRCode;
+
+      // Pre-generate QR data URLs in parallel chunks of 50
+      const qrDataUrls = new Array(allTokens.length);
+      const chunkSize = 50;
+      for (let i = 0; i < allTokens.length; i += chunkSize) {
+        const slice = allTokens.slice(i, i + chunkSize);
+        const chunkUrls = await Promise.all(
+          slice.map(async (tok) => {
+            const url = tok.qrPayloadUrl || `https://verify.duragritvitrified.com/qr/${tok.serialKey}`;
+            try {
+              if (qrLib && typeof qrLib.toDataURL === 'function') {
+                return await qrLib.toDataURL(url, { width: 120, margin: 0, errorCorrectionLevel: 'M' });
+              }
+            } catch (_) {}
+            return null;
+          })
+        );
+        for (let j = 0; j < chunkUrls.length; j++) {
+          qrDataUrls[i + j] = chunkUrls[j];
+        }
+      }
+
       let currentY = 34;
       const stickerW = 42;
       const stickerH = 40;
       const gapX = 4;
       const gapY = 4;
       let colIndex = 0;
+      let pageNum = 1;
+
+      const renderHeader = (p) => {
+        doc.setFillColor(200, 72, 38);
+        doc.rect(0, 0, 210, 26, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(255, 255, 255);
+        doc.text('DURAGRIT VITRIFIED', 15, 12);
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(254, 242, 238);
+        doc.text(
+          `QR BATCH MANIFEST: ${targetBatch.batchId} • ${targetBatch.productName || 'PRODUCT'} (${allTokens.length} TOKENS) • PAGE ${p}`,
+          15,
+          19
+        );
+      };
+
+      renderHeader(1);
 
       for (let i = 0; i < allTokens.length; i++) {
         const tok = allTokens[i];
         if (currentY + stickerH > 285) {
           doc.addPage();
-          currentY = 15;
+          pageNum++;
+          renderHeader(pageNum);
+          currentY = 34;
           colIndex = 0;
         }
         const currentX = 15 + colIndex * (stickerW + gapX);
@@ -368,20 +500,23 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         doc.setTextColor(255, 255, 255);
         doc.text('DURAGRIT VITRIFIED', currentX + stickerW / 2, currentY + 3.9, { align: 'center' });
 
-        let tokQr = liveQrDataUrl;
-        if (qrLib && typeof qrLib.toDataURL === 'function' && allTokens.length <= 200) {
-          try {
-            tokQr = await qrLib.toDataURL(`https://verify.duragritvitrified.com/qr/${tok.serialKey}`, { width: 100, margin: 0 });
-          } catch (_) {}
-        }
-        if (tokQr && tokQr.startsWith('data:image/png')) {
-          doc.addImage(tokQr, 'PNG', currentX + (stickerW - 20) / 2, currentY + 6.5, 20, 20);
+        const tokQr = qrDataUrls[i];
+        if (tokQr && tokQr.startsWith('data:image/')) {
+          doc.addImage(tokQr, 'PNG', currentX + (stickerW - 22) / 2, currentY + 6.2, 22, 22);
+        } else {
+          doc.setDrawColor(200, 72, 38);
+          doc.rect(currentX + (stickerW - 22) / 2, currentY + 6.2, 22, 22, 'S');
         }
 
         doc.setFont('courier', 'bold');
-        doc.setFontSize(6.2);
+        doc.setFontSize(5.8);
         doc.setTextColor(28, 25, 23);
-        doc.text(tok.serialKey, currentX + stickerW / 2, currentY + 33, { align: 'center' });
+        doc.text(tok.serialKey, currentX + stickerW / 2, currentY + 32, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(4.8);
+        doc.setTextColor(166, 44, 17);
+        doc.text(`₹${Number(tok.cashbackAmount || targetBatch.cashbackAmount || 50)} Cashback`, currentX + stickerW / 2, currentY + 36.5, { align: 'center' });
 
         colIndex++;
         if (colIndex >= 4) {
@@ -390,8 +525,9 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         }
       }
 
-      doc.save(`DURAGRIT_${targetBatch.batchId}_STICKERS.pdf`);
-      showToast(`PDF downloaded for ${targetBatch.batchId}!`);
+      const fileName = `DURAGRIT_${targetBatch.batchId}_ALL_${allTokens.length}_STICKERS.pdf`;
+      doc.save(fileName);
+      showToast(`PDF Manifest (${allTokens.length} stickers) downloaded: ${fileName}`);
     } catch (err) {
       showToast(`PDF Error: ${err.message}`);
     } finally {
@@ -901,7 +1037,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                 className="flex-1 py-2.5 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-[#F59B7F]" />
-                <span>{isGeneratingPdf ? 'Generating...' : 'Download A4 Sticker Sheet PDF'}</span>
+                <span>{isGeneratingPdf ? 'Generating PDF...' : `Download A4 Sheet PDF (${generatedBatchModal.quantity || generatedBatchModal.tokens?.length || 0})`}</span>
               </button>
               <button
                 onClick={() => {
@@ -912,7 +1048,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                 className="flex-1 py-2.5 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Preview &amp; Print Stickers</span>
+                <span>Preview &amp; Print Stickers ({generatedBatchModal.quantity || generatedBatchModal.tokens?.length || 0})</span>
               </button>
             </div>
           </div>
@@ -922,69 +1058,205 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
       {/* Print Stickers Preview Modal */}
       {printStickersModal && (() => {
         const modalTokens = getFullTokensForBatch(printStickersModal);
+        const filteredTokens = modalTokens.filter((t) =>
+          !stickerSearch || t.serialKey.toLowerCase().includes(stickerSearch.toLowerCase().trim())
+        );
+
+        const effectiveSize = stickerPageSize === 'all' ? (filteredTokens.length || 1) : Number(stickerPageSize);
+        const totalPages = Math.max(1, Math.ceil(filteredTokens.length / effectiveSize));
+        const activePage = Math.min(Math.max(1, stickerPage), totalPages);
+        const startIdx = (activePage - 1) * effectiveSize;
+        const displayedTokens = stickerPageSize === 'all'
+          ? filteredTokens
+          : filteredTokens.slice(startIdx, startIdx + effectiveSize);
+
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-2xl w-full border border-[#E7E5E0] shadow-2xl p-6 text-[#1C1917] space-y-4 max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between pb-3 border-b border-stone-100 shrink-0">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+            <div className="bg-white rounded-3xl max-w-4xl w-full border border-[#E7E5E0] shadow-2xl p-5 sm:p-6 text-[#1C1917] space-y-3.5 max-h-[92vh] flex flex-col">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-100 gap-2 shrink-0">
                 <div>
-                  <h3 className="font-bold text-sm text-[#1C1917]">Thermal Roll Sticker Preview ({modalTokens.length} Stickers)</h3>
-                  <p className="text-[11px] text-stone-400">Batch {printStickersModal.batchId} • Click any serial below to copy</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-[#1C1917]">
+                      Batch Sticker Manifest &amp; Thermal Roll Preview
+                    </h3>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      {modalTokens.length} Total Stickers
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-0.5">
+                    Batch: <span className="font-mono font-bold text-[#A62C11]">{printStickersModal.batchId}</span> • {printStickersModal.productName} • ₹{printStickersModal.cashbackAmount || 50} Cashback/Unit
+                  </p>
                 </div>
-                <button onClick={() => setPrintStickersModal(null)} className="text-stone-400 hover:text-stone-600 p-1 cursor-pointer">
+                <button
+                  onClick={() => {
+                    setPrintStickersModal(null);
+                    setStickerSearch('');
+                    setStickerPage(1);
+                  }}
+                  className="text-stone-400 hover:text-stone-600 p-1 cursor-pointer self-end sm:self-auto"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 bg-[#FAF9F6] rounded-2xl border border-[#E7E5E0] grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {modalTokens.slice(0, 24).map((t, i) => (
-                  <div
-                    key={i}
-                    onClick={() => copySerial(t.serialKey)}
-                    className="bg-white p-2.5 rounded-xl border-2 border-[#1C1917] hover:border-[#C84826] shadow-xs flex flex-col items-center text-center justify-between cursor-pointer transition"
-                    title="Click to copy serial key"
-                  >
-                    <div className="w-full bg-[#C84826] text-white text-[7.5px] font-black uppercase py-0.5 rounded">
-                      DURAGRIT VITRIFIED
-                    </div>
-                    <div className="my-1.5">
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t.qrPayloadUrl || ('https://verify.duragritvitrified.com/qr/' + t.serialKey))}`}
-                        alt="QR"
-                        className="w-16 h-16"
-                        onError={(e) => { e.currentTarget.src = liveQrDataUrl; }}
-                      />
-                    </div>
-                    <span className="text-[8px] font-mono font-bold text-[#1C1917] block truncate max-w-full pb-1">
-                      {t.serialKey}
-                    </span>
+              {/* Search & Pagination Control Bar */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-stone-50 p-2.5 rounded-2xl border border-stone-200 text-xs shrink-0">
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="text"
+                    value={stickerSearch}
+                    onChange={(e) => {
+                      setStickerSearch(e.target.value);
+                      setStickerPage(1);
+                    }}
+                    placeholder={`Search within ${modalTokens.length} serials (e.g. 000045)...`}
+                    className="w-full sm:max-w-xs px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-mono placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#C84826]"
+                  />
+                  {stickerSearch && (
+                    <button
+                      onClick={() => setStickerSearch('')}
+                      className="text-[11px] text-stone-400 hover:text-stone-700 underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2">
+                  <div className="flex items-center gap-1.5 text-[11px] text-stone-600 font-medium">
+                    <span>Show:</span>
+                    {[24, 48, 100].map((sz) => (
+                      <button
+                        key={sz}
+                        onClick={() => {
+                          setStickerPageSize(sz);
+                          setStickerPage(1);
+                        }}
+                        className={`px-2 py-0.5 rounded-lg font-mono text-[11px] transition ${
+                          stickerPageSize === sz
+                            ? 'bg-[#C84826] text-white font-bold'
+                            : 'bg-white border border-stone-200 hover:bg-stone-100 text-stone-700'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setStickerPageSize('all');
+                        setStickerPage(1);
+                      }}
+                      className={`px-2 py-0.5 rounded-lg font-mono text-[11px] transition ${
+                        stickerPageSize === 'all'
+                          ? 'bg-[#C84826] text-white font-bold'
+                          : 'bg-white border border-stone-200 hover:bg-stone-100 text-stone-700'
+                      }`}
+                    >
+                      All ({modalTokens.length})
+                    </button>
                   </div>
-                ))}
+
+                  {stickerPageSize !== 'all' && totalPages > 1 && (
+                    <div className="flex items-center gap-1 text-[11px]">
+                      <button
+                        disabled={activePage <= 1}
+                        onClick={() => setStickerPage((p) => Math.max(1, p - 1))}
+                        className="px-2 py-0.5 rounded-lg bg-white border border-stone-200 disabled:opacity-40 hover:bg-stone-100 font-bold"
+                      >
+                        Prev
+                      </button>
+                      <span className="font-mono px-1.5 text-stone-700">
+                        {activePage} / {totalPages}
+                      </span>
+                      <button
+                        disabled={activePage >= totalPages}
+                        onClick={() => setStickerPage((p) => Math.min(totalPages, p + 1))}
+                        className="px-2 py-0.5 rounded-lg bg-white border border-stone-200 disabled:opacity-40 hover:bg-stone-100 font-bold"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
+              {/* Status / Count Pill */}
+              <div className="flex items-center justify-between text-[11px] text-stone-500 px-1 shrink-0">
+                <span>
+                  Showing <strong>{filteredTokens.length === 0 ? 0 : startIdx + 1}</strong> -{' '}
+                  <strong>{Math.min(startIdx + (stickerPageSize === 'all' ? filteredTokens.length : Number(stickerPageSize)), filteredTokens.length)}</strong> of{' '}
+                  <strong>{filteredTokens.length}</strong> stickers
+                  {stickerSearch ? ` matching "${stickerSearch}"` : ''}
+                </span>
+                <span className="text-[10px] text-stone-400 font-mono">
+                  300 DPI Vector QR • Tap any sticker to copy serial
+                </span>
+              </div>
+
+              {/* Sticker Grid */}
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-[#FAF9F6] rounded-2xl border border-[#E7E5E0] grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                {displayedTokens.length === 0 ? (
+                  <div className="col-span-full py-12 text-center text-xs text-stone-400">
+                    No stickers found matching "{stickerSearch}".
+                  </div>
+                ) : (
+                  displayedTokens.map((t, i) => (
+                    <div
+                      key={t.serialKey + i}
+                      onClick={() => copySerial(t.serialKey)}
+                      className="bg-white p-2 rounded-xl border border-stone-300 hover:border-[#C84826] shadow-xs hover:shadow-md flex flex-col items-center text-center justify-between cursor-pointer transition select-none group"
+                      title="Click to copy serial key"
+                    >
+                      <div className="w-full bg-[#C84826] text-white text-[7px] font-black uppercase py-0.5 rounded tracking-tight">
+                        DURAGRIT
+                      </div>
+                      <div className="my-1 flex items-center justify-center">
+                        <TokenQrPreview
+                          url={t.qrPayloadUrl || `https://verify.duragritvitrified.com/qr/${t.serialKey}`}
+                          fallbackSvg={liveQrDataUrl}
+                        />
+                      </div>
+                      <span className="text-[7.5px] font-mono font-bold text-[#1C1917] block truncate max-w-full pb-0.5 group-hover:text-[#C84826]">
+                        {t.serialKey}
+                      </span>
+                      <span className="text-[7px] font-mono text-emerald-700 font-bold">
+                        ₹{Number(t.cashbackAmount || printStickersModal.cashbackAmount || 50)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Bottom Action Footer */}
               <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-stone-100 shrink-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     onClick={() => handleExportThermal40x40Pdf(printStickersModal)}
                     disabled={isGeneratingPdf}
                     className="px-3 py-1.5 bg-stone-100 hover:bg-[#FEF2EE] text-stone-800 hover:text-[#A62C11] border border-stone-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                    title="Export 40×40mm 300 DPI Vector PDF"
                   >
                     40×40mm PDF
                   </button>
                   <button
                     onClick={() => handleExportThermal40x40Svg(printStickersModal)}
                     className="px-3 py-1.5 bg-stone-100 hover:bg-[#FEF2EE] text-stone-800 hover:text-[#A62C11] border border-stone-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                    title="Export Vector SVG Sheet"
                   >
                     40×40mm SVG
                   </button>
                   <button
                     onClick={() => handleExportThermalZpl(printStickersModal, 'zpl')}
                     className="px-3 py-1.5 bg-stone-100 hover:bg-[#FEF2EE] text-stone-800 hover:text-[#A62C11] border border-stone-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                    title="Direct ZPL Stream for Zebra / Godex"
                   >
                     Godex/Zebra .ZPL
                   </button>
                   <button
                     onClick={() => handleExportBatchManifestCsv(printStickersModal)}
                     className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-[11px] font-bold transition cursor-pointer"
+                    title="Download CSV Manifest"
                   >
                     Manifest .CSV
                   </button>
@@ -992,7 +1264,11 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setPrintStickersModal(null)}
+                    onClick={() => {
+                      setPrintStickersModal(null);
+                      setStickerSearch('');
+                      setStickerPage(1);
+                    }}
                     className="px-3.5 py-2 border border-[#E7E5E0] text-stone-700 rounded-xl text-xs font-bold hover:bg-stone-50 cursor-pointer"
                   >
                     Close
@@ -1000,14 +1276,14 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                   <button
                     onClick={() => handleDownloadBatchPDF(printStickersModal)}
                     disabled={isGeneratingPdf}
-                    className="px-4 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-[#1C1917] hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-sm"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>A4 Sheet PDF</span>
+                    <Download className="w-3.5 h-3.5 text-[#F59B7F]" />
+                    <span>Download A4 Sheet PDF ({modalTokens.length})</span>
                   </button>
                   <button
                     onClick={() => handlePrintAllStickers(printStickersModal)}
-                    className="px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-sm"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>Print All {modalTokens.length}</span>

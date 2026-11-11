@@ -309,7 +309,40 @@ const mapBatchFromDb = (row, tokensRows = []) => {
       scannedAt: t.scanned_at,
     }));
 
-  const finalTokens = batchTokens.length > 0 ? batchTokens : (meta.tokens || []);
+  let finalTokens = batchTokens.length > 0 ? batchTokens : (meta.tokens || []);
+  const qty = Number(row.quantity ?? finalTokens.length ?? 0);
+
+  if (qty > 0 && finalTokens.length < qty) {
+    const cleanSku = String(row.products?.sku_code || meta.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const lotNum = String(row.lot_number || meta.lotNumber || '1001');
+    const dateMatch = String(meta.prefix || row.batch_identifier || '').match(/(20\d{2})[-_]?(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i);
+    const yyyymmm = dateMatch ? `${dateMatch[1]}${dateMatch[2].toUpperCase()}` : '2026NOV';
+    const reward = Number(meta.cashbackAmount ?? row.products?.cashback_reward ?? 50);
+    const filled = [];
+    for (let i = 0; i < qty; i++) {
+      const existingTok = finalTokens[i];
+      if (existingTok && (existingTok.serialKey || existingTok.serial)) {
+        filled.push(existingTok);
+      } else {
+        const seq = String(i + 1).padStart(6, '0');
+        const serial = `DG-${cleanSku}-${yyyymmm}-${seq}`;
+        filled.push({
+          serialKey: serial,
+          serial: serial,
+          serial_token_id: serial,
+          verification_url: `https://verify.duragritvitrified.com/qr/${serial}`,
+          qrPayloadUrl: `https://verify.duragritvitrified.com/qr/${serial}`,
+          sku_code: cleanSku,
+          cashback_inr: reward,
+          cashbackAmount: reward,
+          lotNumber: lotNum,
+          isScanned: false,
+        });
+      }
+    }
+    finalTokens = filled;
+  }
+
   const scannedCount = finalTokens.filter((t) => t.isScanned).length;
 
   return {
@@ -323,7 +356,7 @@ const mapBatchFromDb = (row, tokensRows = []) => {
     packSize: meta.packSize || row.products?.pack_weight || '20 kg',
     mrp: Number(meta.mrp ?? row.products?.base_mrp ?? 0),
     lotNumber: row.lot_number,
-    quantity: Number(row.quantity ?? finalTokens.length ?? 0),
+    quantity: qty,
     scannedCount,
     cashbackAmount: Number(meta.cashbackAmount ?? finalTokens[0]?.cashbackAmount ?? row.products?.cashback_reward ?? 0),
     discountTier: row.discount_tier || 'Standard Master Tier',
@@ -868,7 +901,39 @@ export const DataProvider = ({ children }) => {
                     const existing = batchMap.get(bId) || {};
                     const existingTokens = existing.tokens || existing.codes || [];
                     const incomingTokens = b.tokens || b.codes || [];
-                    const mergedTokens = incomingTokens.length >= existingTokens.length ? incomingTokens : existingTokens;
+                    let mergedTokens = incomingTokens.length >= existingTokens.length ? incomingTokens : existingTokens;
+
+                    if (mergedTokens.length < qty) {
+                      const cleanSku = String(b.skuCode || existing.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                      const lotNum = String(b.lotNumber || existing.lotNumber || (bId.split('-').pop()) || '1001');
+                      const dateMatch = String(b.prefix || existing.prefix || bId).match(/(20\d{2})[-_]?(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i);
+                      const yyyymmm = dateMatch ? `${dateMatch[1]}${dateMatch[2].toUpperCase()}` : '2026NOV';
+                      const reward = Number(b.cashbackAmount ?? existing.cashbackAmount ?? 50);
+                      const filled = [];
+                      for (let i = 0; i < qty; i++) {
+                        const existingTok = mergedTokens[i];
+                        if (existingTok && (existingTok.serialKey || existingTok.serial)) {
+                          filled.push(existingTok);
+                        } else {
+                          const seq = String(i + 1).padStart(6, '0');
+                          const serial = `DG-${cleanSku}-${yyyymmm}-${seq}`;
+                          filled.push({
+                            serialKey: serial,
+                            serial: serial,
+                            serial_token_id: serial,
+                            verification_url: `https://verify.duragritvitrified.com/qr/${serial}`,
+                            qrPayloadUrl: `https://verify.duragritvitrified.com/qr/${serial}`,
+                            sku_code: b.skuCode || cleanSku,
+                            cashback_inr: reward,
+                            cashbackAmount: reward,
+                            lotNumber: lotNum,
+                            isScanned: false,
+                          });
+                        }
+                      }
+                      mergedTokens = filled;
+                    }
+
                     batchMap.set(bId, {
                       ...existing,
                       ...b,

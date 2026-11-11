@@ -19,6 +19,7 @@ export const QRBatchGenerator = () => {
   const [activeBatch, setActiveBatch] = useState(batches[0] || null);
   const [previewQrDataUrl, setPreviewQrDataUrl] = useState('');
   const [copiedToken, setCopiedToken] = useState(null);
+  const [showAllTokens, setShowAllTokens] = useState(false);
 
   const selectedSku = skus.find(s => s.id === selectedSkuId) || skus[0];
 
@@ -255,7 +256,7 @@ export const QRBatchGenerator = () => {
             </div>
 
             <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
-              {activeBatch?.tokens?.slice(0,50).map((tok, idx) => (
+              {((showAllTokens ? activeBatch?.tokens : activeBatch?.tokens?.slice(0, 50)) || []).map((tok, idx) => (
                 <div
                   key={tok.serialKey}
                   onClick={() => handlePreviewToken(tok)}
@@ -267,7 +268,7 @@ export const QRBatchGenerator = () => {
                         {tok.serialKey}
                       </span>
                       <span className="text-[11px] font-semibold text-amber-700">
-                        , {tok.cashbackAmount}
+                        ₹{tok.cashbackAmount}
                       </span>
                     </div>
                     <div className="font-mono text-[10px] text-gray-400 flex items-center space-x-1">
@@ -296,8 +297,21 @@ export const QRBatchGenerator = () => {
               ))}
             </div>
 
-            <div className="p-3 bg-gray-50 border-t border-gray-100 text-center text-xs text-gray-500">
-              Showing first 50 tokens of batch. Use <strong>Download PDF Manifest</strong> for complete thermal foil packaging print run.
+            <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+              <span>
+                {showAllTokens
+                  ? `Showing all ${activeBatch?.tokens?.length || 0} tokens of batch.`
+                  : `Showing first ${Math.min(50, activeBatch?.tokens?.length || 0)} of ${activeBatch?.tokens?.length || 0} tokens.`}
+              </span>
+              {(activeBatch?.tokens?.length || 0) > 50 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTokens(!showAllTokens)}
+                  className="font-bold text-[#8B0000] hover:underline cursor-pointer"
+                >
+                  {showAllTokens ? 'Show Top 50' : `Show All (${activeBatch.tokens.length})`}
+                </button>
+              )}
             </div>
           </div>
 

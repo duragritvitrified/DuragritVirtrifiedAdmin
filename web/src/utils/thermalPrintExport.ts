@@ -137,69 +137,95 @@ export function generateSerializedBatchTokens(input: BatchExportInput): Serializ
 }
 
 /**
- * Normalizes existing batch tokens into full SerializedTokenRecord objects
+ * Normalizes existing batch tokens into full SerializedTokenRecord objects.
+ * Supports passing either a batch object OR an array of tokens with an optional metadata fallback.
  */
-export function normalizeBatchTokensForExport(batch: any): SerializedTokenRecord[] {
-  const rawTokens = Array.isArray(batch?.tokens)
-    ? batch.tokens
-    : Array.isArray(batch?.codes)
-    ? batch.codes
+export function normalizeBatchTokensForExport(batchOrTokens: any, metaFallback?: any): SerializedTokenRecord[] {
+  const isArr = Array.isArray(batchOrTokens);
+  const rawTokens: any[] = isArr
+    ? batchOrTokens
+    : Array.isArray(batchOrTokens?.tokens)
+    ? batchOrTokens.tokens
+    : Array.isArray(batchOrTokens?.codes)
+    ? batchOrTokens.codes
     : [];
 
-  const skuCode = batch?.skuCode || 'DTA-999';
-  const batchPrefix = batch?.prefix || batch?.batchId || 'BATCH-2026-OCT';
-  const cashback = Number(batch?.cashbackAmount ?? batch?.cashbackReward ?? 50);
-  const discountNum = parseFloat(String(batch?.discountTier || '15').replace(/[^0-9.]/g, '')) || 15;
-  const expiryDate = resolveExpiryDate(batch?.validityPeriod, batch?.expDate);
+  const meta = {
+    ...(isArr ? {} : batchOrTokens),
+    ...(metaFallback || {}),
+  };
+
+  const skuCode = meta?.skuCode || meta?.sku_code || rawTokens[0]?.sku_code || 'DTA-999';
+  const cleanSku = String(skuCode).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  const batchPrefix = meta?.prefix || meta?.batchPrefix || meta?.batchId || `BATCH-${cleanSku}`;
+  const yyyymmm = extractYearMonthStamp(batchPrefix);
+  const cashback = Number(meta?.cashbackAmount ?? meta?.cashbackInr ?? meta?.cashbackReward ?? 50);
+  const discountNum = parseFloat(String(meta?.discountTier ?? meta?.dealerDiscountPct ?? '15').replace(/[^0-9.]/g, '')) || 15;
+  const expiryDate = resolveExpiryDate(meta?.validityPeriod, meta?.expDate || meta?.expiryDate);
+  const lotNum = String(meta?.lotNumber || (meta?.batchId ? String(meta.batchId).split('-').pop() : '') || '1001');
+
+  const targetQty = Number(meta?.quantity || rawTokens.length || 10);
 
   if (rawTokens.length === 0) {
     return generateSerializedBatchTokens({
-      batchId: batch?.batchId,
+      batchId: meta?.batchId,
       skuCode,
       batchPrefix,
-      quantity: Number(batch?.quantity || 10),
+      quantity: targetQty,
       cashbackInr: cashback,
       dealerDiscountPct: discountNum,
-      validityPeriod: batch?.validityPeriod,
+      validityPeriod: meta?.validityPeriod,
       expiryDate,
+      lotNumber: lotNum,
     });
   }
 
-  return rawTokens.map((t: any, idx: number) => {
-    const serialId =
-      t.serial_token_id ||
-      t.serialKey ||
-      t.serial ||
-      `DG-${skuCode.replace(/[^A-Z0-9]/gi, '').toUpperCase()}-${extractYearMonthStamp(batchPrefix)}-${String(idx + 1).padStart(6, '0')}`;
-    const verifyUrl = t.verification_url || t.qrPayloadUrl || `${THERMAL_PRINTER_SPEC.verificationBaseUrl}/${serialId}`;
-    const tokenCashback = Number(t.cashback_inr ?? t.cashbackAmount ?? cashback);
-    const checksum = t.sha256_checksum || computeSaltedSha256(serialId, skuCode, tokenCashback);
+  const totalCount = Math.max(rawTokens.length, targetQty);
+  const list: SerializedTokenRecord[] = [];
 
-    return {
+  for (let idx = 0; idx < totalCount; idx++) {
+    const t = rawTokens[idx];
+    const seq = String(idx + 1).padStart(6, '0');
+    const serialId =
+      t?.serial_token_id ||
+      t?.serialKey ||
+      t?.serial ||
+      `DG-${cleanSku}-${yyyymmm}-${seq}`;
+    const verifyUrl = t?.verification_url || t?.qrPayloadUrl || `${THERMAL_PRINTER_SPEC.verificationBaseUrl}/${serialId}`;
+    const tokenCashback = Number(t?.cashback_inr ?? t?.cashbackAmount ?? cashback);
+    const checksum = t?.sha256_checksum || computeSaltedSha256(serialId, skuCode, tokenCashback);
+
+    list.push({
       serialKey: serialId,
       serial_token_id: serialId,
       verification_url: verifyUrl,
       qrPayloadUrl: verifyUrl,
-      sku_code: t.sku_code || skuCode,
-      batch_prefix: t.batch_prefix || batchPrefix,
+      sku_code: t?.sku_code || skuCode,
+      batch_prefix: t?.batch_prefix || batchPrefix,
       cashback_inr: tokenCashback,
       cashbackAmount: tokenCashback,
-      dealer_discount_pct: Number(t.dealer_discount_pct ?? discountNum),
-      expiry_date: t.expiry_date || expiryDate,
+      dealer_discount_pct: Number(t?.dealer_discount_pct ?? discountNum),
+      expiry_date: t?.expiry_date || expiryDate,
       sha256_checksum: checksum,
-      dualSha128: t.dualSha128 || `SHA128-${checksum.slice(0, 16)}`,
-      lotNumber: String(t.lotNumber || batch?.lotNumber || '1001'),
-      isScanned: Boolean(t.isScanned),
-    };
-  });
+      dualSha128: t?.dualSha128 || `SHA128-${checksum.slice(0, 16)}`,
+      lotNumber: String(t?.lotNumber || lotNum),
+      isScanned: Boolean(t?.isScanned),
+    });
+  }
+
+  return list;
 }
 
 /**
  * Step A.3 (a1): 300 DPI 40x40mm (1.5"x1.5") High-Contrast Vector PDF Label Roll Export
  */
-export async function exportThermal40x40Pdf(batch: any): Promise<string> {
-  const tokens = normalizeBatchTokensForExport(batch);
-  const batchId = batch?.batchId || batch?.prefix || 'BATCH-EXPORT';
+export async function exportThermal40x40Pdf(batchOrTokens: any, metaFallback?: any): Promise<string> {
+  const tokens = normalizeBatchTokensForExport(batchOrTokens, metaFallback);
+  const meta = {
+    ...(Array.isArray(batchOrTokens) ? {} : batchOrTokens),
+    ...(metaFallback || {}),
+  };
+  const batchId = meta?.batchId || meta?.prefix || 'BATCH-EXPORT';
 
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -271,9 +297,13 @@ export async function exportThermal40x40Pdf(batch: any): Promise<string> {
 /**
  * Step A.3 (a2): 300 DPI 40x40mm (472px x 472px) Printable SVG Vector Roll Sheet Export
  */
-export async function exportThermal40x40SvgSheet(batch: any): Promise<string> {
-  const tokens = normalizeBatchTokensForExport(batch);
-  const batchId = batch?.batchId || batch?.prefix || 'BATCH-EXPORT';
+export async function exportThermal40x40SvgSheet(batchOrTokens: any, metaFallback?: any): Promise<string> {
+  const tokens = normalizeBatchTokensForExport(batchOrTokens, metaFallback);
+  const meta = {
+    ...(Array.isArray(batchOrTokens) ? {} : batchOrTokens),
+    ...(metaFallback || {}),
+  };
+  const batchId = meta?.batchId || meta?.prefix || 'BATCH-EXPORT';
   const qrLib = (QRCode as any)?.default || QRCode;
 
   const cols = 4;
@@ -340,14 +370,18 @@ export async function exportThermal40x40SvgSheet(batch: any): Promise<string> {
 /**
  * Step A.3 (b): Godex / Zebra Raw Thermal Stream (.zpl / .ezpl) at 12 dots/mm (300 DPI)
  */
-export function exportThermalZplStream(batch: any, format: 'zpl' | 'ezpl' = 'zpl'): {
+export function exportThermalZplStream(batchOrTokens: any, metaFallback?: any, format: 'zpl' | 'ezpl' = 'zpl'): {
   fileName: string;
   port: string;
   status: string;
   labelCount: number;
 } {
-  const tokens = normalizeBatchTokensForExport(batch);
-  const batchId = batch?.batchId || batch?.prefix || 'BATCH-EXPORT';
+  const tokens = normalizeBatchTokensForExport(batchOrTokens, metaFallback);
+  const meta = {
+    ...(Array.isArray(batchOrTokens) ? {} : batchOrTokens),
+    ...(metaFallback || {}),
+  };
+  const batchId = meta?.batchId || meta?.prefix || 'BATCH-EXPORT';
 
   let content = '';
   if (format === 'ezpl') {
@@ -411,9 +445,13 @@ export function exportThermalZplStream(batch: any, format: 'zpl' | 'ezpl' = 'zpl
  * Step A.3 (c): Serialized Batch Manifest (.csv)
  * Columns: serial_token_id, verification_url, sku_code, batch_prefix, cashback_inr, dealer_discount_pct, expiry_date, sha256_checksum
  */
-export function exportSerializedBatchManifestCsv(batch: any): string {
-  const tokens = normalizeBatchTokensForExport(batch);
-  const batchId = batch?.batchId || batch?.prefix || 'BATCH-EXPORT';
+export function exportSerializedBatchManifestCsv(batchOrTokens: any, metaFallback?: any): string {
+  const tokens = normalizeBatchTokensForExport(batchOrTokens, metaFallback);
+  const meta = {
+    ...(Array.isArray(batchOrTokens) ? {} : batchOrTokens),
+    ...(metaFallback || {}),
+  };
+  const batchId = meta?.batchId || meta?.prefix || 'BATCH-EXPORT';
 
   const headers = [
     'serial_token_id',
