@@ -163,50 +163,6 @@ function New-AppIconImage([string]$appType, [int]$size, [bool]$isRound = $false,
     return $bmp
 }
 
-# Densities for Android
-$densities = @(
-    @{ Name="mdpi"; Launcher=48; Round=48; Fore=108 },
-    @{ Name="hdpi"; Launcher=72; Round=72; Fore=162 },
-    @{ Name="xhdpi"; Launcher=96; Round=96; Fore=216 },
-    @{ Name="xxhdpi"; Launcher=144; Round=144; Fore=324 },
-    @{ Name="xxxhdpi"; Launcher=192; Round=192; Fore=432 }
-)
-
-Write-Host "--- Generating Android Admin Launcher Mipmaps ---"
-$adminRes = "$root\android\app\src\main\res"
-if (Test-Path $adminRes) {
-    foreach ($d in $densities) {
-        $folder = "$adminRes\mipmap-$($d.Name)"
-        if (-not (Test-Path $folder)) { New-Item -ItemType Directory -Path $folder -Force | Out-Null }
-
-        $launcherBmp = New-AppIconImage "Admin" $d.Launcher $false $false
-        $launcherBmp.Save("$folder\ic_launcher.png", [System.Drawing.Imaging.ImageFormat]::Png)
-        $launcherBmp.Dispose()
-
-        $roundBmp = New-AppIconImage "Admin" $d.Round $true $false
-        $roundBmp.Save("$folder\ic_launcher_round.png", [System.Drawing.Imaging.ImageFormat]::Png)
-        $roundBmp.Dispose()
-
-        $foreBmp = New-AppIconImage "Admin" $d.Fore $false $true
-        $foreBmp.Save("$folder\ic_launcher_foreground.png", [System.Drawing.Imaging.ImageFormat]::Png)
-        $foreBmp.Dispose()
-
-        Write-Host "Generated Admin mipmap-$($d.Name)"
-    }
-
-    $adminV26 = "$adminRes\mipmap-anydpi-v26"
-    if (-not (Test-Path $adminV26)) { New-Item -ItemType Directory -Path $adminV26 -Force | Out-Null }
-    $adaptiveAdminXml = @"
-<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background"/>
-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
-</adaptive-icon>
-"@
-    Set-Content -Path "$adminV26\ic_launcher.xml" -Value $adaptiveAdminXml -Encoding utf8
-    Set-Content -Path "$adminV26\ic_launcher_round.xml" -Value $adaptiveAdminXml -Encoding utf8
-}
-
 function Resize-BitmapImage([System.Drawing.Image]$Image, [int]$TargetWidth, [int]$TargetHeight, [bool]$IsRound = $false, [float]$ScaleFactor = 1.0) {
     $dest = New-Object System.Drawing.Bitmap($TargetWidth, $TargetHeight, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
     $g = [System.Drawing.Graphics]::FromImage($dest)
@@ -235,6 +191,71 @@ function Resize-BitmapImage([System.Drawing.Image]$Image, [int]$TargetWidth, [in
 
     $g.Dispose()
     return $dest
+}
+
+# Densities for Android
+$densities = @(
+    @{ Name="mdpi"; Launcher=48; Round=48; Fore=108 },
+    @{ Name="hdpi"; Launcher=72; Round=72; Fore=162 },
+    @{ Name="xhdpi"; Launcher=96; Round=96; Fore=216 },
+    @{ Name="xxhdpi"; Launcher=144; Round=144; Fore=324 },
+    @{ Name="xxxhdpi"; Launcher=192; Round=192; Fore=432 }
+)
+
+Write-Host "--- Generating Android Admin Launcher Mipmaps ---"
+$adminRes = "$root\android\app\src\main\res"
+$adminMaster = "$root\public\admin-app-icon.png"
+$adminMasterBmp = if (Test-Path $adminMaster) {
+    $rawBytesAdmin = [System.IO.File]::ReadAllBytes($adminMaster)
+    $msAdmin = New-Object System.IO.MemoryStream(,$rawBytesAdmin)
+    [System.Drawing.Image]::FromStream($msAdmin)
+} else { $null }
+
+if (Test-Path $adminRes) {
+    foreach ($d in $densities) {
+        $folder = "$adminRes\mipmap-$($d.Name)"
+        if (-not (Test-Path $folder)) { New-Item -ItemType Directory -Path $folder -Force | Out-Null }
+
+        if ($adminMasterBmp) {
+            $launcherBmp = Resize-BitmapImage $adminMasterBmp $d.Launcher $d.Launcher
+            $launcherBmp.Save("$folder\ic_launcher.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $launcherBmp.Dispose()
+
+            $roundBmp = Resize-BitmapImage $adminMasterBmp $d.Round $d.Round $true
+            $roundBmp.Save("$folder\ic_launcher_round.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $roundBmp.Dispose()
+
+            $foreBmp = Resize-BitmapImage $adminMasterBmp $d.Fore $d.Fore $false 0.76
+            $foreBmp.Save("$folder\ic_launcher_foreground.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $foreBmp.Dispose()
+        } else {
+            $launcherBmp = New-AppIconImage "Admin" $d.Launcher $false $false
+            $launcherBmp.Save("$folder\ic_launcher.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $launcherBmp.Dispose()
+
+            $roundBmp = New-AppIconImage "Admin" $d.Round $true $false
+            $roundBmp.Save("$folder\ic_launcher_round.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $roundBmp.Dispose()
+
+            $foreBmp = New-AppIconImage "Admin" $d.Fore $false $true
+            $foreBmp.Save("$folder\ic_launcher_foreground.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $foreBmp.Dispose()
+        }
+
+        Write-Host "Generated Admin mipmap-$($d.Name)"
+    }
+
+    $adminV26 = "$adminRes\mipmap-anydpi-v26"
+    if (-not (Test-Path $adminV26)) { New-Item -ItemType Directory -Path $adminV26 -Force | Out-Null }
+    $adaptiveAdminXml = @"
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+"@
+    Set-Content -Path "$adminV26\ic_launcher.xml" -Value $adaptiveAdminXml -Encoding utf8
+    Set-Content -Path "$adminV26\ic_launcher_round.xml" -Value $adaptiveAdminXml -Encoding utf8
 }
 
 Write-Host "--- Generating Android Vendor Launcher Mipmaps ---"
@@ -301,8 +322,8 @@ $webTargets = @(
     "$root\app\public"
 )
 
-$admin512 = New-AppIconImage "Admin" 512 $false $false
-$admin192 = New-AppIconImage "Admin" 192 $false $false
+$admin512 = if ($adminMasterBmp) { Resize-BitmapImage $adminMasterBmp 512 512 } else { New-AppIconImage "Admin" 512 $false $false }
+$admin192 = if ($adminMasterBmp) { Resize-BitmapImage $adminMasterBmp 192 192 } else { New-AppIconImage "Admin" 192 $false $false }
 $vendor512 = if ($vendorMasterBmp) { Resize-BitmapImage $vendorMasterBmp 512 512 } else { New-AppIconImage "Vendor" 512 $false $false }
 $vendor192 = if ($vendorMasterBmp) { Resize-BitmapImage $vendorMasterBmp 192 192 } else { New-AppIconImage "Vendor" 192 $false $false }
 
@@ -312,6 +333,7 @@ foreach ($t in $webTargets) {
     # Admin icons
     $admin512.Save("$t\icon-admin-512.png", [System.Drawing.Imaging.ImageFormat]::Png)
     $admin192.Save("$t\icon-admin-192.png", [System.Drawing.Imaging.ImageFormat]::Png)
+    $admin512.Save("$t\admin-app-icon.png", [System.Drawing.Imaging.ImageFormat]::Png)
 
     # Vendor icons (default icon-192 / icon-512)
     $vendor512.Save("$t\icon-512.png", [System.Drawing.Imaging.ImageFormat]::Png)
@@ -327,6 +349,7 @@ $admin512.Dispose()
 $admin192.Dispose()
 $vendor512.Dispose()
 $vendor192.Dispose()
+if ($adminMasterBmp) { $adminMasterBmp.Dispose() }
 if ($vendorMasterBmp) { $vendorMasterBmp.Dispose() }
 
 Write-Host "All Android & Web App Icons Generated Successfully!"
