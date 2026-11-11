@@ -565,7 +565,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
     <div className="w-full max-w-[420px] mx-auto h-full min-h-[100dvh] bg-[#FAF9F6] px-4 flex flex-col items-center justify-center font-serif overflow-hidden">
       <div className="w-full">
         {/* Centered Official DuraGrit Vitrified Logo */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-8 sm:mb-9">
           <img
             src="/logo.png"
             alt="DuraGrit Vitrified"
@@ -580,7 +580,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         <div className="bg-white rounded-3xl p-5 border border-[#ECEAE6] shadow-sm relative overflow-hidden">
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="mb-1.5">
                 <label className="text-[11px] font-bold text-stone-800 font-sans">
                   {portalMode === 'vendor'
                     ? 'Registered Mobile or Vendor ID'
@@ -589,12 +589,9 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                       : 'Registered Mobile or User ID'}{' '}
                   <span className="text-[#C84826]">*</span>
                 </label>
-                <span className="text-[9.5px] font-mono text-stone-500 font-bold uppercase">
-                  VERIFIED CREDENTIALS
-                </span>
               </div>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-stone-400">
+                <span className="absolute left-3 text-[#C84826]/70">
                   <CreditCard className="w-4 h-4" />
                 </span>
                 <input
@@ -602,27 +599,20 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="e.g. VND-101 or 8826021114"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#ECEAE6] bg-[#FBFAF9] focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] text-xs font-semibold text-stone-900 outline-none transition-all font-mono"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#E5A898] bg-[#FFFDFC] focus:bg-white focus:border-[#C84826] focus:ring-2 focus:ring-[#C84826]/20 text-xs font-semibold text-stone-900 placeholder:text-stone-400 outline-none transition-all font-mono shadow-2xs"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="mb-1.5">
                 <label className="text-[11px] font-bold text-stone-800 font-sans">
                   Password or Security Key <span className="text-[#C84826]">*</span>
                 </label>
-                <button
-                  type="button"
-                  onClick={() => showToast('Check User / Vendor Management in Admin Panel for assigned passkey.')}
-                  className="text-[10px] text-[#A6300F] hover:underline font-semibold cursor-pointer font-sans"
-                >
-                  Forgot?
-                </button>
               </div>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-stone-400">
+                <span className="absolute left-3 text-[#C84826]/70">
                   <Key className="w-4 h-4" />
                 </span>
                 <input
@@ -630,7 +620,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••"
-                  className="w-full pl-9 pr-14 py-2.5 rounded-xl border border-[#ECEAE6] bg-[#FBFAF9] focus:bg-white focus:border-[#C84826] focus:ring-1 focus:ring-[#C84826] text-xs font-mono text-stone-900 outline-none transition-all"
+                  className="w-full pl-9 pr-14 py-2.5 rounded-xl border-2 border-[#E5A898] bg-[#FFFDFC] focus:bg-white focus:border-[#C84826] focus:ring-2 focus:ring-[#C84826]/20 text-xs font-mono text-stone-900 placeholder:text-stone-400 outline-none transition-all shadow-2xs"
                   required
                 />
                 <button
