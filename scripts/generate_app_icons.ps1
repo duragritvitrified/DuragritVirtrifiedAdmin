@@ -207,24 +207,75 @@ if (Test-Path $adminRes) {
     Set-Content -Path "$adminV26\ic_launcher_round.xml" -Value $adaptiveAdminXml -Encoding utf8
 }
 
+function Resize-BitmapImage([System.Drawing.Image]$Image, [int]$TargetWidth, [int]$TargetHeight, [bool]$IsRound = $false, [float]$ScaleFactor = 1.0) {
+    $dest = New-Object System.Drawing.Bitmap($TargetWidth, $TargetHeight, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $g = [System.Drawing.Graphics]::FromImage($dest)
+    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+    $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    $g.Clear([System.Drawing.Color]::Transparent)
+
+    if ($IsRound) {
+        $clipPath = New-Object System.Drawing.Drawing2D.GraphicsPath
+        $clipPath.AddEllipse(1, 1, $TargetWidth - 2, $TargetHeight - 2)
+        $g.SetClip($clipPath)
+    }
+
+    $drawW = [int]($TargetWidth * $ScaleFactor)
+    $drawH = [int]($TargetHeight * $ScaleFactor)
+    $drawX = [int](($TargetWidth - $drawW) / 2)
+    $drawY = [int](($TargetHeight - $drawH) / 2)
+
+    $rect = New-Object System.Drawing.Rectangle($drawX, $drawY, $drawW, $drawH)
+    $g.DrawImage($Image, $rect)
+
+    if ($IsRound) {
+        $g.ResetClip()
+    }
+
+    $g.Dispose()
+    return $dest
+}
+
 Write-Host "--- Generating Android Vendor Launcher Mipmaps ---"
 $vendorRes = "$root\app\android\app\src\main\res"
+$vendorMaster = "$root\public\vendor-app-icon.png"
+$vendorMasterBmp = if (Test-Path $vendorMaster) {
+    $rawBytes = [System.IO.File]::ReadAllBytes($vendorMaster)
+    $ms = New-Object System.IO.MemoryStream(,$rawBytes)
+    [System.Drawing.Image]::FromStream($ms)
+} else { $null }
+
 if (Test-Path $vendorRes) {
     foreach ($d in $densities) {
         $folder = "$vendorRes\mipmap-$($d.Name)"
         if (-not (Test-Path $folder)) { New-Item -ItemType Directory -Path $folder -Force | Out-Null }
 
-        $launcherBmp = New-AppIconImage "Vendor" $d.Launcher $false $false
-        $launcherBmp.Save("$folder\ic_launcher.png", [System.Drawing.Imaging.ImageFormat]::Png)
-        $launcherBmp.Dispose()
+        if ($vendorMasterBmp) {
+            $launcherBmp = Resize-BitmapImage $vendorMasterBmp $d.Launcher $d.Launcher
+            $launcherBmp.Save("$folder\ic_launcher.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $launcherBmp.Dispose()
 
-        $roundBmp = New-AppIconImage "Vendor" $d.Round $true $false
-        $roundBmp.Save("$folder\ic_launcher_round.png", [System.Drawing.Imaging.ImageFormat]::Png)
-        $roundBmp.Dispose()
+            $roundBmp = Resize-BitmapImage $vendorMasterBmp $d.Round $d.Round $true
+            $roundBmp.Save("$folder\ic_launcher_round.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $roundBmp.Dispose()
 
-        $foreBmp = New-AppIconImage "Vendor" $d.Fore $false $true
-        $foreBmp.Save("$folder\ic_launcher_foreground.png", [System.Drawing.Imaging.ImageFormat]::Png)
-        $foreBmp.Dispose()
+            $foreBmp = Resize-BitmapImage $vendorMasterBmp $d.Fore $d.Fore $false 0.76
+            $foreBmp.Save("$folder\ic_launcher_foreground.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $foreBmp.Dispose()
+        } else {
+            $launcherBmp = New-AppIconImage "Vendor" $d.Launcher $false $false
+            $launcherBmp.Save("$folder\ic_launcher.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $launcherBmp.Dispose()
+
+            $roundBmp = New-AppIconImage "Vendor" $d.Round $true $false
+            $roundBmp.Save("$folder\ic_launcher_round.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $roundBmp.Dispose()
+
+            $foreBmp = New-AppIconImage "Vendor" $d.Fore $false $true
+            $foreBmp.Save("$folder\ic_launcher_foreground.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $foreBmp.Dispose()
+        }
 
         Write-Host "Generated Vendor mipmap-$($d.Name)"
     }
@@ -252,8 +303,8 @@ $webTargets = @(
 
 $admin512 = New-AppIconImage "Admin" 512 $false $false
 $admin192 = New-AppIconImage "Admin" 192 $false $false
-$vendor512 = New-AppIconImage "Vendor" 512 $false $false
-$vendor192 = New-AppIconImage "Vendor" 192 $false $false
+$vendor512 = if ($vendorMasterBmp) { Resize-BitmapImage $vendorMasterBmp 512 512 } else { New-AppIconImage "Vendor" 512 $false $false }
+$vendor192 = if ($vendorMasterBmp) { Resize-BitmapImage $vendorMasterBmp 192 192 } else { New-AppIconImage "Vendor" 192 $false $false }
 
 foreach ($t in $webTargets) {
     if (-not (Test-Path $t)) { New-Item -ItemType Directory -Path $t -Force | Out-Null }
@@ -265,6 +316,9 @@ foreach ($t in $webTargets) {
     # Vendor icons (default icon-192 / icon-512)
     $vendor512.Save("$t\icon-512.png", [System.Drawing.Imaging.ImageFormat]::Png)
     $vendor192.Save("$t\icon-192.png", [System.Drawing.Imaging.ImageFormat]::Png)
+    $vendor512.Save("$t\vendor-app-icon.png", [System.Drawing.Imaging.ImageFormat]::Png)
+    $vendor512.Save("$t\vendor-icon-512.png", [System.Drawing.Imaging.ImageFormat]::Png)
+    $vendor192.Save("$t\vendor-icon-192.png", [System.Drawing.Imaging.ImageFormat]::Png)
     
     Write-Host "Updated web launcher icons in $t"
 }
@@ -273,6 +327,7 @@ $admin512.Dispose()
 $admin192.Dispose()
 $vendor512.Dispose()
 $vendor192.Dispose()
+if ($vendorMasterBmp) { $vendorMasterBmp.Dispose() }
 
 Write-Host "All Android & Web App Icons Generated Successfully!"
 
