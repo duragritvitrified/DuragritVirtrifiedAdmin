@@ -1035,23 +1035,15 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     return (
       <div className="w-full max-w-[420px] mx-auto h-full min-h-[100dvh] bg-[#FAF9F6] px-4 flex flex-col items-center justify-center font-sans overflow-hidden select-none">
         <div className="w-full">
-          {/* Centered Official DuraGrit Vitrified Logo & Admin App Console Identifier */}
-          <div className="flex flex-col items-center justify-center mb-5 text-center">
-            {/* Header Text: Admin APP Console */}
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white border border-stone-200/90 shadow-2xs mb-2.5">
-              <span className="w-2 h-2 rounded-full bg-[#C84826] animate-pulse"></span>
-              <span className="text-[11px] sm:text-xs font-mono font-extrabold uppercase tracking-wider text-stone-800">
-                Admin APP Console
-              </span>
-            </div>
-
+          {/* Centered Official DuraGrit Vitrified Admin Badge */}
+          <div className="flex flex-col items-center justify-center mb-5 sm:mb-6 text-center">
             <img
-              src="/logo.png"
-              alt="DuraGrit Vitrified"
-              className="h-10 sm:h-12 w-auto object-contain"
+              src="/site-assets/admin-mobile-signin-logo.png"
+              alt="DuraGrit Vitrified Admin Console"
+              className="w-28 sm:w-32 h-auto max-h-28 sm:max-h-32 object-contain drop-shadow-[0_8px_20px_rgba(15,23,42,0.15)] transition-transform duration-200 hover:scale-105"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = '/logo-white.png';
+                e.target.src = '/logo.png';
               }}
             />
           </div>
