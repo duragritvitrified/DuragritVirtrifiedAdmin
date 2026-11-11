@@ -1035,8 +1035,16 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     return (
       <div className="w-full max-w-[420px] mx-auto h-full min-h-[100dvh] bg-[#FAF9F6] px-4 flex flex-col items-center justify-center font-sans overflow-hidden select-none">
         <div className="w-full">
-          {/* Centered Official DuraGrit Vitrified Logo */}
-          <div className="flex justify-center mb-6">
+          {/* Centered Official DuraGrit Vitrified Logo & Admin App Console Identifier */}
+          <div className="flex flex-col items-center justify-center mb-5 text-center">
+            {/* Header Text: Admin APP Console */}
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white border border-stone-200/90 shadow-2xs mb-2.5">
+              <span className="w-2 h-2 rounded-full bg-[#C84826] animate-pulse"></span>
+              <span className="text-[11px] sm:text-xs font-mono font-extrabold uppercase tracking-wider text-stone-800">
+                Admin APP Console
+              </span>
+            </div>
+
             <img
               src="/logo.png"
               alt="DuraGrit Vitrified"
