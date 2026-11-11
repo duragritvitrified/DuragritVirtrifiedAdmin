@@ -258,6 +258,59 @@ export default async function handler(req, res) {
     });
     responseData.skus = Array.from(skuMap.values());
 
+    // 2b. Batches
+    const batchMap = new Map();
+    if (batchRes.status === 'fulfilled' && !batchRes.value.error) {
+      (batchRes.value.data || []).forEach((b) => {
+        const bId = String(b.batch_identifier || b.id || '').toUpperCase();
+        if (bId && !deletedKeysSet.has(bId)) {
+          batchMap.set(bId, {
+            id: b.batch_identifier || b.id,
+            batchId: b.batch_identifier || b.id,
+            skuCode: b.products?.sku_code || '',
+            productName: b.products?.name || 'DuraGrit Product',
+            lotNumber: b.lot_number,
+            quantity: Number(b.quantity || 100),
+            cashbackAmount: Number(b.products?.cashback_reward || 150),
+            expDate: b.expiry_date || '',
+            mfgDate: (b.created_at || '').slice(0, 10),
+            status: b.status || 'Active',
+            createdAt: b.created_at,
+            tokens: []
+          });
+        }
+      });
+    }
+
+    eventRows.forEach((r) => {
+      if (r.qr_serial === 'DURAGRIT_BATCHES_REGISTRY' || (r.request_id && String(r.request_id).startsWith('SYNC_BATCHES_'))) {
+        try {
+          const list = JSON.parse(r.flag_reason);
+          if (Array.isArray(list)) {
+            list.forEach((b) => {
+              const bId = String(b.batchId || b.id || '').toUpperCase();
+              if (bId && !deletedKeysSet.has(bId) && bId !== 'DG-BATCH-DA777') {
+                const existing = batchMap.get(bId) || {};
+                const qty = Number(b.quantity || existing.quantity || 10);
+                const tokens = (b.tokens?.length ? b.tokens : b.codes) || existing.tokens || [];
+                batchMap.set(bId, {
+                  ...existing,
+                  ...b,
+                  id: b.batchId || b.id || bId,
+                  batchId: b.batchId || b.id || bId,
+                  quantity: qty,
+                  tokens
+                });
+              }
+            });
+          }
+        } catch (_) {}
+      }
+    });
+    responseData.batches = Array.from(batchMap.values()).sort(
+      (a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
+    );
+
     // 3. Vendors
     const vendorMap = new Map();
     const BASE_VENDORS = [
