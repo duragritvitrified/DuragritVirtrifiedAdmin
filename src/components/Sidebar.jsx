@@ -501,7 +501,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
           )}
         </div>
 
-        {/* 8. App Installs & Telemetry */}
+        {/* 9. App Installs & Telemetry */}
         <button
           onClick={() => handleNav('app-installs')}
           className={navBtnClass(activeTab === 'app-installs')}
@@ -512,7 +512,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }
                 activeTab === 'app-installs' ? 'text-[#C84826]' : 'text-stone-400'
               }`}
             />
-            <span>8. App Installs</span>
+            <span>9. App Installs</span>
           </div>
           <span className="text-[10px] bg-stone-100 text-stone-600 font-bold px-1.5 py-0.5 rounded font-mono">
             {activeInstallsCount} Live
