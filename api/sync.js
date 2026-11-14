@@ -153,6 +153,27 @@ export default async function handler(req, res) {
         );
       }
 
+      if (payload.claimAction && typeof payload.claimAction === 'object') {
+        const act = payload.claimAction;
+        const cId = act.claimId || act.requestId || act.id || 'CLAIM';
+        const isDisbursed = act.status === 'Disbursed';
+        const disbursedAmt = Number(act.disbursedAmount || act.amount || 0);
+        inserts.push(
+          supabase.from('cashback_requests').insert({
+            request_id: `CLAIM_ACTION_EVENT_${cId}_${Date.now()}`.slice(0, 50),
+            qr_serial: 'DURAGRIT_CLAIM_ACTION',
+            claim_value: disbursedAmt || 1,
+            net_disbursed: isDisbursed ? disbursedAmt : 0,
+            npci_rrn: act.transactionId || act.utr || act.npciRrn || null,
+            disbursed_at: isDisbursed ? (act.disbursedAt || new Date().toISOString()) : null,
+            status: act.status || 'Approved',
+            payout_method: act.paymentMode || 'UPI',
+            flag_reason: JSON.stringify(act),
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
       await Promise.allSettled(inserts);
       return res.status(200).json({ success: true, count: inserts.length });
     }
@@ -215,7 +236,7 @@ export default async function handler(req, res) {
         .select('request_id, qr_serial, flag_reason, timestamp')
         .like('request_id', 'CLAIM_ACTION_EVENT_%')
         .order('timestamp', { ascending: false })
-        .limit(20),
+        .limit(300),
       supabase.from('cashback_requests')
         .select('request_id, qr_serial, flag_reason, timestamp')
         .like('request_id', 'VERIFY_EVENT_%')
@@ -543,7 +564,8 @@ export default async function handler(req, res) {
 
     // 6. Cashback Claims
     if (claimRes.status === 'fulfilled' && !claimRes.value.error) {
-      responseData.claims = (claimRes.value.data || []).map((row) => {
+      const claimsMap = new Map();
+      (claimRes.value.data || []).forEach((row) => {
         let meta = {};
         if (row.flag_reason && row.flag_reason.startsWith('{')) {
           try { meta = JSON.parse(row.flag_reason); } catch (_) {}
@@ -557,7 +579,7 @@ export default async function handler(req, res) {
         const gross = Number(row.claim_value ?? meta.amount ?? 150);
         const net = Number(row.net_disbursed || meta.disbursedAmount || meta.netDisbursed || gross);
 
-        return {
+        const claimObj = {
           ...meta,
           id: row.request_id || row.id,
           requestId: row.request_id,
@@ -580,9 +602,47 @@ export default async function handler(req, res) {
           vendorName: meta.vendorName || meta.companyName || 'DuraGrit Partner',
           vendorId: meta.vendorId || 'VND-101',
           submittedAt: row.timestamp || row.created_at || new Date().toISOString(),
-          date: row.timestamp || row.created_at || new Date().toISOString()
+          date: row.timestamp || row.created_at || new Date().toISOString(),
+          updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : new Date(row.timestamp || 0).getTime()
         };
+        const key = String(claimObj.id).toUpperCase();
+        claimsMap.set(key, claimObj);
+        if (claimObj.requestId) claimsMap.set(String(claimObj.requestId).toUpperCase(), claimObj);
+        if (claimObj.supabaseId) claimsMap.set(String(claimObj.supabaseId).toUpperCase(), claimObj);
       });
+
+      // Apply claim actions chronologically (oldest to newest) so latest decision wins
+      const sortedClaimActs = [...rawClaimActs].sort(
+        (a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0)
+      );
+      sortedClaimActs.forEach((row) => {
+        try {
+          const act = JSON.parse(row.flag_reason || '{}');
+          const targetId = String(act.claimId || act.requestId || '').toUpperCase();
+          if (targetId && claimsMap.has(targetId)) {
+            const target = claimsMap.get(targetId);
+            if (act.status) target.status = act.status;
+            if (act.payoutStatus) target.payoutStatus = act.payoutStatus;
+            if (act.transactionId) target.transactionId = act.transactionId;
+            if (act.npciRrn) target.npciRrn = act.npciRrn;
+            if (act.utr) target.utr = act.utr;
+            if (act.disbursedAmount !== undefined && act.disbursedAmount !== null) target.disbursedAmount = Number(act.disbursedAmount);
+            if (act.disbursedAt) target.disbursedAt = act.disbursedAt;
+            if (act.approvedAt) target.approvedAt = act.approvedAt;
+            if (act.rejectedAt) target.rejectedAt = act.rejectedAt;
+            if (act.flagReason) target.flagReason = act.flagReason;
+            if (act.remarks) target.remarks = act.remarks;
+            target.updatedAt = Math.max(Number(target.updatedAt || 0), new Date(row.timestamp || 0).getTime());
+          }
+        } catch (_) {}
+      });
+
+      // Deduplicate by canonical id
+      const uniqueClaims = new Map();
+      claimsMap.forEach((claim) => {
+        uniqueClaims.set(String(claim.id).toUpperCase(), claim);
+      });
+      responseData.claims = Array.from(uniqueClaims.values());
     }
 
     // 7. SMTP Config

@@ -901,9 +901,22 @@ export const DataProvider = ({ children }) => {
           try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(bridge.orders)); } catch (_) {}
         }
         if (Array.isArray(bridge.claims) && bridge.claims.length > 0) {
-          claimsRef.current = bridge.claims;
-          setClaims(bridge.claims);
-          try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(bridge.claims)); } catch (_) {}
+          const localMap = new Map();
+          (claimsRef.current || []).forEach((c) => {
+            const k = String(c.id || c.requestId || '').toUpperCase();
+            if (k) localMap.set(k, c);
+          });
+          const mergedBridgeClaims = bridge.claims.map((bc) => {
+            const k = String(bc.id || bc.requestId || '').toUpperCase();
+            const local = localMap.get(k);
+            if (local && (Number(local.updatedAt || 0) > Number(bc.updatedAt || 0))) {
+              return { ...bc, ...local };
+            }
+            return bc;
+          });
+          claimsRef.current = mergedBridgeClaims;
+          setClaims(mergedBridgeClaims);
+          try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(mergedBridgeClaims)); } catch (_) {}
         }
         setDbStatus((prev) => ({
           ...prev,
@@ -1000,7 +1013,7 @@ export const DataProvider = ({ children }) => {
             .select('request_id, qr_serial, flag_reason, timestamp')
             .like('request_id', 'CLAIM_ACTION_EVENT_%')
             .order('timestamp', { ascending: false })
-            .limit(20),
+            .limit(300),
           supabase.from('cashback_requests')
             .select('request_id, qr_serial, flag_reason, timestamp')
             .like('request_id', 'VERIFY_EVENT_%')
@@ -1314,7 +1327,7 @@ export const DataProvider = ({ children }) => {
         // F. Process Real Claims & Claim Actions
         if (
           (realClaimRes.status === 'fulfilled' && !realClaimRes.value.error) ||
-          (eventRes.status === 'fulfilled' && !eventRes.value.error)
+          (claimActRes.status === 'fulfilled' && !claimActRes.value.error)
         ) {
           sbConnected = true;
           const realClaimRows = allClaimsRows.filter(
@@ -1332,7 +1345,13 @@ export const DataProvider = ({ children }) => {
           claimActionRows.forEach((row) => {
             try {
               const action = JSON.parse(row.flag_reason || '{}');
-              const target = sbClaims.find((c) => c.id === action.claimId || c.requestId === action.claimId || c.supabaseId === action.claimId);
+              const actId = String(action.claimId || action.requestId || '').toUpperCase();
+              const target = sbClaims.find((c) => {
+                const cId = String(c.id || '').toUpperCase();
+                const cReqId = String(c.requestId || c.claimNumber || '').toUpperCase();
+                const cSbId = String(c.supabaseId || '').toUpperCase();
+                return cId === actId || cReqId === actId || cSbId === actId;
+              });
               if (target) {
                 if (action.status) target.status = action.status;
                 if (action.payoutStatus) target.payoutStatus = action.payoutStatus;
@@ -2919,9 +2938,13 @@ export const DataProvider = ({ children }) => {
     const nowTs = Date.now();
     const approvedIso = new Date().toISOString();
     let targetClaim = null;
+    const cleanTargetId = String(claimId || '').trim().toUpperCase();
 
     const updatedClaims = claimsRef.current.map((c) => {
-      if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
+      const cId = String(c.id || '').trim().toUpperCase();
+      const cReqId = String(c.requestId || c.claimNumber || '').trim().toUpperCase();
+      const cSbId = String(c.supabaseId || '').trim().toUpperCase();
+      if (cId === cleanTargetId || cReqId === cleanTargetId || cSbId === cleanTargetId) {
         targetClaim = {
           ...c,
           status: 'Approved',
@@ -2936,7 +2959,18 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    pushDevSync({ claims: updatedClaims });
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
+    pushDevSync({ 
+      claims: updatedClaims,
+      claimAction: targetClaim ? {
+        claimId: targetClaim.id,
+        requestId: targetClaim.requestId,
+        status: 'Approved',
+        payoutStatus: 'Pending Release',
+        approvedAt: approvedIso,
+        decisionAt: approvedIso,
+      } : null
+    });
 
     if (SB_ONLINE && targetClaim) {
       await pushClaimActionToSupabase({
@@ -2961,7 +2995,13 @@ export const DataProvider = ({ children }) => {
   // Step 2 Payout Release (Approved -> Disbursed with Amount, Screenshot, Transaction ID, Remarks)
   const releaseClaimPayout = useCallback(async (claimId, { disbursedAmount, transactionId, paymentMode = 'UPI', remarks = '', paymentProofUrl = null } = {}) => {
     const nowTs = Date.now();
-    const existing = claimsRef.current.find((c) => c.id === claimId || c.requestId === claimId || c.supabaseId === claimId);
+    const cleanTargetId = String(claimId || '').trim().toUpperCase();
+    const existing = claimsRef.current.find((c) => {
+      const cId = String(c.id || '').trim().toUpperCase();
+      const cReqId = String(c.requestId || c.claimNumber || '').trim().toUpperCase();
+      const cSbId = String(c.supabaseId || '').trim().toUpperCase();
+      return cId === cleanTargetId || cReqId === cleanTargetId || cSbId === cleanTargetId;
+    });
     if (!existing) return { success: false, message: 'Claim not found' };
 
     const finalAmount = Number(disbursedAmount ?? existing.amount ?? 0);
@@ -2970,7 +3010,10 @@ export const DataProvider = ({ children }) => {
 
     let updatedClaim = null;
     const updatedClaims = claimsRef.current.map((c) => {
-      if (c.id === claimId || c.requestId === claimId || c.supabaseId === claimId) {
+      const cId = String(c.id || '').trim().toUpperCase();
+      const cReqId = String(c.requestId || c.claimNumber || '').trim().toUpperCase();
+      const cSbId = String(c.supabaseId || '').trim().toUpperCase();
+      if (cId === cleanTargetId || cReqId === cleanTargetId || cSbId === cleanTargetId) {
         updatedClaim = {
           ...c,
           status: 'Disbursed',
@@ -2994,7 +3037,23 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    pushDevSync({ claims: updatedClaims });
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
+    pushDevSync({ 
+      claims: updatedClaims,
+      claimAction: updatedClaim ? {
+        claimId: updatedClaim.id,
+        requestId: updatedClaim.requestId,
+        status: 'Disbursed',
+        payoutStatus: 'Disbursed',
+        disbursedAmount: finalAmount,
+        transactionId: finalTxnId,
+        npciRrn: finalTxnId,
+        utr: finalTxnId,
+        remarks,
+        paymentProofUrl: paymentProofUrl || updatedClaim.paymentProofUrl || null,
+        disbursedAt: disbursedIso,
+      } : null
+    });
 
     // Move User Wallet: Escrow -> Approved Reward Balance
     const cleanMobile = normalizeMobile(existing.mobile || existing.userMobile);
@@ -3168,25 +3227,48 @@ export const DataProvider = ({ children }) => {
   const rejectClaim = useCallback(async (claimId, reason = 'Rejected during Admin Verification') => {
     const nowTs = Date.now();
     const rejectedIso = new Date().toISOString();
-    const existing = claims.find((c) => c.id === claimId || c.requestId === claimId || c.supabaseId === claimId);
+    const cleanTargetId = String(claimId || '').trim().toUpperCase();
+    const existing = claimsRef.current.find((c) => {
+      const cId = String(c.id || '').trim().toUpperCase();
+      const cReqId = String(c.requestId || c.claimNumber || '').trim().toUpperCase();
+      const cSbId = String(c.supabaseId || '').trim().toUpperCase();
+      return cId === cleanTargetId || cReqId === cleanTargetId || cSbId === cleanTargetId;
+    });
 
-    setClaims((prev) => {
-      const updated = prev.map((c) =>
-        c.id === claimId || c.requestId === claimId || c.supabaseId === claimId
-          ? {
-              ...c,
-              status: 'Rejected',
-              payoutStatus: 'Rejected',
-              flagReason: reason,
-              remarks: reason,
-              rejectedAt: rejectedIso,
-              decisionAt: rejectedIso,
-              updatedAt: nowTs,
-            }
-          : c
-      );
-      pushDevSync({ claims: updated });
-      return updated;
+    let targetClaim = null;
+    const updatedClaims = claimsRef.current.map((c) => {
+      const cId = String(c.id || '').trim().toUpperCase();
+      const cReqId = String(c.requestId || c.claimNumber || '').trim().toUpperCase();
+      const cSbId = String(c.supabaseId || '').trim().toUpperCase();
+      if (cId === cleanTargetId || cReqId === cleanTargetId || cSbId === cleanTargetId) {
+        targetClaim = {
+          ...c,
+          status: 'Rejected',
+          payoutStatus: 'Rejected',
+          flagReason: reason,
+          remarks: reason,
+          rejectedAt: rejectedIso,
+          decisionAt: rejectedIso,
+          updatedAt: nowTs,
+        };
+        return targetClaim;
+      }
+      return c;
+    });
+    claimsRef.current = updatedClaims;
+    setClaims(updatedClaims);
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
+    pushDevSync({ 
+      claims: updatedClaims,
+      claimAction: targetClaim ? {
+        claimId: targetClaim.id,
+        requestId: targetClaim.requestId,
+        status: 'Rejected',
+        payoutStatus: 'Rejected',
+        flagReason: reason,
+        remarks: reason,
+        rejectedAt: rejectedIso,
+      } : null
     });
 
     // Release held escrow back if rejected before disbursement
@@ -3225,7 +3307,7 @@ export const DataProvider = ({ children }) => {
       await q;
     }
     return { success: true };
-  }, [claims, pushDevSync, pushClaimActionToSupabase]);
+  }, [pushDevSync, pushClaimActionToSupabase]);
 
   const lockSettlement = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0];

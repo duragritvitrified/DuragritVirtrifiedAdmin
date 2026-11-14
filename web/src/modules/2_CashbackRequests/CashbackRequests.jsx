@@ -427,7 +427,7 @@ export function CashbackRequests() {
   // 1. APPROVE ACTION (Pending Tab ONLY sets status to Approved & moves to Completed tab)
   const handleSingleApprove = async (claim) => {
     setProcessingId(claim.id);
-    await approveClaimStep1(claim.id);
+    await approveClaimStep1(claim.id || claim.requestId || claim.supabaseId);
     setSelectedIds((prev) => prev.filter((id) => id !== claim.id));
     setProcessingId(null);
     showToast(`✓ Claim ${claim.id} Approved! Moved to 'In Process / Complete' tab for payout release.`);
@@ -445,7 +445,7 @@ export function CashbackRequests() {
     const totalAmount = toApprove.reduce((sum, c) => sum + c.cashback, 0);
 
     for (const claim of toApprove) {
-      await approveClaimStep1(claim.id);
+      await approveClaimStep1(claim.id || claim.requestId || claim.supabaseId);
     }
 
     setSelectedIds([]);
@@ -456,7 +456,7 @@ export function CashbackRequests() {
   // Single Reject
   const handleSingleReject = async (claim) => {
     setProcessingId(claim.id);
-    await rejectClaim(claim.id, 'Rejected by Admin during claim verification');
+    await rejectClaim(claim.id || claim.requestId || claim.supabaseId, 'Rejected by Admin during claim verification');
     setSelectedIds((prev) => prev.filter((id) => id !== claim.id));
     setProcessingId(null);
     showToast(`Request ${claim.id} rejected and moved to Quarantine.`);
