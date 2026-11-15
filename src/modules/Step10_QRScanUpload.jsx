@@ -24,7 +24,7 @@ export const FIELD_TAG_QUEUE_STORAGE_KEY = 'duragrit_field_tag_queue_v1';
 
 export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
   const { currentUser } = useAuth();
-  const { submitScannedCode, batches = [], claims = [] } = useData();
+  const { submitScannedCode, batches = [], claims = [], vendors = [] } = useData();
 
   const [manualSerial, setManualSerial] = useState(() => {
     try {
@@ -646,6 +646,7 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
       <ManifestIngestSheet
         isOpen={showManifestSheet}
         onClose={() => setShowManifestSheet(false)}
+        vendors={vendors}
         onIngestSerial={(serial, photoDataUrl, fileName) =>
           processSubmission(serial, photoDataUrl, fileName)
         }

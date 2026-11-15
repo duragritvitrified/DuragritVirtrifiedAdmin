@@ -8,7 +8,8 @@ import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 
 const AuthContext = createContext();
 
-const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+// 30 Days login session duration (to avoid frequent logins)
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const getAppSessionKey = () => {
   if (typeof window !== 'undefined') {
@@ -54,7 +55,7 @@ export const AuthProvider = ({ children }) => {
         const parsed = JSON.parse(stored);
         if (parsed?.isAuthenticated && parsed?.loginTimestamp) {
           const elapsed = Date.now() - parsed.loginTimestamp;
-          if (elapsed < EIGHT_HOURS_MS) {
+          if (elapsed < THIRTY_DAYS_MS) {
             return parsed;
           }
         }
@@ -70,11 +71,11 @@ export const AuthProvider = ({ children }) => {
         const parsed = JSON.parse(stored);
         if (parsed?.loginTimestamp) {
           const elapsed = Date.now() - parsed.loginTimestamp;
-          return Math.max(0, EIGHT_HOURS_MS - elapsed);
+          return Math.max(0, THIRTY_DAYS_MS - elapsed);
         }
       }
     } catch (_) {}
-    return EIGHT_HOURS_MS;
+    return THIRTY_DAYS_MS;
   });
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
@@ -91,7 +92,7 @@ export const AuthProvider = ({ children }) => {
     if (!currentUser?.isAuthenticated) return;
     const interval = setInterval(() => {
       const elapsed = Date.now() - currentUser.loginTimestamp;
-      const left = Math.max(0, EIGHT_HOURS_MS - elapsed);
+      const left = Math.max(0, THIRTY_DAYS_MS - elapsed);
       setSessionRemaining(left);
       if (left === 0) logout();
     }, 1000);

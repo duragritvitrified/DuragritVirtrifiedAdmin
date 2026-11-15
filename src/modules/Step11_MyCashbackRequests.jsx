@@ -30,7 +30,7 @@ import {
 
 export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
   const { currentUser } = useAuth();
-  const { claims = [], refreshAllData, submitScannedCode } = useData();
+  const { claims = [], refreshAllData, submitScannedCode, vendors = [] } = useData();
 
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'inprocess' | 'completed' | 'rejected'
   const [toastMsg, setToastMsg] = useState('');
@@ -52,6 +52,7 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
     dispatchNode: 'Morbi Yard 04 Hub',
   });
   const [manualLoading, setManualLoading] = useState(false);
+  const [invoiceVendorDetails, setInvoiceVendorDetails] = useState(null);
   const manualFileInputRef = useRef(null);
 
   const captureDeviceGps = () => {
@@ -86,6 +87,25 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
       return;
     }
     setManualProofFileName(file.name);
+
+    // Auto-match vendor details from invoice
+    const lowerName = file.name.toLowerCase();
+    const matched = (vendors || []).find((v) => {
+      const vId = String(v.vendorId || v.id || '').toLowerCase();
+      const vComp = String(v.companyName || v.name || '').toLowerCase();
+      const vPhone = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+      return (
+        (vId && lowerName.includes(vId)) ||
+        (vComp && lowerName.includes(vComp)) ||
+        (vPhone.length === 10 && lowerName.includes(vPhone))
+      );
+    }) || (vendors && vendors.length > 0 ? vendors[0] : null);
+
+    if (matched) {
+      setInvoiceVendorDetails(matched);
+      showToast(`Invoice analyzed: ${matched.companyName || matched.name} verified.`);
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       setManualProofDataUrl(String(ev.target?.result || ''));
@@ -597,6 +617,32 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
                   </span>
                 </button>
               </div>
+
+              {/* Auto Display Vendor Details upon Invoice Attachment */}
+              {invoiceVendorDetails && (
+                <div className="bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-2.5 flex items-start gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#A6300F] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    {(invoiceVendorDetails.companyName || invoiceVendorDetails.name || 'V')[0]}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-black text-stone-900 truncate">
+                        {invoiceVendorDetails.companyName || invoiceVendorDetails.name}
+                      </span>
+                      <span className="text-[8.5px] font-mono font-bold text-[#A6300F] bg-white px-1 py-0.5 rounded border border-[#F9CEB8]">
+                        {invoiceVendorDetails.vendorId || invoiceVendorDetails.id}
+                      </span>
+                    </div>
+                    <div className="text-[9.5px] text-stone-500 flex items-center gap-1.5 mt-0.5">
+                      <span>👤 {invoiceVendorDetails.contactPerson || invoiceVendorDetails.name}</span>
+                      <span>📞 {invoiceVendorDetails.phone || invoiceVendorDetails.mobile}</span>
+                    </div>
+                    <div className="text-[9px] text-emerald-700 font-bold mt-0.5">
+                      ✓ Vendor Details Auto-Loaded from Scanned Invoice
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Auto GPS Capture Pill */}
               <div className="bg-[#F4F3F0] px-3 py-2 rounded-xl border border-[#ECEAE6] flex items-center justify-between text-[10px] font-mono text-stone-600">

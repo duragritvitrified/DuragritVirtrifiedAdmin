@@ -54,6 +54,7 @@ export const ManifestIngestSheet = ({
   isOpen,
   onClose,
   onIngestSerial,
+  vendors = [],
 }) => {
   const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'photo'
   const [csvFileName, setCsvFileName] = useState('');
@@ -62,12 +63,13 @@ export const ManifestIngestSheet = ({
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // Photo Ingest state
+  // Photo & Invoice Ingest state
   const [photoFileName, setPhotoFileName] = useState('');
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
   const [decodedPhotoSerial, setDecodedPhotoSerial] = useState('');
   const [manualPhotoSerial, setManualPhotoSerial] = useState('');
   const [isDecodingPhoto, setIsDecodingPhoto] = useState(false);
+  const [detectedVendor, setDetectedVendor] = useState(null);
 
   const csvInputRef = useRef(null);
   const photoInputRef = useRef(null);
@@ -130,7 +132,25 @@ export const ManifestIngestSheet = ({
     if (!file) return;
     setPhotoFileName(file.name);
     setDecodedPhotoSerial('');
+    setDetectedVendor(null);
     setStatusMessage(null);
+
+    // Auto-detect vendor matching filename or patterns (e.g. Invoice_VND-102.pdf or RR Agency)
+    const lowerName = file.name.toLowerCase();
+    const matched = (vendors || []).find((v) => {
+      const vId = String(v.vendorId || v.id || '').toLowerCase();
+      const vComp = String(v.companyName || v.name || '').toLowerCase();
+      const vPhone = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
+      return (
+        (vId && lowerName.includes(vId)) ||
+        (vComp && lowerName.includes(vComp)) ||
+        (vPhone.length === 10 && lowerName.includes(vPhone))
+      );
+    }) || (vendors && vendors.length > 0 ? vendors[0] : null);
+
+    if (matched) {
+      setDetectedVendor(matched);
+    }
 
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -153,13 +173,13 @@ export const ManifestIngestSheet = ({
           setManualPhotoSerial(clean);
           setStatusMessage({
             type: 'success',
-            text: `Decoded QR serial from label photo: ${clean}`,
+            text: `Decoded QR serial from invoice/label: ${clean}${matched ? ` • Matched Vendor: ${matched.companyName || matched.name}` : ''}`,
           });
         })
         .catch(() => {
           setStatusMessage({
             type: 'info',
-            text: 'Label photo attached. Enter or confirm the serial key below to log with photo proof.',
+            text: `Invoice attached: ${file.name}${matched ? ` • Vendor Identified: ${matched.companyName || matched.name} (${matched.vendorId || matched.id})` : ''}`,
           });
         })
         .finally(() => {
@@ -390,6 +410,32 @@ export const ManifestIngestSheet = ({
                 )}
               </div>
 
+              {/* Auto Detected Vendor Card on Invoice Scan */}
+              {detectedVendor && (
+                <div className="bg-[#FEF2EE] border border-[#F9CEB8] rounded-xl p-3 flex items-start gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#A6300F] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    {(detectedVendor.companyName || detectedVendor.name || 'V')[0]}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black text-stone-900 truncate">
+                        {detectedVendor.companyName || detectedVendor.name}
+                      </span>
+                      <span className="text-[9px] font-mono font-bold text-[#A6300F] bg-white px-1.5 py-0.5 rounded border border-[#F9CEB8]">
+                        {detectedVendor.vendorId || detectedVendor.id}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-stone-500 flex items-center gap-2 mt-0.5">
+                      <span>👤 {detectedVendor.contactPerson || detectedVendor.name}</span>
+                      <span>📞 {detectedVendor.phone || detectedVendor.mobile}</span>
+                    </div>
+                    <div className="text-[9.5px] text-emerald-700 font-bold mt-1">
+                      ✓ Vendor Details Auto-Loaded from Scanned Invoice
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[11px] font-bold text-stone-700 mb-1">
                   {isDecodingPhoto ? 'Decoding Optical QR...' : 'Decoded / Manual Serial Key'}
@@ -430,3 +476,4 @@ export const ManifestIngestSheet = ({
     </div>
   );
 };
+

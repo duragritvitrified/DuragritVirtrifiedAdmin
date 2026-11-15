@@ -54,6 +54,21 @@ export const PartnerOverviewDashboard = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [claimFilter, setClaimFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'disbursed' | 'rejected'
   const [selectedClaim, setSelectedClaim] = useState(null);
+  const [rewardMode, setRewardMode] = useState(() => {
+    try {
+      return localStorage.getItem('duragrit_reward_mode') || 'cashback'; // 'cashback' | 'points'
+    } catch (_) {
+      return 'cashback';
+    }
+  });
+
+  const toggleRewardMode = (mode) => {
+    setRewardMode(mode);
+    try {
+      localStorage.setItem('duragrit_reward_mode', mode);
+    } catch (_) {}
+    showToast(`Switched view to ${mode === 'points' ? 'Reward Points (Pts)' : 'Cashback (₹)'}`);
+  };
 
   // OTA Listeners
   useEffect(() => {
@@ -434,17 +449,44 @@ export const PartnerOverviewDashboard = ({
           {/* Subtle background luxury accent */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#FEF2EE] to-transparent rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
 
-          <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center justify-between relative z-10 flex-wrap gap-2">
             <div className="flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-[#A6300F]" />
               <span className="text-[11px] font-black tracking-wider text-stone-900 uppercase">
-                Payout &amp; Scan Summary
+                {rewardMode === 'points' ? 'Reward Points & Scan Summary' : 'Payout & Scan Summary'}
               </span>
             </div>
-            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              {percentSettled}% Settled
-            </span>
+            <div className="flex items-center gap-1.5">
+              {/* Dual Mode Switch: Points & Cashback */}
+              <div className="flex items-center bg-[#F4F3F0] p-0.5 rounded-xl border border-[#ECEAE6]">
+                <button
+                  type="button"
+                  onClick={() => toggleRewardMode('cashback')}
+                  className={`px-2 py-0.5 text-[9.5px] font-bold rounded-lg transition cursor-pointer ${
+                    rewardMode === 'cashback'
+                      ? 'bg-[#A6300F] text-white shadow-2xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  Cashback (₹)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleRewardMode('points')}
+                  className={`px-2 py-0.5 text-[9.5px] font-bold rounded-lg transition cursor-pointer ${
+                    rewardMode === 'points'
+                      ? 'bg-[#A6300F] text-white shadow-2xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  Points (Pts)
+                </button>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                {percentSettled}% Settled
+              </span>
+            </div>
           </div>
 
           {/* Top 2 Primary Metrics: Total Scans & Total Payout */}
@@ -472,23 +514,32 @@ export const PartnerOverviewDashboard = ({
               </span>
             </div>
 
-            {/* KPI 2: Kitna Payout Total */}
+            {/* KPI 2: Kitna Payout Total / Kitne Points Total */}
             <div className="bg-gradient-to-br from-[#FFF8F5] to-white border border-[#F9CEB8] rounded-2xl p-3 shadow-2xs">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-[#A6300F] uppercase tracking-wider">
-                  Total Payout
+                  {rewardMode === 'points' ? 'Total Points' : 'Total Payout'}
                 </span>
                 <div className="w-6 h-6 rounded-lg bg-[#A6300F] text-white flex items-center justify-center shadow-xs">
-                  <Wallet className="w-3.5 h-3.5" />
+                  {rewardMode === 'points' ? <Sparkles className="w-3.5 h-3.5" /> : <Wallet className="w-3.5 h-3.5" />}
                 </div>
               </div>
               <div className="mt-1 flex items-baseline gap-1">
                 <span className="text-2xl font-black text-[#A6300F] font-mono tracking-tight">
-                  ₹{totalPayout.toLocaleString('en-IN')}
+                  {rewardMode === 'points'
+                    ? `${(totalPayout * 10).toLocaleString('en-IN')}`
+                    : `₹${totalPayout.toLocaleString('en-IN')}`}
                 </span>
+                {rewardMode === 'points' && (
+                  <span className="text-[10px] font-bold text-[#A6300F] font-mono uppercase">
+                    pts
+                  </span>
+                )}
               </div>
               <span className="text-[9.5px] text-[#A6300F]/70 block mt-0.5 font-medium">
-                Gross Claim Value
+                {rewardMode === 'points'
+                  ? `${userClaims.length} Claims • 10 Pts/₹1`
+                  : 'Gross Claim Value'}
               </span>
             </div>
           </div>
@@ -513,7 +564,9 @@ export const PartnerOverviewDashboard = ({
                 </span>
               </div>
               <div className="text-base sm:text-lg font-black text-emerald-700 font-mono leading-tight tracking-tight">
-                ₹{disbursedAmount.toLocaleString('en-IN')}
+                {rewardMode === 'points'
+                  ? `${(disbursedAmount * 10).toLocaleString('en-IN')} pts`
+                  : `₹${disbursedAmount.toLocaleString('en-IN')}`}
               </div>
               <div className="flex items-center justify-between gap-1 flex-wrap">
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
@@ -543,7 +596,9 @@ export const PartnerOverviewDashboard = ({
                 </span>
               </div>
               <div className="text-base sm:text-lg font-black text-blue-700 font-mono leading-tight tracking-tight">
-                ₹{approvedAmount.toLocaleString('en-IN')}
+                {rewardMode === 'points'
+                  ? `${(approvedAmount * 10).toLocaleString('en-IN')} pts`
+                  : `₹${approvedAmount.toLocaleString('en-IN')}`}
               </div>
               <div className="flex items-center justify-between gap-1 flex-wrap">
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-blue-800 bg-white/90 px-2 py-0.5 rounded-full border border-blue-200 shadow-2xs">
@@ -573,7 +628,9 @@ export const PartnerOverviewDashboard = ({
                 </span>
               </div>
               <div className="text-base sm:text-lg font-black text-amber-800 font-mono leading-tight tracking-tight">
-                ₹{pendingAmount.toLocaleString('en-IN')}
+                {rewardMode === 'points'
+                  ? `${(pendingAmount * 10).toLocaleString('en-IN')} pts`
+                  : `₹${pendingAmount.toLocaleString('en-IN')}`}
               </div>
               <div className="flex items-center justify-between gap-1 flex-wrap">
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-amber-800 bg-white/90 px-2 py-0.5 rounded-full border border-amber-200 shadow-2xs">

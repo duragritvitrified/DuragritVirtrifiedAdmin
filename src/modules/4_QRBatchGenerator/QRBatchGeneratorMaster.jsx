@@ -379,7 +379,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
           <div class="sticker-header">DURAGRIT VITRIFIED</div>
           <div class="qr-container">${qrDisplay}</div>
           <div class="serial-key">${t.serialKey}</div>
-          <div class="cashback-badge">₹${Number(t.cashbackAmount || targetBatch.cashbackAmount || 50)} Cashback</div>
+          <div class="cashback-badge">AUTHENTIC PRODUCT</div>
         </div>`;
       })
       .join('');
@@ -516,7 +516,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(4.8);
         doc.setTextColor(166, 44, 17);
-        doc.text(`₹${Number(tok.cashbackAmount || targetBatch.cashbackAmount || 50)} Cashback`, currentX + stickerW / 2, currentY + 36.5, { align: 'center' });
+        doc.text(`AUTHENTIC PRODUCT`, currentX + stickerW / 2, currentY + 36.5, { align: 'center' });
 
         colIndex++;
         if (colIndex >= 4) {
