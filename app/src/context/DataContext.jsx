@@ -394,6 +394,7 @@ const mapClaimFromDb = (row) => {
 
   const gross = Number(row.claim_value ?? meta.amount ?? 0);
   const net = Number(row.net_disbursed || meta.disbursedAmount || gross);
+  const points = Number(meta.points ?? meta.rewardPoints ?? (gross * 10));
   const cleanFlagReason = (row.flag_reason && !row.flag_reason.trim().startsWith('{')) ? row.flag_reason : (meta.remarks || meta.flagReason || '');
 
   return {
@@ -418,6 +419,8 @@ const mapClaimFromDb = (row) => {
     batchCode: row.qr_serial,
     amount: gross,
     claimValue: gross,
+    points,
+    rewardPoints: points,
     tdsDeducted: Number(row.tds_deducted ?? 0),
     netDisbursed: net,
     disbursedAmount: status === 'Disbursed' ? net : Number(meta.disbursedAmount || 0),
@@ -2687,6 +2690,15 @@ export const DataProvider = ({ children }) => {
       0
     );
 
+    const pointsReward = Number(
+      matchedToken?.pointsReward ??
+      matchedToken?.rewardPoints ??
+      matchedBatch?.pointsReward ??
+      matchedBatch?.rewardPoints ??
+      matchedSku?.rewardPoints ??
+      (claimAmount * 10)
+    );
+
     const productName = matchedBatch?.productName || sbTokenRow?.products?.name || matchedSku?.name || 'DuraGrit Verified Pack';
     const skuCode = matchedBatch?.skuCode || sbTokenRow?.products?.sku_code || matchedSku?.skuCode || '';
 
@@ -2760,6 +2772,8 @@ export const DataProvider = ({ children }) => {
       batchCode: cleanKey,
       amount: claimAmount,
       claimValue: claimAmount,
+      points: pointsReward,
+      rewardPoints: pointsReward,
       tdsDeducted: tdsInfo.tdsAmount,
       netDisbursed: tdsInfo.netAmount,
       disbursedAmount: 0,
@@ -2807,6 +2821,8 @@ export const DataProvider = ({ children }) => {
         subCategory: matchedSku?.subCategory || 'High-Polymer Vitrified',
         mrp: Number(matchedSku?.baseMrp || matchedSku?.mrp || 650),
         claimValue: claimAmount,
+        points: pointsReward,
+        rewardPoints: pointsReward,
         serialKey: cleanKey
       };
 

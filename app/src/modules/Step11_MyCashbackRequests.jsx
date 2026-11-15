@@ -176,6 +176,16 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
     0
   );
 
+  const getClaimPoints = (c) => Number(c.points ?? c.rewardPoints ?? (Number(c.amount || c.claimValue) * 10)) || 0;
+  const earnedPointsTotal = [...completedList, ...inProcessList].reduce(
+    (sum, c) => sum + getClaimPoints(c),
+    0
+  );
+  const inReviewPointsTotal = pendingList.reduce(
+    (sum, c) => sum + getClaimPoints(c),
+    0
+  );
+
   const currentList =
     activeTab === 'pending'
       ? pendingList
@@ -288,9 +298,9 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
               <div className="text-2xl font-black text-amber-900 font-serif mt-0.5">
                 ₹{inReviewAmount.toLocaleString('en-IN')}
               </div>
-              <div className="text-[10px] text-[#C2410C] font-bold mt-1 flex items-center gap-1">
-                <span>⏳</span>
-                <span>{pendingList.length} Claims Pending</span>
+              <div className="text-[10px] text-[#C2410C] font-bold mt-1 flex items-center justify-between">
+                <span>⏳ {pendingList.length} Pending</span>
+                <span className="font-mono text-amber-800">⭐ {inReviewPointsTotal.toLocaleString('en-IN')} pts</span>
               </div>
             </div>
 
@@ -301,9 +311,9 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
               <div className="text-2xl font-black text-[#15803D] font-serif mt-0.5">
                 ₹{disbursedTotal.toLocaleString('en-IN')}
               </div>
-              <div className="text-[10px] text-emerald-800 font-bold mt-1 flex items-center gap-1 truncate">
-                <span>🏛️</span>
-                <span>Bank/UPI Payouts</span>
+              <div className="text-[10px] text-emerald-800 font-bold mt-1 flex items-center justify-between">
+                <span>🏛️ Bank/UPI</span>
+                <span className="font-mono text-emerald-800 font-black">⭐ {earnedPointsTotal.toLocaleString('en-IN')} pts</span>
               </div>
             </div>
           </div>
@@ -489,11 +499,17 @@ export const Step11_MyCashbackRequests = ({ onBack, onNavigateScan }) => {
 
                   {/* Payout & Context Row */}
                   <div className="flex items-center justify-between text-[11px] text-stone-600 pt-1">
-                    <div>
-                      <span className="text-stone-400">Cashback:</span>{' '}
-                      <strong className="text-stone-900 font-serif">₹{claim.amount}</strong>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <div>
+                        <span className="text-stone-400">Cashback:</span>{' '}
+                        <strong className="text-stone-900 font-serif">₹{claim.amount}</strong>
+                      </div>
+                      <span className="inline-flex items-center gap-0.5 font-mono text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                        <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                        <span>{getClaimPoints(claim).toLocaleString('en-IN')} pts</span>
+                      </span>
                       {claim.transactionId && (
-                        <span className="text-stone-400 text-[10px] font-mono ml-2">
+                        <span className="text-stone-400 text-[10px] font-mono ml-1">
                           UTR: {claim.transactionId}
                         </span>
                       )}

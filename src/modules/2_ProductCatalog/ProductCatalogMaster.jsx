@@ -875,14 +875,9 @@ export function ProductCatalogMaster({ onNavigateQR }) {
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold text-stone-700">
-                        Cashback Reward / QR (₹) <span className="text-[#C84826]">*</span>
-                      </label>
-                      <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                        {Number(formData.cashbackReward || 0) * 10} Points (Pts)
-                      </span>
-                    </div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Cashback Reward / QR (₹) <span className="text-[#C84826]">*</span>
+                    </label>
                     <input
                       type="number"
                       min="1"

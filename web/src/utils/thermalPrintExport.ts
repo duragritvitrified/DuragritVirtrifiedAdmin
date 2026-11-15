@@ -46,6 +46,7 @@ export interface BatchExportInput {
   batchPrefix: string;
   quantity: number;
   cashbackInr: number;
+  pointsReward?: number | string;
   dealerDiscountPct?: number | string;
   validityPeriod?: string;
   expiryDate?: string;
@@ -102,6 +103,7 @@ export function generateSerializedBatchTokens(input: BatchExportInput): Serializ
   const yyyymmm = extractYearMonthStamp(input.batchPrefix);
   const qty = Math.min(5000, Math.max(1, Number(input.quantity) || 10));
   const cashback = Number(input.cashbackInr ?? 50);
+  const points = Number(input.pointsReward ?? cashback * 10);
   const discountNum =
     typeof input.dealerDiscountPct === 'number'
       ? input.dealerDiscountPct
@@ -125,6 +127,8 @@ export function generateSerializedBatchTokens(input: BatchExportInput): Serializ
       batch_prefix: input.batchPrefix || `BATCH-${cleanSku}-${yyyymmm}`,
       cashback_inr: cashback,
       cashbackAmount: cashback,
+      rewardPoints: points,
+      pointsReward: points,
       dealer_discount_pct: discountNum,
       expiry_date: expiryDate,
       sha256_checksum: checksum,
@@ -204,6 +208,8 @@ export function normalizeBatchTokensForExport(batchOrTokens: any, metaFallback?:
       batch_prefix: t?.batch_prefix || batchPrefix,
       cashback_inr: tokenCashback,
       cashbackAmount: tokenCashback,
+      rewardPoints: Number(t?.rewardPoints ?? t?.pointsReward ?? tokenCashback * 10),
+      pointsReward: Number(t?.rewardPoints ?? t?.pointsReward ?? tokenCashback * 10),
       dealer_discount_pct: Number(t?.dealer_discount_pct ?? discountNum),
       expiry_date: t?.expiry_date || expiryDate,
       sha256_checksum: checksum,

@@ -578,6 +578,7 @@ export default async function handler(req, res) {
 
         const gross = Number(row.claim_value ?? meta.amount ?? 150);
         const net = Number(row.net_disbursed || meta.disbursedAmount || meta.netDisbursed || gross);
+        const points = Number(meta.points ?? meta.rewardPoints ?? (gross * 10));
 
         const claimObj = {
           ...meta,
@@ -590,6 +591,8 @@ export default async function handler(req, res) {
           userMobile: meta.userMobile || row.mobile || '',
           amount: gross,
           claimValue: gross,
+          points,
+          rewardPoints: points,
           disbursedAmount: status === 'Disbursed' ? net : 0,
           netDisbursed: status === 'Disbursed' ? net : 0,
           status,

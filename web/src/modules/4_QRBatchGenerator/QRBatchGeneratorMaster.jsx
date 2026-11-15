@@ -76,7 +76,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
   const [batchPrefix, setBatchPrefix] = useState(`BATCH-${currentMonthYear}`);
   const [quantity, setQuantity] = useState(25);
   const [cashbackReward, setCashbackReward] = useState(50);
-  const [discountTier, setDiscountTier] = useState(15);
+  const [pointsReward, setPointsReward] = useState(500);
   const [validityPeriod, setValidityPeriod] = useState('12 Months from Generation Date');
 
   const [liveQrDataUrl, setLiveQrDataUrl] = useState(() => createSimpleQRSvg());
@@ -130,6 +130,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
       const codePart = (selectedSku.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '');
       setBatchPrefix(`BATCH-${codePart}-${currentMonthYear}`);
       setCashbackReward(Number(selectedSku.cashbackReward ?? selectedSku.cashbackAmount ?? 50));
+      setPointsReward(Number(selectedSku.rewardPoints ?? (Number(selectedSku.cashbackReward ?? selectedSku.cashbackAmount ?? 50) * 10)));
     }
   }, [selectedSku, currentMonthYear]);
 
@@ -226,7 +227,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         batchPrefix,
         quantity: qtyNum,
         cashbackReward: Number(cashbackReward),
-        discountTier: Number(discountTier),
+        pointsReward: Number(pointsReward),
         validityPeriod,
         lotNumber: String(batchNum),
       });
@@ -242,7 +243,8 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         prefix: batchPrefix,
         quantity: qtyNum,
         cashbackAmount: Number(cashbackReward),
-        discountTier: `${discountTier}% Dealer Wholesale`,
+        pointsReward: Number(pointsReward),
+        rewardPoints: Number(pointsReward),
         validityPeriod,
         createdAt: new Date().toISOString(),
         tokens: tokensList,
@@ -711,15 +713,15 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
 
                 <div>
                   <label className="block text-xs font-bold text-stone-700 mb-1">
-                    Discount Tier (%)
+                    Reward Points per QR (Pts) <span className="text-[#C84826]">*</span>
                   </label>
                   <input
                     type="number"
-                    min="0"
-                    max="40"
-                    value={discountTier}
-                    onChange={(e) => setDiscountTier(Number(e.target.value))}
+                    min="1"
+                    value={pointsReward}
+                    onChange={(e) => setPointsReward(Number(e.target.value))}
                     className="w-full px-3.5 py-2 text-xs bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl text-[#1C1917] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#C84826]"
+                    placeholder="e.g. 500"
                   />
                 </div>
 

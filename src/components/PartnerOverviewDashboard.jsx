@@ -314,6 +314,17 @@ export const PartnerOverviewDashboard = ({
   const rejectedAmount = rejectedClaims.reduce((sum, c) => sum + (Number(c.amount || c.claimValue) || 0), 0);
   const rejectedCount = rejectedClaims.length;
 
+  // 7. Earned Points Metrics (Awarded / credited officially ONLY when approved or disbursed)
+  const getClaimPoints = (c) => Number(c.points ?? c.rewardPoints ?? (Number(c.amount || c.claimValue) * 10)) || 0;
+  const disbursedPoints = disbursedClaims.reduce((sum, c) => sum + getClaimPoints(c), 0);
+  const approvedPoints = approvedClaims.reduce((sum, c) => sum + getClaimPoints(c), 0);
+  const pendingPoints = pendingClaims.reduce((sum, c) => sum + getClaimPoints(c), 0);
+  const rejectedPoints = rejectedClaims.reduce((sum, c) => sum + getClaimPoints(c), 0);
+
+  // Total officially earned & credited to vendor wallet
+  const totalEarnedPoints = disbursedPoints + approvedPoints;
+  const totalScannedPoints = userClaims.reduce((sum, c) => sum + getClaimPoints(c), 0);
+
   // Percent settled
   const percentSettled = totalPayout > 0 ? Math.round((disbursedAmount / totalPayout) * 100) : 0;
 
@@ -419,6 +430,10 @@ export const PartnerOverviewDashboard = ({
               <span className="inline-flex items-center font-mono text-[9px] sm:text-[9.5px] font-black text-[#A6300F] bg-[#FEF2EE] px-1.5 py-0.5 rounded border border-[#F9CEB8] shrink-0 tracking-wider">
                 {partner.id}
               </span>
+              <span className="inline-flex items-center gap-1 font-mono text-[9px] sm:text-[9.5px] font-black text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 shrink-0 shadow-2xs" title="Total Earned Points (Approved Scans)">
+                <Sparkles className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                <span>{totalEarnedPoints.toLocaleString('en-IN')} Pts</span>
+              </span>
             </div>
           </div>
         </div>
@@ -518,7 +533,7 @@ export const PartnerOverviewDashboard = ({
             <div className="bg-gradient-to-br from-[#FFF8F5] to-white border border-[#F9CEB8] rounded-2xl p-3 shadow-2xs">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-[#A6300F] uppercase tracking-wider">
-                  {rewardMode === 'points' ? 'Total Points' : 'Total Payout'}
+                  {rewardMode === 'points' ? 'Earned Reward Points' : 'Total Payout'}
                 </span>
                 <div className="w-6 h-6 rounded-lg bg-[#A6300F] text-white flex items-center justify-center shadow-xs">
                   {rewardMode === 'points' ? <Sparkles className="w-3.5 h-3.5" /> : <Wallet className="w-3.5 h-3.5" />}
@@ -527,7 +542,7 @@ export const PartnerOverviewDashboard = ({
               <div className="mt-1 flex items-baseline gap-1">
                 <span className="text-2xl font-black text-[#A6300F] font-mono tracking-tight">
                   {rewardMode === 'points'
-                    ? `${(totalPayout * 10).toLocaleString('en-IN')}`
+                    ? `${totalEarnedPoints.toLocaleString('en-IN')}`
                     : `₹${totalPayout.toLocaleString('en-IN')}`}
                 </span>
                 {rewardMode === 'points' && (
@@ -538,7 +553,7 @@ export const PartnerOverviewDashboard = ({
               </div>
               <span className="text-[9.5px] text-[#A6300F]/70 block mt-0.5 font-medium">
                 {rewardMode === 'points'
-                  ? `${userClaims.length} Claims • 10 Pts/₹1`
+                  ? `Approved (${pendingPoints.toLocaleString('en-IN')} Pts in Review)`
                   : 'Gross Claim Value'}
               </span>
             </div>
@@ -565,15 +580,15 @@ export const PartnerOverviewDashboard = ({
               </div>
               <div className="text-base sm:text-lg font-black text-emerald-700 font-mono leading-tight tracking-tight">
                 {rewardMode === 'points'
-                  ? `${(disbursedAmount * 10).toLocaleString('en-IN')} pts`
+                  ? `${disbursedPoints.toLocaleString('en-IN')} pts`
                   : `₹${disbursedAmount.toLocaleString('en-IN')}`}
               </div>
               <div className="flex items-center justify-between gap-1 flex-wrap">
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
                   {disbursedCount} Paid ✓
                 </span>
-                <span className="text-[9px] font-semibold text-emerald-600/80">
-                  Settled UPI
+                <span className="text-[9px] font-semibold text-emerald-700">
+                  {rewardMode === 'points' ? `₹${disbursedAmount.toLocaleString('en-IN')}` : `${disbursedPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
             </div>
@@ -597,15 +612,15 @@ export const PartnerOverviewDashboard = ({
               </div>
               <div className="text-base sm:text-lg font-black text-blue-700 font-mono leading-tight tracking-tight">
                 {rewardMode === 'points'
-                  ? `${(approvedAmount * 10).toLocaleString('en-IN')} pts`
+                  ? `${approvedPoints.toLocaleString('en-IN')} pts`
                   : `₹${approvedAmount.toLocaleString('en-IN')}`}
               </div>
               <div className="flex items-center justify-between gap-1 flex-wrap">
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-blue-800 bg-white/90 px-2 py-0.5 rounded-full border border-blue-200 shadow-2xs">
                   {approvedCount} Queued
                 </span>
-                <span className="text-[9px] font-semibold text-blue-600/80">
-                  Verified
+                <span className="text-[9px] font-semibold text-blue-700">
+                  {rewardMode === 'points' ? `₹${approvedAmount.toLocaleString('en-IN')}` : `${approvedPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
             </div>
@@ -629,15 +644,15 @@ export const PartnerOverviewDashboard = ({
               </div>
               <div className="text-base sm:text-lg font-black text-amber-800 font-mono leading-tight tracking-tight">
                 {rewardMode === 'points'
-                  ? `${(pendingAmount * 10).toLocaleString('en-IN')} pts`
+                  ? `${pendingPoints.toLocaleString('en-IN')} pts`
                   : `₹${pendingAmount.toLocaleString('en-IN')}`}
               </div>
               <div className="flex items-center justify-between gap-1 flex-wrap">
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-amber-800 bg-white/90 px-2 py-0.5 rounded-full border border-amber-200 shadow-2xs">
                   {pendingCount} Review
                 </span>
-                <span className="text-[9px] font-semibold text-amber-700/80">
-                  In Queue
+                <span className="text-[9px] font-semibold text-amber-700">
+                  {rewardMode === 'points' ? `₹${pendingAmount.toLocaleString('en-IN')}` : `${pendingPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
             </div>
@@ -660,14 +675,16 @@ export const PartnerOverviewDashboard = ({
                 </span>
               </div>
               <div className="text-base sm:text-lg font-black text-rose-700 font-mono leading-tight tracking-tight">
-                ₹{rejectedAmount.toLocaleString('en-IN')}
+                {rewardMode === 'points'
+                  ? `${rejectedPoints.toLocaleString('en-IN')} pts`
+                  : `₹${rejectedAmount.toLocaleString('en-IN')}`}
               </div>
               <div className="flex items-center justify-between gap-1 flex-wrap">
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-rose-800 bg-white/90 px-2 py-0.5 rounded-full border border-rose-200 shadow-2xs">
                   {rejectedCount} Rejected
                 </span>
-                <span className="text-[9px] font-semibold text-rose-600/80">
-                  Flagged
+                <span className="text-[9px] font-semibold text-rose-700">
+                  {rewardMode === 'points' ? `₹${rejectedAmount.toLocaleString('en-IN')}` : `${rejectedPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
             </div>
@@ -1003,9 +1020,15 @@ export const PartnerOverviewDashboard = ({
                         <span>(₹{claim.amount})</span>
                       </span>
 
-                      <span className="block text-[9.5px] text-stone-400 font-mono mt-0.5">
-                        {claim.date || claim.submittedAt || 'Today'}
-                      </span>
+                      <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                        <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold font-mono px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                          <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                          <span>{Number(claim.points ?? claim.rewardPoints ?? (Number(claim.amount || claim.claimValue) * 10)).toLocaleString('en-IN')} pts</span>
+                        </span>
+                        <span className="text-[9.5px] text-stone-400 font-mono">
+                          {claim.date || claim.submittedAt || 'Today'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1109,6 +1132,13 @@ export const PartnerOverviewDashboard = ({
                 <span className="text-stone-500">Reward Value:</span>
                 <span className="font-mono font-bold text-emerald-700 text-sm">
                   ₹{selectedClaim.amount}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Earned Points:</span>
+                <span className="font-mono font-bold text-amber-700 text-sm flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{Number(selectedClaim.points ?? selectedClaim.rewardPoints ?? (Number(selectedClaim.amount || selectedClaim.claimValue) * 10)).toLocaleString('en-IN')} pts</span>
                 </span>
               </div>
               <div className="flex justify-between">

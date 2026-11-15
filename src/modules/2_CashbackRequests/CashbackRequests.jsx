@@ -238,6 +238,7 @@ export function CashbackRequests() {
   const claimsList = useMemo(() => {
     return (claims || []).map((c) => {
       const cashback = Number(c.amount ?? c.claimValue ?? c.cashback ?? 0);
+      const points = Number(c.points ?? c.rewardPoints ?? (cashback * 10));
       const isDisbursed = c.status === 'Disbursed' || c.payoutStatus === 'Disbursed';
       const isApprovedAwaiting = c.status === 'Approved' && !isDisbursed;
       const isRejected = c.status === 'Rejected' || c.status === 'Flagged';
@@ -264,6 +265,8 @@ export function CashbackRequests() {
         photoUrl: pInfo.photoUrl,
         qrSerial: c.qrSerial || c.serialKey || '—',
         cashback,
+        points,
+        rewardPoints: points,
         disbursedAmount: isDisbursed ? Number(c.disbursedAmount ?? c.netDisbursed ?? cashback) : 0,
         payoutType,
         paymentMode: c.paymentMode || c.payoutMethod || 'UPI',
@@ -568,6 +571,7 @@ export function CashbackRequests() {
         'Product',
         'QR Serial',
         'Claimed Amount (INR)',
+        'Earned Points (Pts)',
         'Disbursed Amount (INR)',
         'Payout Method',
         'Destination',
@@ -589,6 +593,7 @@ export function CashbackRequests() {
         `"${c.productName}"`,
         c.qrSerial,
         c.cashback,
+        c.points,
         c.disbursedAmount || 0,
         c.paymentMode,
         `"${c.payoutDest}"`,
@@ -954,6 +959,7 @@ export function CashbackRequests() {
                 <th className="py-3.5 px-4 min-w-[190px]">Applicant &amp; Role</th>
                 <th className="py-3.5 px-4 min-w-[220px]">Scanned Product &amp; QR Serial</th>
                 <th className="py-3.5 px-3 min-w-[120px]">Cashback Claim</th>
+                <th className="py-3.5 px-3 min-w-[125px]">Earned Points</th>
                 <th className="py-3.5 px-4 min-w-[180px]">Payout Method &amp; Dest</th>
                 <th className="py-3.5 px-4 min-w-[165px]">Scan Timestamp</th>
                 <th className="py-3.5 px-4 min-w-[200px] bg-slate-100/70 border-x border-slate-200/60 font-black text-slate-700">
@@ -975,7 +981,7 @@ export function CashbackRequests() {
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {filteredClaims.length === 0 ? (
                 <tr>
-                  <td colSpan={activeTab === 'pending' ? 12 : 11} className="py-14 text-center text-slate-400">
+                  <td colSpan={activeTab === 'pending' ? 13 : 12} className="py-14 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-2 max-w-md mx-auto">
                       <div className="w-12 h-12 rounded-2xl bg-[#FEF2EE] border border-[#F9CEB8] flex items-center justify-center text-[#C84826]">
                         <QrCode className="w-6 h-6" />
@@ -1104,6 +1110,23 @@ export function CashbackRequests() {
                             Disbursed: ₹{claim.disbursedAmount.toFixed(2)}
                           </div>
                         )}
+                      </td>
+
+                      {/* Earned Points */}
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1 font-mono font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 text-xs">
+                          <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+                          <span>{claim.points.toLocaleString('en-IN')} pts</span>
+                        </div>
+                        <div className="text-[10px] font-mono mt-0.5">
+                          {claim.isDisbursed || claim.isApprovedAwaiting ? (
+                            <span className="text-emerald-600 font-semibold">Credited ✓</span>
+                          ) : claim.isRejected ? (
+                            <span className="text-rose-500">Not Awarded</span>
+                          ) : (
+                            <span className="text-amber-600 font-medium">Pending Approval</span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Payout Method & Dest */}
@@ -1699,6 +1722,10 @@ export function CashbackRequests() {
                   <div className="text-[10px] uppercase font-bold text-slate-500">Claim Amount</div>
                   <div className="text-lg font-black font-mono text-[#A62C11]">
                     ₹ {releaseModalClaim.cashback.toFixed(2)}
+                  </div>
+                  <div className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 mt-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span>{(releaseModalClaim.points ?? (releaseModalClaim.cashback * 10)).toLocaleString('en-IN')} pts</span>
                   </div>
                 </div>
               </div>
