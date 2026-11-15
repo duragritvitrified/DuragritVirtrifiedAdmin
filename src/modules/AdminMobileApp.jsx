@@ -935,7 +935,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     playRejectBuzz();
     showHapticHUD(`Claim ${flagModalClaim.requestId || flagModalClaim.id} Flagged`, '🚩', 'rose');
     if (rejectClaim) {
-      await rejectClaim(flagModalClaim.id, flagReason);
+      await rejectClaim(flagModalClaim.id || flagModalClaim.requestId || flagModalClaim.supabaseId, flagReason);
     }
     setFlagModalClaim(null);
   };

@@ -455,11 +455,28 @@ export function CashbackRequests() {
 
   // Single Reject
   const handleSingleReject = async (claim) => {
+    const rawId = claim.id || claim.requestId || claim.supabaseId;
     setProcessingId(claim.id);
-    await rejectClaim(claim.id || claim.requestId || claim.supabaseId, 'Rejected by Admin during claim verification');
-    setSelectedIds((prev) => prev.filter((id) => id !== claim.id));
+    await rejectClaim(rawId, 'Rejected by Admin during claim verification');
+    setSelectedIds((prev) => prev.filter((id) => id !== claim.id && id !== claim.requestId));
     setProcessingId(null);
-    showToast(`Request ${claim.id} rejected and moved to Quarantine.`);
+    showToast(`Request ${claim.id || claim.requestId} rejected and moved to Rejected tab.`);
+  };
+
+  // Bulk Reject in Pending Tab
+  const handleBulkReject = async () => {
+    if (selectedIds.length === 0) {
+      showToast('Please select at least 1 pending request.');
+      return;
+    }
+    setIsBulkProcessing(true);
+    const toReject = claimsList.filter((c) => selectedIds.includes(c.id) || selectedIds.includes(c.requestId));
+    for (const claim of toReject) {
+      await rejectClaim(claim.id || claim.requestId || claim.supabaseId, 'Rejected in bulk by Admin');
+    }
+    setSelectedIds([]);
+    setIsBulkProcessing(false);
+    showToast(`✓ ${toReject.length} Claims Rejected and moved to Rejected tab.`);
   };
 
   // 2. OPEN RELEASE PAYOUT MODAL (Completed Tab -> Release button)
@@ -660,18 +677,30 @@ export function CashbackRequests() {
           </button>
 
           {activeTab === 'pending' && (
-            <button
-              disabled={selectedIds.length === 0 || isBulkProcessing}
-              onClick={handleBulkApprove}
-              className="flex items-center space-x-2 px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-sm shadow-[#C84826]/20 disabled:opacity-50 transition cursor-pointer active:scale-98"
-            >
-              {isBulkProcessing ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Check className="w-4 h-4 stroke-[3]" />
-              )}
-              <span>Approve Selected ({selectedIds.length})</span>
-            </button>
+            <>
+              <button
+                disabled={selectedIds.length === 0 || isBulkProcessing}
+                onClick={handleBulkApprove}
+                className="flex items-center space-x-2 px-4 py-2 bg-[#C84826] hover:bg-[#A62C11] text-white text-xs font-black rounded-xl shadow-sm shadow-[#C84826]/20 disabled:opacity-50 transition cursor-pointer active:scale-98"
+              >
+                {isBulkProcessing ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4 stroke-[3]" />
+                )}
+                <span>Approve Selected ({selectedIds.length})</span>
+              </button>
+
+              <button
+                disabled={selectedIds.length === 0 || isBulkProcessing}
+                onClick={handleBulkReject}
+                className="flex items-center space-x-1.5 px-3 py-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-700 text-xs font-bold rounded-xl shadow-xs disabled:opacity-50 transition cursor-pointer active:scale-98"
+                title="Reject selected claims"
+              >
+                <X className="w-3.5 h-3.5 text-rose-600" />
+                <span>Reject ({selectedIds.length})</span>
+              </button>
+            </>
           )}
         </div>
       </div>
