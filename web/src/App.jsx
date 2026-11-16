@@ -153,7 +153,7 @@ export function App() {
 
   const getFooterStepLabel = () => {
     switch (activeTab) {
-      case 'dashboard': return 'Executive Overview & Live Supabase Sync';
+      case 'dashboard': return 'Executive Overview & Live Cloud Sync';
       case 'master-workflow': return '14-Step Supply Chain Pipeline';
       case 'users': return 'Step 05 of 14: User & Partner Management';
       case 'cashback': return 'Step 06 of 14: 2-Step Cashback Disbursal';
@@ -179,7 +179,7 @@ export function App() {
       case 'settings-sms':
         return activeTab === 'settings-app-download'
           ? 'Mobile Companion App APK & iPhone PWA Downloads'
-          : 'System Settings & Supabase Sync Console';
+          : 'System Settings & Cloud Sync Console';
       case 'app-installs': return 'Mobile App Installs & Device Telemetry Audit';
       case 'orders': return 'Step 08 of 14: Vendor Orders & Dispatch Fulfillment';
       case 'vendor-manage':
@@ -341,7 +341,15 @@ export function App() {
           <span className="text-stone-400 hidden sm:inline">DuraGrit National Kiln Network</span>
         </div>
         <div className="flex items-center space-x-3 text-stone-400 shrink-0 text-[9.5px]">
-          <span className="hidden md:inline">DB: Supabase PostgreSQL</span>
+          <a
+            href="https://ecreation.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white text-stone-300 transition cursor-pointer flex items-center space-x-1"
+          >
+            <span>Design &amp; Developed By</span>
+            <span className="text-[#F59B7F] font-bold hover:underline">Ecreation IT Solution</span>
+          </a>
           <span>SLA: 99.98%</span>
           <span className="text-emerald-400 font-bold hidden sm:inline">ONLINE</span>
         </div>
