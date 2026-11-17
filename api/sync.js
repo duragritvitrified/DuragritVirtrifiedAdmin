@@ -139,7 +139,7 @@ export default async function handler(req, res) {
 
       if (payload.orderUpdate && typeof payload.orderUpdate === 'object') {
         const u = payload.orderUpdate;
-        const oId = u.id || `ORD-${Date.now().toString().slice(-6)}`;
+        const oId = u.id || u.orderNumber || `ORD-${Date.now().toString().slice(-6)}`;
         inserts.push(
           supabase.from('cashback_requests').insert({
             request_id: `ORD_ST_${oId}_${Date.now()}`.slice(0, 50),
@@ -148,6 +148,20 @@ export default async function handler(req, res) {
             status: 'Approved',
             payout_method: 'UPI',
             flag_reason: JSON.stringify(u),
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
+      if (Array.isArray(payload.orders)) {
+        inserts.push(
+          supabase.from('cashback_requests').insert({
+            request_id: `ORD_REG_${Date.now()}`.slice(0, 50),
+            qr_serial: 'DURAGRIT_VENDOR_ORDERS_REGISTRY',
+            claim_value: payload.orders.length,
+            status: 'Approved',
+            payout_method: 'UPI',
+            flag_reason: JSON.stringify(payload.orders),
             timestamp: new Date().toISOString(),
           })
         );
@@ -214,9 +228,9 @@ export default async function handler(req, res) {
         .limit(2),
       supabase.from('cashback_requests')
         .select('request_id, qr_serial, flag_reason, timestamp')
-        .or('qr_serial.eq.DURAGRIT_VENDOR_ORDERS,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
+        .or('qr_serial.eq.DURAGRIT_VENDOR_ORDERS,qr_serial.eq.DURAGRIT_VENDOR_ORDERS_REGISTRY,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
         .order('timestamp', { ascending: false })
-        .limit(15),
+        .limit(200),
       supabase.from('cashback_requests')
         .select('request_id, qr_serial, flag_reason, timestamp')
         .or('qr_serial.eq.DURAGRIT_DELETED_KEYS,request_id.ilike.SYNC_DELETED_%')
@@ -544,22 +558,59 @@ export default async function handler(req, res) {
         updatedAt: '2026-11-11T06:48:50.391Z'
       }
     ];
-    DEFAULT_ORDERS.forEach((o) => orderMap.set(o.id, o));
+    DEFAULT_ORDERS.forEach((o) => {
+      orderMap.set(String(o.id).toUpperCase(), { ...o });
+    });
 
-    eventRows.forEach((r) => {
-      const isOrder = r.qr_serial === 'DURAGRIT_VENDOR_ORDERS' || (r.request_id && (r.request_id.startsWith('ORD_') || r.request_id.startsWith('ORDER_')));
-      if (isOrder) {
-        try {
-          const parsed = JSON.parse(r.flag_reason || '{}');
-          if (parsed?.id) {
-            const existing = orderMap.get(parsed.id) || {};
-            orderMap.set(parsed.id, { ...existing, ...parsed, updatedAt: parsed.updatedAt || r.timestamp });
+    const getOrderTs = (val) => {
+      if (!val) return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const ms = new Date(val).getTime();
+      return isNaN(ms) ? (Number(val) || 0) : ms;
+    };
+
+    // Filter and sort chronologically ascending (oldest to newest) so latest status decisions win
+    const orderRows = eventRows
+      .filter((r) =>
+        r.qr_serial === 'DURAGRIT_VENDOR_ORDERS' ||
+        r.qr_serial === 'DURAGRIT_VENDOR_ORDERS_REGISTRY' ||
+        (r.request_id && (String(r.request_id).startsWith('ORD_') || String(r.request_id).startsWith('ORDER_')))
+      )
+      .sort((a, b) => getOrderTs(a.timestamp) - getOrderTs(b.timestamp));
+
+    orderRows.forEach((r) => {
+      try {
+        const parsed = JSON.parse(r.flag_reason || '{}');
+        const processOrderObj = (o) => {
+          const oId = String(o?.id || o?.orderNumber || '').toUpperCase();
+          if (!oId) return;
+          const existing = orderMap.get(oId) || {};
+          const rowTs = getOrderTs(o.updatedAt || r.timestamp);
+          const existTs = getOrderTs(existing.updatedAt);
+          if (rowTs >= existTs || !existing.status) {
+            const merged = {
+              ...existing,
+              ...o,
+              id: o.id || existing.id || oId,
+              orderNumber: o.orderNumber || existing.orderNumber || oId,
+              status: o.status || existing.status || 'Pending',
+              adminNotes: o.adminNotes !== undefined ? o.adminNotes : (existing.adminNotes || ''),
+              updatedAt: o.updatedAt || r.timestamp || new Date().toISOString()
+            };
+            orderMap.set(oId, merged);
+            if (o.id && o.id !== oId) orderMap.set(String(o.id), merged);
           }
-        } catch (_) {}
-      }
+        };
+
+        if (Array.isArray(parsed)) {
+          parsed.forEach(processOrderObj);
+        } else if (parsed && typeof parsed === 'object') {
+          processOrderObj(parsed);
+        }
+      } catch (_) {}
     });
     responseData.orders = Array.from(orderMap.values()).sort(
-      (a, b) => new Date(b.createdAt || b.timestamp || 0) - new Date(a.createdAt || a.timestamp || 0)
+      (a, b) => getOrderTs(b.createdAt || b.timestamp) - getOrderTs(a.createdAt || a.timestamp)
     );
 
     // 6. Cashback Claims

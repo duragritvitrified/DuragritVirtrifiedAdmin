@@ -450,6 +450,15 @@ const mapClaimFromDb = (row) => {
   };
 };
 
+const parseTimestamp = (ts) => {
+  if (!ts) return 0;
+  if (typeof ts === 'number') return isNaN(ts) ? 0 : ts;
+  const parsed = new Date(ts).getTime();
+  if (!isNaN(parsed)) return parsed;
+  const num = Number(ts);
+  return isNaN(num) ? 0 : num;
+};
+
 // Merge helper: combines Supabase rows + Dev-Sync rows using newer timestamp
 function mergeCollections(sbList, syncList, getKey, deletedSet) {
   const map = new Map();
@@ -467,8 +476,8 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
     if (!existing) {
       map.set(key, sbItem);
     } else {
-      const sbTime = Number(sbItem.updatedAt || 0);
-      const localTime = Number(existing.updatedAt || 0);
+      const sbTime = parseTimestamp(sbItem.updatedAt || sbItem.timestamp || sbItem.createdAt);
+      const localTime = parseTimestamp(existing.updatedAt || existing.timestamp || existing.createdAt);
       if (sbTime >= localTime) {
         map.set(key, {
           ...existing,
@@ -1522,55 +1531,70 @@ export const DataProvider = ({ children }) => {
 
       // C. Vendor Orders Synchronization
       const orderRows = allClaimsRows
-        .filter((c) => c.qr_serial === 'DURAGRIT_VENDOR_ORDERS' || (c.request_id && (String(c.request_id).startsWith('ORDER_') || String(c.request_id).startsWith('ORD_'))))
-        .sort((a, b) => new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
+        .filter((c) =>
+          c.qr_serial === 'DURAGRIT_VENDOR_ORDERS' ||
+          c.qr_serial === 'DURAGRIT_VENDOR_ORDERS_REGISTRY' ||
+          (c.request_id && (String(c.request_id).startsWith('ORDER_') || String(c.request_id).startsWith('ORD_')))
+        )
+        .sort((a, b) => parseTimestamp(a.timestamp || a.created_at) - parseTimestamp(b.timestamp || b.created_at));
 
       const orderMap = new Map();
-      DEFAULT_INITIAL_ORDERS.forEach((o) => orderMap.set(o.id, o));
-      (loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS) || []).forEach((o) => {
-        if (o?.id) orderMap.set(o.id, { ...(orderMap.get(o.id) || {}), ...o });
-      });
+
+      const mergeIntoOrderMap = (o, eventTs = null) => {
+        if (!o || typeof o !== 'object') return;
+        const key = String(o.id || o.orderNumber || '').trim().toUpperCase();
+        if (!key) return;
+        const existing = orderMap.get(key) || {};
+        const incomingTime = parseTimestamp(o.updatedAt || o.timestamp || eventTs || o.createdAt);
+        const existingTime = parseTimestamp(existing.updatedAt || existing.timestamp || existing.createdAt);
+
+        if (!existing.id || incomingTime >= existingTime) {
+          orderMap.set(key, {
+            ...existing,
+            ...o,
+            id: o.id || existing.id || key,
+            orderNumber: o.orderNumber || existing.orderNumber || key,
+            status: o.status || existing.status || 'Pending',
+            adminNotes: o.adminNotes !== undefined ? o.adminNotes : (existing.adminNotes || ''),
+            updatedAt: o.updatedAt || eventTs || existing.updatedAt || new Date().toISOString(),
+          });
+        }
+      };
+
+      // 1. Base defaults
+      DEFAULT_INITIAL_ORDERS.forEach((o) => mergeIntoOrderMap(o));
+
+      // 2. Saved local storage orders
+      (loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS) || []).forEach((o) => mergeIntoOrderMap(o));
+
+      // 3. Bridge orders from /api/sync
       if (Array.isArray(bridge?.orders)) {
-        bridge.orders.forEach((o) => {
-          if (o?.id) orderMap.set(o.id, { ...(orderMap.get(o.id) || {}), ...o });
-        });
+        bridge.orders.forEach((o) => mergeIntoOrderMap(o));
       }
 
+      // 4. Supabase live event rows (sorted chronologically ascending so newer decision wins)
       orderRows.forEach((row) => {
         if (row?.flag_reason) {
           try {
             const parsed = JSON.parse(row.flag_reason);
-            if (parsed?.id) {
-              const existing = orderMap.get(parsed.id) || {};
-              orderMap.set(parsed.id, {
-                ...existing,
-                ...parsed,
-                status: parsed.status || existing.status || 'Pending',
-                adminNotes: parsed.adminNotes !== undefined ? parsed.adminNotes : (existing.adminNotes || ''),
-                updatedAt: parsed.updatedAt || row.timestamp || row.created_at || new Date().toISOString(),
-              });
+            if (Array.isArray(parsed)) {
+              parsed.forEach((item) => mergeIntoOrderMap(item, row.timestamp));
+            } else if (parsed && typeof parsed === 'object') {
+              mergeIntoOrderMap(parsed, row.timestamp);
             }
           } catch (_) {}
         }
       });
 
+      // 5. In-memory ordersRef (guarantee in-flight or recent user changes are never downgraded)
       ordersRef.current.forEach((localOrder) => {
-        if (localOrder?.id && !orderMap.has(localOrder.id)) {
-          orderMap.set(localOrder.id, localOrder);
-        }
+        mergeIntoOrderMap(localOrder);
       });
 
-      const bridgeOrders = Array.isArray(bridge?.orders) && bridge.orders.length > 0
-        ? bridge.orders
-        : loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS);
-      const nextOrders = mergeCollections(
-        Array.from(orderMap.values()),
-        bridgeOrders,
-        (o) => String(o.id || o.orderNumber || '').toUpperCase(),
-        deletedSet
-      ).sort(
-        (a, b) => new Date(b.createdAt || b.timestamp || 0) - new Date(a.createdAt || a.timestamp || 0)
+      const nextOrders = Array.from(orderMap.values()).sort(
+        (a, b) => parseTimestamp(b.createdAt || b.timestamp) - parseTimestamp(a.createdAt || a.timestamp)
       );
+
       ordersRef.current = nextOrders;
       setOrders(nextOrders);
       try {
@@ -2532,13 +2556,19 @@ export const DataProvider = ({ children }) => {
 
   const updateOrderStatus = useCallback(async (orderId, newStatus, adminNotes = '') => {
     let updatedOrder = null;
+    const cleanTargetId = String(orderId || '').trim().toUpperCase();
+    const nowIso = new Date().toISOString();
+
     const updated = ordersRef.current.map((o) => {
-      if (o.id === orderId) {
+      const oid = String(o?.id || '').trim().toUpperCase();
+      const onum = String(o?.orderNumber || '').trim().toUpperCase();
+      if (oid === cleanTargetId || onum === cleanTargetId) {
         updatedOrder = {
           ...o,
           status: newStatus,
           adminNotes: adminNotes !== undefined && adminNotes !== '' ? adminNotes : (o.adminNotes || ''),
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowIso,
+          timestamp: o.timestamp || nowIso,
         };
         return updatedOrder;
       }
@@ -2559,7 +2589,8 @@ export const DataProvider = ({ children }) => {
 
       if (SB_ONLINE) {
         try {
-          const reqId = `ORD_ST_${orderId}_${Date.now()}`.slice(0, 50);
+          const safeId = String(updatedOrder.id || orderId).replace(/[^a-zA-Z0-9_-]/g, '_');
+          const reqId = `ORD_ST_${safeId}_${Date.now()}`.slice(0, 50);
           await supabase.from('cashback_requests').insert({
             request_id: reqId,
             qr_serial: 'DURAGRIT_VENDOR_ORDERS',
@@ -2567,7 +2598,7 @@ export const DataProvider = ({ children }) => {
             status: 'Approved',
             payout_method: 'UPI',
             flag_reason: JSON.stringify(updatedOrder),
-            timestamp: new Date().toISOString(),
+            timestamp: nowIso,
           });
         } catch (err) {
           console.warn('Failed to push order status update to Supabase:', err);

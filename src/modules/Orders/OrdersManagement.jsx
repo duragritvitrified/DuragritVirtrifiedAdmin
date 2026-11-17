@@ -161,10 +161,16 @@ export function OrdersManagement() {
     try {
       await updateOrderStatus(orderId, newStatus, adminNoteInput);
       showToast(`✓ Order ${orderId} marked as ${newStatus}`);
-      if (selectedOrder && selectedOrder.id === orderId) {
+      if (
+        selectedOrder &&
+        (selectedOrder.id === orderId ||
+          selectedOrder.orderNumber === orderId ||
+          String(selectedOrder.id || '').toUpperCase() === String(orderId || '').toUpperCase() ||
+          String(selectedOrder.orderNumber || '').toUpperCase() === String(orderId || '').toUpperCase())
+      ) {
         setSelectedOrder((prev) => ({ ...prev, status: newStatus, adminNotes: adminNoteInput }));
       }
-      setTimeout(() => refreshAllData?.(), 300);
+      setTimeout(() => refreshAllData?.(), 1500);
     } catch (err) {
       showToast(`Error: ${err.message || 'Status update failed'}`);
     }
@@ -304,11 +310,10 @@ export function OrdersManagement() {
             <button
               type="button"
               onClick={() => setViewMode('all')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                viewMode === 'all'
-                  ? 'bg-white text-[#C84826] shadow-xs'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${viewMode === 'all'
+                ? 'bg-white text-[#C84826] shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+                }`}
             >
               <FileText className="w-3.5 h-3.5" />
               <span>All Orders ({filteredOrders.length})</span>
@@ -316,11 +321,10 @@ export function OrdersManagement() {
             <button
               type="button"
               onClick={() => setViewMode('vendor-grouped')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                viewMode === 'vendor-grouped'
-                  ? 'bg-white text-[#C84826] shadow-xs'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${viewMode === 'vendor-grouped'
+                ? 'bg-white text-[#C84826] shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+                }`}
             >
               <Building2 className="w-3.5 h-3.5" />
               <span>Vendor-Wise Grouped ({vendorGroupedOrders.length})</span>
@@ -348,11 +352,10 @@ export function OrdersManagement() {
               key={st}
               type="button"
               onClick={() => setStatusFilter(st)}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
-                statusFilter === st
-                  ? 'bg-[#C84826] text-white font-bold shadow-2xs'
-                  : 'bg-stone-50 text-stone-600 hover:bg-stone-100 border border-stone-200'
-              }`}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${statusFilter === st
+                ? 'bg-[#C84826] text-white font-bold shadow-2xs'
+                : 'bg-stone-50 text-stone-600 hover:bg-stone-100 border border-stone-200'
+                }`}
             >
               {st}
             </button>
@@ -417,12 +420,12 @@ export function OrdersManagement() {
                           <span>
                             {ord.createdAt
                               ? new Date(ord.createdAt).toLocaleDateString('en-IN', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
                               : 'Recent'}
                           </span>
                         </div>
@@ -481,7 +484,7 @@ export function OrdersManagement() {
                           {getStatusBadge(ord.status)}
                           <select
                             value={ord.status}
-                            onChange={(e) => handleUpdateStatus(ord.id, e.target.value)}
+                            onChange={(e) => handleUpdateStatus(ord.id || ord.orderNumber, e.target.value)}
                             className="text-[10px] font-bold bg-white border border-stone-200 rounded-md px-1.5 py-0.5 text-stone-700 outline-none focus:border-[#C84826] cursor-pointer"
                           >
                             <option value="Pending">Pending</option>
@@ -592,10 +595,10 @@ export function OrdersManagement() {
                             <span className="text-[10px] text-stone-400 block">
                               {ord.createdAt
                                 ? new Date(ord.createdAt).toLocaleDateString('en-IN', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })
                                 : 'Recent'}
                             </span>
                           </td>
@@ -671,12 +674,12 @@ export function OrdersManagement() {
                     Placed on{' '}
                     {selectedOrder.createdAt
                       ? new Date(selectedOrder.createdAt).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                       : 'Recent'}
                   </p>
                 </div>

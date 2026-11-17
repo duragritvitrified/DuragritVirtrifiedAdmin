@@ -161,10 +161,16 @@ export function OrdersManagement() {
     try {
       await updateOrderStatus(orderId, newStatus, adminNoteInput);
       showToast(`✓ Order ${orderId} marked as ${newStatus}`);
-      if (selectedOrder && selectedOrder.id === orderId) {
+      if (
+        selectedOrder &&
+        (selectedOrder.id === orderId ||
+          selectedOrder.orderNumber === orderId ||
+          String(selectedOrder.id || '').toUpperCase() === String(orderId || '').toUpperCase() ||
+          String(selectedOrder.orderNumber || '').toUpperCase() === String(orderId || '').toUpperCase())
+      ) {
         setSelectedOrder((prev) => ({ ...prev, status: newStatus, adminNotes: adminNoteInput }));
       }
-      setTimeout(() => refreshAllData?.(), 300);
+      setTimeout(() => refreshAllData?.(), 1500);
     } catch (err) {
       showToast(`Error: ${err.message || 'Status update failed'}`);
     }
@@ -478,7 +484,7 @@ export function OrdersManagement() {
                           {getStatusBadge(ord.status)}
                           <select
                             value={ord.status}
-                            onChange={(e) => handleUpdateStatus(ord.id, e.target.value)}
+                            onChange={(e) => handleUpdateStatus(ord.id || ord.orderNumber, e.target.value)}
                             className="text-[10px] font-bold bg-white border border-stone-200 rounded-md px-1.5 py-0.5 text-stone-700 outline-none focus:border-[#C84826] cursor-pointer"
                           >
                             <option value="Pending">Pending</option>
