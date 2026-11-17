@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useData } from '../../context/DataContext';
 import QRCode from 'qrcode';
 import { jsPDF } from 'jspdf';
@@ -94,6 +94,8 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     setTimeout(() => setToastMsg(''), 4000);
   };
 
+  const lastLoadedSkuRef = useRef('');
+
   useEffect(() => {
     try {
       const pendingRaw = localStorage.getItem('duragrit_pending_qr_sku');
@@ -104,7 +106,10 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
           (s) => s.skuCode === pendingSku.skuCode || s.id === pendingSku.id
         );
         const targetId = match ? (match.id || match.skuCode) : (pendingSku.id || pendingSku.skuCode);
-        if (targetId) setSelectedSkuId(targetId);
+        if (targetId) {
+          lastLoadedSkuRef.current = targetId;
+          setSelectedSkuId(targetId);
+        }
         if (pendingSku.cashbackReward || pendingSku.cashbackAmount) {
           setCashbackReward(Number(pendingSku.cashbackReward ?? pendingSku.cashbackAmount));
         }
@@ -125,12 +130,19 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
     return skus.find((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId) || skus[0] || null;
   }, [skus, selectedSkuId]);
 
+  // Only load defaults when user explicitly switches to a different SKU, NOT on background re-renders!
   useEffect(() => {
     if (selectedSku) {
-      const codePart = (selectedSku.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '');
-      setBatchPrefix(`BATCH-${codePart}-${currentMonthYear}`);
-      setCashbackReward(Number(selectedSku.cashbackReward ?? selectedSku.cashbackAmount ?? 50));
-      setPointsReward(Number(selectedSku.rewardPoints ?? (Number(selectedSku.cashbackReward ?? selectedSku.cashbackAmount ?? 50) * 10)));
+      const activeSkuKey = selectedSku.id || selectedSku.skuCode || '';
+      if (activeSkuKey && activeSkuKey !== lastLoadedSkuRef.current) {
+        lastLoadedSkuRef.current = activeSkuKey;
+        const codePart = (selectedSku.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '');
+        setBatchPrefix(`BATCH-${codePart}-${currentMonthYear}`);
+        const defCashback = Number(selectedSku.cashbackReward ?? selectedSku.cashbackAmount ?? 150);
+        const defPoints = Number(selectedSku.rewardPoints ?? (defCashback * 10));
+        setCashbackReward(defCashback);
+        setPointsReward(defPoints);
+      }
     }
   }, [selectedSku, currentMonthYear]);
 
@@ -209,11 +221,13 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
       showToast('Please add a Product SKU in Catalog first.');
       return;
     }
-    const qtyNum = Number(quantity);
-    if (!qtyNum || qtyNum < 1) {
-      showToast('Quantity must be at least 1 unit.');
-      return;
-    }
+    const qtyNum = Math.max(1, Number(quantity) || 1);
+    const cbNum = (cashbackReward !== '' && !isNaN(Number(cashbackReward)))
+      ? Number(cashbackReward)
+      : Number(selectedSku.cashbackReward ?? selectedSku.cashbackAmount ?? 150);
+    const ptNum = (pointsReward !== '' && !isNaN(Number(pointsReward)))
+      ? Number(pointsReward)
+      : Number(selectedSku.rewardPoints ?? (cbNum * 10));
 
     setIsGenerating(true);
     try {
@@ -226,8 +240,8 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         skuCode: selectedSku.skuCode,
         batchPrefix,
         quantity: qtyNum,
-        cashbackReward: Number(cashbackReward),
-        pointsReward: Number(pointsReward),
+        cashbackReward: cbNum,
+        pointsReward: ptNum,
         validityPeriod,
         lotNumber: String(batchNum),
       });
@@ -242,17 +256,17 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         lotNumber: String(batchNum),
         prefix: batchPrefix,
         quantity: qtyNum,
-        cashbackAmount: Number(cashbackReward),
-        pointsReward: Number(pointsReward),
-        rewardPoints: Number(pointsReward),
+        cashbackAmount: cbNum,
+        pointsReward: ptNum,
+        rewardPoints: ptNum,
         validityPeriod,
         createdAt: new Date().toISOString(),
         tokens: tokensList,
-        escrowVaultValue: qtyNum * Number(cashbackReward),
+        escrowVaultValue: qtyNum * cbNum,
         status: 'Active',
       });
 
-      setGeneratedBatchModal({ ...created, escrowVaultValue: qtyNum * Number(cashbackReward), datePart });
+      setGeneratedBatchModal({ ...created, escrowVaultValue: qtyNum * cbNum, datePart });
       showToast(`Batch ${batchId} (${qtyNum} QR codes) generated & queued on ${THERMAL_PRINTER_SPEC.port} (Online)!`);
     } catch (err) {
       showToast(`Error: ${err.message}`);
@@ -691,9 +705,16 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                     min="1"
                     max="5000"
                     required
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    value={quantity === '' ? '' : quantity}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setQuantity(val === '' ? '' : Number(val));
+                    }}
+                    onBlur={() => {
+                      if (!quantity || Number(quantity) < 1) setQuantity(25);
+                    }}
                     className="w-full px-3.5 py-2 text-xs bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl text-[#1C1917] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#C84826]"
+                    placeholder="25"
                   />
                 </div>
 
@@ -703,11 +724,20 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                   </label>
                   <input
                     type="number"
-                    min="1"
+                    min="0"
                     required
-                    value={cashbackReward}
-                    onChange={(e) => setCashbackReward(Number(e.target.value))}
+                    value={cashbackReward === '' ? '' : cashbackReward}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCashbackReward(val === '' ? '' : Number(val));
+                    }}
+                    onBlur={() => {
+                      if (cashbackReward === '' || isNaN(Number(cashbackReward))) {
+                        setCashbackReward(Number(selectedSku?.cashbackReward ?? selectedSku?.cashbackAmount ?? 150));
+                      }
+                    }}
                     className="w-full px-3.5 py-2 text-xs bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl text-[#1C1917] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#C84826]"
+                    placeholder={String(selectedSku?.cashbackReward ?? selectedSku?.cashbackAmount ?? 150)}
                   />
                 </div>
 
@@ -717,11 +747,20 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                   </label>
                   <input
                     type="number"
-                    min="1"
-                    value={pointsReward}
-                    onChange={(e) => setPointsReward(Number(e.target.value))}
+                    min="0"
+                    value={pointsReward === '' ? '' : pointsReward}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPointsReward(val === '' ? '' : Number(val));
+                    }}
+                    onBlur={() => {
+                      if (pointsReward === '' || isNaN(Number(pointsReward))) {
+                        const cb = Number(cashbackReward) || 150;
+                        setPointsReward(Number(selectedSku?.rewardPoints ?? (cb * 10)));
+                      }
+                    }}
                     className="w-full px-3.5 py-2 text-xs bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl text-[#1C1917] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#C84826]"
-                    placeholder="e.g. 500"
+                    placeholder={String(selectedSku?.rewardPoints ?? (Number(cashbackReward || 150) * 10))}
                   />
                 </div>
 

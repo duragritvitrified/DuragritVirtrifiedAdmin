@@ -326,10 +326,12 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   const [selectedSkuId, setSelectedSkuId] = useState('');
   const [batchQty, setBatchQty] = useState(100);
   const [batchCashback, setBatchCashback] = useState(150);
+  const [batchPoints, setBatchPoints] = useState(1500);
   const [batchLoading, setBatchLoading] = useState(false);
   const [inspectedBatch, setInspectedBatch] = useState(null);
   const [copiedToken, setCopiedToken] = useState('');
   const [tokenSearchQuery, setTokenSearchQuery] = useState('');
+  const lastAdminMobileSkuRef = useRef('');
 
   const inspectedTokens = useMemo(() => {
     if (!inspectedBatch) return [];
@@ -373,10 +375,15 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
   useEffect(() => {
     if (skus.length > 0) {
       const currentExists = skus.some((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId);
-      if (!selectedSkuId || !currentExists) {
-        setSelectedSkuId(skus[0].id || skus[0].skuCode);
-        const reward = Number(skus[0].cashbackReward || skus[0].cashbackAmount || 150);
+      const targetId = (!selectedSkuId || !currentExists) ? (skus[0].id || skus[0].skuCode) : selectedSkuId;
+      if (targetId && targetId !== lastAdminMobileSkuRef.current) {
+        lastAdminMobileSkuRef.current = targetId;
+        setSelectedSkuId(targetId);
+        const match = skus.find((s) => s.id === targetId || s.skuCode === targetId) || skus[0];
+        const reward = Number(match.cashbackReward || match.cashbackAmount || 150);
+        const pts = Number(match.rewardPoints || (reward * 10));
         setBatchCashback(reward);
+        setBatchPoints(pts);
       }
     }
   }, [skus, selectedSkuId]);
@@ -950,11 +957,18 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
           id: 'SKU-DA-777',
           skuCode: 'DA-777',
           name: 'duragrit DA 777',
-          cashbackReward: batchCashback || 150
+          cashbackReward: 150,
+          rewardPoints: 1500
         };
 
       const count = Math.max(1, Number(batchQty) || 1);
-      const reward = Number(batchCashback) || Number(targetSku.cashbackReward || targetSku.cashbackAmount) || 150;
+      const reward = (batchCashback !== '' && !isNaN(Number(batchCashback)))
+        ? Number(batchCashback)
+        : Number(targetSku.cashbackReward || targetSku.cashbackAmount || 150);
+      const points = (batchPoints !== '' && !isNaN(Number(batchPoints)))
+        ? Number(batchPoints)
+        : Number(targetSku.rewardPoints || (reward * 10));
+
       const batchNum = Math.floor(1000 + Math.random() * 9000);
       const batchId = `DG-BATCH-${targetSku.skuCode || 'SKU'}-${batchNum}`;
 
@@ -965,6 +979,8 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
           serialKey: tokenSerial,
           serial: tokenSerial,
           cashbackAmount: reward,
+          pointsReward: points,
+          rewardPoints: points,
           isScanned: false
         };
       });
@@ -977,6 +993,8 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
           productName: targetSku.name,
           quantity: count,
           cashbackAmount: reward,
+          pointsReward: points,
+          rewardPoints: points,
           tokens: tokensList,
           status: 'Active'
         });
@@ -2974,43 +2992,86 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                     onChange={(e) => {
                       const val = e.target.value;
                       setSelectedSkuId(val);
+                      lastAdminMobileSkuRef.current = val;
                       const target = skus.find((s) => s.id === val || s.skuCode === val);
-                      if (target && (target.cashbackReward || target.cashbackAmount)) {
-                        setBatchCashback(Number(target.cashbackReward || target.cashbackAmount));
+                      if (target) {
+                        const reward = Number(target.cashbackReward || target.cashbackAmount || 150);
+                        const pts = Number(target.rewardPoints || (reward * 10));
+                        setBatchCashback(reward);
+                        setBatchPoints(pts);
                       }
                     }}
                     className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium"
                   >
                     {skus.map((s) => (
                       <option key={s.id || s.skuCode} value={s.id || s.skuCode}>
-                        {s.skuCode} — {s.name} (Reward: ₹{s.cashbackReward || s.cashbackAmount || 50})
+                        {s.skuCode} — {s.name} (Reward: ₹{s.cashbackReward || s.cashbackAmount || 50} • {s.rewardPoints || 500} Pts)
                       </option>
                     ))}
                     {skus.length === 0 && <option value="">Loading live products from Supabase...</option>}
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Batch Size (Qty)</label>
                     <input
                       type="number"
                       min="1"
                       max="5000"
-                      value={batchQty}
-                      onChange={(e) => setBatchQty(Number(e.target.value))}
+                      value={batchQty === '' ? '' : batchQty}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setBatchQty(val === '' ? '' : Number(val));
+                      }}
+                      onBlur={() => {
+                        if (!batchQty || Number(batchQty) < 1) setBatchQty(100);
+                      }}
                       className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold"
+                      placeholder="100"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Reward (₹ per QR)</label>
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Reward (₹/QR)</label>
                     <input
                       type="number"
-                      min="10"
-                      max="1000"
-                      value={batchCashback}
-                      onChange={(e) => setBatchCashback(Number(e.target.value))}
+                      min="0"
+                      max="50000"
+                      value={batchCashback === '' ? '' : batchCashback}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setBatchCashback(val === '' ? '' : Number(val));
+                      }}
+                      onBlur={() => {
+                        if (batchCashback === '' || isNaN(Number(batchCashback))) {
+                          const target = skus.find((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId);
+                          setBatchCashback(Number(target?.cashbackReward || target?.cashbackAmount || 150));
+                        }
+                      }}
                       className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold text-emerald-700"
+                      placeholder="150"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Points (Pts)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="500000"
+                      value={batchPoints === '' ? '' : batchPoints}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setBatchPoints(val === '' ? '' : Number(val));
+                      }}
+                      onBlur={() => {
+                        if (batchPoints === '' || isNaN(Number(batchPoints))) {
+                          const target = skus.find((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId);
+                          const cb = Number(batchCashback) || 150;
+                          setBatchPoints(Number(target?.rewardPoints || (cb * 10)));
+                        }
+                      }}
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold text-indigo-700"
+                      placeholder="1500"
                     />
                   </div>
                 </div>
@@ -3827,43 +3888,86 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
                   onChange={(e) => {
                     const val = e.target.value;
                     setSelectedSkuId(val);
+                    lastAdminMobileSkuRef.current = val;
                     const target = skus.find((s) => s.id === val || s.skuCode === val);
-                    if (target && (target.cashbackReward || target.cashbackAmount)) {
-                      setBatchCashback(Number(target.cashbackReward || target.cashbackAmount));
+                    if (target) {
+                      const reward = Number(target.cashbackReward || target.cashbackAmount || 150);
+                      const pts = Number(target.rewardPoints || (reward * 10));
+                      setBatchCashback(reward);
+                      setBatchPoints(pts);
                     }
                   }}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium"
                 >
                   {skus.map((s) => (
                     <option key={s.id || s.skuCode} value={s.id || s.skuCode}>
-                      {s.skuCode} — {s.name}
+                      {s.skuCode} — {s.name} (Reward: ₹{s.cashbackReward || s.cashbackAmount || 50} • {s.rewardPoints || 500} Pts)
                     </option>
                   ))}
                   {skus.length === 0 && <option value="">Loading live products from Supabase...</option>}
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Token Count</label>
                   <input
                     type="number"
                     min="1"
                     max="5000"
-                    value={batchQty}
-                    onChange={(e) => setBatchQty(Number(e.target.value))}
+                    value={batchQty === '' ? '' : batchQty}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBatchQty(val === '' ? '' : Number(val));
+                    }}
+                    onBlur={() => {
+                      if (!batchQty || Number(batchQty) < 1) setBatchQty(100);
+                    }}
                     className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold"
+                    placeholder="100"
                   />
                 </div>
                 <div>
                   <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Cashback (₹)</label>
                   <input
                     type="number"
-                    min="10"
-                    max="1000"
-                    value={batchCashback}
-                    onChange={(e) => setBatchCashback(Number(e.target.value))}
+                    min="0"
+                    max="50000"
+                    value={batchCashback === '' ? '' : batchCashback}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBatchCashback(val === '' ? '' : Number(val));
+                    }}
+                    onBlur={() => {
+                      if (batchCashback === '' || isNaN(Number(batchCashback))) {
+                        const target = skus.find((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId);
+                        setBatchCashback(Number(target?.cashbackReward || target?.cashbackAmount || 150));
+                      }
+                    }}
                     className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold text-emerald-700"
+                    placeholder="150"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10.5px] font-bold text-slate-700 mb-1">Points (Pts)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="500000"
+                    value={batchPoints === '' ? '' : batchPoints}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBatchPoints(val === '' ? '' : Number(val));
+                    }}
+                    onBlur={() => {
+                      if (batchPoints === '' || isNaN(Number(batchPoints))) {
+                        const target = skus.find((s) => s.id === selectedSkuId || s.skuCode === selectedSkuId);
+                        const cb = Number(batchCashback) || 150;
+                        setBatchPoints(Number(target?.rewardPoints || (cb * 10)));
+                      }
+                    }}
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold text-indigo-700"
+                    placeholder="1500"
                   />
                 </div>
               </div>
