@@ -79,11 +79,12 @@ export function OrdersManagement() {
     const confirmed = orders.filter((o) => o.status === 'Confirmed').length;
     const dispatched = orders.filter((o) => o.status === 'Dispatched').length;
     const delivered = orders.filter((o) => o.status === 'Delivered').length;
+    const cancelled = orders.filter((o) => o.status === 'Cancelled').length;
     const totalUnits = orders.reduce((sum, o) => {
       const q = o.totalQuantity ?? (o.items || []).reduce((s, i) => s + (Number(i.quantity) || 0), 0);
       return sum + Number(q || 0);
     }, 0);
-    return { total, pending, confirmed, dispatched, delivered, totalUnits };
+    return { total, pending, confirmed, dispatched, delivered, cancelled, totalUnits };
   }, [orders]);
 
   // Distinct vendors with orders
@@ -264,7 +265,7 @@ export function OrdersManagement() {
       </div>
 
       {/* KPI Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-2xs">
           <span className="text-[11px] font-bold text-stone-500 uppercase font-mono block">Total Orders</span>
           <div className="text-2xl font-black text-stone-900 mt-1 font-serif">{stats.total}</div>
@@ -295,7 +296,13 @@ export function OrdersManagement() {
           <span className="text-[10px] text-emerald-600 font-medium">Fulfilled to yard</span>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1C1917] to-stone-900 text-white p-4 rounded-2xl shadow-sm">
+        <div className="bg-white p-4 rounded-2xl border border-rose-200/80 bg-rose-50/20 shadow-2xs">
+          <span className="text-[11px] font-bold text-rose-700 uppercase font-mono block">Cancelled</span>
+          <div className="text-2xl font-black text-rose-800 mt-1 font-serif">{stats.cancelled}</div>
+          <span className="text-[10px] text-rose-600 font-medium">Voided or rejected</span>
+        </div>
+
+        <div className="bg-gradient-to-br from-[#1C1917] to-stone-900 text-white p-4 rounded-2xl shadow-sm col-span-2 sm:col-span-1">
           <span className="text-[11px] font-bold text-amber-300 uppercase font-mono block">Total Volume</span>
           <div className="text-2xl font-black text-white mt-1 font-mono">{stats.totalUnits.toLocaleString('en-IN')}</div>
           <span className="text-[10px] text-stone-400 font-medium">Bags, Buckets &amp; Cans</span>
