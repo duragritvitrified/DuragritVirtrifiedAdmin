@@ -175,17 +175,17 @@ export const AuthProvider = ({ children }) => {
         return { success: true, mode: user.authMode, user };
       }
 
-      // 2. Check Newly Added Internal Users from Database / LocalStorage / DevSync
+      // 2. Check Newly Added Internal Users from LocalStorage + Live /api/sync + Supabase
       let internalUsers = [];
       try {
-        const cached = localStorage.getItem('duragrit_enterprise_data_v7');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed.users)) internalUsers = parsed.users;
+        const rawUsers = localStorage.getItem('duragrit_users_v7');
+        if (rawUsers) {
+          const parsed = JSON.parse(rawUsers);
+          if (Array.isArray(parsed)) internalUsers = parsed;
         }
       } catch (_) {}
 
-      const matchedUser = internalUsers.find((u) => {
+      const findMatchedUser = (list) => (list || []).find((u) => {
         const uId = String(u.id || u.userId || '').toLowerCase();
         const uDigits = String(u.mobile || u.phone || '').replace(/\D/g, '').slice(-10);
         const uEmail = String(u.email || '').toLowerCase();
@@ -196,6 +196,48 @@ export const AuthProvider = ({ children }) => {
           (uEmail && uEmail === cleanInput)
         );
       });
+
+      let matchedUser = findMatchedUser(internalUsers);
+
+      // If not found in localStorage (e.g. logging in from a fresh browser/PC), fetch from /api/sync & Supabase
+      if (!matchedUser) {
+        try {
+          const syncRes = await fetch('/api/sync?force=1');
+          if (syncRes.ok) {
+            const syncData = await syncRes.json();
+            if (Array.isArray(syncData?.users)) {
+              internalUsers = syncData.users;
+              matchedUser = findMatchedUser(internalUsers);
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!matchedUser && supabaseOnline) {
+        try {
+          const { data: profRows } = await supabase.from('profiles').select('*');
+          if (Array.isArray(profRows)) {
+            const mapped = profRows.map((r) => {
+              const m = r.metadata || {};
+              const dispId = m.displayId || m.userId || m.id || `USR-${String(r.mobile || '').slice(-4) || '1001'}`;
+              return {
+                ...m,
+                id: String(dispId).replace(/^USR-/i, ''),
+                userId: String(dispId).startsWith('USR-') ? dispId : `USR-${dispId}`,
+                name: r.full_name,
+                mobile: r.mobile,
+                phone: r.mobile,
+                email: r.email || '',
+                role: m.uiRole || r.role || 'Operations Manager',
+                passkey: m.passkey || m.tempPassword || r.terminal_key || `Dura#${String(r.mobile || '').slice(-4) || '1234'}`,
+                accountStatus: r.account_status || 'Active',
+                active: r.account_status !== 'Suspended',
+              };
+            });
+            matchedUser = findMatchedUser(mapped);
+          }
+        } catch (_) {}
+      }
 
       if (matchedUser) {
         if (
