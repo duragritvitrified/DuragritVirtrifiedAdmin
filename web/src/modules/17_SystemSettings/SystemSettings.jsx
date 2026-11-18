@@ -681,7 +681,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="text-[10px] text-slate-400 font-sans font-bold uppercase">Supabase Project</div>
-                <div className="text-sm font-black text-slate-900 mt-1">fykxjzvdslvxablmjlfw</div>
+                <div className="text-sm font-black text-slate-900 mt-1">bzvmsuctrdlqnfccejtr</div>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="text-[10px] text-slate-400 font-sans font-bold uppercase">Data Storage Mode</div>

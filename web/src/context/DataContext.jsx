@@ -992,9 +992,9 @@ export const DataProvider = ({ children }) => {
             .limit(2),
           supabase.from('cashback_requests')
             .select('request_id, qr_serial, flag_reason, timestamp')
-            .or('qr_serial.eq.DURAGRIT_VENDOR_ORDERS,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
+            .or('qr_serial.eq.DURAGRIT_VENDOR_ORDERS,qr_serial.eq.DURAGRIT_VENDOR_ORDERS_REGISTRY,request_id.ilike.ORDER_%,request_id.ilike.ORD_%')
             .order('timestamp', { ascending: false })
-            .limit(15),
+            .limit(50),
           supabase.from('cashback_requests')
             .select('request_id, qr_serial, flag_reason, timestamp')
             .or('qr_serial.eq.DURAGRIT_DELETED_KEYS,request_id.ilike.SYNC_DELETED_%')
