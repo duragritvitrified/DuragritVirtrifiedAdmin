@@ -148,8 +148,8 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
               if (!decodedText || isProcessingRef.current) return;
               const clean = String(decodedText).trim();
               const now = Date.now();
-              // Prevent repeat rapid firing on same code
-              if (lastScannedTextRef.current === clean && now - lastScannedTimeRef.current < 3000) {
+              // Prevent repeat rapid firing on same code (8s cooldown + immediate lock)
+              if (lastScannedTextRef.current === clean && now - lastScannedTimeRef.current < 8000) {
                 return;
               }
               lastScannedTextRef.current = clean;
@@ -159,7 +159,7 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
               processSubmission(clean).finally(() => {
                 setTimeout(() => {
                   isProcessingRef.current = false;
-                }, 1500);
+                }, 2500);
               });
             },
             () => {}

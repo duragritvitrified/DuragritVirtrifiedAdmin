@@ -859,6 +859,7 @@ export const DataProvider = ({ children }) => {
   }, [batches]);
 
   const [appInstalls, setAppInstalls] = useState(() => getDeviceInstalls());
+  const submittingSerialsRef = useRef(new Set());
 
   const [claims, setClaims] = useState(() =>
     (loadStorage(STORAGE_KEYS.CLAIMS, []) || []).filter((c) => !isTestOrInternalClaim(c, deletedKeysRef.current))
@@ -1072,6 +1073,7 @@ export const DataProvider = ({ children }) => {
           vendorEvtRes,
           claimActRes,
           verifyActRes,
+          smtpRes
           smtpRes,
           installRes
         ] = await Promise.allSettled([
@@ -1579,7 +1581,7 @@ export const DataProvider = ({ children }) => {
                 const key = String(inst.deviceUuid || inst.id || inst.userId || '').toUpperCase();
                 if (key) instMap.set(key, { ...(instMap.get(key) || {}), ...inst });
               });
-            } catch (_) {}
+            } catch (_) { }
           });
           sbInstalls = Array.from(instMap.values());
         }
@@ -2855,83 +2857,151 @@ export const DataProvider = ({ children }) => {
       };
     }
 
-    // 1. Duplicate Claim Guard
-    const alreadyClaimed = claims.find(
-      (c) => QREngineV24.extractSerialKey(c.serialKey || c.qrSerial || c.batchCode) === cleanKey
-    );
-    if (alreadyClaimed) {
+    // 0. Atomic In-Flight Lock (prevents 2x rapid camera scans or double-taps from submitting twice)
+    if (submittingSerialsRef.current.has(cleanKey)) {
       return {
         success: false,
-        message: `QR serial ${cleanKey} has already been scanned and claimed (${alreadyClaimed.requestId || alreadyClaimed.id}).`,
+        message: `QR serial ${cleanKey} is already being processed. Please wait.`,
       };
     }
+    submittingSerialsRef.current.add(cleanKey);
 
-    // 2. Verify against generated QR Batches (or Supabase qr_tokens)
-    let matchedBatch = null;
-    let matchedToken = null;
-
-    for (const batch of batches) {
-      const list = batch.tokens || batch.codes || [];
-      const found = list.find((t) => QREngineV24.extractSerialKey(t.serialKey || t.serial) === cleanKey);
-      if (found) {
-        matchedBatch = batch;
-        matchedToken = found;
-        break;
-      }
-    }
-
-    let sbTokenRow = null;
-    if (!matchedToken && SB_ONLINE) {
-      const { data: tokData } = await supabase
-        .from('qr_tokens')
-        .select('*, products(name, sku_code, cashback_reward)')
-        .ilike('serial_key', cleanKey)
-        .maybeSingle();
-      if (tokData) {
-        sbTokenRow = tokData;
-      }
-    }
-
-    if (!matchedToken && !sbTokenRow) {
-      // Automatic SKU-level fallback:
-      // If the QR serial format is valid (e.g. DG-DA777-NOV2026-000001, DG-DA777-4473-000001, etc.),
-      // resolve it to the matching catalog SKU so vendor app can scan preview stickers or pre-printed batches seamlessly.
-      const upperKey = cleanKey.toUpperCase();
-      const availableSkus = (skus && skus.length > 0) ? skus : DEFAULT_LIVE_SKUS;
-      const matchedSkuFallback = availableSkus.find((s) => {
-        const cleanSkuCode = String(s.skuCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        return (
-          cleanSkuCode &&
-          (upperKey.includes(cleanSkuCode) ||
-            upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
-            (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
-        );
-      }) || availableSkus[0];
-
-      if (matchedSkuFallback && QREngineV24.validateSerialFormat(cleanKey)) {
-        const reward = Number(matchedSkuFallback.cashbackReward || matchedSkuFallback.cashbackAmount || 150);
-        matchedToken = {
-          serialKey: cleanKey,
-          dualSha128: QREngineV24.generateToken('10001', 1, 'DG', cleanKey).dualSha128,
-          cashbackAmount: reward,
-          skuId: matchedSkuFallback.id,
-          skuCode: matchedSkuFallback.skuCode,
-          productName: matchedSkuFallback.name,
-          isScanned: false,
-        };
-        matchedBatch = {
-          batchId: `DG-BATCH-${(matchedSkuFallback.skuCode || 'DA777').replace(/[^a-zA-Z0-9]/g, '')}`,
-          skuCode: matchedSkuFallback.skuCode,
-          productName: matchedSkuFallback.name,
-          cashbackAmount: reward,
-        };
-      } else {
+    try {
+      // 1. Duplicate Claim Guard (check live ref + live Supabase database before inserting)
+      const currentClaims = claimsRef.current || claims;
+      const alreadyClaimed = currentClaims.find(
+        (c) => QREngineV24.extractSerialKey(c.serialKey || c.qrSerial || c.batchCode) === cleanKey
+      );
+      if (alreadyClaimed) {
         return {
           success: false,
-          message: `Unregistered QR code "${cleanKey}". Generate a QR batch in Admin Panel first, then scan a serial from that batch.`,
+          message: `QR serial ${cleanKey} has already been scanned and claimed (${alreadyClaimed.requestId || alreadyClaimed.id}).`,
         };
       }
-    }
+
+      if (SB_ONLINE) {
+        try {
+          const { data: existingDbClaim } = await supabase
+            .from('cashback_requests')
+            .select('request_id, status')
+            .ilike('qr_serial', cleanKey)
+            .limit(1)
+            .maybeSingle();
+          if (existingDbClaim) {
+            return {
+              success: false,
+              message: `QR serial ${cleanKey} has already been scanned and claimed (${existingDbClaim.request_id}).`,
+            };
+          }
+        } catch (_) {}
+      }
+
+      // 2. Verify against generated QR Batches (local state -> Supabase qr_tokens -> Supabase qr_batches)
+      let matchedBatch = null;
+      let matchedToken = null;
+
+      for (const batch of (batchesRef.current || batches)) {
+        const list = batch.tokens || batch.codes || [];
+        const found = list.find((t) => QREngineV24.extractSerialKey(t.serialKey || t.serial) === cleanKey);
+        if (found) {
+          matchedBatch = batch;
+          matchedToken = found;
+          break;
+        }
+      }
+
+      let sbTokenRow = null;
+      if (!matchedToken && SB_ONLINE) {
+        const { data: tokData } = await supabase
+          .from('qr_tokens')
+          .select('*, products(name, sku_code, cashback_reward)')
+          .ilike('serial_key', cleanKey)
+          .maybeSingle();
+        if (tokData) {
+          sbTokenRow = tokData;
+        }
+      }
+
+      // If not in local batches or qr_tokens, look up the exact batch directly in Supabase qr_batches
+      if (!matchedBatch && !sbTokenRow && SB_ONLINE) {
+        try {
+          const parts = cleanKey.split('-');
+          const lotPart = parts.length >= 4 ? parts[parts.length - 2] : '';
+          if (lotPart) {
+            const { data: dbBatch } = await supabase
+              .from('qr_batches')
+              .select('*, products(name, sku_code, pack_weight, base_mrp, cashback_reward)')
+              .ilike('batch_identifier', `%-${lotPart}`)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (dbBatch) {
+              const meta = dbBatch.metadata || {};
+              const reward = Number(meta.cashbackAmount ?? dbBatch.products?.cashback_reward ?? 0);
+              const pts = Number(meta.pointsReward ?? meta.rewardPoints ?? (reward * 10));
+              matchedBatch = {
+                batchId: dbBatch.batch_identifier,
+                skuId: meta.skuId || dbBatch.product_id || '',
+                skuCode: meta.skuCode || dbBatch.products?.sku_code || '',
+                productName: meta.productName || dbBatch.products?.name || 'DuraGrit Verified Pack',
+                cashbackAmount: reward,
+                pointsReward: pts,
+                rewardPoints: pts,
+              };
+              matchedToken = {
+                serialKey: cleanKey,
+                dualSha128: QREngineV24.generateToken(dbBatch.lot_number || lotPart, 1, 'DG', cleanKey).dualSha128,
+                cashbackAmount: reward,
+                pointsReward: pts,
+                rewardPoints: pts,
+                skuId: matchedBatch.skuId,
+                skuCode: matchedBatch.skuCode,
+                productName: matchedBatch.productName,
+                isScanned: false,
+              };
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!matchedToken && !sbTokenRow) {
+        // Automatic SKU-level fallback:
+        const upperKey = cleanKey.toUpperCase();
+        const availableSkus = (skus && skus.length > 0) ? skus : DEFAULT_LIVE_SKUS;
+        const matchedSkuFallback = availableSkus.find((s) => {
+          const cleanSkuCode = String(s.skuCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+          return (
+            cleanSkuCode &&
+            (upperKey.includes(cleanSkuCode) ||
+              upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
+              (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
+          );
+        }) || availableSkus[0];
+
+        if (matchedSkuFallback && QREngineV24.validateSerialFormat(cleanKey)) {
+          const reward = Number(matchedSkuFallback.cashbackReward || matchedSkuFallback.cashbackAmount || 150);
+          matchedToken = {
+            serialKey: cleanKey,
+            dualSha128: QREngineV24.generateToken('10001', 1, 'DG', cleanKey).dualSha128,
+            cashbackAmount: reward,
+            skuId: matchedSkuFallback.id,
+            skuCode: matchedSkuFallback.skuCode,
+            productName: matchedSkuFallback.name,
+            isScanned: false,
+          };
+          matchedBatch = {
+            batchId: `DG-BATCH-${(matchedSkuFallback.skuCode || 'DA777').replace(/[^a-zA-Z0-9]/g, '')}`,
+            skuCode: matchedSkuFallback.skuCode,
+            productName: matchedSkuFallback.name,
+            cashbackAmount: reward,
+          };
+        } else {
+          return {
+            success: false,
+            message: `Unregistered QR code "${cleanKey}". Generate a QR batch in Admin Panel first, then scan a serial from that batch.`,
+          };
+        }
+      }
 
     if (matchedToken?.isScanned || sbTokenRow?.is_scanned) {
       return {
@@ -3203,13 +3273,16 @@ export const DataProvider = ({ children }) => {
       return updated;
     });
 
-    return {
-      success: true,
-      claim: newClaim,
-      productName,
-      cashbackAmount: claimAmount,
-      claimCode: requestId,
-    };
+      return {
+        success: true,
+        claim: newClaim,
+        productName,
+        cashbackAmount: claimAmount,
+        claimCode: requestId,
+      };
+    } finally {
+      submittingSerialsRef.current.delete(cleanKey);
+    }
   }, [claims, batches, skus, users, vendors, handleSbError, pushDevSync, pushBatchesToSupabase]);
 
   // Step 1 Approval (Pending -> Approved / Completed Tab awaiting Release)

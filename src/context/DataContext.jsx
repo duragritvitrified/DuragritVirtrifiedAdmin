@@ -38,7 +38,7 @@ const LIVE_VERCEL_SYNC_URL = 'https://duragrit-virtrified-admin-khaki.vercel.app
 // Under NO circumstances should mobile devices (Capacitor/WebView) attempt to connect to localhost:3000!
 const DEV_SYNC_URL =
   typeof window !== 'undefined' &&
-  (window.location.hostname.endsWith('.vercel.app') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    (window.location.hostname.endsWith('.vercel.app') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? '/api/sync'
     : LIVE_VERCEL_SYNC_URL;
 
@@ -76,7 +76,7 @@ try {
   ];
   legacyKeys.forEach((k) => localStorage.removeItem(k));
   localStorage.setItem(STORAGE_KEYS.CLEAN_FLAG, 'true');
-} catch (_) {}
+} catch (_) { }
 
 const loadStorage = (key, fallback = []) => {
   try {
@@ -416,7 +416,7 @@ const mapClaimFromDb = (row) => {
     try {
       const parsed = JSON.parse(row.flag_reason);
       meta = { ...meta, ...parsed };
-    } catch (_) {}
+    } catch (_) { }
   }
   const status = row.status || 'Pending';
   let payoutStatus = meta.payoutStatus || 'Awaiting Approval';
@@ -859,6 +859,7 @@ export const DataProvider = ({ children }) => {
   }, [batches]);
 
   const [appInstalls, setAppInstalls] = useState(() => getDeviceInstalls());
+  const submittingSerialsRef = useRef(new Set());
 
   const [claims, setClaims] = useState(() =>
     (loadStorage(STORAGE_KEYS.CLAIMS, []) || []).filter((c) => !isTestOrInternalClaim(c, deletedKeysRef.current))
@@ -893,7 +894,7 @@ export const DataProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(slimForNetworkSync(patch)),
       });
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
   // Universal Supabase Realtime Event Broadcasters (Works under all RLS policies via cashback_requests)
@@ -1003,7 +1004,7 @@ export const DataProvider = ({ children }) => {
     const arr = Array.from(deletedKeysRef.current);
     try {
       localStorage.setItem(STORAGE_KEYS.DELETED, JSON.stringify(arr));
-    } catch (_) {}
+    } catch (_) { }
     pushDevSync({ deletedKeys: arr });
     pushDeletedKeysToSupabase();
   }, [pushDevSync, pushDeletedKeysToSupabase]);
@@ -1028,7 +1029,7 @@ export const DataProvider = ({ children }) => {
         try {
           const res = await fetch(DEV_SYNC_URL);
           if (res.ok) bridge = await res.json();
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (Array.isArray(bridge?.deletedKeys)) {
@@ -1173,7 +1174,7 @@ export const DataProvider = ({ children }) => {
                   }
                 });
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1207,7 +1208,7 @@ export const DataProvider = ({ children }) => {
                   }
                 });
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1299,7 +1300,7 @@ export const DataProvider = ({ children }) => {
                   }
                 });
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1400,7 +1401,7 @@ export const DataProvider = ({ children }) => {
                 });
               }
             }
-          } catch (_) {}
+          } catch (_) { }
         });
 
         // 4. Apply live verification events from Supabase
@@ -1425,7 +1426,7 @@ export const DataProvider = ({ children }) => {
                   break;
                 }
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1494,7 +1495,7 @@ export const DataProvider = ({ children }) => {
                 if (action.remarks) target.remarks = action.remarks;
                 target.updatedAt = Math.max(Number(target.updatedAt || 0), new Date(row.timestamp || 0).getTime());
               }
-            } catch (_) {}
+            } catch (_) { }
           });
 
           // Cross-reference scanned serials from sbClaims against sbBatches so scanned counts & token states stay 100% synced
@@ -1548,7 +1549,7 @@ export const DataProvider = ({ children }) => {
               window.dispatchEvent(new CustomEvent('duragrit:ota-release-pushed', { detail: relInfo }));
               window.dispatchEvent(new CustomEvent('duragrit:admin-ota-release-pushed', { detail: relInfo }));
             }
-          } catch (_) {}
+          } catch (_) { }
         }
 
         // H. Process Authoritative SMTP Config from Supabase
@@ -1565,7 +1566,7 @@ export const DataProvider = ({ children }) => {
                 return mergedSmtp;
               });
             }
-          } catch (_) {}
+          } catch (_) { }
         }
 
         // I. Process App Installs & Telemetry
@@ -1593,7 +1594,7 @@ export const DataProvider = ({ children }) => {
             bridge = await res.json();
             sbConnected = true;
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (bridge?.smtpConfig) {
@@ -1603,7 +1604,7 @@ export const DataProvider = ({ children }) => {
             if (JSON.stringify(prev) === JSON.stringify(mergedSmtp)) return prev;
             return mergedSmtp;
           });
-        } catch (_) {}
+        } catch (_) { }
       }
 
       // 3. Merge Collections with Authoritative Priority
@@ -1807,7 +1808,7 @@ export const DataProvider = ({ children }) => {
               } else if (parsed && typeof parsed === 'object') {
                 mergeIntoOrderMap(parsed, row.timestamp);
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1824,7 +1825,7 @@ export const DataProvider = ({ children }) => {
         setOrders(nextOrders);
         try {
           localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(nextOrders));
-        } catch (_) {}
+        } catch (_) { }
       } catch (ordErr) {
         console.warn('Order sync warning:', ordErr);
       }
@@ -1845,22 +1846,22 @@ export const DataProvider = ({ children }) => {
 
   // Persist to localStorage whenever collections change
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.SKUS, JSON.stringify(skus)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.SKUS, JSON.stringify(skus)); } catch (_) { }
   }, [skus]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users)); } catch (_) { }
   }, [users]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(vendors)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(vendors)); } catch (_) { }
   }, [vendors]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.BATCHES, JSON.stringify(batches)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.BATCHES, JSON.stringify(batches)); } catch (_) { }
   }, [batches]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(claims)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(claims)); } catch (_) { }
   }, [claims]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch (_) { }
   }, [orders]);
 
   // Initial load + Realtime Supabase subscriptions + Cross-Port Polling
@@ -2565,7 +2566,7 @@ export const DataProvider = ({ children }) => {
     setVendors(updated);
     try {
       localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
-    } catch (_) {}
+    } catch (_) { }
     pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
     syncVendorEventToSupabase('UPSERT', newVendor, updated);
 
@@ -2589,7 +2590,7 @@ export const DataProvider = ({ children }) => {
         const { data, error } = await supabase.from('vendors').upsert(dbVendor, { onConflict: 'vendor_id' }).select().single();
         if (error) handleSbError('addVendor', error);
         if (data?.id) newVendor.supabaseId = data.id;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     return newVendor;
@@ -2653,7 +2654,7 @@ export const DataProvider = ({ children }) => {
       setVendors(updated);
       try {
         localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
-      } catch (_) {}
+      } catch (_) { }
       pushDevSync({ vendors: updated });
       syncVendorEventToSupabase('UPSERT', targetVendor, updated);
 
@@ -2672,7 +2673,7 @@ export const DataProvider = ({ children }) => {
               account_status: targetVendor.status === 'INACTIVE' || targetVendor.active === false ? 'Suspended' : 'Active',
               updated_at: new Date().toISOString(),
             }, { onConflict: 'vendor_id' });
-        } catch (_) {}
+        } catch (_) { }
       }
     }
 
@@ -2699,14 +2700,14 @@ export const DataProvider = ({ children }) => {
     setVendors(updated);
     try {
       localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
-    } catch (_) {}
+    } catch (_) { }
     pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
     syncVendorEventToSupabase('DELETE', { id: cleanId, vendorId: cleanId }, updated);
 
     if (SB_ONLINE) {
       try {
         await supabase.from('vendors').delete().eq('vendor_id', cleanId);
-      } catch (_) {}
+      } catch (_) { }
     }
     return { success: true };
   }, [markDeletedKey, pushDevSync, syncVendorEventToSupabase]);
@@ -2759,12 +2760,12 @@ export const DataProvider = ({ children }) => {
     setOrders(updated);
     try {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
-    } catch (_) {}
+    } catch (_) { }
 
     pushDevSync({ order: newOrder, orders: updated });
     try {
       window.dispatchEvent(new CustomEvent('duragrit:orders-updated', { detail: newOrder }));
-    } catch (_) {}
+    } catch (_) { }
 
     if (SB_ONLINE) {
       try {
@@ -2812,12 +2813,12 @@ export const DataProvider = ({ children }) => {
       setOrders(updated);
       try {
         localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
-      } catch (_) {}
+      } catch (_) { }
 
       pushDevSync({ orderUpdate: updatedOrder, orders: updated });
       try {
         window.dispatchEvent(new CustomEvent('duragrit:orders-updated', { detail: updatedOrder }));
-      } catch (_) {}
+      } catch (_) { }
 
       if (SB_ONLINE) {
         try {
@@ -2855,83 +2856,151 @@ export const DataProvider = ({ children }) => {
       };
     }
 
-    // 1. Duplicate Claim Guard
-    const alreadyClaimed = claims.find(
-      (c) => QREngineV24.extractSerialKey(c.serialKey || c.qrSerial || c.batchCode) === cleanKey
-    );
-    if (alreadyClaimed) {
+    // 0. Atomic In-Flight Lock (prevents 2x rapid camera scans or double-taps from submitting twice)
+    if (submittingSerialsRef.current.has(cleanKey)) {
       return {
         success: false,
-        message: `QR serial ${cleanKey} has already been scanned and claimed (${alreadyClaimed.requestId || alreadyClaimed.id}).`,
+        message: `QR serial ${cleanKey} is already being processed. Please wait.`,
       };
     }
+    submittingSerialsRef.current.add(cleanKey);
 
-    // 2. Verify against generated QR Batches (or Supabase qr_tokens)
-    let matchedBatch = null;
-    let matchedToken = null;
-
-    for (const batch of batches) {
-      const list = batch.tokens || batch.codes || [];
-      const found = list.find((t) => QREngineV24.extractSerialKey(t.serialKey || t.serial) === cleanKey);
-      if (found) {
-        matchedBatch = batch;
-        matchedToken = found;
-        break;
-      }
-    }
-
-    let sbTokenRow = null;
-    if (!matchedToken && SB_ONLINE) {
-      const { data: tokData } = await supabase
-        .from('qr_tokens')
-        .select('*, products(name, sku_code, cashback_reward)')
-        .ilike('serial_key', cleanKey)
-        .maybeSingle();
-      if (tokData) {
-        sbTokenRow = tokData;
-      }
-    }
-
-    if (!matchedToken && !sbTokenRow) {
-      // Automatic SKU-level fallback:
-      // If the QR serial format is valid (e.g. DG-DA777-NOV2026-000001, DG-DA777-4473-000001, etc.),
-      // resolve it to the matching catalog SKU so vendor app can scan preview stickers or pre-printed batches seamlessly.
-      const upperKey = cleanKey.toUpperCase();
-      const availableSkus = (skus && skus.length > 0) ? skus : DEFAULT_LIVE_SKUS;
-      const matchedSkuFallback = availableSkus.find((s) => {
-        const cleanSkuCode = String(s.skuCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        return (
-          cleanSkuCode &&
-          (upperKey.includes(cleanSkuCode) ||
-           upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
-           (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
-        );
-      }) || availableSkus[0];
-
-      if (matchedSkuFallback && QREngineV24.validateSerialFormat(cleanKey)) {
-        const reward = Number(matchedSkuFallback.cashbackReward || matchedSkuFallback.cashbackAmount || 150);
-        matchedToken = {
-          serialKey: cleanKey,
-          dualSha128: QREngineV24.generateToken('10001', 1, 'DG', cleanKey).dualSha128,
-          cashbackAmount: reward,
-          skuId: matchedSkuFallback.id,
-          skuCode: matchedSkuFallback.skuCode,
-          productName: matchedSkuFallback.name,
-          isScanned: false,
-        };
-        matchedBatch = {
-          batchId: `DG-BATCH-${(matchedSkuFallback.skuCode || 'DA777').replace(/[^a-zA-Z0-9]/g, '')}`,
-          skuCode: matchedSkuFallback.skuCode,
-          productName: matchedSkuFallback.name,
-          cashbackAmount: reward,
-        };
-      } else {
+    try {
+      // 1. Duplicate Claim Guard (check live ref + live Supabase database before inserting)
+      const currentClaims = claimsRef.current || claims;
+      const alreadyClaimed = currentClaims.find(
+        (c) => QREngineV24.extractSerialKey(c.serialKey || c.qrSerial || c.batchCode) === cleanKey
+      );
+      if (alreadyClaimed) {
         return {
           success: false,
-          message: `Unregistered QR code "${cleanKey}". Generate a QR batch in Admin Panel first, then scan a serial from that batch.`,
+          message: `QR serial ${cleanKey} has already been scanned and claimed (${alreadyClaimed.requestId || alreadyClaimed.id}).`,
         };
       }
-    }
+
+      if (SB_ONLINE) {
+        try {
+          const { data: existingDbClaim } = await supabase
+            .from('cashback_requests')
+            .select('request_id, status')
+            .ilike('qr_serial', cleanKey)
+            .limit(1)
+            .maybeSingle();
+          if (existingDbClaim) {
+            return {
+              success: false,
+              message: `QR serial ${cleanKey} has already been scanned and claimed (${existingDbClaim.request_id}).`,
+            };
+          }
+        } catch (_) {}
+      }
+
+      // 2. Verify against generated QR Batches (local state -> Supabase qr_tokens -> Supabase qr_batches)
+      let matchedBatch = null;
+      let matchedToken = null;
+
+      for (const batch of (batchesRef.current || batches)) {
+        const list = batch.tokens || batch.codes || [];
+        const found = list.find((t) => QREngineV24.extractSerialKey(t.serialKey || t.serial) === cleanKey);
+        if (found) {
+          matchedBatch = batch;
+          matchedToken = found;
+          break;
+        }
+      }
+
+      let sbTokenRow = null;
+      if (!matchedToken && SB_ONLINE) {
+        const { data: tokData } = await supabase
+          .from('qr_tokens')
+          .select('*, products(name, sku_code, cashback_reward)')
+          .ilike('serial_key', cleanKey)
+          .maybeSingle();
+        if (tokData) {
+          sbTokenRow = tokData;
+        }
+      }
+
+      // If not in local batches or qr_tokens, look up the exact batch directly in Supabase qr_batches
+      if (!matchedBatch && !sbTokenRow && SB_ONLINE) {
+        try {
+          const parts = cleanKey.split('-');
+          const lotPart = parts.length >= 4 ? parts[parts.length - 2] : '';
+          if (lotPart) {
+            const { data: dbBatch } = await supabase
+              .from('qr_batches')
+              .select('*, products(name, sku_code, pack_weight, base_mrp, cashback_reward)')
+              .ilike('batch_identifier', `%-${lotPart}`)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (dbBatch) {
+              const meta = dbBatch.metadata || {};
+              const reward = Number(meta.cashbackAmount ?? dbBatch.products?.cashback_reward ?? 0);
+              const pts = Number(meta.pointsReward ?? meta.rewardPoints ?? (reward * 10));
+              matchedBatch = {
+                batchId: dbBatch.batch_identifier,
+                skuId: meta.skuId || dbBatch.product_id || '',
+                skuCode: meta.skuCode || dbBatch.products?.sku_code || '',
+                productName: meta.productName || dbBatch.products?.name || 'DuraGrit Verified Pack',
+                cashbackAmount: reward,
+                pointsReward: pts,
+                rewardPoints: pts,
+              };
+              matchedToken = {
+                serialKey: cleanKey,
+                dualSha128: QREngineV24.generateToken(dbBatch.lot_number || lotPart, 1, 'DG', cleanKey).dualSha128,
+                cashbackAmount: reward,
+                pointsReward: pts,
+                rewardPoints: pts,
+                skuId: matchedBatch.skuId,
+                skuCode: matchedBatch.skuCode,
+                productName: matchedBatch.productName,
+                isScanned: false,
+              };
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!matchedToken && !sbTokenRow) {
+        // Automatic SKU-level fallback:
+        const upperKey = cleanKey.toUpperCase();
+        const availableSkus = (skus && skus.length > 0) ? skus : DEFAULT_LIVE_SKUS;
+        const matchedSkuFallback = availableSkus.find((s) => {
+          const cleanSkuCode = String(s.skuCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+          return (
+            cleanSkuCode &&
+            (upperKey.includes(cleanSkuCode) ||
+              upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
+              (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
+          );
+        }) || availableSkus[0];
+
+        if (matchedSkuFallback && QREngineV24.validateSerialFormat(cleanKey)) {
+          const reward = Number(matchedSkuFallback.cashbackReward || matchedSkuFallback.cashbackAmount || 150);
+          matchedToken = {
+            serialKey: cleanKey,
+            dualSha128: QREngineV24.generateToken('10001', 1, 'DG', cleanKey).dualSha128,
+            cashbackAmount: reward,
+            skuId: matchedSkuFallback.id,
+            skuCode: matchedSkuFallback.skuCode,
+            productName: matchedSkuFallback.name,
+            isScanned: false,
+          };
+          matchedBatch = {
+            batchId: `DG-BATCH-${(matchedSkuFallback.skuCode || 'DA777').replace(/[^a-zA-Z0-9]/g, '')}`,
+            skuCode: matchedSkuFallback.skuCode,
+            productName: matchedSkuFallback.name,
+            cashbackAmount: reward,
+          };
+        } else {
+          return {
+            success: false,
+            message: `Unregistered QR code "${cleanKey}". Generate a QR batch in Admin Panel first, then scan a serial from that batch.`,
+          };
+        }
+      }
 
     if (matchedToken?.isScanned || sbTokenRow?.is_scanned) {
       return {
@@ -3203,13 +3272,16 @@ export const DataProvider = ({ children }) => {
       return updated;
     });
 
-    return {
-      success: true,
-      claim: newClaim,
-      productName,
-      cashbackAmount: claimAmount,
-      claimCode: requestId,
-    };
+      return {
+        success: true,
+        claim: newClaim,
+        productName,
+        cashbackAmount: claimAmount,
+        claimCode: requestId,
+      };
+    } finally {
+      submittingSerialsRef.current.delete(cleanKey);
+    }
   }, [claims, batches, skus, users, vendors, handleSbError, pushDevSync, pushBatchesToSupabase]);
 
   // Step 1 Approval (Pending -> Approved / Completed Tab awaiting Release)
@@ -3238,8 +3310,8 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
-    pushDevSync({ 
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) { }
+    pushDevSync({
       claims: updatedClaims,
       claimAction: targetClaim ? {
         claimId: targetClaim.id,
@@ -3316,8 +3388,8 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
-    pushDevSync({ 
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) { }
+    pushDevSync({
       claims: updatedClaims,
       claimAction: updatedClaim ? {
         claimId: updatedClaim.id,
@@ -3395,7 +3467,7 @@ export const DataProvider = ({ children }) => {
           payoutStatus: 'Disbursed'
         };
         updatedFlagReason = JSON.stringify(metaPayload);
-      } catch (_) {}
+      } catch (_) { }
 
       const dbClaimPatch = {
         status: 'Disbursed',
@@ -3415,15 +3487,15 @@ export const DataProvider = ({ children }) => {
       if (updatedUser) {
         const uq = updatedUser.supabaseId
           ? supabase.from('profiles').update({
-              escrow_balance: updatedUser.escrowBalance,
-              reward_balance: updatedUser.rewardBalance,
-              updated_at: disbursedIso,
-            }).eq('id', updatedUser.supabaseId)
+            escrow_balance: updatedUser.escrowBalance,
+            reward_balance: updatedUser.rewardBalance,
+            updated_at: disbursedIso,
+          }).eq('id', updatedUser.supabaseId)
           : supabase.from('profiles').update({
-              escrow_balance: updatedUser.escrowBalance,
-              reward_balance: updatedUser.rewardBalance,
-              updated_at: disbursedIso,
-            }).eq('mobile', normalizeMobile(updatedUser.mobile));
+            escrow_balance: updatedUser.escrowBalance,
+            reward_balance: updatedUser.rewardBalance,
+            updated_at: disbursedIso,
+          }).eq('mobile', normalizeMobile(updatedUser.mobile));
         await uq;
       }
     }
@@ -3536,8 +3608,8 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
-    pushDevSync({ 
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) { }
+    pushDevSync({
       claims: updatedClaims,
       claimAction: targetClaim ? {
         claimId: targetClaim.id,
@@ -3618,11 +3690,11 @@ export const DataProvider = ({ children }) => {
     try {
       Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
       localStorage.setItem(STORAGE_KEYS.CLEAN_FLAG, 'true');
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       await fetch(DEV_SYNC_URL, { method: 'DELETE' });
-    } catch (_) {}
+    } catch (_) { }
 
     if (SB_ONLINE) {
       await Promise.allSettled([
