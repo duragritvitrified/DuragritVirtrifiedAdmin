@@ -153,7 +153,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10) === '8826021114'
         );
 
-        loginUser({
+        const loginRes1 = await loginUser({
           id: 'VND-101',
           vendorId: 'VND-101',
           name: vLive?.companyName || vLive?.name || 'DuraGrit Authorized Partner',
@@ -172,6 +172,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           profileImage: vLive?.profileImage || '',
           active: true,
         });
+        if (loginRes1 && !loginRes1.success) {
+          setErrorMsg(loginRes1.message || 'Already logged in on another device.');
+          setIsSubmitting(false);
+          return;
+        }
 
         refreshAllData?.();
         if (onLoginSuccess) onLoginSuccess('dashboard');
@@ -374,7 +379,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           return;
         }
 
-        loginUser({
+        const loginRes2 = await loginUser({
           id: targetVendor.vendorId || targetVendor.id,
           vendorId: targetVendor.vendorId || targetVendor.id,
           name: targetVendor.companyName,
@@ -388,6 +393,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           avatarUrl: targetVendor.avatarUrl || targetVendor.profileImage || '',
           profileImage: targetVendor.avatarUrl || targetVendor.profileImage || '',
         });
+        if (loginRes2 && !loginRes2.success) {
+          setErrorMsg(loginRes2.message || 'Already logged in on another device.');
+          setIsSubmitting(false);
+          return;
+        }
 
         refreshAllData?.();
         if (onLoginSuccess) onLoginSuccess('dashboard');
@@ -434,7 +444,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         return;
       }
 
-      loginUser({
+      const loginRes3 = await loginUser({
         id: matchedUser.id || matchedUser.userId || matchedUser.vendorId,
         userId: matchedUser.userId || matchedUser.id || matchedUser.vendorId,
         name: matchedUser.name || matchedUser.contactPerson || matchedUser.companyName || 'Verified Partner',
@@ -453,6 +463,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         avatarUrl: matchedUser.avatarUrl || matchedUser.profileImage || '',
         profileImage: matchedUser.avatarUrl || matchedUser.profileImage || '',
       });
+      if (loginRes3 && !loginRes3.success) {
+        setErrorMsg(loginRes3.message || 'Already logged in on another device.');
+        setIsSubmitting(false);
+        return;
+      }
 
       refreshAllData?.();
       if (onLoginSuccess) onLoginSuccess('dashboard');
@@ -530,7 +545,7 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
         });
 
       if (matchedUser) {
-        loginUser({
+        const otpRes = await loginUser({
           id: matchedUser.id || matchedUser.userId,
           userId: matchedUser.userId || matchedUser.id,
           name: matchedUser.name || matchedUser.fullLegalName || 'Verified Partner',
@@ -545,12 +560,17 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           avatarUrl: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.avatarUrl || '',
           profileImage: matchedUser.avatarUrl || matchedUser.profileImage || matchedVendorPartner?.profileImage || '',
         });
+        if (otpRes && !otpRes.success) {
+          setErrorMsg(otpRes.message || 'Already logged in on another device.');
+          setShowOtpModal(false);
+          return;
+        }
         refreshAllData?.();
         setShowOtpModal(false);
         if (onLoginSuccess) onLoginSuccess('dashboard');
       } else {
         // Fallback verified login
-        loginUser({
+        const otpRes2 = await loginUser({
           id: `CNT-${cleanDigits.slice(-4)}`,
           userId: `CNT-${cleanDigits.slice(-4)}`,
           name: 'Verified Applicator',
@@ -561,6 +581,11 @@ export const Step8_MobileSignIn = ({ onLoginSuccess }) => {
           status: 'Active',
           hub: yardLocation,
         });
+        if (otpRes2 && !otpRes2.success) {
+          setErrorMsg(otpRes2.message || 'Already logged in on another device.');
+          setShowOtpModal(false);
+          return;
+        }
         refreshAllData?.();
         setShowOtpModal(false);
         if (onLoginSuccess) onLoginSuccess('dashboard');

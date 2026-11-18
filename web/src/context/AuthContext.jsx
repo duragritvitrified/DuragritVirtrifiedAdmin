@@ -3,6 +3,11 @@ import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 import {
   getAdminCredentials,
 } from '../config/adminAuthConfig';
+import {
+  acquireSessionLock,
+  heartbeatSessionLock,
+  releaseSessionLock,
+} from '../services/sessionLockService';
 
 // =====================================================================
 // DuraGrit Vitrified - Corporate Admin Authentication Context
@@ -78,6 +83,24 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [currentUser?.loginTimestamp]);
 
+  // Single-device active session heartbeat check (every 45s)
+  useEffect(() => {
+    if (!currentUser?.isAuthenticated || !currentUser?.lockUserKey) return;
+    const portal = currentUser.lockPortal || 'WEB_ADMIN';
+    const uKey = currentUser.lockUserKey;
+    const hbInterval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      const hb = await heartbeatSessionLock(portal, uKey);
+      if (hb && hb.valid === false) {
+        setAuthError(hb.message || 'Session ended because this User ID logged in on another device.');
+        setCurrentUser(null);
+        sessionStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SESSION_KEY);
+      }
+    }, 45000);
+    return () => clearInterval(hbInterval);
+  }, [currentUser?.isAuthenticated, currentUser?.lockUserKey, currentUser?.lockPortal]);
+
   const loginAsAdmin = useCallback(async (inputEmail, inputPassword, inputPin, remember = true) => {
     setAuthLoading(true);
     setAuthError(null);
@@ -118,6 +141,13 @@ export const AuthProvider = ({ children }) => {
           } catch (_) {}
         }
 
+        const lockUserKey = (cleanInput.includes('@') ? cleanInput : masterCreds.email).toUpperCase();
+        const lockRes = await acquireSessionLock('WEB_ADMIN', lockUserKey);
+        if (!lockRes.success && lockRes.locked) {
+          setAuthError(lockRes.message);
+          return { success: false, message: lockRes.message, locked: true };
+        }
+
         const user = {
           email: cleanInput.includes('@') ? cleanInput : masterCreds.email,
           name: masterCreds.name,
@@ -133,6 +163,8 @@ export const AuthProvider = ({ children }) => {
           isInternal: true,
           authMode: sbAuthId ? 'supabase' : 'local',
           rememberTerminal: remember,
+          lockPortal: 'WEB_ADMIN',
+          lockUserKey,
         };
 
         setCurrentUser(user);
@@ -194,6 +226,13 @@ export const AuthProvider = ({ children }) => {
           return { success: false, message: msg };
         }
 
+        const lockUserKey = String(matchedUser.id || matchedUser.userId || matchedUser.mobile || matchedUser.email).toUpperCase();
+        const lockRes = await acquireSessionLock('WEB_ADMIN', lockUserKey);
+        if (!lockRes.success && lockRes.locked) {
+          setAuthError(lockRes.message);
+          return { success: false, message: lockRes.message, locked: true };
+        }
+
         const user = {
           email: matchedUser.email || `${matchedUser.id}@duragrit.com`,
           name: matchedUser.name || 'Internal Operator',
@@ -209,6 +248,8 @@ export const AuthProvider = ({ children }) => {
           isInternal: true,
           authMode: 'internal-user',
           rememberTerminal: remember,
+          lockPortal: 'WEB_ADMIN',
+          lockUserKey,
         };
 
         setCurrentUser(user);
@@ -315,13 +356,16 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
+    if (currentUser?.lockUserKey) {
+      await releaseSessionLock(currentUser.lockPortal || 'WEB_ADMIN', currentUser.lockUserKey);
+    }
     if (supabaseOnline && currentUser?.authMode === 'supabase') {
       try { await supabase.auth.signOut(); } catch (_) {}
     }
     setCurrentUser(null);
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
-  }, [supabaseOnline, currentUser?.authMode]);
+  }, [supabaseOnline, currentUser?.authMode, currentUser?.lockUserKey, currentUser?.lockPortal]);
 
   const formatSessionTime = (ms) => {
     const totalSecs = Math.floor(ms / 1000);

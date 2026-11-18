@@ -1011,7 +1011,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
     }
   };
 
-  const handleAdminSignIn = (e) => {
+  const handleAdminSignIn = async (e) => {
     if (e) e.preventDefault();
     setLoginError('');
     setIsSubmittingLogin(true);
@@ -1037,7 +1037,7 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       return;
     }
 
-    loginUser({
+    const loginRes = await loginUser({
       id: 'ADMIN-01',
       name: 'DuraGrit Super Admin',
       email: 'duragrit07@gmail.com',
@@ -1047,6 +1047,12 @@ export const AdminMobileApp = ({ onSwitchToPartnerApp }) => {
       location: 'Morbi Kiln HQ, Gujarat',
       status: 'Active'
     });
+
+    if (loginRes && !loginRes.success) {
+      setLoginError(loginRes.message || 'Already logged in on another device.');
+      setIsSubmittingLogin(false);
+      return;
+    }
 
     refreshAllData?.();
 

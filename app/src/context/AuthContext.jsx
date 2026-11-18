@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
+import {
+  acquireSessionLock,
+  heartbeatSessionLock,
+  releaseSessionLock,
+} from '../services/sessionLockService';
 
 // =====================================================================
 // DuraGrit Vitrified - Mobile Field App Authentication Context
@@ -99,6 +104,26 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [currentUser?.loginTimestamp]);
 
+  // Single-device active session heartbeat check (every 45s)
+  useEffect(() => {
+    if (!currentUser?.isAuthenticated || !currentUser?.lockUserKey) return;
+    const portal = currentUser.lockPortal || (currentUser.isAdmin ? 'ADMIN_MOBILE' : 'VENDOR_MOBILE');
+    const uKey = currentUser.lockUserKey;
+    const hbInterval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      const hb = await heartbeatSessionLock(portal, uKey);
+      if (hb && hb.valid === false) {
+        setAuthError(hb.message || 'Session ended because this User ID logged in on another device.');
+        setCurrentUser(null);
+        try {
+          const key = getAppSessionKey();
+          localStorage.removeItem(key);
+        } catch (_) {}
+      }
+    }, 45000);
+    return () => clearInterval(hbInterval);
+  }, [currentUser?.isAuthenticated, currentUser?.lockUserKey, currentUser?.lockPortal]);
+
   const sendOTP = useCallback(async (mobile) => {
     if (!supabaseOnline) {
       return { success: false, message: 'Supabase not configured. Connect credentials to enable OTP.' };
@@ -136,8 +161,20 @@ export const AuthProvider = ({ children }) => {
     }
   }, [supabaseOnline]);
 
-  const loginUser = useCallback((userData) => {
+  const loginUser = useCallback(async (userData) => {
+    setAuthError(null);
     const rawId = String(userData?.id || userData?.vendorId || Date.now());
+    const portal = userData?.isAdmin ? 'ADMIN_MOBILE' : 'VENDOR_MOBILE';
+    const lockUserKey = String(
+      userData?.vendorId || userData?.mobile || userData?.phone || userData?.email || rawId
+    ).trim().toUpperCase();
+
+    const lockRes = await acquireSessionLock(portal, lockUserKey);
+    if (!lockRes.success && lockRes.locked) {
+      setAuthError(lockRes.message);
+      return { success: false, locked: true, message: lockRes.message };
+    }
+
     const session = {
       ...userData,
       id: rawId,
@@ -146,6 +183,8 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: true,
       loginTimestamp: Date.now(),
       authMode: userData?.supabaseId ? 'supabase-synced' : 'local',
+      lockPortal: portal,
+      lockUserKey,
     };
     setCurrentUser(session);
     try {
@@ -169,6 +208,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
+    if (currentUser?.lockUserKey) {
+      await releaseSessionLock(
+        currentUser.lockPortal || (currentUser.isAdmin ? 'ADMIN_MOBILE' : 'VENDOR_MOBILE'),
+        currentUser.lockUserKey
+      );
+    }
     if (supabaseOnline && currentUser?.authMode === 'supabase') {
       try { await supabase.auth.signOut(); } catch (_) {}
     }
@@ -182,7 +227,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('duragrit_admin_mobile_session_v6');
       localStorage.removeItem('duragrit_vendor_mobile_session_v6');
     } catch (_) {}
-  }, [supabaseOnline, currentUser?.authMode]);
+  }, [supabaseOnline, currentUser?.authMode, currentUser?.lockUserKey, currentUser?.lockPortal]);
 
   const formatSessionTime = (ms) => {
     const totalSecs = Math.floor(ms / 1000);
