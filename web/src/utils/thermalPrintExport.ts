@@ -109,12 +109,13 @@ export function generateSerializedBatchTokens(input: BatchExportInput): Serializ
       ? input.dealerDiscountPct
       : parseFloat(String(input.dealerDiscountPct || '15').replace(/[^0-9.]/g, '')) || 15;
   const expiryDate = resolveExpiryDate(input.validityPeriod, input.expiryDate);
-  const lotNum = String(input.lotNumber || Math.floor(1000 + Math.random() * 9000));
+  const lotNum = String(input.lotNumber || Math.floor(1000 + Math.random() * 9000)).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  const stamp = lotNum || yyyymmm;
 
   const list: SerializedTokenRecord[] = [];
   for (let i = 0; i < qty; i++) {
     const seq = String(i + 1).padStart(6, '0');
-    const serialId = `DG-${cleanSku}-${yyyymmm}-${seq}`;
+    const serialId = `DG-${cleanSku}-${stamp}-${seq}`;
     const verifyUrl = `${THERMAL_PRINTER_SPEC.verificationBaseUrl}/${serialId}`;
     const checksum = computeSaltedSha256(serialId, input.skuCode, cashback);
 
@@ -190,11 +191,17 @@ export function normalizeBatchTokensForExport(batchOrTokens: any, metaFallback?:
   for (let idx = 0; idx < totalCount; idx++) {
     const t = rawTokens[idx];
     const seq = String(idx + 1).padStart(6, '0');
+    const cleanLot = String(lotNum || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const isNewLotBatch = cleanLot && cleanLot !== '1001' && (
+      (meta?.createdAt && String(meta.createdAt) >= '2026-11-18T16:50:00') ||
+      (rawTokens[0]?.serialKey && String(rawTokens[0].serialKey).includes(`-${cleanLot}-`))
+    );
+    const stamp = isNewLotBatch ? cleanLot : yyyymmm;
     const serialId =
       t?.serial_token_id ||
       t?.serialKey ||
       t?.serial ||
-      `DG-${cleanSku}-${yyyymmm}-${seq}`;
+      `DG-${cleanSku}-${stamp}-${seq}`;
     const verifyUrl = t?.verification_url || t?.qrPayloadUrl || `${THERMAL_PRINTER_SPEC.verificationBaseUrl}/${serialId}`;
     const tokenCashback = Number(t?.cashback_inr ?? t?.cashbackAmount ?? cashback);
     const checksum = t?.sha256_checksum || computeSaltedSha256(serialId, skuCode, tokenCashback);

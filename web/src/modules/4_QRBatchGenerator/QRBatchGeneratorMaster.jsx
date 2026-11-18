@@ -184,20 +184,25 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
 
     if (targetQty > 0 && list.length < targetQty) {
       const cleanSku = String(batch.skuCode || selectedSku?.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-      const lotNum = String(batch.lotNumber || (batch.batchId ? String(batch.batchId).split('-').pop() : '') || '1001');
+      const lotNum = String(batch.lotNumber || (batch.batchId ? String(batch.batchId).split('-').pop() : '') || '1001').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
       const prefix = batch.prefix || `BATCH-${cleanSku}-${currentMonthYear}`;
       const dateMatch = String(prefix).match(/(20\d{2})[-_]?(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i);
       const yyyymmm = dateMatch ? `${dateMatch[1]}${dateMatch[2].toUpperCase()}` : currentMonthYear.replace(/[^A-Z0-9]/g, '');
+      const isLotStamped = lotNum && lotNum !== '1001' && (
+        (batch.createdAt && String(batch.createdAt) >= '2026-11-18T16:50:00') ||
+        (list[0]?.serialKey && String(list[0].serialKey).includes(`-${lotNum}-`))
+      );
+      const stamp = isLotStamped ? lotNum : yyyymmm;
       const reward = Number(batch.cashbackAmount ?? batch.cashbackReward ?? cashbackReward ?? 50);
 
       const synthesized = [];
       for (let i = 0; i < targetQty; i++) {
         const existing = list[i];
-        if (existing && (existing.serialKey || existing.serial)) {
+        if (existing && (existing.serialKey || existing.serial) && (!isLotStamped || String(existing.serialKey || existing.serial).includes(`-${lotNum}-`))) {
           synthesized.push(existing);
         } else {
           const seq = String(i + 1).padStart(6, '0');
-          const serial = `DG-${cleanSku}-${yyyymmm}-${seq}`;
+          const serial = `DG-${cleanSku}-${stamp}-${seq}`;
           synthesized.push({
             serialKey: serial,
             serial: serial,
@@ -242,6 +247,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         skuCode: selectedSku.skuCode,
         batchPrefix,
         quantity: qtyNum,
+        cashbackInr: cbNum,
         cashbackReward: cbNum,
         pointsReward: ptNum,
         validityPeriod,
