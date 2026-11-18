@@ -1488,24 +1488,46 @@ export const DataProvider = ({ children }) => {
         (u) => normalizeMobile(u.mobile) || String(u.id || '').toUpperCase(),
         deletedSet
       );
-      const bridgeVendors = Array.isArray(bridge?.vendors) && bridge.vendors.length > 0
-        ? bridge.vendors
-        : loadStorage(STORAGE_KEYS.VENDORS, BASE_REGISTERED_VENDORS);
-      const nextVendors = mergeCollections(
-        sbVendors,
-        bridgeVendors,
-        (v) => String(v.vendorId || v.id || '').toUpperCase(),
-        deletedSet
+      const vendorMap = new Map();
+      const getVendorTs = (v) => parseTimestamp(v?.updatedAt || v?.createdAt || 0);
+
+      const mergeIntoVendorMap = (list) => {
+        if (!Array.isArray(list)) return;
+        list.forEach((v) => {
+          if (!v) return;
+          const vKey = String(v.vendorId || v.id || '').trim().toUpperCase();
+          if (!vKey || deletedSet.has(vKey)) return;
+          const existing = vendorMap.get(vKey);
+          if (!existing) {
+            vendorMap.set(vKey, v);
+          } else {
+            const existTime = getVendorTs(existing);
+            const incomingTime = getVendorTs(v);
+            if (incomingTime >= existTime) {
+              vendorMap.set(vKey, { ...existing, ...v, updatedAt: incomingTime || existTime });
+            } else {
+              vendorMap.set(vKey, { ...v, ...existing, updatedAt: existTime });
+            }
+          }
+        });
+      };
+
+      // Merge sequentially with priority: base -> localStorage -> bridge -> Supabase -> local memory ref
+      mergeIntoVendorMap(BASE_REGISTERED_VENDORS);
+      mergeIntoVendorMap(loadStorage(STORAGE_KEYS.VENDORS, []));
+      mergeIntoVendorMap(bridge?.vendors);
+      mergeIntoVendorMap(sbVendors);
+      mergeIntoVendorMap(vendorsRef.current);
+
+      const nextVendors = Array.from(vendorMap.values()).filter(
+        (v) => !deletedSet.has(String(v.vendorId || v.id || '').toUpperCase())
       );
-      // Guarantee registered vendors are never dropped
-      BASE_REGISTERED_VENDORS.forEach((bv) => {
-        const bvId = String(bv.vendorId || bv.id).toUpperCase();
-        if (!nextVendors.some((v) => String(v.vendorId || v.id).toUpperCase() === bvId)) {
-          nextVendors.push({ ...bv });
-        }
-      });
+
       vendorsRef.current = nextVendors;
       setVendors(nextVendors);
+      try {
+        localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(nextVendors));
+      } catch (_) {}
       const nextBatches = registryBatches.length > 0
         ? sbBatches
         : mergeCollections(
@@ -2340,6 +2362,9 @@ export const DataProvider = ({ children }) => {
     const updated = [newVendor, ...currentList];
     vendorsRef.current = updated;
     setVendors(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
+    } catch (_) {}
     pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
     syncVendorEventToSupabase('UPSERT', newVendor, updated);
 
@@ -2425,6 +2450,9 @@ export const DataProvider = ({ children }) => {
     if (targetVendor) {
       vendorsRef.current = updated;
       setVendors(updated);
+      try {
+        localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
+      } catch (_) {}
       pushDevSync({ vendors: updated });
       syncVendorEventToSupabase('UPSERT', targetVendor, updated);
 
@@ -2468,6 +2496,9 @@ export const DataProvider = ({ children }) => {
     const updated = vendorsRef.current.filter((v) => String(v.id).toUpperCase() !== cleanId && String(v.vendorId).toUpperCase() !== cleanId);
     vendorsRef.current = updated;
     setVendors(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
+    } catch (_) {}
     pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
     syncVendorEventToSupabase('DELETE', { id: cleanId, vendorId: cleanId }, updated);
 

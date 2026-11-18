@@ -95,10 +95,10 @@ const EMPTY_FORM = () => ({
 
   // Address & Territory
   address: '',
-  city: '',
+  city: 'Morbi',
   state: 'Gujarat',
-  pincode: '',
-  location: 'Morbi Central Hub',
+  pincode: '363641',
+  location: 'Morbi Central Hub, Gujarat',
   territory: 'Morbi Central Hub',
 
   // Bank & UPI Settlement
@@ -987,19 +987,13 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
     const missing = [];
     const currentVendorId = vendor?.vendorId || vendor?.id;
 
-    // 1. Company Name
+    // 1. Company Name (Compulsory)
     if (!form.companyName?.trim()) {
       errors.companyName = 'Firm / Company Name is compulsory';
       missing.push('Firm / Company Name');
     }
 
-    // 2. Contact Person
-    if (!form.contactPerson?.trim()) {
-      errors.contactPerson = 'Contact Person Full Name is compulsory';
-      missing.push('Contact Person Full Name');
-    }
-
-    // 3. Mobile Number (10 digits & Unique)
+    // 2. Mobile Number (10 digits & Unique - Compulsory)
     const phoneClean = String(form.phone || '').replace(/\D/g, '').slice(-10);
     if (!phoneClean || phoneClean.length !== 10) {
       errors.phone = 'Valid 10-digit Mobile Number is compulsory';
@@ -1016,42 +1010,23 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
       }
     }
 
-    // 4. Email ID (Compulsory & Unique)
+    // 3. Email ID (Optional, but if provided must be valid format & unique)
     const emailStr = String(form.email || '').trim().toLowerCase();
-    if (!emailStr) {
-      errors.email = 'Business Email ID is compulsory for verification & credentials';
-      missing.push('Business Email Address');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
-      errors.email = 'Please enter a valid email format (e.g. partner@example.com)';
-      missing.push('Valid Email Format');
-    } else {
-      const dupEmail = (existingVendors || []).find((v) => {
-        if (currentVendorId && String(v.vendorId || v.id).toUpperCase() === String(currentVendorId).toUpperCase()) return false;
-        const vEmail = String(v.email || '').trim().toLowerCase();
-        return vEmail === emailStr;
-      });
-      if (dupEmail) {
-        errors.email = `Already registered! Yeh email ID (${emailStr}) pehle se registered hai (${dupEmail.companyName || dupEmail.id}). New email ID enter karna hoga.`;
-        missing.push(`Email ID (${emailStr} already registered)`);
+    if (emailStr) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+        errors.email = 'Please enter a valid email format (e.g. partner@example.com)';
+        missing.push('Valid Email Format');
+      } else {
+        const dupEmail = (existingVendors || []).find((v) => {
+          if (currentVendorId && String(v.vendorId || v.id).toUpperCase() === String(currentVendorId).toUpperCase()) return false;
+          const vEmail = String(v.email || '').trim().toLowerCase();
+          return vEmail === emailStr;
+        });
+        if (dupEmail) {
+          errors.email = `Already registered! Yeh email ID (${emailStr}) pehle se registered hai (${dupEmail.companyName || dupEmail.id}). New email ID enter karna hoga.`;
+          missing.push(`Email ID (${emailStr} already registered)`);
+        }
       }
-    }
-
-    // 5. Passkey / Password (at least 4 characters)
-    if (!form.passkey?.trim() || form.passkey.trim().length < 4) {
-      errors.passkey = 'Login Password / Passkey must be at least 4 characters';
-      missing.push('Login Password / Passkey');
-    }
-
-    // 6. City / Hub
-    if (!form.city?.trim()) {
-      errors.city = 'City / Hub is compulsory';
-      missing.push('City / Hub');
-    }
-
-    // 7. State / Region
-    if (!form.state?.trim()) {
-      errors.state = 'State / Region is compulsory';
-      missing.push('State / Region');
     }
 
     return { isValid: missing.length === 0, errors, missing };
@@ -1068,9 +1043,8 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
       // Auto-open sections containing missing fields
       setSections((prev) => ({
         ...prev,
-        basic: prev.basic || Boolean(errors.companyName || errors.contactPerson || errors.phone || errors.email),
+        basic: prev.basic || Boolean(errors.companyName || errors.phone || errors.email),
         credentials: prev.credentials || Boolean(errors.passkey),
-        address: prev.address || Boolean(errors.city || errors.state),
       }));
 
       // Scroll modal to top so alert banner is prominent
@@ -1083,32 +1057,43 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
     setFormErrors({});
     setFormAlert('');
     setSaving(true);
-    const loc = form.city && form.state ? `${form.city.trim()}, ${form.state.trim()}` : form.location;
-    const poVal = parseFloat(form.poValueLakhs) || 0;
+    try {
+      const cityVal = form.city?.trim() || 'Morbi';
+      const stateVal = form.state?.trim() || 'Gujarat';
+      const loc = `${cityVal}, ${stateVal}`;
+      const poVal = parseFloat(form.poValueLakhs) || 0;
+      const phoneDigits = form.phone?.replace(/\D/g, '').slice(-10) || '';
+      const passkeyVal = form.passkey?.trim() || `Vend#${phoneDigits.slice(-4) || '2026'}`;
 
-    await onSave({
-      ...form,
-      avatarUrl: form.avatarUrl || '',
-      profileImage: form.avatarUrl || '',
-      companyName: form.companyName.trim(),
-      name: form.companyName.trim(),
-      contactPerson: form.contactPerson?.trim() || form.companyName.trim(),
-      phone: form.phone?.replace(/\D/g, '').slice(-10) || '',
-      mobile: form.phone?.replace(/\D/g, '').slice(-10) || '',
-      email: form.email?.trim() || '',
-      status: form.status || 'ACTIVE',
-      gstin: (form.gstin || '').toUpperCase().trim(),
-      location: loc || form.territory || 'Morbi Central Hub',
-      territory: form.territory || loc || 'Morbi Central Hub',
-      poValueLakhs: poVal,
-      totalPayoutLakhs: poVal,
-      activePurchaseOrders: parseInt(form.activePurchaseOrders, 10) || (poVal > 0 ? 1 : 0),
-      tempPassword: form.passkey,
-      passkey: form.passkey,
-      appRole: form.appRole || (form.category === 'Distributor' ? 'Distributor' : form.category === 'Dealer' ? 'Dealer' : 'Contractor'),
-    });
-    setSaving(false);
-    onClose();
+      await onSave({
+        ...form,
+        avatarUrl: form.avatarUrl || '',
+        profileImage: form.avatarUrl || '',
+        companyName: form.companyName.trim(),
+        name: form.companyName.trim(),
+        contactPerson: form.contactPerson?.trim() || form.companyName.trim(),
+        phone: phoneDigits,
+        mobile: phoneDigits,
+        email: form.email?.trim() || '',
+        city: cityVal,
+        state: stateVal,
+        status: form.status || 'ACTIVE',
+        gstin: (form.gstin || '').toUpperCase().trim(),
+        location: loc,
+        territory: form.territory || loc,
+        poValueLakhs: poVal,
+        totalPayoutLakhs: poVal,
+        activePurchaseOrders: parseInt(form.activePurchaseOrders, 10) || (poVal > 0 ? 1 : 0),
+        tempPassword: passkeyVal,
+        passkey: passkeyVal,
+        appRole: form.appRole || (form.category === 'Distributor' ? 'Distributor' : form.category === 'Dealer' ? 'Dealer' : 'Contractor'),
+      });
+      onClose();
+    } catch (err) {
+      setFormAlert(`❌ Failed to save partner: ${err.message || 'Please check input fields and try again.'}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -2113,11 +2098,19 @@ export function VendorManagement() {
     } else {
       const newPayload = {
         ...data,
-        status: data.status || 'INACTIVE', // Requires Admin Approval
-        emailVerified: 'Pending',
+        status: data.status || 'ACTIVE',
+        accountStatus: 'Active',
+        active: true,
+        emailVerified: data.email ? 'Pending' : 'N/A',
         credentialsSent: false,
       };
       const created = await addVendor(newPayload);
+
+      // Reset search filter and page to 1 so the new vendor is immediately visible on top
+      setSearch('');
+      setSelectedCategory('all');
+      setSelectedStatus('all');
+      setCurrentPage(1);
 
       // Automatically dispatch Email 1 (Verification Link) if email is present
       if (data.email) {
@@ -2141,14 +2134,14 @@ export function VendorManagement() {
           });
         } catch (_) {
           setAlertToast({
-            type: 'info',
-            msg: `Partner registered. Email verification pending dispatch.`,
+            type: 'success',
+            msg: `✅ Partner ${data.companyName} created successfully! (Email verification pending dispatch)`,
           });
         }
       } else {
         setAlertToast({
-          type: 'info',
-          msg: `Partner registered without email. Add an email to send verification link & APK credentials.`,
+          type: 'success',
+          msg: `✅ Partner ${data.companyName} created successfully and active in directory!`,
         });
       }
     }

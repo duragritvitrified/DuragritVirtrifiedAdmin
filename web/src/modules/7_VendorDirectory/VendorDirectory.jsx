@@ -19,8 +19,10 @@ export const VendorDirectory = () => {
   const [gstValidationMsg, setGstValidationMsg] = useState('');
 
   const filteredVendors = vendors.filter(v => {
-    const matchesSearch = v.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          v.gstin.toLowerCase().includes(searchTerm.toLowerCase());
+    const vName = String(v.vendorName || v.companyName || v.name || '').toLowerCase();
+    const vGst = String(v.gstin || '').toLowerCase();
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = !q || vName.includes(q) || vGst.includes(q);
     const matchesCat = selectedCategory === 'All' || v.category === selectedCategory;
     return matchesSearch && matchesCat;
   });

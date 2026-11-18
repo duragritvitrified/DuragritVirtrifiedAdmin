@@ -11,6 +11,9 @@ const PROTECTED_KEYS = new Set([
   '9820144521', '9898012345'
 ]);
 
+global.__DURAGRIT_VENDORS_REGISTRY__ = global.__DURAGRIT_VENDORS_REGISTRY__ || new Map();
+global.__DURAGRIT_ORDERS_REGISTRY__ = global.__DURAGRIT_ORDERS_REGISTRY__ || new Map();
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -53,10 +56,22 @@ export default async function handler(req, res) {
       }
 
       if (Array.isArray(payload.vendors)) {
+        global.__DURAGRIT_VENDORS_REGISTRY__ = global.__DURAGRIT_VENDORS_REGISTRY__ || new Map();
+        payload.vendors.forEach((v) => {
+          const vId = String(v?.vendorId || v?.id || '').toUpperCase();
+          if (vId) {
+            global.__DURAGRIT_VENDORS_REGISTRY__.set(vId, {
+              ...(global.__DURAGRIT_VENDORS_REGISTRY__.get(vId) || {}),
+              ...v,
+              updatedAt: v.updatedAt || Date.now()
+            });
+          }
+        });
+
         const nowIso = new Date().toISOString();
         inserts.push(
           supabase.from('cashback_requests').insert({
-            request_id: `SYNC_VENDORS_EVENT_${Date.now()}`,
+            request_id: `SYNC_VENDORS_EVENT_${Date.now()}`.slice(0, 50),
             qr_serial: 'DURAGRIT_VENDORS_STORE_V1',
             claim_value: payload.vendors.length,
             status: 'Approved',
@@ -68,9 +83,10 @@ export default async function handler(req, res) {
         payload.vendors.forEach((v) => {
           const vId = String(v.vendorId || v.id || '').toUpperCase();
           if (vId) {
+            const cleanReqId = `DURAGRIT_VENDOR_POST_${vId}_${Date.now()}`.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
             inserts.push(
               supabase.from('cashback_requests').insert({
-                request_id: `DURAGRIT_VENDOR_POST_${vId}_${Date.now()}`,
+                request_id: cleanReqId,
                 qr_serial: 'DURAGRIT_VENDOR_EVENT',
                 claim_value: 1,
                 status: 'Approved',
@@ -89,6 +105,12 @@ export default async function handler(req, res) {
       }
 
       if (Array.isArray(payload.deletedKeys)) {
+        payload.deletedKeys.forEach((k) => {
+          const up = String(k || '').toUpperCase();
+          if (global.__DURAGRIT_VENDORS_REGISTRY__) {
+            global.__DURAGRIT_VENDORS_REGISTRY__.delete(up);
+          }
+        });
         const safeDeleted = payload.deletedKeys.filter(
           (k) => !PROTECTED_KEYS.has(String(k).toUpperCase())
         );
@@ -490,6 +512,16 @@ export default async function handler(req, res) {
         }
       } catch (_) {}
     });
+
+    if (global.__DURAGRIT_VENDORS_REGISTRY__) {
+      for (const [vId, v] of global.__DURAGRIT_VENDORS_REGISTRY__.entries()) {
+        if (!deletedKeysSet.has(vId)) {
+          const existing = vendorMap.get(vId) || {};
+          vendorMap.set(vId, { ...existing, ...v });
+        }
+      }
+    }
+
     responseData.vendors = Array.from(vendorMap.values());
 
     // 4. Profiles / Users
