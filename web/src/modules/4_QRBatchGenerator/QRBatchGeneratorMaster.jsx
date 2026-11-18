@@ -13,7 +13,7 @@ import {
 import {
   QrCode, ShieldCheck, Download, Printer,
   Copy, Check, Lock, RefreshCw, X, Info, Plus, Trash2,
-  AlertCircle,
+  AlertCircle, Search,
   CheckCircle2, FileText, FileSpreadsheet
 } from 'lucide-react';
 
@@ -68,7 +68,7 @@ function TokenQrPreview({ url, fallbackSvg }) {
 }
 
 export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
-  const { skus = [], batches = [], createBatch, deleteBatch } = useData();
+  const { skus = [], batches = [], claims = [], createBatch, deleteBatch } = useData();
 
   const currentMonthYear = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short' }).toUpperCase().replace(' ', '-');
 
@@ -78,6 +78,8 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
   const [cashbackReward, setCashbackReward] = useState(50);
   const [pointsReward, setPointsReward] = useState(500);
   const [validityPeriod, setValidityPeriod] = useState('12 Months from Generation Date');
+  const [ledgerTab, setLedgerTab] = useState('batches'); // 'batches' | 'redeemed'
+  const [qrSearchQuery, setQrSearchQuery] = useState('');
 
   const [liveQrDataUrl, setLiveQrDataUrl] = useState(() => createSimpleQRSvg());
   const [isGenerating, setIsGenerating] = useState(false);
@@ -867,136 +869,379 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
         </div>
       </div>
 
-      {/* Historical Batches Ledger */}
+      {/* Historical Batches & Redeemed QR Logs Ledger */}
       <div className="bg-white rounded-2xl border border-[#E7E5E0] shadow-xs overflow-hidden mt-6">
-        <div className="p-5 border-b border-stone-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-extrabold text-[#1C1917]">Generated QR Batches Ledger</h3>
-            <p className="text-xs text-stone-400 mt-0.5">
-              Click any sample serial code to copy and test scanning directly inside the Mobile App
-            </p>
-          </div>
-          <span className="text-xs font-mono font-bold text-[#A62C11] bg-[#FEF2EE] px-2.5 py-1 rounded-lg border border-[#C84826]/20">
-            Total Batches: {batches.length}
-          </span>
-        </div>
+        {(() => {
+          const sortedBatches = [...batches].sort((a, b) => {
+            const tA = new Date(a.createdAt || a.date || a.timestamp || 0).getTime() || Number(a.updatedAt || 0);
+            const tB = new Date(b.createdAt || b.date || b.timestamp || 0).getTime() || Number(b.updatedAt || 0);
+            return tB - tA;
+          });
 
-        {batches.length === 0 ? (
-          <div className="py-12 px-6 text-center text-xs text-stone-400">
-            No QR batches generated yet. Select a SKU above and click <strong>Generate Unique QR Batch</strong>.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-stone-700">
-              <thead className="bg-[#FAF9F6] border-b border-[#E7E5E0] text-[11px] font-bold uppercase tracking-wider text-stone-500">
-                <tr>
-                  <th className="py-3 px-4">Batch ID</th>
-                  <th className="py-3 px-4">Product SKU</th>
-                  <th className="py-3 px-4">Created Date &amp; Time</th>
-                  <th className="py-3 px-4">Next Unscanned Serial (Click to Copy)</th>
-                  <th className="py-3 px-4">Redeemed / Total</th>
-                  <th className="py-3 px-4">Cashback / QR</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100 font-medium">
-                {[...batches]
-                  .sort((a, b) => {
-                    const tA = new Date(a.createdAt || a.date || a.timestamp || 0).getTime() || Number(a.updatedAt || 0);
-                    const tB = new Date(b.createdAt || b.date || b.timestamp || 0).getTime() || Number(b.updatedAt || 0);
-                    return tB - tA;
-                  })
-                  .map((b, idx) => {
-                  const toks = getFullTokensForBatch(b);
-                  const nextAvailable = toks.find((t) => !t.isScanned);
-                  const scannedCnt = toks.filter((t) => t.isScanned).length;
-                  const rawCreated = b.createdAt || b.date || b.timestamp || (b.updatedAt ? Number(b.updatedAt) : null);
-                  const createdDateObj = rawCreated ? new Date(rawCreated) : null;
-                  const isValidDate = createdDateObj && !isNaN(createdDateObj.getTime());
-                  const formattedDate = isValidDate
-                    ? createdDateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : '—';
-                  const formattedTime = isValidDate
-                    ? createdDateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-                    : '';
-                  return (
-                    <tr key={b.batchId || idx} className="hover:bg-[#FAF9F6] transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#1C1917]">{b.batchId}</td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-[#1C1917]">{b.skuCode}</div>
-                        <div className="text-[10px] text-stone-400">{b.productName}</div>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-semibold text-stone-800 text-[11px]">{formattedDate}</div>
-                        {formattedTime && (
-                          <div className="text-[10px] font-mono text-stone-500 mt-0.5">{formattedTime}</div>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        {nextAvailable ? (
-                          <button
-                            type="button"
-                            onClick={() => copySerial(nextAvailable.serialKey)}
-                            className="inline-flex items-center space-x-1.5 font-mono text-[11px] font-bold bg-[#FEF2EE] hover:bg-[#FDE3DA] text-[#A62C11] border border-[#C84826]/25 px-2.5 py-1 rounded-lg transition cursor-pointer"
-                            title="Copy serial key to test in Mobile App"
-                          >
-                            <span>{nextAvailable.serialKey}</span>
-                            <Copy className="w-3 h-3" />
-                          </button>
-                        ) : (
-                          <span className="text-[11px] text-stone-400 italic">All tokens redeemed</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-stone-800">
-                        {scannedCnt} / {b.quantity || toks.length}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#A62C11]">
-                        ₹{Number(b.cashbackAmount || 0)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                        <button
-                          onClick={() => handleExportThermal40x40Pdf(b)}
-                          title="40×40mm 300 DPI Vector PDF Roll Sheet"
-                          className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-[#FEF2EE] text-stone-700 hover:text-[#A62C11] border border-stone-200 rounded-lg transition cursor-pointer"
-                        >
-                          40×40 PDF
-                        </button>
-                        <button
-                          onClick={() => handleExportThermalZpl(b, 'zpl')}
-                          title="Godex / Zebra Raw Thermal Stream (.zpl) @ 300 DPI"
-                          className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-[#FEF2EE] text-stone-700 hover:text-[#A62C11] border border-stone-200 rounded-lg transition cursor-pointer"
-                        >
-                          .ZPL
-                        </button>
-                        <button
-                          onClick={() => handleExportBatchManifestCsv(b)}
-                          title="Download Serialized Batch Manifest (.csv)"
-                          className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-emerald-700 border border-stone-200 rounded-lg transition cursor-pointer"
-                        >
-                          .CSV
-                        </button>
-                        <button
-                          onClick={() => setPrintStickersModal(b)}
-                          title="Preview & Print Stickers"
-                          className="p-1.5 text-[#C84826] hover:text-[#A62C11] hover:bg-[#FEF2EE] rounded-lg transition cursor-pointer"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => deleteBatch(b.batchId)}
-                          title="Delete Batch"
-                          className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+          const redeemedMap = new Map();
+          // 1. Authoritative redeemed claims from claims list
+          (claims || []).forEach((c) => {
+            const serial = String(c.serialKey || c.qrSerial || c.batchCode || '').trim().toUpperCase();
+            if (!serial || serial.startsWith('DURAGRIT_')) return;
+            const amount = Number(c.amount ?? c.claimValue ?? 0);
+            const points = Number(c.points ?? c.rewardPoints ?? (amount * 10));
+            const rawTs = c.submittedAt || c.createdAt || c.date || c.updatedAt || null;
+            redeemedMap.set(serial, {
+              serialKey: serial,
+              requestId: c.requestId || c.claimNumber || c.id || '',
+              batchId: c.batchId || '',
+              skuCode: c.skuCode || '',
+              productName: c.productName || 'DuraGrit Verified Pack',
+              partnerName: c.vendorName || c.userName || 'Registered Partner',
+              partnerMobile: c.userMobile || c.mobile || '',
+              cashbackAmount: amount,
+              rewardPoints: points,
+              status: c.status || 'Pending',
+              redeemedAt: rawTs,
+            });
+          });
+
+          // 2. Supplement with any scanned tokens from batches not yet in claims
+          sortedBatches.forEach((b) => {
+            const toks = getFullTokensForBatch(b);
+            toks.forEach((t) => {
+              if (!t.isScanned) return;
+              const serial = String(t.serialKey || t.serial || '').trim().toUpperCase();
+              if (!serial) return;
+              const existing = redeemedMap.get(serial);
+              if (!existing) {
+                const amount = Number(t.cashbackAmount ?? b.cashbackAmount ?? 0);
+                const points = Number(t.pointsReward ?? t.rewardPoints ?? b.pointsReward ?? b.rewardPoints ?? (amount * 10));
+                redeemedMap.set(serial, {
+                  serialKey: serial,
+                  requestId: '',
+                  batchId: b.batchId || '',
+                  skuCode: b.skuCode || '',
+                  productName: b.productName || 'DuraGrit Verified Pack',
+                  partnerName: t.scannedBy || 'Registered Partner',
+                  partnerMobile: '',
+                  cashbackAmount: amount,
+                  rewardPoints: points,
+                  status: 'Redeemed',
+                  redeemedAt: t.scannedAt || b.createdAt || null,
+                });
+              } else if (!existing.batchId && b.batchId) {
+                redeemedMap.set(serial, { ...existing, batchId: b.batchId });
+              }
+            });
+          });
+
+          const allRedeemedLogs = Array.from(redeemedMap.values()).sort((a, b) => {
+            const tA = new Date(a.redeemedAt || 0).getTime() || 0;
+            const tB = new Date(b.redeemedAt || 0).getTime() || 0;
+            return tB - tA;
+          });
+
+          const q = qrSearchQuery.trim().toLowerCase();
+          const filteredBatches = !q
+            ? sortedBatches
+            : sortedBatches.filter((b) => {
+                const toks = getFullTokensForBatch(b);
+                return (
+                  String(b.batchId || '').toLowerCase().includes(q) ||
+                  String(b.skuCode || '').toLowerCase().includes(q) ||
+                  String(b.productName || '').toLowerCase().includes(q) ||
+                  toks.some((t) => String(t.serialKey || t.serial || '').toLowerCase().includes(q))
+                );
+              });
+
+          const filteredRedeemed = !q
+            ? allRedeemedLogs
+            : allRedeemedLogs.filter((r) =>
+                String(r.serialKey || '').toLowerCase().includes(q) ||
+                String(r.batchId || '').toLowerCase().includes(q) ||
+                String(r.skuCode || '').toLowerCase().includes(q) ||
+                String(r.productName || '').toLowerCase().includes(q) ||
+                String(r.partnerName || '').toLowerCase().includes(q) ||
+                String(r.partnerMobile || '').toLowerCase().includes(q) ||
+                String(r.requestId || '').toLowerCase().includes(q)
+              );
+
+          return (
+            <>
+              <div className="p-5 border-b border-stone-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-extrabold text-[#1C1917]">Generated QR Batches &amp; Redemption Ledger</h3>
+                  <p className="text-xs text-stone-400 mt-0.5">
+                    Track generated batches, individual redeemed QR serials, cashback &amp; reward points
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                  {/* Search by QR Code */}
+                  <div className="relative min-w-[240px]">
+                    <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={qrSearchQuery}
+                      onChange={(e) => setQrSearchQuery(e.target.value)}
+                      placeholder="Search by QR Code, Batch ID, SKU..."
+                      className="w-full pl-8 pr-7 py-1.5 bg-[#FAF9F6] border border-[#E7E5E0] rounded-lg text-xs font-mono text-[#1C1917] placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#C84826]/30 focus:border-[#C84826]"
+                    />
+                    {qrSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setQrSearchQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                        title="Clear search"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Tabs Switcher */}
+                  <div className="inline-flex bg-[#FAF9F6] p-1 rounded-xl border border-[#E7E5E0]">
+                    <button
+                      type="button"
+                      onClick={() => setLedgerTab('batches')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        ledgerTab === 'batches'
+                          ? 'bg-[#C84826] text-white shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
+                    >
+                      <span>Generated Batches</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                        ledgerTab === 'batches' ? 'bg-white/20 text-white' : 'bg-stone-200 text-stone-700'
+                      }`}>
+                        {filteredBatches.length}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLedgerTab('redeemed')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        ledgerTab === 'redeemed'
+                          ? 'bg-[#C84826] text-white shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
+                    >
+                      <span>Redeemed QR Logs</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                        ledgerTab === 'redeemed' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {filteredRedeemed.length}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {ledgerTab === 'batches' ? (
+                filteredBatches.length === 0 ? (
+                  <div className="py-12 px-6 text-center text-xs text-stone-400">
+                    {qrSearchQuery
+                      ? `No QR batches matching "${qrSearchQuery}".`
+                      : <>No QR batches generated yet. Select a SKU above and click <strong>Generate Unique QR Batch</strong>.</>}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-stone-700">
+                      <thead className="bg-[#FAF9F6] border-b border-[#E7E5E0] text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                        <tr>
+                          <th className="py-3 px-4">Batch ID</th>
+                          <th className="py-3 px-4">Product SKU</th>
+                          <th className="py-3 px-4">Created Date &amp; Time</th>
+                          <th className="py-3 px-4">Next Unscanned Serial (Click to Copy)</th>
+                          <th className="py-3 px-4">Redeemed / Total</th>
+                          <th className="py-3 px-4">Cashback / QR</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-stone-100 font-medium">
+                        {filteredBatches.map((b, idx) => {
+                          const toks = getFullTokensForBatch(b);
+                          const nextAvailable = toks.find((t) => !t.isScanned);
+                          const scannedCnt = toks.filter((t) => t.isScanned).length;
+                          const rawCreated = b.createdAt || b.date || b.timestamp || (b.updatedAt ? Number(b.updatedAt) : null);
+                          const createdDateObj = rawCreated ? new Date(rawCreated) : null;
+                          const isValidDate = createdDateObj && !isNaN(createdDateObj.getTime());
+                          const formattedDate = isValidDate
+                            ? createdDateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                            : '—';
+                          const formattedTime = isValidDate
+                            ? createdDateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                            : '';
+                          return (
+                            <tr key={b.batchId || idx} className="hover:bg-[#FAF9F6] transition-colors">
+                              <td className="py-3.5 px-4 font-mono font-bold text-[#1C1917]">{b.batchId}</td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-[#1C1917]">{b.skuCode}</div>
+                                <div className="text-[10px] text-stone-400">{b.productName}</div>
+                              </td>
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <div className="font-semibold text-stone-800 text-[11px]">{formattedDate}</div>
+                                {formattedTime && (
+                                  <div className="text-[10px] font-mono text-stone-500 mt-0.5">{formattedTime}</div>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                {nextAvailable ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => copySerial(nextAvailable.serialKey)}
+                                    className="inline-flex items-center space-x-1.5 font-mono text-[11px] font-bold bg-[#FEF2EE] hover:bg-[#FDE3DA] text-[#A62C11] border border-[#C84826]/25 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                    title="Copy serial key to test in Mobile App"
+                                  >
+                                    <span>{nextAvailable.serialKey}</span>
+                                    <Copy className="w-3 h-3" />
+                                  </button>
+                                ) : (
+                                  <span className="text-[11px] text-stone-400 italic">All tokens redeemed</span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-bold text-stone-800">
+                                {scannedCnt} / {b.quantity || toks.length}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-bold text-[#A62C11]">
+                                ₹{Number(b.cashbackAmount || 0)}
+                              </td>
+                              <td className="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
+                                <button
+                                  onClick={() => handleExportThermal40x40Pdf(b)}
+                                  title="40×40mm 300 DPI Vector PDF Roll Sheet"
+                                  className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-[#FEF2EE] text-stone-700 hover:text-[#A62C11] border border-stone-200 rounded-lg transition cursor-pointer"
+                                >
+                                  40×40 PDF
+                                </button>
+                                <button
+                                  onClick={() => handleExportThermalZpl(b, 'zpl')}
+                                  title="Godex / Zebra Raw Thermal Stream (.zpl) @ 300 DPI"
+                                  className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-[#FEF2EE] text-stone-700 hover:text-[#A62C11] border border-stone-200 rounded-lg transition cursor-pointer"
+                                >
+                                  .ZPL
+                                </button>
+                                <button
+                                  onClick={() => handleExportBatchManifestCsv(b)}
+                                  title="Download Serialized Batch Manifest (.csv)"
+                                  className="px-2 py-1 text-[10px] font-mono font-bold bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-emerald-700 border border-stone-200 rounded-lg transition cursor-pointer"
+                                >
+                                  .CSV
+                                </button>
+                                <button
+                                  onClick={() => setPrintStickersModal(b)}
+                                  title="Preview & Print Stickers"
+                                  className="p-1.5 text-[#C84826] hover:text-[#A62C11] hover:bg-[#FEF2EE] rounded-lg transition cursor-pointer"
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => deleteBatch(b.batchId)}
+                                  title="Delete Batch"
+                                  className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              ) : (
+                filteredRedeemed.length === 0 ? (
+                  <div className="py-12 px-6 text-center text-xs text-stone-400">
+                    {qrSearchQuery
+                      ? `No redeemed QR serials matching "${qrSearchQuery}".`
+                      : 'No QR codes redeemed yet.'}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-stone-700">
+                      <thead className="bg-[#FAF9F6] border-b border-[#E7E5E0] text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                        <tr>
+                          <th className="py-3 px-4">Redeemed QR Serial</th>
+                          <th className="py-3 px-4">Product &amp; SKU</th>
+                          <th className="py-3 px-4">Redeemed By (Partner)</th>
+                          <th className="py-3 px-4">Cashback</th>
+                          <th className="py-3 px-4">Reward Points</th>
+                          <th className="py-3 px-4">Redeemed Date &amp; Time</th>
+                          <th className="py-3 px-4 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-stone-100 font-medium">
+                        {filteredRedeemed.map((log, idx) => {
+                          const dObj = log.redeemedAt ? new Date(log.redeemedAt) : null;
+                          const isValid = dObj && !isNaN(dObj.getTime());
+                          const dStr = isValid
+                            ? dObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                            : '—';
+                          const tStr = isValid
+                            ? dObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                            : '';
+                          const st = String(log.status || 'Pending');
+                          const badgeCls =
+                            st === 'Disbursed'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : st === 'Approved'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : st === 'Rejected' || st === 'Flagged'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200';
+                          return (
+                            <tr key={log.serialKey || idx} className="hover:bg-[#FAF9F6] transition-colors">
+                              <td className="py-3.5 px-4">
+                                <button
+                                  type="button"
+                                  onClick={() => copySerial(log.serialKey)}
+                                  className="inline-flex items-center space-x-1.5 font-mono text-[11px] font-bold bg-[#FEF2EE] hover:bg-[#FDE3DA] text-[#A62C11] border border-[#C84826]/25 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                  title="Click to copy QR serial"
+                                >
+                                  <span>{log.serialKey}</span>
+                                  <Copy className="w-3 h-3" />
+                                </button>
+                                {log.requestId && (
+                                  <div className="text-[10px] font-mono text-stone-400 mt-1">
+                                    Claim ID: {log.requestId}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-[#1C1917]">{log.skuCode || 'SKU'}</div>
+                                <div className="text-[10px] text-stone-400">{log.productName}</div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-bold text-stone-900">{log.partnerName}</div>
+                                {log.partnerMobile && (
+                                  <div className="text-[10px] font-mono text-stone-500">{log.partnerMobile}</div>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-extrabold text-[#A62C11]">
+                                ₹{Number(log.cashbackAmount || 0).toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-bold text-emerald-700">
+                                {Number(log.rewardPoints || 0).toLocaleString('en-IN')} pts
+                              </td>
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <div className="font-semibold text-stone-800 text-[11px]">{dStr}</div>
+                                {tStr && (
+                                  <div className="text-[10px] font-mono text-stone-500 mt-0.5">{tStr}</div>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeCls}`}>
+                                  {st}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* Batch Generated Modal */}
