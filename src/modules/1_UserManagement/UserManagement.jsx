@@ -253,22 +253,8 @@ export function UserManagement() {
       tempPassword: generatedPassword,
       passkey: generatedPassword,
       isInternal: true,
-      emailVerified: 'Pending',
+      emailVerified: 'Verified',
     });
-
-    if (autoEmailOnAdd && formData.email) {
-      try {
-        await sendVerificationEmail({
-          userId: `USR-${created.id}`,
-          recipientName: created.name,
-          recipientEmail: formData.email.trim(),
-          mobile: cleanDigits,
-        });
-        showToast(`Verification link sent to ${formData.email.trim()}. Credentials will auto-dispatch upon verification.`);
-      } catch (err) {
-        console.error('Email dispatch error:', err);
-      }
-    }
 
     showToast(`✓ Internal User ${created.name} (ID: USR-${created.id}) created successfully.`);
     setFormData(emptyAddForm());
@@ -714,19 +700,6 @@ export function UserManagement() {
                     className="w-full border border-stone-200 rounded-lg px-3 py-2 bg-stone-50 font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#C84826]"
                   />
                 </div>
-              </div>
-
-              {/* Send Email Notification Toggle */}
-              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
-                <label className="text-stone-600 flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoEmailOnAdd}
-                    onChange={(e) => setAutoEmailOnAdd(e.target.checked)}
-                    className="rounded text-[#C84826] focus:ring-[#C84826]"
-                  />
-                  <span>Send verification email (Credentials will auto-dispatch upon verification)</span>
-                </label>
               </div>
 
               {/* Footer Buttons */}

@@ -253,22 +253,8 @@ export function UserManagement() {
       tempPassword: generatedPassword,
       passkey: generatedPassword,
       isInternal: true,
-      emailVerified: 'Pending',
+      emailVerified: 'Verified',
     });
-
-    if (autoEmailOnAdd && formData.email) {
-      try {
-        await sendVerificationEmail({
-          userId: `USR-${created.id}`,
-          recipientName: created.name,
-          recipientEmail: formData.email.trim(),
-          mobile: cleanDigits,
-        });
-        showToast(`Verification link sent to ${formData.email.trim()}. Credentials will auto-dispatch upon verification.`);
-      } catch (err) {
-        console.error('Email dispatch error:', err);
-      }
-    }
 
     showToast(`✓ Internal User ${created.name} (ID: USR-${created.id}) created successfully.`);
     setFormData(emptyAddForm());
@@ -309,9 +295,8 @@ export function UserManagement() {
       {toastMsg && (() => {
         const isError = /error|failed|failure|invalid|missing|required|cannot|unable|reject|please enter|denied/i.test(toastMsg);
         return (
-          <div className={`fixed top-5 right-5 z-50 text-white px-4 py-2.5 rounded-xl shadow-xl border text-xs font-semibold flex items-center space-x-2 animate-fade-in ${
-            isError ? 'bg-rose-600 border-rose-400 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400 shadow-emerald-950/30'
-          }`}>
+          <div className={`fixed top-5 right-5 z-50 text-white px-4 py-2.5 rounded-xl shadow-xl border text-xs font-semibold flex items-center space-x-2 animate-fade-in ${isError ? 'bg-rose-600 border-rose-400 shadow-rose-950/30' : 'bg-emerald-600 border-emerald-400 shadow-emerald-950/30'
+            }`}>
             {isError ? (
               <AlertCircle className="w-4 h-4 text-white shrink-0" />
             ) : (
@@ -534,17 +519,15 @@ export function UserManagement() {
                         <button
                           type="button"
                           onClick={() => handleToggleActive(user)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold cursor-pointer transition ${
-                            user.isActive
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold cursor-pointer transition ${user.isActive
                               ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
                               : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                          }`}
+                            }`}
                           title="Click to toggle status"
                         >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              user.isActive ? 'bg-emerald-500' : 'bg-rose-500'
-                            }`}
+                            className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-rose-500'
+                              }`}
                           ></span>
                           <span>{user.isActive ? 'Active' : 'Suspended'}</span>
                         </button>
@@ -714,19 +697,6 @@ export function UserManagement() {
                     className="w-full border border-stone-200 rounded-lg px-3 py-2 bg-stone-50 font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#C84826]"
                   />
                 </div>
-              </div>
-
-              {/* Send Email Notification Toggle */}
-              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
-                <label className="text-stone-600 flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoEmailOnAdd}
-                    onChange={(e) => setAutoEmailOnAdd(e.target.checked)}
-                    className="rounded text-[#C84826] focus:ring-[#C84826]"
-                  />
-                  <span>Send verification email (Credentials will auto-dispatch upon verification)</span>
-                </label>
               </div>
 
               {/* Footer Buttons */}
