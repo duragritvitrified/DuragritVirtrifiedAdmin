@@ -51,8 +51,10 @@ export function OrdersManagement() {
   React.useEffect(() => {
     refreshAllData?.();
     const interval = setInterval(() => {
-      refreshAllData?.();
-    }, 4000);
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        refreshAllData?.();
+      }
+    }, 20000);
     return () => clearInterval(interval);
   }, [refreshAllData]);
 

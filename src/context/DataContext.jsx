@@ -886,59 +886,6 @@ export const DataProvider = ({ children }) => {
         if (res.ok) bridge = await res.json();
       } catch (_) {}
 
-      // Immediate authoritative hydration from bridge so mobile apps show live data in < 1 second!
-      if (bridge && (bridge.claims?.length || bridge.batches?.length || bridge.vendors?.length || bridge.skus?.length)) {
-        if (Array.isArray(bridge.skus) && bridge.skus.length > 0) {
-          skusRef.current = bridge.skus;
-          setSkus(bridge.skus);
-          try { localStorage.setItem(STORAGE_KEYS.SKUS, JSON.stringify(bridge.skus)); } catch (_) {}
-        }
-        if (Array.isArray(bridge.batches) && bridge.batches.length > 0) {
-          batchesRef.current = bridge.batches;
-          setBatches(bridge.batches);
-          try { localStorage.setItem(STORAGE_KEYS.BATCHES, JSON.stringify(bridge.batches)); } catch (_) {}
-        }
-        if (Array.isArray(bridge.vendors) && bridge.vendors.length > 0) {
-          vendorsRef.current = bridge.vendors;
-          setVendors(bridge.vendors);
-          try { localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(bridge.vendors)); } catch (_) {}
-        }
-        if (Array.isArray(bridge.users) && bridge.users.length > 0) {
-          setUsers(bridge.users);
-          try { localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(bridge.users)); } catch (_) {}
-        }
-        if (Array.isArray(bridge.orders) && bridge.orders.length > 0) {
-          ordersRef.current = bridge.orders;
-          setOrders(bridge.orders);
-          try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(bridge.orders)); } catch (_) {}
-        }
-        if (Array.isArray(bridge.claims) && bridge.claims.length > 0) {
-          const localMap = new Map();
-          (claimsRef.current || []).forEach((c) => {
-            const k = String(c.id || c.requestId || '').toUpperCase();
-            if (k) localMap.set(k, c);
-          });
-          const mergedBridgeClaims = bridge.claims.map((bc) => {
-            const k = String(bc.id || bc.requestId || '').toUpperCase();
-            const local = localMap.get(k);
-            if (local && (Number(local.updatedAt || 0) > Number(bc.updatedAt || 0))) {
-              return { ...bc, ...local };
-            }
-            return bc;
-          });
-          claimsRef.current = mergedBridgeClaims;
-          setClaims(mergedBridgeClaims);
-          try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(mergedBridgeClaims)); } catch (_) {}
-        }
-        setDbStatus((prev) => ({
-          ...prev,
-          connected: true,
-          online: true,
-          loading: false,
-          lastSynced: new Date().toLocaleTimeString(),
-        }));
-      }
-
       if (Array.isArray(bridge?.deletedKeys)) {
         bridge.deletedKeys.forEach((k) => {
           const uk = String(k).toUpperCase();
@@ -1474,14 +1421,18 @@ export const DataProvider = ({ children }) => {
       }
 
       // 3. Merge Collections with Authoritative Priority
-      const nextSkus = registrySkus.length > 0
-        ? sbSkus
-        : mergeCollections(
-            sbSkus,
-            bridge?.skus ?? loadStorage(STORAGE_KEYS.SKUS, []),
-            (s) => String(s.skuCode || s.id || '').toUpperCase(),
-            deletedSet
-          );
+      const skuBase = mergeCollections(
+        sbSkus,
+        bridge?.skus ?? loadStorage(STORAGE_KEYS.SKUS, []),
+        (s) => String(s.skuCode || s.id || '').toUpperCase(),
+        deletedSet
+      );
+      const nextSkus = mergeCollections(
+        skuBase,
+        skusRef.current || [],
+        (s) => String(s.skuCode || s.id || '').toUpperCase(),
+        deletedSet
+      );
       const nextUsers = mergeCollections(
         sbUsers,
         bridge?.users ?? loadStorage(STORAGE_KEYS.USERS, []),
@@ -1528,20 +1479,30 @@ export const DataProvider = ({ children }) => {
       try {
         localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(nextVendors));
       } catch (_) {}
-      const nextBatches = registryBatches.length > 0
-        ? sbBatches
-        : mergeCollections(
-            sbBatches,
-            bridge?.batches ?? loadStorage(STORAGE_KEYS.BATCHES, []),
-            (b) => String(b.batchId || b.id || '').toUpperCase(),
-            deletedSet
-          );
-      const bridgeClaims = Array.isArray(bridge?.claims)
+      const batchBase = mergeCollections(
+        sbBatches,
+        bridge?.batches ?? loadStorage(STORAGE_KEYS.BATCHES, []),
+        (b) => String(b.batchId || b.id || '').toUpperCase(),
+        deletedSet
+      );
+      const nextBatches = mergeCollections(
+        batchBase,
+        batchesRef.current || [],
+        (b) => String(b.batchId || b.id || '').toUpperCase(),
+        deletedSet
+      );
+      const bridgeClaims = Array.isArray(bridge?.claims) && bridge.claims.length > 0
         ? bridge.claims
         : loadStorage(STORAGE_KEYS.CLAIMS, []);
-      const nextClaims = mergeCollections(
+      const claimsBase = mergeCollections(
         sbClaims,
         bridgeClaims.filter((c) => !isTestOrInternalClaim(c, deletedSet)),
+        (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
+        deletedSet
+      );
+      const nextClaims = mergeCollections(
+        claimsBase,
+        (claimsRef.current || []).filter((c) => !isTestOrInternalClaim(c, deletedSet)),
         (c) => String(c.requestId || c.claimNumber || c.id || '').toUpperCase(),
         deletedSet
       ).filter((c) => !isTestOrInternalClaim(c, deletedSet));
@@ -1674,8 +1635,10 @@ export const DataProvider = ({ children }) => {
     }
 
     const pollInterval = setInterval(() => {
-      refreshAllData();
-    }, 3000);
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        refreshAllData();
+      }
+    }, 20000);
 
     const onFocus = () => refreshAllData();
     const onOrdersUpdated = () => refreshAllData();

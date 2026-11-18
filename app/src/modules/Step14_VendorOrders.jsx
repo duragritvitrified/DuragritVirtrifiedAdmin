@@ -51,12 +51,14 @@ export function Step14_VendorOrders({ onBack, onNavigateScan }) {
   const [historyStatusFilter, setHistoryStatusFilter] = useState('All');
   const [showAllCompanyOrders, setShowAllCompanyOrders] = useState(false);
 
-  // Auto-sync polling every 4 seconds when viewing orders
+  // Auto-sync polling when viewing orders
   React.useEffect(() => {
     refreshAllData?.();
     const interval = setInterval(() => {
-      refreshAllData?.();
-    }, 4000);
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        refreshAllData?.();
+      }
+    }, 20000);
     return () => clearInterval(interval);
   }, [refreshAllData]);
 
