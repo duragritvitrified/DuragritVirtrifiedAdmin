@@ -259,10 +259,10 @@ async function authenticateSmtp(client, user, pass) {
 export async function testSmtpHandshake(config = {}) {
   const host = config.smtpHost || config.host || process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = config.smtpPort || config.port || process.env.SMTP_PORT || 587;
-  const user = config.smtpUser || config.user || config.senderEmail || process.env.GMAIL_USER || process.env.SMTP_USER || 'duragrit07@gmail.com';
+  const user = config.smtpUser || config.user || config.senderEmail || process.env.GMAIL_USER || process.env.SMTP_USER || 'chiranjibsahoo2010@gmail.com';
   let pass = config.smtpPassword || config.pass || config.password;
   if (!pass || pass.includes('•••')) {
-    pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASSWORD || '';
+    pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASSWORD || 'zauolpuinktjdfqp';
   }
   const startTime = Date.now();
   let client;
@@ -310,10 +310,10 @@ export async function sendSmtpMail(config = {}, { from, to, subject, html, text 
   try {
     const host = config.smtpHost || config.host || process.env.SMTP_HOST || 'smtp.gmail.com';
     const port = config.smtpPort || config.port || process.env.SMTP_PORT || 587;
-    const user = config.smtpUser || config.user || config.senderEmail || process.env.GMAIL_USER || process.env.SMTP_USER || 'duragrit07@gmail.com';
+    const user = config.smtpUser || config.user || config.senderEmail || process.env.GMAIL_USER || process.env.SMTP_USER || 'chiranjibsahoo2010@gmail.com';
     let pass = config.smtpPassword || config.pass || config.password;
     if (!pass || pass.includes('•••')) {
-      pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASSWORD || '';
+      pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASSWORD || 'zauolpuinktjdfqp';
     }
 
     client = await connectSmtp({ ...config, host, port });
