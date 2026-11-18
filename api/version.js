@@ -18,8 +18,8 @@ export default function handler(req, res) {
     adminBuildNumber: 170,
     vendorVersion: '5.0.0',
     vendorBuildNumber: 170,
-    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk',
-    pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin',
+    apkUrl: 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-admin-command-v2.apk',
+    pwaUrl: 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=admin',
     changelog: 'Vendor mobile header live sync icon, instant database reflection for company edits, and real-time vendor sync v5.0.0.'
   });
 }

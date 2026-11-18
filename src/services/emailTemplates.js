@@ -16,7 +16,7 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{mobile}}', label: 'Registered Mobile', sample: '+91 98112 40591' },
       { tag: '{{verifyCode}}', label: '8-Digit Unique Verification Code', sample: '88264905' },
       { tag: '{{verifyToken}}', label: 'Security Auth Token', sample: 'DGVT-88264905' },
-      { tag: '{{verifyLink}}', label: 'Dedicated Verification Page Link', sample: 'https://duragrit-virtrified-admin.vercel.app/verify' },
+      { tag: '{{verifyLink}}', label: 'Dedicated Verification Page Link', sample: 'https://duragrit-virtrified-admin-khaki.vercel.app/verify' },
       { tag: '{{expiryHours}}', label: 'Link Expiry Window', sample: '48' }
     ],
     sampleData: {
@@ -25,7 +25,7 @@ export const EMAIL_TEMPLATES = [
       mobile: '+91 88260 21114',
       verifyCode: '88264905',
       verifyToken: 'DGVT-88264905',
-      verifyLink: 'https://duragrit-virtrified-admin.vercel.app/verify',
+      verifyLink: 'https://duragrit-virtrified-admin-khaki.vercel.app/verify',
       expiryHours: '48'
     },
     generateHtml: (data = {}) => {
@@ -35,12 +35,12 @@ export const EMAIL_TEMPLATES = [
         mobile = '+91 88260 21114',
         verifyCode = '88264905',
         verifyToken = 'DGVT-88264905',
-        verifyLink = 'https://duragrit-virtrified-admin.vercel.app/verify',
+        verifyLink = 'https://duragrit-virtrified-admin-khaki.vercel.app/verify',
         expiryHours = '48'
       } = data;
 
       const displayCode = verifyCode || verifyToken || '88264905';
-      const finalVerifyLink = verifyLink || 'https://duragrit-virtrified-admin.vercel.app/verify';
+      const finalVerifyLink = verifyLink || 'https://duragrit-virtrified-admin-khaki.vercel.app/verify';
 
       return `<!DOCTYPE html>
 <html lang="en">
@@ -61,7 +61,7 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td valign="middle">
-                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <img src="https://duragrit-virtrified-admin-khaki.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
                     <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">OFFICIAL PARTNER ACCOUNT ACTIVATION</div>
                   </td>
                   <td align="right" valign="middle">
@@ -181,8 +181,8 @@ export const EMAIL_TEMPLATES = [
       { tag: '{{tempPassword}}', label: 'One-Time Temp Password', sample: 'Dura#8492' },
       { tag: '{{role}}', label: 'Assigned Partner Role', sample: 'Tile Contractor / Mason' },
       { tag: '{{hub}}', label: 'Regional Kiln Hub', sample: 'Morbi Central Kiln Hub' },
-      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL (v4.8.2 Prod)', sample: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk' },
-      { tag: '{{pwaUrl}}', label: 'iPhone Safari Vendor Portal URL', sample: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor' }
+      { tag: '{{apkUrl}}', label: 'Android Vendor APK URL (v4.8.2 Prod)', sample: 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v4.8.2.apk' },
+      { tag: '{{pwaUrl}}', label: 'iPhone Safari Vendor Portal URL', sample: 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor' }
     ],
     sampleData: {
       recipientName: 'Mahesh Sharma',
@@ -190,8 +190,8 @@ export const EMAIL_TEMPLATES = [
       tempPassword: 'Dura#8492',
       role: 'Tile Contractor / Mason',
       hub: 'Morbi Central Kiln Hub',
-      apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
-      pwaUrl: 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
+      apkUrl: 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
+      pwaUrl: 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor'
     },
     generateHtml: (data = {}) => {
       const {
@@ -200,8 +200,8 @@ export const EMAIL_TEMPLATES = [
         tempPassword = 'Dura#8492',
         role = 'Tile Contractor / Mason',
         hub = 'Morbi Central Kiln Hub',
-        apkUrl = 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
-        pwaUrl = 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor'
+        apkUrl = 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v4.8.2.apk',
+        pwaUrl = 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor'
       } = data;
 
       return `<!DOCTYPE html>
@@ -223,7 +223,7 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td valign="middle">
-                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <img src="https://duragrit-virtrified-admin-khaki.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
                     <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">OFFICIAL VENDOR PARTNER DOSSIER</div>
                   </td>
                   <td align="right" valign="middle">
@@ -285,7 +285,7 @@ export const EMAIL_TEMPLATES = [
                   </tr>
                 </table>
                 <div style="margin-top: 10px; font-size: 11px; color: #64748b; text-align: center; line-height: 1.5;">
-                  Android Package: <a href="${apkUrl}" target="_blank" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v4.8.2.apk">Direct Download v4.8.2 (.apk)</a> • Direct Link: <a href="https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk" target="_blank" style="color: #059669; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v4.8.2.apk">Production APK Link</a> • Mobile Page: <a href="https://duragrit-virtrified-admin.vercel.app/download" target="_blank" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • iPhone Safari: <a href="${pwaUrl}" target="_blank" style="color: #0284c7; font-weight: 700; text-decoration: underline;">Open Vendor Web App</a>
+                  Android Package: <a href="${apkUrl}" target="_blank" style="color: #C84826; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v4.8.2.apk">Direct Download v4.8.2 (.apk)</a> • Direct Link: <a href="https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v4.8.2.apk" target="_blank" style="color: #059669; font-weight: 700; text-decoration: underline;" download="duragrit-vendor-v4.8.2.apk">Production APK Link</a> • Mobile Page: <a href="https://duragrit-virtrified-admin-khaki.vercel.app/download" target="_blank" style="color: #FAA322; font-weight: 700; text-decoration: underline;">Installation Helper</a> • iPhone Safari: <a href="${pwaUrl}" target="_blank" style="color: #0284c7; font-weight: 700; text-decoration: underline;">Open Vendor Web App</a>
                 </div>
               </div>
 
@@ -390,7 +390,7 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td valign="middle">
-                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <img src="https://duragrit-virtrified-admin-khaki.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
                     <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">NPCI FAST PAYOUT GATEWAY RECEIPT</div>
                   </td>
                   <td align="right" valign="middle">
@@ -530,7 +530,7 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td valign="middle">
-                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <img src="https://duragrit-virtrified-admin-khaki.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
                     <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">IDENTITY &amp; KYC VERIFICATION CELL</div>
                   </td>
                   <td align="right" valign="middle">
@@ -664,7 +664,7 @@ export const EMAIL_TEMPLATES = [
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td valign="middle">
-                    <img src="https://duragrit-virtrified-admin.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
+                    <img src="https://duragrit-virtrified-admin-khaki.vercel.app/logo-white.png" alt="DuraGrit Vitrified" width="180" style="display: block; border: 0; outline: none; height: auto; max-height: 40px; width: 180px;" />
                     <div style="font-size: 10px; color: #FAA322; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">SMTP RELAY DIAGNOSTIC TELEMETRY</div>
                   </td>
                   <td align="right" valign="middle">

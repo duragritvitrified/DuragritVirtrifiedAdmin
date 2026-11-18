@@ -434,7 +434,7 @@ export const getAppVersionInfo = () => {
     releaseDate: latest.releaseDate || '04 Nov 2026',
     title: latest.title || 'Official Production Release',
     changelog: latest.changelog || 'Latest security & performance patches.',
-    apkUrl: 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
+    apkUrl: 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v2.apk',
     packageId: 'com.duragrit.contractor',
     size: latest.downloadSize || '18.4 MB'
   };
@@ -692,7 +692,7 @@ export const checkForLiveServerUpdate = async (appType = 'auto') => {
   try {
     const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
       ? window.location.origin
-      : 'https://duragrit-virtrified-admin.vercel.app';
+      : 'https://duragrit-virtrified-admin-khaki.vercel.app';
     const res = await fetch(`${origin}/api/version?t=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
@@ -1281,7 +1281,7 @@ export const checkForLiveAdminUpdate = async () => {
   try {
     const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
       ? window.location.origin
-      : 'https://duragrit-virtrified-admin.vercel.app';
+      : 'https://duragrit-virtrified-admin-khaki.vercel.app';
     const res = await fetch(`${origin}/api/version?t=${Date.now()}&app=admin`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
@@ -1330,7 +1330,7 @@ export const checkForLiveAdminUpdate = async () => {
         ],
         title: `Official Release ${cleanServerVer}`,
         isMandatory: true,
-        apkUrl: data.apkUrl || 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk'
+        apkUrl: data.apkUrl || 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-admin-command-v2.apk'
       };
     }
   } catch (e) {

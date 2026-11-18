@@ -69,25 +69,25 @@ export function OnboardingDossier({ initialUser, onNavigateToFieldApp }) {
     ? (isLocalHost
         ? `${window.location.protocol}//${window.location.hostname}:3002/`
         : `${window.location.origin}/app/?app=vendor`)
-    : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor';
+    : 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor';
 
   const vendorApkUrl = typeof window !== 'undefined'
     ? (isLocalHost
         ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-vendor-v4.8.2.apk`
         : `${window.location.origin}/apk/duragrit-vendor-v4.8.2.apk`)
-    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v4.8.2.apk';
+    : 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v4.8.2.apk';
 
   const adminPwaUrl = typeof window !== 'undefined'
     ? (isLocalHost
         ? `${window.location.protocol}//${window.location.hostname}:3001/`
         : `${window.location.origin}/app/?app=admin`)
-    : 'https://duragrit-virtrified-admin.vercel.app/app/?app=admin';
+    : 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=admin';
 
   const adminApkUrl = typeof window !== 'undefined'
     ? (isLocalHost
         ? `${window.location.protocol}//${window.location.hostname}:3000/apk/duragrit-admin-v2.apk`
         : `${window.location.origin}/apk/duragrit-admin-v2.apk`)
-    : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-v2.apk';
+    : 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-admin-v2.apk';
 
   // Seed sample partners if database is completely empty so page is NEVER blank
   const defaultSamplePartners = [

@@ -15,7 +15,7 @@ try {
   localStorage.removeItem('duragrit_email_dispatches_v1');
 } catch (_) {}
 
-export const LIVE_PUBLIC_URL = 'https://duragrit-virtrified-admin.vercel.app';
+export const LIVE_PUBLIC_URL = 'https://duragrit-virtrified-admin-khaki.vercel.app';
 
 export const getEmailBaseUrl = () => {
   if (typeof window !== 'undefined' && window.location?.origin) {
@@ -129,7 +129,7 @@ export const saveSmtpConfig = (config, options = {}) => {
     }
 
     // Also push to /api/sync
-    const syncUrl = typeof window !== 'undefined' && window.location.hostname === 'duragrit-virtrified-admin.vercel.app'
+    const syncUrl = typeof window !== 'undefined' && window.location.hostname === 'duragrit-virtrified-admin-khaki.vercel.app'
       ? '/api/sync'
       : `${LIVE_PUBLIC_URL}/api/sync`;
 
@@ -836,7 +836,7 @@ export const verifyVendorByCode = async (rawCode) => {
   try {
     const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
       ? window.location.origin
-      : 'https://duragrit-virtrified-admin.vercel.app';
+      : 'https://duragrit-virtrified-admin-khaki.vercel.app';
     const apiRes = await fetch(`${origin}/api/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

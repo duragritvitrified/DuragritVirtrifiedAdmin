@@ -28,13 +28,13 @@ const DataContext = createContext();
 
 const SB_ONLINE = isSupabaseConfigured();
 
-const LIVE_VERCEL_SYNC_URL = 'https://duragrit-virtrified-admin.vercel.app/api/sync';
+const LIVE_VERCEL_SYNC_URL = 'https://duragrit-virtrified-admin-khaki.vercel.app/api/sync';
 
 // Pure Live Architecture — always connect to live Vercel & Supabase
 // Under NO circumstances should mobile devices (Capacitor/WebView) attempt to connect to localhost:3000!
 const DEV_SYNC_URL =
   typeof window !== 'undefined' &&
-  window.location.hostname === 'duragrit-virtrified-admin.vercel.app'
+  (window.location.hostname.endsWith('.vercel.app') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? '/api/sync'
     : LIVE_VERCEL_SYNC_URL;
 

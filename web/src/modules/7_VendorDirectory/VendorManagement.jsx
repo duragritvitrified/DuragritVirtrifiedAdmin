@@ -459,7 +459,7 @@ function ViewModal({ vendor, onClose, onEdit, onReleasePayout, onResendVerificat
   const handleCopyCredentials = () => {
     const portalUrl = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
       ? `${window.location.origin}/app/?app=vendor`
-      : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor';
+      : 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor';
     const text = `DuraGrit Partner Login Credentials:\nPortal URL: ${portalUrl}\nLogin ID (Mobile): ${vendor.phone || vendor.mobile || vendor.vendorId}\nTemporary Password: ${vendor.passkey || vendor.tempPassword || 'Dura#2026'}\nStatus: ${vendor.status || 'ACTIVE'}`;
     navigator.clipboard.writeText(text);
     setCopiedKey(true);
@@ -1491,7 +1491,7 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
                     <code className="text-[#C84826] font-mono font-bold">{form.passkey}</code>
                   </div>
                   <div className="text-[10px] text-slate-400">
-                    Vendor Portal: <span className="font-mono text-slate-600">https://duragrit-virtrified-admin.vercel.app/app/?app=vendor</span> (or Android Vendor APK)
+                    Vendor Portal: <span className="font-mono text-slate-600">https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor</span> (or Android Vendor APK)
                   </div>
                 </div>
                 <button
@@ -1499,7 +1499,7 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
                   onClick={() => {
                     const portalUrl = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
                       ? `${window.location.origin}/app/?app=vendor`
-                      : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor';
+                      : 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor';
                     const text = `DuraGrit Vendor Partner Login Credentials:\nVendor App URL: ${portalUrl}\nLogin ID / Mobile: ${form.phone || form.vendorId}\nTemporary Password: ${form.passkey}\nRole: ${form.category}`;
                     navigator.clipboard.writeText(text);
                     setCopiedDossier(true);
@@ -1906,8 +1906,8 @@ export function VendorManagement() {
             role: vendor.category || 'Tile Contractor / Applicator',
             passkey: vendor.passkey || vendor.tempPassword || 'Dura#2026',
             hub: vendor.territory || vendor.location || 'Morbi Central Hub',
-            apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk` : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
-            pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
+            apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk` : 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v2.apk',
+            pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor',
           });
           await updateVendor(vendor.id || vendor.vendorId, {
             credentialsSent: true,
@@ -1950,8 +1950,8 @@ export function VendorManagement() {
           role: vendor.category || 'Tile Contractor / Applicator',
           passkey: vendor.passkey || vendor.tempPassword || 'Dura#2026',
           hub: vendor.territory || vendor.location || 'Morbi Central Hub',
-          apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk` : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
-          pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
+          apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk` : 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v2.apk',
+          pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor',
         });
         await updateVendor(vendor.id || vendor.vendorId, {
           credentialsSent: true,
@@ -2032,8 +2032,8 @@ export function VendorManagement() {
       role: vendor.category || 'Tile Contractor / Applicator',
       passkey: vendor.passkey || vendor.tempPassword || 'Dura#2026',
       hub: vendor.territory || vendor.location || 'Morbi Central Hub',
-      apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk` : 'https://duragrit-virtrified-admin.vercel.app/apk/duragrit-vendor-v2.apk',
-      pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin.vercel.app/app/?app=vendor',
+      apkUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/apk/duragrit-vendor-v2.apk` : 'https://duragrit-virtrified-admin-khaki.vercel.app/apk/duragrit-vendor-v2.apk',
+      pwaUrl: (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') ? `${window.location.origin}/app/?app=vendor` : 'https://duragrit-virtrified-admin-khaki.vercel.app/app/?app=vendor',
     });
     await updateVendor(vendor.id || vendor.vendorId, {
       credentialsSent: true,

@@ -90,7 +90,7 @@ export function SystemSettings({ initialSubTab = 'general' }) {
   const [liveVersionInfo, setLiveVersionInfo] = useState(null);
   const [versionLoading, setVersionLoading] = useState(true);
 
-  const PROD_BASE = 'https://duragrit-virtrified-admin.vercel.app';
+  const PROD_BASE = 'https://duragrit-virtrified-admin-khaki.vercel.app';
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : PROD_BASE;
   const isLocalHost = typeof window !== 'undefined' && 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
