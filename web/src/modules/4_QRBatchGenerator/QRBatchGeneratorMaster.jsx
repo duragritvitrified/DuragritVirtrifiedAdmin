@@ -892,6 +892,7 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                 <tr>
                   <th className="py-3 px-4">Batch ID</th>
                   <th className="py-3 px-4">Product SKU</th>
+                  <th className="py-3 px-4">Created Date &amp; Time</th>
                   <th className="py-3 px-4">Next Unscanned Serial (Click to Copy)</th>
                   <th className="py-3 px-4">Redeemed / Total</th>
                   <th className="py-3 px-4">Cashback / QR</th>
@@ -899,16 +900,37 @@ export function QRBatchGeneratorMaster({ onNavigateCatalog }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 font-medium">
-                {batches.map((b, idx) => {
+                {[...batches]
+                  .sort((a, b) => {
+                    const tA = new Date(a.createdAt || a.date || a.timestamp || 0).getTime() || Number(a.updatedAt || 0);
+                    const tB = new Date(b.createdAt || b.date || b.timestamp || 0).getTime() || Number(b.updatedAt || 0);
+                    return tB - tA;
+                  })
+                  .map((b, idx) => {
                   const toks = getFullTokensForBatch(b);
                   const nextAvailable = toks.find((t) => !t.isScanned);
                   const scannedCnt = toks.filter((t) => t.isScanned).length;
+                  const rawCreated = b.createdAt || b.date || b.timestamp || (b.updatedAt ? Number(b.updatedAt) : null);
+                  const createdDateObj = rawCreated ? new Date(rawCreated) : null;
+                  const isValidDate = createdDateObj && !isNaN(createdDateObj.getTime());
+                  const formattedDate = isValidDate
+                    ? createdDateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : '—';
+                  const formattedTime = isValidDate
+                    ? createdDateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                    : '';
                   return (
                     <tr key={b.batchId || idx} className="hover:bg-[#FAF9F6] transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-[#1C1917]">{b.batchId}</td>
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-[#1C1917]">{b.skuCode}</div>
                         <div className="text-[10px] text-stone-400">{b.productName}</div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-semibold text-stone-800 text-[11px]">{formattedDate}</div>
+                        {formattedTime && (
+                          <div className="text-[10px] font-mono text-stone-500 mt-0.5">{formattedTime}</div>
+                        )}
                       </td>
                       <td className="py-3.5 px-4">
                         {nextAvailable ? (

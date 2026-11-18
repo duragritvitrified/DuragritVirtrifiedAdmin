@@ -1073,7 +1073,6 @@ export const DataProvider = ({ children }) => {
           vendorEvtRes,
           claimActRes,
           verifyActRes,
-          smtpRes
           smtpRes,
           installRes
         ] = await Promise.allSettled([

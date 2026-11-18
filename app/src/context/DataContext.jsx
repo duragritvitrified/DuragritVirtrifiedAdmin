@@ -1580,7 +1580,7 @@ export const DataProvider = ({ children }) => {
                 const key = String(inst.deviceUuid || inst.id || inst.userId || '').toUpperCase();
                 if (key) instMap.set(key, { ...(instMap.get(key) || {}), ...inst });
               });
-            } catch (_) {}
+            } catch (_) { }
           });
           sbInstalls = Array.from(instMap.values());
         }
