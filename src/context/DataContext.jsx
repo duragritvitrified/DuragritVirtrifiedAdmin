@@ -1620,10 +1620,15 @@ export const DataProvider = ({ children }) => {
         (s) => String(s.skuCode || s.id || '').toUpperCase(),
         deletedSet
       );
+      const getUserKey = (u) => {
+        if (u?.supabaseId) return `SB_${String(u.supabaseId).toUpperCase()}`;
+        if (u?.userId || u?.id) return `USR_${String(u.userId || u.id).replace(/^USR-/i, '').toUpperCase()}`;
+        return normalizeMobile(u?.mobile);
+      };
       const nextUsers = mergeCollections(
         sbUsers,
-        bridge?.users ?? loadStorage(STORAGE_KEYS.USERS, []),
-        (u) => normalizeMobile(u.mobile) || String(u.id || '').toUpperCase(),
+        sbUsers.length > 0 ? [] : (bridge?.users ?? loadStorage(STORAGE_KEYS.USERS, [])),
+        getUserKey,
         deletedSet
       );
       const vendorMap = new Map();
@@ -2377,8 +2382,10 @@ export const DataProvider = ({ children }) => {
     });
 
     if (SB_ONLINE && updatedUser) {
+      const cleanMob = normalizeMobile(updatedUser.mobile);
       const dbPatch = {
         full_name: updatedUser.name,
+        mobile: cleanMob || undefined,
         email: updatedUser.email || null,
         role: toDbRole(updatedUser.role),
         location: updatedUser.location,
@@ -2390,11 +2397,20 @@ export const DataProvider = ({ children }) => {
         reward_balance: Number(updatedUser.rewardBalance ?? 0),
         escrow_balance: Number(updatedUser.escrowBalance ?? 0),
         scans_count: Number(updatedUser.scansCount ?? 0),
+        metadata: {
+          id: String(updatedUser.id || '').replace(/^USR-/i, ''),
+          userId: updatedUser.userId || `USR-${String(updatedUser.id || '').replace(/^USR-/i, '')}`,
+          displayId: updatedUser.userId || `USR-${String(updatedUser.id || '').replace(/^USR-/i, '')}`,
+          uiRole: updatedUser.role,
+          department: updatedUser.department || '',
+          passkey: updatedUser.passkey || updatedUser.tempPassword || '',
+          updatedAt: nowTs,
+        },
         updated_at: new Date().toISOString(),
       };
       const q = updatedUser.supabaseId
         ? supabase.from('profiles').update(dbPatch).eq('id', updatedUser.supabaseId)
-        : supabase.from('profiles').update(dbPatch).eq('mobile', normalizeMobile(updatedUser.mobile));
+        : supabase.from('profiles').update(dbPatch).eq('mobile', cleanMob);
       const { error } = await q;
       if (error) handleSbError('updateUser', error);
     }

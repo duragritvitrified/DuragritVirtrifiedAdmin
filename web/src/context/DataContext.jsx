@@ -1620,10 +1620,15 @@ export const DataProvider = ({ children }) => {
         (s) => String(s.skuCode || s.id || '').toUpperCase(),
         deletedSet
       );
+      const getUserKey = (u) => {
+        if (u?.supabaseId) return `SB_${String(u.supabaseId).toUpperCase()}`;
+        if (u?.userId || u?.id) return `USR_${String(u.userId || u.id).replace(/^USR-/i, '').toUpperCase()}`;
+        return normalizeMobile(u?.mobile);
+      };
       const nextUsers = mergeCollections(
         sbUsers,
-        bridge?.users ?? loadStorage(STORAGE_KEYS.USERS, []),
-        (u) => normalizeMobile(u.mobile) || String(u.id || '').toUpperCase(),
+        sbUsers.length > 0 ? [] : (bridge?.users ?? loadStorage(STORAGE_KEYS.USERS, [])),
+        getUserKey,
         deletedSet
       );
       const vendorMap = new Map();
@@ -2377,8 +2382,10 @@ export const DataProvider = ({ children }) => {
     });
 
     if (SB_ONLINE && updatedUser) {
+      const cleanMob = normalizeMobile(updatedUser.mobile);
       const dbPatch = {
         full_name: updatedUser.name,
+        mobile: cleanMob || undefined,
         email: updatedUser.email || null,
         role: toDbRole(updatedUser.role),
         location: updatedUser.location,
@@ -2390,11 +2397,20 @@ export const DataProvider = ({ children }) => {
         reward_balance: Number(updatedUser.rewardBalance ?? 0),
         escrow_balance: Number(updatedUser.escrowBalance ?? 0),
         scans_count: Number(updatedUser.scansCount ?? 0),
+        metadata: {
+          id: String(updatedUser.id || '').replace(/^USR-/i, ''),
+          userId: updatedUser.userId || `USR-${String(updatedUser.id || '').replace(/^USR-/i, '')}`,
+          displayId: updatedUser.userId || `USR-${String(updatedUser.id || '').replace(/^USR-/i, '')}`,
+          uiRole: updatedUser.role,
+          department: updatedUser.department || '',
+          passkey: updatedUser.passkey || updatedUser.tempPassword || '',
+          updatedAt: nowTs,
+        },
         updated_at: new Date().toISOString(),
       };
       const q = updatedUser.supabaseId
         ? supabase.from('profiles').update(dbPatch).eq('id', updatedUser.supabaseId)
-        : supabase.from('profiles').update(dbPatch).eq('mobile', normalizeMobile(updatedUser.mobile));
+        : supabase.from('profiles').update(dbPatch).eq('mobile', cleanMob);
       const { error } = await q;
       if (error) handleSbError('updateUser', error);
     }
@@ -2892,7 +2908,7 @@ export const DataProvider = ({ children }) => {
               message: `QR serial ${cleanKey} has already been scanned and claimed (${existingDbClaim.request_id}).`,
             };
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       // 2. Verify against generated QR Batches (local state -> Supabase qr_tokens -> Supabase qr_batches)
@@ -2960,7 +2976,7 @@ export const DataProvider = ({ children }) => {
               };
             }
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (!matchedToken && !sbTokenRow) {
@@ -3002,275 +3018,275 @@ export const DataProvider = ({ children }) => {
         }
       }
 
-    if (matchedToken?.isScanned || sbTokenRow?.is_scanned) {
-      return {
-        success: false,
-        message: `QR serial "${cleanKey}" has already been redeemed.`,
-      };
-    }
-
-    const matchedSku = skus.find(
-      (s) => s.skuCode === (matchedBatch?.skuCode || sbTokenRow?.products?.sku_code) || s.id === matchedBatch?.skuId
-    );
-
-    const claimAmount = Number(
-      matchedToken?.cashbackAmount ??
-      matchedBatch?.cashbackAmount ??
-      sbTokenRow?.cashback_amount ??
-      matchedSku?.cashbackAmount ??
-      matchedSku?.cashbackReward ??
-      0
-    );
-
-    const pointsReward = Number(
-      matchedToken?.pointsReward ??
-      matchedToken?.rewardPoints ??
-      matchedBatch?.pointsReward ??
-      matchedBatch?.rewardPoints ??
-      matchedSku?.rewardPoints ??
-      (claimAmount * 10)
-    );
-
-    const productName = matchedBatch?.productName || sbTokenRow?.products?.name || matchedSku?.name || 'DuraGrit Verified Pack';
-    const skuCode = matchedBatch?.skuCode || sbTokenRow?.products?.sku_code || matchedSku?.skuCode || '';
-
-    // Resolve live registered user profile
-    const cleanUserMobile = normalizeMobile(user?.mobile);
-    const liveUser = users.find(
-      (u) =>
-        (cleanUserMobile && normalizeMobile(u.mobile) === cleanUserMobile) ||
-        String(u.userId || '') === String(user?.userId || '') ||
-        String(u.id || '') === String(user?.id || '').replace(/^USR-/i, '')
-    );
-
-    // Resolve Vendor partner
-    const matchedVendor = vendors.find((v) => {
-      const vid = String(v.vendorId || v.id || '').toUpperCase();
-      const uVid = String(user?.vendorId || user?.id || liveUser?.vendorId || '').toUpperCase();
-      const vPhone = normalizeMobile(v.phone || v.mobile);
-      return (
-        (uVid && vid === uVid) ||
-        (cleanUserMobile && vPhone === cleanUserMobile) ||
-        String(v.companyName || '').toLowerCase() === String(user?.name || '').toLowerCase()
-      );
-    });
-
-    const vendorName =
-      (user?.companyName && user.companyName !== 'DuraGrit Authorized Partner' ? user.companyName : '') ||
-      (user?.vendorName && user.vendorName !== 'DuraGrit Authorized Partner' ? user.vendorName : '') ||
-      (matchedVendor?.companyName && matchedVendor.companyName !== 'DuraGrit Authorized Partner' ? matchedVendor.companyName : '') ||
-      (user?.role === 'Vendor' ? (user?.name || user?.companyName) : '') ||
-      (liveUser?.companyName && liveUser.companyName !== 'DuraGrit Authorized Partner' ? liveUser.companyName : '') ||
-      (liveUser?.vendorName && liveUser.vendorName !== 'DuraGrit Authorized Partner' ? liveUser.vendorName : '') ||
-      user?.name ||
-      liveUser?.name ||
-      'Trade Partner';
-
-    const vendorId =
-      user?.vendorId ||
-      matchedVendor?.vendorId ||
-      matchedVendor?.id ||
-      (user?.role === 'Vendor' ? user?.id : '') ||
-      liveUser?.vendorId ||
-      'VND-101';
-
-    const requestId = `CB-${Math.floor(1000 + Math.random() * 9000)}`;
-    const tdsInfo = QREngineV24.calculateTDS(claimAmount, Boolean(liveUser?.panNumber || user?.panNumber));
-    const formattedDate = new Date().toLocaleString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-
-    const newClaim = {
-      id: requestId,
-      requestId,
-      claimNumber: requestId,
-      userId: liveUser?.userId || user?.userId || `USR-${liveUser?.id || '1001'}`,
-      userSupabaseId: liveUser?.supabaseId || user?.supabaseId || null,
-      userName: liveUser?.name || user?.name || 'Registered Partner',
-      vendorName,
-      vendorId,
-      userMobile: liveUser?.mobile || user?.mobile || '',
-      mobile: liveUser?.mobile || user?.mobile || '',
-      userRole: liveUser?.role || user?.role || 'Contractor',
-      location: liveUser?.location || user?.location || 'Morbi, GJ',
-      productName,
-      skuCode,
-      serialKey: cleanKey,
-      qrSerial: cleanKey,
-      batchCode: cleanKey,
-      amount: claimAmount,
-      claimValue: claimAmount,
-      points: pointsReward,
-      rewardPoints: pointsReward,
-      tdsDeducted: tdsInfo.tdsAmount,
-      netDisbursed: tdsInfo.netAmount,
-      disbursedAmount: 0,
-      payoutMethod: liveUser?.upi || user?.upi ? 'UPI' : 'NEFT',
-      paymentMode: liveUser?.upi || user?.upi ? 'UPI' : 'NEFT',
-      upiId: liveUser?.upi || user?.upi || user?.vpaOrIfsc || '',
-      vpaOrIfsc: liveUser?.upi || user?.upi || liveUser?.ifsc || '',
-      bankAccount: liveUser?.accountNo || user?.accountNo || '',
-      ifsc: liveUser?.ifsc || user?.ifsc || '',
-      status: 'Pending',
-      payoutStatus: 'Awaiting Approval',
-      proofUrl: proofImage || null,
-      proofImageUrl: proofImage || null,
-      paymentProofUrl: null,
-      transactionId: '',
-      npciRrn: '',
-      remarks: '',
-      submittedAt: new Date().toISOString(),
-      date: formattedDate,
-      updatedAt: nowTs,
-    };
-
-    // Sync to Supabase cashback_requests + qr_tokens + profiles
-    if (SB_ONLINE) {
-      let sbUserId = liveUser?.supabaseId || user?.supabaseId || null;
-      if (!sbUserId && cleanUserMobile) {
-        const { data: profLookup } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('mobile', cleanUserMobile)
-          .maybeSingle();
-        if (profLookup?.id) sbUserId = profLookup.id;
+      if (matchedToken?.isScanned || sbTokenRow?.is_scanned) {
+        return {
+          success: false,
+          message: `QR serial "${cleanKey}" has already been redeemed.`,
+        };
       }
 
-      const claimMeta = {
-        vendorName: newClaim.vendorName,
-        vendorId: newClaim.vendorId,
-        userName: newClaim.userName,
-        userMobile: newClaim.userMobile,
-        userRole: newClaim.userRole,
-        productName: newClaim.productName,
-        skuCode: newClaim.skuCode,
-        packSize: matchedSku?.packSize || matchedSku?.packWeight || '20 kg',
-        category: matchedSku?.category || 'Adhesives',
-        subCategory: matchedSku?.subCategory || 'High-Polymer Vitrified',
-        mrp: Number(matchedSku?.baseMrp || matchedSku?.mrp || 650),
+      const matchedSku = skus.find(
+        (s) => s.skuCode === (matchedBatch?.skuCode || sbTokenRow?.products?.sku_code) || s.id === matchedBatch?.skuId
+      );
+
+      const claimAmount = Number(
+        matchedToken?.cashbackAmount ??
+        matchedBatch?.cashbackAmount ??
+        sbTokenRow?.cashback_amount ??
+        matchedSku?.cashbackAmount ??
+        matchedSku?.cashbackReward ??
+        0
+      );
+
+      const pointsReward = Number(
+        matchedToken?.pointsReward ??
+        matchedToken?.rewardPoints ??
+        matchedBatch?.pointsReward ??
+        matchedBatch?.rewardPoints ??
+        matchedSku?.rewardPoints ??
+        (claimAmount * 10)
+      );
+
+      const productName = matchedBatch?.productName || sbTokenRow?.products?.name || matchedSku?.name || 'DuraGrit Verified Pack';
+      const skuCode = matchedBatch?.skuCode || sbTokenRow?.products?.sku_code || matchedSku?.skuCode || '';
+
+      // Resolve live registered user profile
+      const cleanUserMobile = normalizeMobile(user?.mobile);
+      const liveUser = users.find(
+        (u) =>
+          (cleanUserMobile && normalizeMobile(u.mobile) === cleanUserMobile) ||
+          String(u.userId || '') === String(user?.userId || '') ||
+          String(u.id || '') === String(user?.id || '').replace(/^USR-/i, '')
+      );
+
+      // Resolve Vendor partner
+      const matchedVendor = vendors.find((v) => {
+        const vid = String(v.vendorId || v.id || '').toUpperCase();
+        const uVid = String(user?.vendorId || user?.id || liveUser?.vendorId || '').toUpperCase();
+        const vPhone = normalizeMobile(v.phone || v.mobile);
+        return (
+          (uVid && vid === uVid) ||
+          (cleanUserMobile && vPhone === cleanUserMobile) ||
+          String(v.companyName || '').toLowerCase() === String(user?.name || '').toLowerCase()
+        );
+      });
+
+      const vendorName =
+        (user?.companyName && user.companyName !== 'DuraGrit Authorized Partner' ? user.companyName : '') ||
+        (user?.vendorName && user.vendorName !== 'DuraGrit Authorized Partner' ? user.vendorName : '') ||
+        (matchedVendor?.companyName && matchedVendor.companyName !== 'DuraGrit Authorized Partner' ? matchedVendor.companyName : '') ||
+        (user?.role === 'Vendor' ? (user?.name || user?.companyName) : '') ||
+        (liveUser?.companyName && liveUser.companyName !== 'DuraGrit Authorized Partner' ? liveUser.companyName : '') ||
+        (liveUser?.vendorName && liveUser.vendorName !== 'DuraGrit Authorized Partner' ? liveUser.vendorName : '') ||
+        user?.name ||
+        liveUser?.name ||
+        'Trade Partner';
+
+      const vendorId =
+        user?.vendorId ||
+        matchedVendor?.vendorId ||
+        matchedVendor?.id ||
+        (user?.role === 'Vendor' ? user?.id : '') ||
+        liveUser?.vendorId ||
+        'VND-101';
+
+      const requestId = `CB-${Math.floor(1000 + Math.random() * 9000)}`;
+      const tdsInfo = QREngineV24.calculateTDS(claimAmount, Boolean(liveUser?.panNumber || user?.panNumber));
+      const formattedDate = new Date().toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      const newClaim = {
+        id: requestId,
+        requestId,
+        claimNumber: requestId,
+        userId: liveUser?.userId || user?.userId || `USR-${liveUser?.id || '1001'}`,
+        userSupabaseId: liveUser?.supabaseId || user?.supabaseId || null,
+        userName: liveUser?.name || user?.name || 'Registered Partner',
+        vendorName,
+        vendorId,
+        userMobile: liveUser?.mobile || user?.mobile || '',
+        mobile: liveUser?.mobile || user?.mobile || '',
+        userRole: liveUser?.role || user?.role || 'Contractor',
+        location: liveUser?.location || user?.location || 'Morbi, GJ',
+        productName,
+        skuCode,
+        serialKey: cleanKey,
+        qrSerial: cleanKey,
+        batchCode: cleanKey,
+        amount: claimAmount,
         claimValue: claimAmount,
         points: pointsReward,
         rewardPoints: pointsReward,
-        serialKey: cleanKey
-      };
-
-      const dbClaim = {
-        request_id: requestId,
-        user_id: sbUserId,
-        qr_token_id: sbTokenRow?.id || matchedToken?.id || null,
-        qr_serial: cleanKey,
-        claim_value: Math.max(1, claimAmount),
-        payout_method: toDbPayoutMethod(newClaim.payoutMethod),
-        vpa_or_ifsc: newClaim.vpaOrIfsc || 'pending@upi',
+        tdsDeducted: tdsInfo.tdsAmount,
+        netDisbursed: tdsInfo.netAmount,
+        disbursedAmount: 0,
+        payoutMethod: liveUser?.upi || user?.upi ? 'UPI' : 'NEFT',
+        paymentMode: liveUser?.upi || user?.upi ? 'UPI' : 'NEFT',
+        upiId: liveUser?.upi || user?.upi || user?.vpaOrIfsc || '',
+        vpaOrIfsc: liveUser?.upi || user?.upi || liveUser?.ifsc || '',
+        bankAccount: liveUser?.accountNo || user?.accountNo || '',
+        ifsc: liveUser?.ifsc || user?.ifsc || '',
         status: 'Pending',
-        proof_url: proofImage || null,
-        tds_deducted: tdsInfo.tdsAmount,
-        net_disbursed: tdsInfo.netAmount,
-        flag_reason: JSON.stringify(claimMeta),
-        geo_lat: geoLat || null,
-        geo_lng: geoLng || null,
-      };
-
-      const { data: claimRow, error: claimErr } = await supabase
-        .from('cashback_requests')
-        .insert(dbClaim)
-        .select()
-        .single();
-
-      if (claimErr) handleSbError('submitScannedCode', claimErr);
-      if (claimRow?.id) newClaim.supabaseId = claimRow.id;
-
-      await supabase
-        .from('qr_tokens')
-        .update({
-          is_scanned: true,
-          scanned_by: sbUserId,
-          scanned_at: new Date().toISOString(),
-          stage_1_verified: true,
-          stage_2_unlocked: true,
-        })
-        .eq('serial_key', cleanKey);
-
-      if (sbUserId) {
-        await supabase
-          .from('profiles')
-          .update({
-            escrow_balance: Number(liveUser?.escrowBalance || 0) + claimAmount,
-            scans_count: Number(liveUser?.scansCount || 0) + 1,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', sbUserId);
-      }
-    }
-
-    // Update local + dev-sync + Supabase Batches (mark token scanned)
-    const prevBatches = batchesRef.current;
-    const hasBatch = prevBatches.some((b) => matchedBatch && b.batchId === matchedBatch.batchId);
-    let updatedBatches = prevBatches;
-    if (!hasBatch && matchedBatch && Number(matchedBatch.quantity || 0) > 0) {
-      const newBatchWithToken = {
-        ...matchedBatch,
-        tokens: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
-        codes: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
-        quantity: matchedBatch.quantity,
-        scannedCount: 1,
+        payoutStatus: 'Awaiting Approval',
+        proofUrl: proofImage || null,
+        proofImageUrl: proofImage || null,
+        paymentProofUrl: null,
+        transactionId: '',
+        npciRrn: '',
+        remarks: '',
+        submittedAt: new Date().toISOString(),
+        date: formattedDate,
         updatedAt: nowTs,
       };
-      updatedBatches = [newBatchWithToken, ...prevBatches];
-    } else if (hasBatch) {
-      updatedBatches = prevBatches.map((b) => {
-        if (matchedBatch && b.batchId === matchedBatch.batchId) {
-          const nextTokens = (b.tokens || b.codes || []).map((t) =>
-            QREngineV24.extractSerialKey(t.serialKey || t.serial) === cleanKey
-              ? { ...t, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }
-              : t
-          );
-          return {
-            ...b,
-            tokens: nextTokens,
-            codes: nextTokens,
-            scannedCount: nextTokens.filter((t) => t.isScanned).length,
-            updatedAt: nowTs,
-          };
-        }
-        return b;
-      });
-    }
-    batchesRef.current = updatedBatches;
-    setBatches(updatedBatches);
-    pushDevSync({ batches: updatedBatches });
-    pushBatchesToSupabase(updatedBatches);
 
-    // Update Claims
-    const updatedClaims = [newClaim, ...claimsRef.current];
-    claimsRef.current = updatedClaims;
-    setClaims(updatedClaims);
-    pushDevSync({ claims: updatedClaims });
-
-    // Update User Escrow & Scan Count
-    setUsers((prev) => {
-      const updated = prev.map((u) => {
-        if (
-          (cleanUserMobile && normalizeMobile(u.mobile) === cleanUserMobile) ||
-          u.userId === newClaim.userId ||
-          String(u.id) === String(liveUser?.id || '')
-        ) {
-          return {
-            ...u,
-            escrowBalance: Number(u.escrowBalance || 0) + claimAmount,
-            scansCount: Number(u.scansCount || 0) + 1,
-            updatedAt: nowTs,
-          };
+      // Sync to Supabase cashback_requests + qr_tokens + profiles
+      if (SB_ONLINE) {
+        let sbUserId = liveUser?.supabaseId || user?.supabaseId || null;
+        if (!sbUserId && cleanUserMobile) {
+          const { data: profLookup } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('mobile', cleanUserMobile)
+            .maybeSingle();
+          if (profLookup?.id) sbUserId = profLookup.id;
         }
-        return u;
+
+        const claimMeta = {
+          vendorName: newClaim.vendorName,
+          vendorId: newClaim.vendorId,
+          userName: newClaim.userName,
+          userMobile: newClaim.userMobile,
+          userRole: newClaim.userRole,
+          productName: newClaim.productName,
+          skuCode: newClaim.skuCode,
+          packSize: matchedSku?.packSize || matchedSku?.packWeight || '20 kg',
+          category: matchedSku?.category || 'Adhesives',
+          subCategory: matchedSku?.subCategory || 'High-Polymer Vitrified',
+          mrp: Number(matchedSku?.baseMrp || matchedSku?.mrp || 650),
+          claimValue: claimAmount,
+          points: pointsReward,
+          rewardPoints: pointsReward,
+          serialKey: cleanKey
+        };
+
+        const dbClaim = {
+          request_id: requestId,
+          user_id: sbUserId,
+          qr_token_id: sbTokenRow?.id || matchedToken?.id || null,
+          qr_serial: cleanKey,
+          claim_value: Math.max(1, claimAmount),
+          payout_method: toDbPayoutMethod(newClaim.payoutMethod),
+          vpa_or_ifsc: newClaim.vpaOrIfsc || 'pending@upi',
+          status: 'Pending',
+          proof_url: proofImage || null,
+          tds_deducted: tdsInfo.tdsAmount,
+          net_disbursed: tdsInfo.netAmount,
+          flag_reason: JSON.stringify(claimMeta),
+          geo_lat: geoLat || null,
+          geo_lng: geoLng || null,
+        };
+
+        const { data: claimRow, error: claimErr } = await supabase
+          .from('cashback_requests')
+          .insert(dbClaim)
+          .select()
+          .single();
+
+        if (claimErr) handleSbError('submitScannedCode', claimErr);
+        if (claimRow?.id) newClaim.supabaseId = claimRow.id;
+
+        await supabase
+          .from('qr_tokens')
+          .update({
+            is_scanned: true,
+            scanned_by: sbUserId,
+            scanned_at: new Date().toISOString(),
+            stage_1_verified: true,
+            stage_2_unlocked: true,
+          })
+          .eq('serial_key', cleanKey);
+
+        if (sbUserId) {
+          await supabase
+            .from('profiles')
+            .update({
+              escrow_balance: Number(liveUser?.escrowBalance || 0) + claimAmount,
+              scans_count: Number(liveUser?.scansCount || 0) + 1,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', sbUserId);
+        }
+      }
+
+      // Update local + dev-sync + Supabase Batches (mark token scanned)
+      const prevBatches = batchesRef.current;
+      const hasBatch = prevBatches.some((b) => matchedBatch && b.batchId === matchedBatch.batchId);
+      let updatedBatches = prevBatches;
+      if (!hasBatch && matchedBatch && Number(matchedBatch.quantity || 0) > 0) {
+        const newBatchWithToken = {
+          ...matchedBatch,
+          tokens: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
+          codes: [{ ...matchedToken, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }],
+          quantity: matchedBatch.quantity,
+          scannedCount: 1,
+          updatedAt: nowTs,
+        };
+        updatedBatches = [newBatchWithToken, ...prevBatches];
+      } else if (hasBatch) {
+        updatedBatches = prevBatches.map((b) => {
+          if (matchedBatch && b.batchId === matchedBatch.batchId) {
+            const nextTokens = (b.tokens || b.codes || []).map((t) =>
+              QREngineV24.extractSerialKey(t.serialKey || t.serial) === cleanKey
+                ? { ...t, isScanned: true, scannedBy: newClaim.userName, scannedAt: new Date().toISOString() }
+                : t
+            );
+            return {
+              ...b,
+              tokens: nextTokens,
+              codes: nextTokens,
+              scannedCount: nextTokens.filter((t) => t.isScanned).length,
+              updatedAt: nowTs,
+            };
+          }
+          return b;
+        });
+      }
+      batchesRef.current = updatedBatches;
+      setBatches(updatedBatches);
+      pushDevSync({ batches: updatedBatches });
+      pushBatchesToSupabase(updatedBatches);
+
+      // Update Claims
+      const updatedClaims = [newClaim, ...claimsRef.current];
+      claimsRef.current = updatedClaims;
+      setClaims(updatedClaims);
+      pushDevSync({ claims: updatedClaims });
+
+      // Update User Escrow & Scan Count
+      setUsers((prev) => {
+        const updated = prev.map((u) => {
+          if (
+            (cleanUserMobile && normalizeMobile(u.mobile) === cleanUserMobile) ||
+            u.userId === newClaim.userId ||
+            String(u.id) === String(liveUser?.id || '')
+          ) {
+            return {
+              ...u,
+              escrowBalance: Number(u.escrowBalance || 0) + claimAmount,
+              scansCount: Number(u.scansCount || 0) + 1,
+              updatedAt: nowTs,
+            };
+          }
+          return u;
+        });
+        pushDevSync({ users: updated });
+        return updated;
       });
-      pushDevSync({ users: updated });
-      return updated;
-    });
 
       return {
         success: true,
