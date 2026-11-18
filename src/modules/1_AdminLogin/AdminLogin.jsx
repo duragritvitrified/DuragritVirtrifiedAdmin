@@ -35,21 +35,10 @@ export const AdminLogin = ({ onSuccessfulLogin }) => {
 
     setSubmitting(true);
     try {
-      // Auto-detect vendor credentials and guide to Vendor Portal
-      const cleanInput = email.trim().toLowerCase();
-      const isVendorFormat = cleanInput.startsWith('usr-') || (!cleanInput.includes('@') && cleanInput.length >= 10);
-      
       const res = await loginAsAdmin(email, password, '1234', rememberTerminal);
       if (res.success) {
         if (onSuccessfulLogin) onSuccessfulLogin();
       } else {
-        if (isVendorFormat) {
-          setLocalError('Vendor Partner credentials detected. Redirecting to Vendor Mobile Portal...');
-          setTimeout(() => {
-            window.location.href = '/app/?app=vendor';
-          }, 800);
-          return;
-        }
         setLocalError(res.message || 'Invalid administrator credentials.');
       }
     } catch (err) {
