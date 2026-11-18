@@ -459,6 +459,31 @@ const parseTimestamp = (ts) => {
   return isNaN(num) ? 0 : num;
 };
 
+// Strip oversized base64 blobs (>45KB) and unscanned token arrays before network sync
+function slimForNetworkSync(val) {
+  if (!val) return val;
+  if (typeof val === 'string') {
+    if (val.startsWith('data:') && val.length > 45000) return '';
+    return val;
+  }
+  if (Array.isArray(val)) {
+    return val.map(slimForNetworkSync);
+  }
+  if (typeof val === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(val)) {
+      if ((k === 'tokens' || k === 'codes') && Array.isArray(v) && v.length > 25) {
+        const scanned = v.filter((t) => t && t.isScanned);
+        out[k] = scanned.length > 0 ? scanned : v.slice(0, 10);
+      } else {
+        out[k] = slimForNetworkSync(v);
+      }
+    }
+    return out;
+  }
+  return val;
+}
+
 // Merge helper: combines Supabase rows + Dev-Sync rows using newer timestamp
 function mergeCollections(sbList, syncList, getKey, deletedSet) {
   const map = new Map();
@@ -482,6 +507,9 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
         map.set(key, {
           ...existing,
           ...sbItem,
+          imageUrl: sbItem.imageUrl || existing.imageUrl || '',
+          avatarUrl: sbItem.avatarUrl || existing.avatarUrl || '',
+          profileImage: sbItem.profileImage || existing.profileImage || '',
           passkey: existing.passkey || existing.tempPassword || sbItem.passkey || '1234',
           tempPassword: existing.tempPassword || existing.passkey || sbItem.tempPassword || '1234',
           supabaseId: sbItem.supabaseId || existing.supabaseId,
@@ -493,6 +521,9 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
         map.set(key, {
           ...sbItem,
           ...existing,
+          imageUrl: existing.imageUrl || sbItem.imageUrl || '',
+          avatarUrl: existing.avatarUrl || sbItem.avatarUrl || '',
+          profileImage: existing.profileImage || sbItem.profileImage || '',
           passkey: existing.passkey || existing.tempPassword || sbItem.passkey || '1234',
           tempPassword: existing.tempPassword || existing.passkey || sbItem.tempPassword || '1234',
           supabaseId: sbItem.supabaseId || existing.supabaseId,
@@ -747,13 +778,17 @@ export const DataProvider = ({ children }) => {
   const realtimeChannelRef = useRef(null);
   const isFetchingRef = useRef(false);
 
-  // Push partial state to /api/sync so all clients stay mirrored
+  // Push partial state to /api/sync on local dev bridge or when Supabase is offline
   const pushDevSync = useCallback(async (patch) => {
+    const isLocalDev =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    if (SB_ONLINE && !isLocalDev) return;
     try {
       await fetch(DEV_SYNC_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch),
+        body: JSON.stringify(slimForNetworkSync(patch)),
       });
     } catch (_) {}
   }, []);
@@ -762,13 +797,14 @@ export const DataProvider = ({ children }) => {
   const pushSkusToSupabase = useCallback(async (skusList) => {
     if (!SB_ONLINE || !Array.isArray(skusList)) return;
     try {
+      const slimSkus = slimForNetworkSync(skusList);
       await supabase.from('cashback_requests').insert({
         request_id: `SYNC_SKUS_EVENT_${Date.now()}`,
         qr_serial: 'DURAGRIT_SKUS_REGISTRY',
-        claim_value: skusList.length,
+        claim_value: slimSkus.length,
         status: 'Approved',
         payout_method: 'UPI',
-        flag_reason: JSON.stringify(skusList),
+        flag_reason: JSON.stringify(slimSkus),
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
@@ -779,13 +815,14 @@ export const DataProvider = ({ children }) => {
   const pushBatchesToSupabase = useCallback(async (batchesList) => {
     if (!SB_ONLINE || !Array.isArray(batchesList)) return;
     try {
+      const slimBatches = slimForNetworkSync(batchesList);
       await supabase.from('cashback_requests').insert({
         request_id: `SYNC_BATCHES_EVENT_${Date.now()}`,
         qr_serial: 'DURAGRIT_BATCHES_REGISTRY',
-        claim_value: batchesList.length,
+        claim_value: slimBatches.length,
         status: 'Approved',
         payout_method: 'UPI',
-        flag_reason: JSON.stringify(batchesList),
+        flag_reason: JSON.stringify(slimBatches),
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
@@ -879,12 +916,17 @@ export const DataProvider = ({ children }) => {
     isFetchingRef.current = true;
 
     try {
-      // 1. Read shared cross-port bridge (:3000 <-> :3001) or /api/sync
+      // 1. Read shared cross-port bridge (:3000 <-> :3001) on local dev or when Supabase is offline
       let bridge = null;
-      try {
-        const res = await fetch(DEV_SYNC_URL);
-        if (res.ok) bridge = await res.json();
-      } catch (_) {}
+      const isLocalDev =
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (isLocalDev || !SB_ONLINE) {
+        try {
+          const res = await fetch(DEV_SYNC_URL);
+          if (res.ok) bridge = await res.json();
+        } catch (_) {}
+      }
 
       if (Array.isArray(bridge?.deletedKeys)) {
         bridge.deletedKeys.forEach((k) => {
@@ -931,7 +973,7 @@ export const DataProvider = ({ children }) => {
           supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
           supabase.from('vendors').select('*').order('created_at', { ascending: false }),
           supabase.from('qr_batches').select('*, products(name, sku_code, pack_weight, base_mrp, cashback_reward)').order('created_at', { ascending: false }),
-          supabase.from('qr_tokens').select('*').order('created_at', { ascending: true }),
+          supabase.from('qr_tokens').select('*').eq('is_scanned', true).order('created_at', { ascending: false }).limit(200),
           // 1. Authoritative real cashback claims (isolated from internal event streams)
           supabase.from('cashback_requests')
             .select('*, profiles(full_name, mobile, role, location)')
@@ -1628,9 +1670,13 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     purgeLegacySeedsFromSupabase().then(() => refreshAllData());
 
+    let rtDebounceTimer = null;
     if (SB_ONLINE) {
       realtimeChannelRef.current = subscribeToAllRealtimeTables(() => {
-        refreshAllData();
+        if (rtDebounceTimer) clearTimeout(rtDebounceTimer);
+        rtDebounceTimer = setTimeout(() => {
+          refreshAllData();
+        }, 2500);
       });
     }
 
@@ -1638,7 +1684,7 @@ export const DataProvider = ({ children }) => {
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
         refreshAllData();
       }
-    }, 20000);
+    }, 60000);
 
     const onFocus = () => refreshAllData();
     const onOrdersUpdated = () => refreshAllData();
@@ -1653,6 +1699,7 @@ export const DataProvider = ({ children }) => {
     window.addEventListener('storage', onStorageChange);
 
     return () => {
+      if (rtDebounceTimer) clearTimeout(rtDebounceTimer);
       clearInterval(pollInterval);
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('duragrit:orders-updated', onOrdersUpdated);
@@ -2202,12 +2249,11 @@ export const DataProvider = ({ children }) => {
     if (!SB_ONLINE) return;
     const nowIso = new Date().toISOString();
     const vendorId = String(vendorData?.vendorId || vendorData?.id || '').toUpperCase();
-    const ops = [];
+    const slimVendor = action === 'DELETE' ? null : slimForNetworkSync(vendorData);
 
-    // 1. Atomic event for this specific vendor
-    ops.push(
-      supabase.from('cashback_requests').insert({
-        request_id: `DURAGRIT_VENDOR_${action}_${vendorId}_${Date.now()}`,
+    try {
+      await supabase.from('cashback_requests').insert({
+        request_id: `DURAGRIT_VENDOR_${action}_${vendorId}_${Date.now()}`.slice(0, 50),
         qr_serial: 'DURAGRIT_VENDOR_EVENT',
         claim_value: action === 'DELETE' ? 0 : 1,
         status: action === 'DELETE' ? 'Rejected' : 'Approved',
@@ -2215,30 +2261,11 @@ export const DataProvider = ({ children }) => {
         flag_reason: JSON.stringify({
           action,
           vendorId,
-          vendor: action === 'DELETE' ? null : vendorData,
+          vendor: slimVendor,
           timestamp: Date.now(),
         }),
         timestamp: nowIso,
-      })
-    );
-
-    // 2. Full snapshot registry
-    if (Array.isArray(fullList) && fullList.length > 0) {
-      ops.push(
-        supabase.from('cashback_requests').insert({
-          request_id: `SYNC_VENDORS_EVENT_${Date.now()}`,
-          qr_serial: 'DURAGRIT_VENDORS_STORE_V1',
-          claim_value: fullList.length,
-          status: 'Approved',
-          payout_method: 'UPI',
-          flag_reason: JSON.stringify(fullList),
-          timestamp: nowIso,
-        })
-      );
-    }
-
-    try {
-      await Promise.allSettled(ops);
+      });
     } catch (e) {
       console.warn('Sync vendor event to Supabase failed:', e);
     }

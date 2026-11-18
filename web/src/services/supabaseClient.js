@@ -4,9 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 // DuraGrit Vitrified - Supabase Client & Full Realtime Sync Factory
 // =====================================================================
 
-const DEFAULT_SUPABASE_URL = 'https://fykxjzvdslvxablmjlfw.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5a3hqenZkc2x2eGFibG1qbGZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDczMTcsImV4cCI6MjEwOTAyMzMxN30.bmMUQ6vcRZorX_b2YOuvgrtfWCWYwRxxlaQTj5QhQxY';
+const DEFAULT_SUPABASE_URL = 'https://bzvmsuctrdlqnfccejtr.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_9Wwxgg5w8vuh6L7QnO6sCA_56L5Ccou';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;

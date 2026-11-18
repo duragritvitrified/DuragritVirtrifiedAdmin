@@ -53,3 +53,5 @@ __pycache__/
 fixes/
 
 supabase/.dev-sync-cache.json
+
+.vercel

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://fykxjzvdslvxablmjlfw.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5a3hqenZkc2x2eGFibG1qbGZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDczMTcsImV4cCI6MjEwOTAyMzMxN30.bmMUQ6vcRZorX_b2YOuvgrtfWCWYwRxxlaQTj5QhQxY';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://bzvmsuctrdlqnfccejtr.supabase.co';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9Wwxgg5w8vuh6L7QnO6sCA_56L5Ccou';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -13,6 +13,32 @@ const PROTECTED_KEYS = new Set([
 
 global.__DURAGRIT_VENDORS_REGISTRY__ = global.__DURAGRIT_VENDORS_REGISTRY__ || new Map();
 global.__DURAGRIT_ORDERS_REGISTRY__ = global.__DURAGRIT_ORDERS_REGISTRY__ || new Map();
+global.__DURAGRIT_SYNC_CACHE__ = global.__DURAGRIT_SYNC_CACHE__ || { data: null, ts: 0 };
+
+// Strip oversized base64 blobs (>45KB) and huge unscanned token arrays to keep sync payload < 30KB
+function slimSyncPayload(val) {
+  if (!val) return val;
+  if (typeof val === 'string') {
+    if (val.startsWith('data:') && val.length > 45000) return '';
+    return val;
+  }
+  if (Array.isArray(val)) {
+    return val.map(slimSyncPayload);
+  }
+  if (typeof val === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(val)) {
+      if ((k === 'tokens' || k === 'codes') && Array.isArray(v) && v.length > 25) {
+        const scanned = v.filter((t) => t && t.isScanned);
+        out[k] = scanned.length > 0 ? scanned : v.slice(0, 10);
+      } else {
+        out[k] = slimSyncPayload(v);
+      }
+    }
+    return out;
+  }
+  return val;
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,38 +52,43 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'POST') {
+      // Invalidate GET cache immediately on any write
+      global.__DURAGRIT_SYNC_CACHE__ = { data: null, ts: 0 };
       const payload = req.body || {};
       const inserts = [];
 
       if (Array.isArray(payload.skus)) {
+        const slimSkus = slimSyncPayload(payload.skus);
         inserts.push(
           supabase.from('cashback_requests').insert({
             request_id: `SYNC_SKUS_EVENT_${Date.now()}`,
             qr_serial: 'DURAGRIT_SKUS_REGISTRY',
-            claim_value: payload.skus.length,
+            claim_value: slimSkus.length,
             status: 'Approved',
             payout_method: 'UPI',
-            flag_reason: JSON.stringify(payload.skus)
+            flag_reason: JSON.stringify(slimSkus)
           })
         );
       }
 
       if (Array.isArray(payload.batches)) {
+        const slimBatches = slimSyncPayload(payload.batches);
         inserts.push(
           supabase.from('cashback_requests').insert({
             request_id: `SYNC_BATCHES_EVENT_${Date.now()}`,
             qr_serial: 'DURAGRIT_BATCHES_REGISTRY',
-            claim_value: payload.batches.length,
+            claim_value: slimBatches.length,
             status: 'Approved',
             payout_method: 'UPI',
-            flag_reason: JSON.stringify(payload.batches)
+            flag_reason: JSON.stringify(slimBatches)
           })
         );
       }
 
       if (Array.isArray(payload.vendors)) {
+        const slimVendors = slimSyncPayload(payload.vendors);
         global.__DURAGRIT_VENDORS_REGISTRY__ = global.__DURAGRIT_VENDORS_REGISTRY__ || new Map();
-        payload.vendors.forEach((v) => {
+        slimVendors.forEach((v) => {
           const vId = String(v?.vendorId || v?.id || '').toUpperCase();
           if (vId) {
             global.__DURAGRIT_VENDORS_REGISTRY__.set(vId, {
@@ -73,35 +104,13 @@ export default async function handler(req, res) {
           supabase.from('cashback_requests').insert({
             request_id: `SYNC_VENDORS_EVENT_${Date.now()}`.slice(0, 50),
             qr_serial: 'DURAGRIT_VENDORS_STORE_V1',
-            claim_value: payload.vendors.length,
+            claim_value: slimVendors.length,
             status: 'Approved',
             payout_method: 'UPI',
-            flag_reason: JSON.stringify(payload.vendors),
+            flag_reason: JSON.stringify(slimVendors),
             timestamp: nowIso,
           })
         );
-        payload.vendors.forEach((v) => {
-          const vId = String(v.vendorId || v.id || '').toUpperCase();
-          if (vId) {
-            const cleanReqId = `DURAGRIT_VENDOR_POST_${vId}_${Date.now()}`.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
-            inserts.push(
-              supabase.from('cashback_requests').insert({
-                request_id: cleanReqId,
-                qr_serial: 'DURAGRIT_VENDOR_EVENT',
-                claim_value: 1,
-                status: 'Approved',
-                payout_method: 'UPI',
-                flag_reason: JSON.stringify({
-                  action: 'UPSERT',
-                  vendorId: vId,
-                  vendor: v,
-                  timestamp: Date.now(),
-                }),
-                timestamp: nowIso,
-              })
-            );
-          }
-        });
       }
 
       if (Array.isArray(payload.deletedKeys)) {
@@ -212,6 +221,15 @@ export default async function handler(req, res) {
 
       await Promise.allSettled(inserts);
       return res.status(200).json({ success: true, count: inserts.length });
+    }
+
+    // GET: Return cached response if fresh (<12s) and not forced
+    if (
+      !req.query?.force &&
+      global.__DURAGRIT_SYNC_CACHE__?.data &&
+      Date.now() - global.__DURAGRIT_SYNC_CACHE__.ts < 12000
+    ) {
+      return res.status(200).json(global.__DURAGRIT_SYNC_CACHE__.data);
     }
 
     // GET: Comprehensive ultra-fast live sync across Supabase database tables & events
@@ -738,7 +756,9 @@ export default async function handler(req, res) {
       } catch (_) {}
     }
 
-    return res.status(200).json(responseData);
+    const slimmedResponse = slimSyncPayload(responseData);
+    global.__DURAGRIT_SYNC_CACHE__ = { data: slimmedResponse, ts: Date.now() };
+    return res.status(200).json(slimmedResponse);
   } catch (err) {
     console.error('api/sync error:', err);
     return res.status(500).json({ success: false, error: err.message });

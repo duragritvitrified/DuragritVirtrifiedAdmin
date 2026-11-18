@@ -977,7 +977,41 @@ function VendorFormModal({ vendor, existingVendors = [], onClose, onSave }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      set(fieldKey, reader.result);
+      const rawDataUrl = reader.result;
+      if (typeof rawDataUrl === 'string' && rawDataUrl.startsWith('data:image/')) {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxDim = 420;
+            let w = img.width || 300;
+            let h = img.height || 300;
+            if (w > maxDim || h > maxDim) {
+              if (w >= h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL('image/jpeg', 0.65);
+            set(fieldKey, compressed);
+          } catch (_) {
+            set(fieldKey, rawDataUrl);
+          }
+        };
+        img.onerror = () => set(fieldKey, rawDataUrl);
+        img.src = rawDataUrl;
+      } else {
+        set(fieldKey, rawDataUrl);
+      }
     };
     reader.readAsDataURL(file);
   };
