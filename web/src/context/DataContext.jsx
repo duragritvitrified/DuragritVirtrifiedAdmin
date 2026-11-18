@@ -15,6 +15,10 @@ import {
   persistSmtpConfigLocal,
   DEFAULT_SMTP_CONFIG,
 } from '../services/emailService';
+import {
+  getDeviceInstalls,
+  mergeCloudAppInstalls,
+} from '../services/appInstallService';
 
 // =====================================================================
 // DuraGrit Vitrified — Unified Live Data Layer (Zero Sample Data)
@@ -34,7 +38,7 @@ const LIVE_VERCEL_SYNC_URL = 'https://duragrit-virtrified-admin-khaki.vercel.app
 // Under NO circumstances should mobile devices (Capacitor/WebView) attempt to connect to localhost:3000!
 const DEV_SYNC_URL =
   typeof window !== 'undefined' &&
-  (window.location.hostname.endsWith('.vercel.app') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    (window.location.hostname.endsWith('.vercel.app') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? '/api/sync'
     : LIVE_VERCEL_SYNC_URL;
 
@@ -72,7 +76,7 @@ try {
   ];
   legacyKeys.forEach((k) => localStorage.removeItem(k));
   localStorage.setItem(STORAGE_KEYS.CLEAN_FLAG, 'true');
-} catch (_) {}
+} catch (_) { }
 
 const loadStorage = (key, fallback = []) => {
   try {
@@ -412,7 +416,7 @@ const mapClaimFromDb = (row) => {
     try {
       const parsed = JSON.parse(row.flag_reason);
       meta = { ...meta, ...parsed };
-    } catch (_) {}
+    } catch (_) { }
   }
   const status = row.status || 'Pending';
   let payoutStatus = meta.payoutStatus || 'Awaiting Approval';
@@ -854,6 +858,8 @@ export const DataProvider = ({ children }) => {
     batchesRef.current = batches;
   }, [batches]);
 
+  const [appInstalls, setAppInstalls] = useState(() => getDeviceInstalls());
+
   const [claims, setClaims] = useState(() =>
     (loadStorage(STORAGE_KEYS.CLAIMS, []) || []).filter((c) => !isTestOrInternalClaim(c, deletedKeysRef.current))
   );
@@ -887,7 +893,7 @@ export const DataProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(slimForNetworkSync(patch)),
       });
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
   // Universal Supabase Realtime Event Broadcasters (Works under all RLS policies via cashback_requests)
@@ -997,7 +1003,7 @@ export const DataProvider = ({ children }) => {
     const arr = Array.from(deletedKeysRef.current);
     try {
       localStorage.setItem(STORAGE_KEYS.DELETED, JSON.stringify(arr));
-    } catch (_) {}
+    } catch (_) { }
     pushDevSync({ deletedKeys: arr });
     pushDeletedKeysToSupabase();
   }, [pushDevSync, pushDeletedKeysToSupabase]);
@@ -1022,7 +1028,7 @@ export const DataProvider = ({ children }) => {
         try {
           const res = await fetch(DEV_SYNC_URL);
           if (res.ok) bridge = await res.json();
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (Array.isArray(bridge?.deletedKeys)) {
@@ -1045,6 +1051,7 @@ export const DataProvider = ({ children }) => {
       let sbVendors = [];
       let sbBatches = [];
       let sbClaims = [];
+      let sbInstalls = [];
       let sbConnected = false;
       let registrySkus = [];
       let registryBatches = [];
@@ -1065,7 +1072,8 @@ export const DataProvider = ({ children }) => {
           vendorEvtRes,
           claimActRes,
           verifyActRes,
-          smtpRes
+          smtpRes,
+          installRes
         ] = await Promise.allSettled([
           supabase.from('products').select('*').order('created_at', { ascending: false }),
           supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
@@ -1124,6 +1132,12 @@ export const DataProvider = ({ children }) => {
             .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.ilike.SYNC_SMTP_%')
             .order('timestamp', { ascending: false })
             .limit(1),
+          // 4. App Installs & Telemetry
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .or('qr_serial.eq.DURAGRIT_APP_INSTALLS,request_id.ilike.SYNC_APP_INSTALL%')
+            .order('timestamp', { ascending: true })
+            .limit(30),
         ]);
 
         const rawRealClaims = realClaimRes.status === 'fulfilled' && !realClaimRes.value.error ? (realClaimRes.value.data || []) : [];
@@ -1159,7 +1173,7 @@ export const DataProvider = ({ children }) => {
                   }
                 });
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1193,7 +1207,7 @@ export const DataProvider = ({ children }) => {
                   }
                 });
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1285,7 +1299,7 @@ export const DataProvider = ({ children }) => {
                   }
                 });
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1386,7 +1400,7 @@ export const DataProvider = ({ children }) => {
                 });
               }
             }
-          } catch (_) {}
+          } catch (_) { }
         });
 
         // 4. Apply live verification events from Supabase
@@ -1411,7 +1425,7 @@ export const DataProvider = ({ children }) => {
                   break;
                 }
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1480,7 +1494,7 @@ export const DataProvider = ({ children }) => {
                 if (action.remarks) target.remarks = action.remarks;
                 target.updatedAt = Math.max(Number(target.updatedAt || 0), new Date(row.timestamp || 0).getTime());
               }
-            } catch (_) {}
+            } catch (_) { }
           });
 
           // Cross-reference scanned serials from sbClaims against sbBatches so scanned counts & token states stay 100% synced
@@ -1534,7 +1548,7 @@ export const DataProvider = ({ children }) => {
               window.dispatchEvent(new CustomEvent('duragrit:ota-release-pushed', { detail: relInfo }));
               window.dispatchEvent(new CustomEvent('duragrit:admin-ota-release-pushed', { detail: relInfo }));
             }
-          } catch (_) {}
+          } catch (_) { }
         }
 
         // H. Process Authoritative SMTP Config from Supabase
@@ -1551,7 +1565,23 @@ export const DataProvider = ({ children }) => {
                 return mergedSmtp;
               });
             }
-          } catch (_) {}
+          } catch (_) { }
+        }
+
+        // I. Process App Installs & Telemetry
+        if (installRes.status === 'fulfilled' && !installRes.value.error) {
+          const instMap = new Map();
+          (installRes.value.data || []).forEach((row) => {
+            try {
+              const parsed = JSON.parse(row.flag_reason || '[]');
+              const items = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? [parsed] : []);
+              items.forEach((inst) => {
+                const key = String(inst.deviceUuid || inst.id || inst.userId || '').toUpperCase();
+                if (key) instMap.set(key, { ...(instMap.get(key) || {}), ...inst });
+              });
+            } catch (_) {}
+          });
+          sbInstalls = Array.from(instMap.values());
         }
       }
 
@@ -1563,7 +1593,7 @@ export const DataProvider = ({ children }) => {
             bridge = await res.json();
             sbConnected = true;
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (bridge?.smtpConfig) {
@@ -1573,7 +1603,7 @@ export const DataProvider = ({ children }) => {
             if (JSON.stringify(prev) === JSON.stringify(mergedSmtp)) return prev;
             return mergedSmtp;
           });
-        } catch (_) {}
+        } catch (_) { }
       }
 
       // 3. Merge Collections with Authoritative Priority
@@ -1714,6 +1744,14 @@ export const DataProvider = ({ children }) => {
       setBatches(nextBatches);
       setClaims(nextClaims);
 
+      const cloudInstalls = sbInstalls.length > 0 ? sbInstalls : (Array.isArray(bridge?.appInstalls) ? bridge.appInstalls : []);
+      if (cloudInstalls.length > 0) {
+        const mergedInstalls = mergeCloudAppInstalls(cloudInstalls);
+        setAppInstalls(mergedInstalls);
+      } else {
+        setAppInstalls(getDeviceInstalls());
+      }
+
       // C. Vendor Orders Synchronization
       try {
         const orderRows = (allClaimsRows || [])
@@ -1769,7 +1807,7 @@ export const DataProvider = ({ children }) => {
               } else if (parsed && typeof parsed === 'object') {
                 mergeIntoOrderMap(parsed, row.timestamp);
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         });
 
@@ -1786,7 +1824,7 @@ export const DataProvider = ({ children }) => {
         setOrders(nextOrders);
         try {
           localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(nextOrders));
-        } catch (_) {}
+        } catch (_) { }
       } catch (ordErr) {
         console.warn('Order sync warning:', ordErr);
       }
@@ -1807,22 +1845,22 @@ export const DataProvider = ({ children }) => {
 
   // Persist to localStorage whenever collections change
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.SKUS, JSON.stringify(skus)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.SKUS, JSON.stringify(skus)); } catch (_) { }
   }, [skus]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users)); } catch (_) { }
   }, [users]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(vendors)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(vendors)); } catch (_) { }
   }, [vendors]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.BATCHES, JSON.stringify(batches)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.BATCHES, JSON.stringify(batches)); } catch (_) { }
   }, [batches]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(claims)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(claims)); } catch (_) { }
   }, [claims]);
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch (_) { }
   }, [orders]);
 
   // Initial load + Realtime Supabase subscriptions + Cross-Port Polling
@@ -2527,7 +2565,7 @@ export const DataProvider = ({ children }) => {
     setVendors(updated);
     try {
       localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
-    } catch (_) {}
+    } catch (_) { }
     pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
     syncVendorEventToSupabase('UPSERT', newVendor, updated);
 
@@ -2551,7 +2589,7 @@ export const DataProvider = ({ children }) => {
         const { data, error } = await supabase.from('vendors').upsert(dbVendor, { onConflict: 'vendor_id' }).select().single();
         if (error) handleSbError('addVendor', error);
         if (data?.id) newVendor.supabaseId = data.id;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     return newVendor;
@@ -2615,7 +2653,7 @@ export const DataProvider = ({ children }) => {
       setVendors(updated);
       try {
         localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
-      } catch (_) {}
+      } catch (_) { }
       pushDevSync({ vendors: updated });
       syncVendorEventToSupabase('UPSERT', targetVendor, updated);
 
@@ -2634,7 +2672,7 @@ export const DataProvider = ({ children }) => {
               account_status: targetVendor.status === 'INACTIVE' || targetVendor.active === false ? 'Suspended' : 'Active',
               updated_at: new Date().toISOString(),
             }, { onConflict: 'vendor_id' });
-        } catch (_) {}
+        } catch (_) { }
       }
     }
 
@@ -2661,14 +2699,14 @@ export const DataProvider = ({ children }) => {
     setVendors(updated);
     try {
       localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(updated));
-    } catch (_) {}
+    } catch (_) { }
     pushDevSync({ vendors: updated, deletedKeys: Array.from(deletedKeysRef.current) });
     syncVendorEventToSupabase('DELETE', { id: cleanId, vendorId: cleanId }, updated);
 
     if (SB_ONLINE) {
       try {
         await supabase.from('vendors').delete().eq('vendor_id', cleanId);
-      } catch (_) {}
+      } catch (_) { }
     }
     return { success: true };
   }, [markDeletedKey, pushDevSync, syncVendorEventToSupabase]);
@@ -2721,12 +2759,12 @@ export const DataProvider = ({ children }) => {
     setOrders(updated);
     try {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
-    } catch (_) {}
+    } catch (_) { }
 
     pushDevSync({ order: newOrder, orders: updated });
     try {
       window.dispatchEvent(new CustomEvent('duragrit:orders-updated', { detail: newOrder }));
-    } catch (_) {}
+    } catch (_) { }
 
     if (SB_ONLINE) {
       try {
@@ -2774,12 +2812,12 @@ export const DataProvider = ({ children }) => {
       setOrders(updated);
       try {
         localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
-      } catch (_) {}
+      } catch (_) { }
 
       pushDevSync({ orderUpdate: updatedOrder, orders: updated });
       try {
         window.dispatchEvent(new CustomEvent('duragrit:orders-updated', { detail: updatedOrder }));
-      } catch (_) {}
+      } catch (_) { }
 
       if (SB_ONLINE) {
         try {
@@ -2865,8 +2903,8 @@ export const DataProvider = ({ children }) => {
         return (
           cleanSkuCode &&
           (upperKey.includes(cleanSkuCode) ||
-           upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
-           (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
+            upperKey.startsWith(`DG-${cleanSkuCode}-`) ||
+            (cleanSkuCode.length >= 4 && upperKey.includes(cleanSkuCode.slice(0, 5))))
         );
       }) || availableSkus[0];
 
@@ -3200,8 +3238,8 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
-    pushDevSync({ 
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) { }
+    pushDevSync({
       claims: updatedClaims,
       claimAction: targetClaim ? {
         claimId: targetClaim.id,
@@ -3278,8 +3316,8 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
-    pushDevSync({ 
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) { }
+    pushDevSync({
       claims: updatedClaims,
       claimAction: updatedClaim ? {
         claimId: updatedClaim.id,
@@ -3357,7 +3395,7 @@ export const DataProvider = ({ children }) => {
           payoutStatus: 'Disbursed'
         };
         updatedFlagReason = JSON.stringify(metaPayload);
-      } catch (_) {}
+      } catch (_) { }
 
       const dbClaimPatch = {
         status: 'Disbursed',
@@ -3377,15 +3415,15 @@ export const DataProvider = ({ children }) => {
       if (updatedUser) {
         const uq = updatedUser.supabaseId
           ? supabase.from('profiles').update({
-              escrow_balance: updatedUser.escrowBalance,
-              reward_balance: updatedUser.rewardBalance,
-              updated_at: disbursedIso,
-            }).eq('id', updatedUser.supabaseId)
+            escrow_balance: updatedUser.escrowBalance,
+            reward_balance: updatedUser.rewardBalance,
+            updated_at: disbursedIso,
+          }).eq('id', updatedUser.supabaseId)
           : supabase.from('profiles').update({
-              escrow_balance: updatedUser.escrowBalance,
-              reward_balance: updatedUser.rewardBalance,
-              updated_at: disbursedIso,
-            }).eq('mobile', normalizeMobile(updatedUser.mobile));
+            escrow_balance: updatedUser.escrowBalance,
+            reward_balance: updatedUser.rewardBalance,
+            updated_at: disbursedIso,
+          }).eq('mobile', normalizeMobile(updatedUser.mobile));
         await uq;
       }
     }
@@ -3498,8 +3536,8 @@ export const DataProvider = ({ children }) => {
     });
     claimsRef.current = updatedClaims;
     setClaims(updatedClaims);
-    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) {}
-    pushDevSync({ 
+    try { localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(updatedClaims)); } catch (_) { }
+    pushDevSync({
       claims: updatedClaims,
       claimAction: targetClaim ? {
         claimId: targetClaim.id,
@@ -3580,11 +3618,11 @@ export const DataProvider = ({ children }) => {
     try {
       Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
       localStorage.setItem(STORAGE_KEYS.CLEAN_FLAG, 'true');
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       await fetch(DEV_SYNC_URL, { method: 'DELETE' });
-    } catch (_) {}
+    } catch (_) { }
 
     if (SB_ONLINE) {
       await Promise.allSettled([
@@ -3609,6 +3647,7 @@ export const DataProvider = ({ children }) => {
         batches,
         claims,
         orders,
+        appInstalls,
         smtpConfig,
         updateSmtpConfig,
         dbStatus,

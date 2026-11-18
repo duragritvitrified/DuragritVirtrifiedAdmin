@@ -47,8 +47,8 @@ import {
 import { useData } from '../../context/DataContext';
 
 export function AppInstallReports() {
-  const { users = [], vendors = [] } = useData();
-  const [installs, setInstalls] = useState([]);
+  const { users = [], vendors = [], appInstalls = [], refreshAllData } = useData();
+  const [installs, setInstalls] = useState(() => (appInstalls && appInstalls.length > 0 ? appInstalls : getDeviceInstalls()));
   const [releases, setReleases] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -98,17 +98,26 @@ export function AppInstallReports() {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('duragrit:ota-update-applied', handleCustomEvent);
     window.addEventListener('duragrit:ota-release-pushed', handleCustomEvent);
+    window.addEventListener('duragrit:app-installs-updated', handleCustomEvent);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('duragrit:ota-update-applied', handleCustomEvent);
       window.removeEventListener('duragrit:ota-release-pushed', handleCustomEvent);
+      window.removeEventListener('duragrit:app-installs-updated', handleCustomEvent);
     };
   }, []);
 
+  useEffect(() => {
+    if (Array.isArray(appInstalls) && appInstalls.length > 0) {
+      setInstalls(appInstalls);
+    }
+  }, [appInstalls]);
+
   const loadData = () => {
-    const list = getDeviceInstalls();
-    setInstalls(Array.isArray(list) ? list : []);
+    const localList = getDeviceInstalls();
+    const list = (Array.isArray(localList) && localList.length > 0) ? localList : (Array.isArray(appInstalls) ? appInstalls : []);
+    setInstalls(list);
     const rels = getAppReleases();
     setReleases(Array.isArray(rels) ? rels : []);
   };
@@ -118,8 +127,11 @@ export function AppInstallReports() {
     setTimeout(() => setToastMsg(''), 4000);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
+    try {
+      if (refreshAllData) await refreshAllData();
+    } catch (_) {}
     setTimeout(() => {
       loadData();
       setIsRefreshing(false);

@@ -15,6 +15,10 @@ import {
   persistSmtpConfigLocal,
   DEFAULT_SMTP_CONFIG,
 } from '../services/emailService';
+import {
+  getDeviceInstalls,
+  mergeCloudAppInstalls,
+} from '../services/appInstallService';
 
 // =====================================================================
 // DuraGrit Vitrified — Unified Live Data Layer (Zero Sample Data)
@@ -854,6 +858,8 @@ export const DataProvider = ({ children }) => {
     batchesRef.current = batches;
   }, [batches]);
 
+  const [appInstalls, setAppInstalls] = useState(() => getDeviceInstalls());
+
   const [claims, setClaims] = useState(() =>
     (loadStorage(STORAGE_KEYS.CLAIMS, []) || []).filter((c) => !isTestOrInternalClaim(c, deletedKeysRef.current))
   );
@@ -1045,6 +1051,7 @@ export const DataProvider = ({ children }) => {
       let sbVendors = [];
       let sbBatches = [];
       let sbClaims = [];
+      let sbInstalls = [];
       let sbConnected = false;
       let registrySkus = [];
       let registryBatches = [];
@@ -1065,7 +1072,8 @@ export const DataProvider = ({ children }) => {
           vendorEvtRes,
           claimActRes,
           verifyActRes,
-          smtpRes
+          smtpRes,
+          installRes
         ] = await Promise.allSettled([
           supabase.from('products').select('*').order('created_at', { ascending: false }),
           supabase.from('profiles').select('*').neq('role', 'Admin').order('created_at', { ascending: false }),
@@ -1124,6 +1132,12 @@ export const DataProvider = ({ children }) => {
             .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.ilike.SYNC_SMTP_%')
             .order('timestamp', { ascending: false })
             .limit(1),
+          // 4. App Installs & Telemetry
+          supabase.from('cashback_requests')
+            .select('request_id, qr_serial, flag_reason, timestamp')
+            .or('qr_serial.eq.DURAGRIT_APP_INSTALLS,request_id.ilike.SYNC_APP_INSTALL%')
+            .order('timestamp', { ascending: true })
+            .limit(30),
         ]);
 
         const rawRealClaims = realClaimRes.status === 'fulfilled' && !realClaimRes.value.error ? (realClaimRes.value.data || []) : [];
@@ -1553,6 +1567,22 @@ export const DataProvider = ({ children }) => {
             }
           } catch (_) {}
         }
+
+        // I. Process App Installs & Telemetry
+        if (installRes.status === 'fulfilled' && !installRes.value.error) {
+          const instMap = new Map();
+          (installRes.value.data || []).forEach((row) => {
+            try {
+              const parsed = JSON.parse(row.flag_reason || '[]');
+              const items = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? [parsed] : []);
+              items.forEach((inst) => {
+                const key = String(inst.deviceUuid || inst.id || inst.userId || '').toUpperCase();
+                if (key) instMap.set(key, { ...(instMap.get(key) || {}), ...inst });
+              });
+            } catch (_) {}
+          });
+          sbInstalls = Array.from(instMap.values());
+        }
       }
 
       // Automatic Serverless Bridge Fallback if direct browser queries to *.supabase.co failed (e.g., ISP DNS block)
@@ -1713,6 +1743,14 @@ export const DataProvider = ({ children }) => {
       setVendors(nextVendors);
       setBatches(nextBatches);
       setClaims(nextClaims);
+
+      const cloudInstalls = sbInstalls.length > 0 ? sbInstalls : (Array.isArray(bridge?.appInstalls) ? bridge.appInstalls : []);
+      if (cloudInstalls.length > 0) {
+        const mergedInstalls = mergeCloudAppInstalls(cloudInstalls);
+        setAppInstalls(mergedInstalls);
+      } else {
+        setAppInstalls(getDeviceInstalls());
+      }
 
       // C. Vendor Orders Synchronization
       try {
@@ -3609,6 +3647,7 @@ export const DataProvider = ({ children }) => {
         batches,
         claims,
         orders,
+        appInstalls,
         smtpConfig,
         updateSmtpConfig,
         dbStatus,

@@ -25,11 +25,11 @@ import {
 
 export const Sidebar = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }) => {
   const { logout } = useAuth();
-  const { users = [], skus = [], vendors = [], claims = [], orders = [] } = useData();
+  const { users = [], skus = [], vendors = [], claims = [], orders = [], appInstalls = [] } = useData();
 
   const pendingClaimsCount = claims.filter((c) => c.status === 'Pending').length;
   const pendingOrdersCount = orders.filter((o) => o.status === 'Pending').length;
-  const activeInstallsCount = getDeviceInstalls ? getDeviceInstalls().length : 0;
+  const activeInstallsCount = (appInstalls && appInstalls.length > 0) ? appInstalls.length : (getDeviceInstalls ? getDeviceInstalls().length : 0);
 
   const productSubItems = [
     { id: 'qr-generator', label: 'QR Batch Generator' },

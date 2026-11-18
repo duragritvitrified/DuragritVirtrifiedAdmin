@@ -219,6 +219,34 @@ export default async function handler(req, res) {
         );
       }
 
+      if (Array.isArray(payload.appInstalls)) {
+        inserts.push(
+          supabase.from('cashback_requests').insert({
+            request_id: `SYNC_APP_INSTALLS_${Date.now()}`.slice(0, 50),
+            qr_serial: 'DURAGRIT_APP_INSTALLS',
+            claim_value: payload.appInstalls.length,
+            status: 'Approved',
+            payout_method: 'UPI',
+            flag_reason: JSON.stringify(payload.appInstalls),
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
+      if (payload.appInstall && typeof payload.appInstall === 'object') {
+        inserts.push(
+          supabase.from('cashback_requests').insert({
+            request_id: `SYNC_APP_INST_${Date.now()}`.slice(0, 50),
+            qr_serial: 'DURAGRIT_APP_INSTALLS',
+            claim_value: 1,
+            status: 'Approved',
+            payout_method: 'UPI',
+            flag_reason: JSON.stringify(payload.appInstall),
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+
       await Promise.allSettled(inserts);
       return res.status(200).json({ success: true, count: inserts.length });
     }
@@ -246,7 +274,8 @@ export default async function handler(req, res) {
       vendorEvtRes,
       claimActRes,
       verifyActRes,
-      smtpRes
+      smtpRes,
+      installRes
     ] = await Promise.allSettled([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('vendors').select('*').order('created_at', { ascending: false }),
@@ -300,7 +329,12 @@ export default async function handler(req, res) {
         .select('flag_reason')
         .or('qr_serial.eq.DURAGRIT_SMTP_CONFIG,request_id.ilike.SYNC_SMTP_%')
         .order('timestamp', { ascending: false })
-        .limit(1)
+        .limit(1),
+      supabase.from('cashback_requests')
+        .select('request_id, qr_serial, flag_reason, timestamp')
+        .or('qr_serial.eq.DURAGRIT_APP_INSTALLS,request_id.ilike.SYNC_APP_INSTALL%')
+        .order('timestamp', { ascending: true })
+        .limit(30)
     ]);
 
     const rawBatchEvents = batchEventRes.status === 'fulfilled' && !batchEventRes.value.error ? (batchEventRes.value.data || []) : [];
@@ -328,6 +362,7 @@ export default async function handler(req, res) {
       users: [],
       orders: [],
       claims: [],
+      appInstalls: [],
       deletedKeys: [],
       smtpConfig: null
     };
@@ -822,6 +857,26 @@ export default async function handler(req, res) {
       try {
         responseData.smtpConfig = JSON.parse(smtpRes.value.data[0].flag_reason);
       } catch (_) {}
+    }
+
+    // 8. App Installs & Telemetry
+    if (installRes.status === 'fulfilled' && !installRes.value.error) {
+      const installMap = new Map();
+      (installRes.value.data || []).forEach((row) => {
+        try {
+          const parsed = JSON.parse(row.flag_reason || '[]');
+          const items = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? [parsed] : []);
+          items.forEach((inst) => {
+            const key = String(inst.deviceUuid || inst.id || inst.userId || '').toUpperCase();
+            if (key) {
+              installMap.set(key, { ...(installMap.get(key) || {}), ...inst });
+            }
+          });
+        } catch (_) {}
+      });
+      responseData.appInstalls = Array.from(installMap.values()).sort(
+        (a, b) => new Date(b.installDate || b.lastActiveTimestamp || 0) - new Date(a.installDate || a.lastActiveTimestamp || 0)
+      );
     }
 
     const slimmedResponse = slimSyncPayload(responseData);

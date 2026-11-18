@@ -83,8 +83,8 @@ export const DEFAULT_RELEASES = [
     releaseDate: '2026-11-10 09:15:00',
     title: 'Product Inspection Modal & Action Link Release v4.9.9',
     changelog: 'Product inspection modal with SKU, packing size, category, MRP, and photo on Web Admin Cashback Requests page.',
-    status: 'ARCHIVED',
-    isMandatory: false,
+    status: 'LIVE',
+    isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',
     bundleHash: 'sha256-vendorviewprod169',
@@ -528,14 +528,45 @@ export const getDeviceInstalls = () => {
   }
 };
 
-export const saveDeviceInstalls = (installs) => {
+export const saveDeviceInstalls = (installs, options = {}) => {
   try {
     localStorage.setItem(INSTALLS_KEY, JSON.stringify(installs));
+    try {
+      window.dispatchEvent(new CustomEvent('duragrit:app-installs-updated', { detail: installs }));
+    } catch (_) {}
+    if (!options.skipCloudSync && typeof window !== 'undefined' && typeof fetch === 'function') {
+      const syncUrl = (window.location.hostname.endsWith('.vercel.app') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? '/api/sync'
+        : 'https://duragrit-virtrified-admin-khaki.vercel.app/api/sync';
+      fetch(syncUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appInstalls: installs }),
+      }).catch(() => {});
+    }
     return true;
   } catch (e) {
     console.error('Failed to save device installs:', e);
     return false;
   }
+};
+
+export const mergeCloudAppInstalls = (cloudList = []) => {
+  const local = getDeviceInstalls();
+  const map = new Map();
+  local.forEach((item) => {
+    const k = String(item.deviceUuid || item.id || item.userId || '').toUpperCase();
+    if (k) map.set(k, item);
+  });
+  (cloudList || []).forEach((item) => {
+    const k = String(item.deviceUuid || item.id || item.userId || '').toUpperCase();
+    if (k) map.set(k, { ...(map.get(k) || {}), ...item });
+  });
+  const merged = Array.from(map.values()).sort(
+    (a, b) => new Date(b.installDate || b.lastActiveTimestamp || 0) - new Date(a.installDate || a.lastActiveTimestamp || 0)
+  );
+  saveDeviceInstalls(merged, { skipCloudSync: true });
+  return merged;
 };
 
 // Register / Update an installation record (called on mobile app launch or install)
