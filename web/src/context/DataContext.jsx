@@ -102,6 +102,7 @@ export const BASE_REGISTERED_VENDORS = [
     accountStatus: 'Active',
     category: 'Contractor',
     location: 'Morbi Central Hub, Gujarat',
+    createdAt: '2026-11-09T09:15:20.000Z',
     active: true,
   },
   {
@@ -120,6 +121,7 @@ export const BASE_REGISTERED_VENDORS = [
     accountStatus: 'Active',
     category: 'Contractor',
     location: 'Morbi Central Hub, Gujarat',
+    createdAt: '2026-11-09T13:24:15.318Z',
     active: true,
   },
   {
@@ -138,6 +140,7 @@ export const BASE_REGISTERED_VENDORS = [
     accountStatus: 'Active',
     category: 'Contractor',
     location: 'Morbi Central Hub, Gujarat',
+    createdAt: '2026-11-09T15:10:12.000Z',
     active: true,
   }
 ];
@@ -319,7 +322,7 @@ const mapVendorFromDb = (row) => {
     pendingPayoutLakhs: Math.max(0, Number((poVal - relVal).toFixed(2))),
     payoutHistory: Array.isArray(meta.payoutHistory) ? meta.payoutHistory : [],
     passkey,
-    createdAt: row.created_at || new Date().toISOString(),
+    createdAt: meta.createdAt || row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : (meta.updatedAt || 0),
   };
 };

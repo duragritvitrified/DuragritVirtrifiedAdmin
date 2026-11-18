@@ -2389,6 +2389,7 @@ export function VendorManagement() {
                 <th className="py-3 px-4">Partner ID</th>
                 <th className="py-3 px-4">Firm / Company &amp; Contact</th>
                 <th className="py-3 px-4">Type / Role</th>
+                <th className="py-3 px-4">Created Date &amp; Time</th>
                 <th className="py-3 px-4">Email Verification</th>
                 <th className="py-3 px-4 text-center">App Login &amp; Status</th>
                 <th className="py-3 px-4">Credentials &amp; APK</th>
@@ -2399,7 +2400,7 @@ export function VendorManagement() {
             <tbody className="divide-y divide-stone-100">
               {paginatedVendors.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-stone-400">
+                  <td colSpan={9} className="py-12 text-center text-stone-400">
                     <Store className="w-8 h-8 mx-auto mb-2 opacity-30 text-stone-500" />
                     <p className="font-semibold text-stone-600">No external partners found</p>
                     <p className="text-[11px] mt-0.5">Click &quot;+ Add External Partner&quot; to register Contractors, Dealers, or Suppliers.</p>
@@ -2410,6 +2411,15 @@ export function VendorManagement() {
                   const displayCat = getCanonicalCategory(vendor);
                   const cat = CATEGORY_CONFIG[displayCat] || CATEGORY_CONFIG.Contractor;
                   const isPassVisible = showPasswordMap[vendor.vendorId];
+                  const rawCreated = vendor.createdAt || vendor.updatedAt || null;
+                  const createdDateObj = rawCreated ? new Date(rawCreated) : null;
+                  const isValidDate = createdDateObj && !isNaN(createdDateObj.getTime());
+                  const formattedDate = isValidDate
+                    ? createdDateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : '—';
+                  const formattedTime = isValidDate
+                    ? createdDateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                    : '';
                   return (
                     <tr key={vendor.vendorId} className="hover:bg-stone-50/80 transition-colors">
                       {/* ID */}
@@ -2448,6 +2458,19 @@ export function VendorManagement() {
                           <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
                           <span>{displayCat}</span>
                         </span>
+                      </td>
+
+                      {/* Created Date & Time */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="font-semibold text-stone-800 text-[11px]">
+                          {formattedDate}
+                        </div>
+                        {formattedTime && (
+                          <div className="text-[10px] font-mono text-stone-500 flex items-center gap-1 mt-0.5">
+                            <Clock className="w-2.5 h-2.5 text-stone-400" />
+                            <span>{formattedTime}</span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Email Verification */}

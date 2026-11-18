@@ -487,7 +487,7 @@ export default async function handler(req, res) {
         location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
         contactPerson: 'Vendor Partner', phone: '8826021114', mobile: '8826021114',
         email: 'duragrit07@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
-        passkey: 'Dura#4905', active: true
+        passkey: 'Dura#4905', createdAt: '2026-11-09T09:15:20.000Z', active: true
       },
       {
         id: 'VND-102', vendorId: 'VND-102', companyName: 'JEEE Toure',
@@ -495,7 +495,7 @@ export default async function handler(req, res) {
         location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
         contactPerson: 'Sunaj Sahoo', phone: '9876543210', mobile: '9876543210',
         email: 'sahoo.sunaj@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
-        passkey: '1234', active: true
+        passkey: '1234', createdAt: '2026-11-09T13:24:15.318Z', active: true
       },
       {
         id: 'VND-103', vendorId: 'VND-103', companyName: 'RR Agency',
@@ -503,7 +503,7 @@ export default async function handler(req, res) {
         location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
         contactPerson: 'Rohit Verma', phone: '9811223344', mobile: '9811223344',
         email: 'rohit.agency@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
-        passkey: '1234', active: true
+        passkey: '1234', createdAt: '2026-11-09T15:10:12.000Z', active: true
       }
     ];
     BASE_VENDORS.forEach((v) => vendorMap.set(v.vendorId, v));
@@ -536,6 +536,7 @@ export default async function handler(req, res) {
             passkey: pass,
             tempPassword: pass,
             payoutHistory: Array.isArray(meta.payoutHistory) ? meta.payoutHistory : [],
+            createdAt: meta.createdAt || v.created_at || new Date().toISOString(),
             active: v.account_status !== 'Inactive' && v.account_status !== 'Suspended'
           });
         }
