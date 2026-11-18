@@ -355,22 +355,34 @@ export default async function handler(req, res) {
       (prodRes.value.data || []).forEach((p) => {
         const code = String(p.sku_code || p.id || '').toUpperCase();
         if (code && !deletedKeysSet.has(code)) {
+          const meta = p.metadata || {};
+          const mrp = Number(meta.mrp ?? p.base_mrp ?? 650);
+          const reward = Number(meta.cashbackAmount ?? meta.cashbackReward ?? p.cashback_reward ?? 150);
+          const fallbackImg = code.includes('555') ? '/assets/sku-dta-555.png' : '/assets/sku-da-777.png';
           skuMap.set(code, {
-            id: p.id || `SKU-${code}`,
+            ...meta,
+            id: meta.id || p.id || `SKU-${code}`,
+            supabaseId: p.id,
             skuCode: p.sku_code,
             name: p.name,
-            category: p.category || 'Adhesives',
-            subCategory: p.sub_category || 'High-Polymer Vitrified',
-            packSize: p.pack_weight || '20 kg',
-            packWeight: p.pack_weight || '20 kg',
-            mrp: Number(p.base_mrp || 650),
-            baseMrp: Number(p.base_mrp || 650),
-            cashbackAmount: Number(p.cashback_reward || 150),
-            cashbackReward: Number(p.cashback_reward || 150),
-            rewardPoints: Number(p.cashback_reward || 150) * 4,
-            status: p.is_active ? 'Active' : 'Inactive',
-            isActive: Boolean(p.is_active),
-            description: p.description || ''
+            category: meta.category || p.category || 'High-Polymer Adhesive',
+            subCategory: meta.subCategory || p.sub_category || 'High-Polymer Vitrified',
+            packSize: meta.packSize || p.pack_weight || '20 kg Bag',
+            packWeight: p.pack_weight || meta.packWeight || '20 kg Bag',
+            mrp,
+            baseMrp: mrp,
+            base: Number(meta.base ?? meta.dealerPrice ?? Math.round(mrp * 0.75)),
+            dealerPrice: Number(meta.dealerPrice ?? Math.round(mrp * 0.75)),
+            contractorPrice: Number(meta.contractorPrice ?? Math.round(mrp * 0.82)),
+            cashbackAmount: reward,
+            cashbackReward: reward,
+            rewardPoints: Number(meta.rewardPoints ?? reward * 10),
+            imageUrl: meta.imageUrl || fallbackImg,
+            image: meta.image || meta.imageUrl || fallbackImg,
+            packRender: meta.packRender || meta.imageUrl || fallbackImg,
+            status: p.is_active === false ? 'Inactive' : 'Active',
+            isActive: p.is_active !== false,
+            description: p.description || meta.description || ''
           });
         }
       });
@@ -384,7 +396,9 @@ export default async function handler(req, res) {
             list.forEach((s) => {
               const code = String(s.skuCode || s.id || '').toUpperCase();
               if (code && !deletedKeysSet.has(code)) {
-                skuMap.set(code, { ...(skuMap.get(code) || {}), ...s });
+                const existing = skuMap.get(code) || {};
+                const img = s.imageUrl || existing.imageUrl || (code.includes('555') ? '/assets/sku-dta-555.png' : '/assets/sku-da-777.png');
+                skuMap.set(code, { ...existing, ...s, imageUrl: img, image: img, packRender: img });
               }
             });
           }
@@ -399,19 +413,24 @@ export default async function handler(req, res) {
       (batchRes.value.data || []).forEach((b) => {
         const bId = String(b.batch_identifier || b.id || '').toUpperCase();
         if (bId && !deletedKeysSet.has(bId)) {
+          const meta = b.metadata || {};
+          const safeTokens = Array.isArray(meta.tokens) ? meta.tokens : [];
           batchMap.set(bId, {
+            ...meta,
             id: b.batch_identifier || b.id,
             batchId: b.batch_identifier || b.id,
-            skuCode: b.products?.sku_code || '',
-            productName: b.products?.name || 'DuraGrit Product',
-            lotNumber: b.lot_number,
-            quantity: Number(b.quantity || 100),
-            cashbackAmount: Number(b.products?.cashback_reward || 150),
-            expDate: b.expiry_date || '',
-            mfgDate: (b.created_at || '').slice(0, 10),
+            supabaseId: b.id,
+            skuCode: meta.skuCode || b.products?.sku_code || '',
+            productName: meta.productName || b.products?.name || 'DuraGrit Product',
+            lotNumber: b.lot_number || meta.lotNumber,
+            quantity: Number(b.quantity || meta.quantity || 100),
+            cashbackAmount: Number(meta.cashbackAmount ?? b.products?.cashback_reward ?? 150),
+            expDate: b.expiry_date || meta.expDate || '',
+            mfgDate: meta.mfgDate || (b.created_at || '').slice(0, 10),
             status: b.status || 'Active',
             createdAt: b.created_at,
-            tokens: []
+            tokens: safeTokens,
+            codes: safeTokens
           });
         }
       });
@@ -427,14 +446,17 @@ export default async function handler(req, res) {
               if (bId && !deletedKeysSet.has(bId) && bId !== 'DG-BATCH-DA777') {
                 const existing = batchMap.get(bId) || {};
                 const qty = Number(b.quantity || existing.quantity || 10);
-                const tokens = (b.tokens?.length ? b.tokens : b.codes) || existing.tokens || [];
+                const inTokens = Array.isArray(b.tokens) ? b.tokens : (Array.isArray(b.codes) ? b.codes : []);
+                const exTokens = Array.isArray(existing.tokens) ? existing.tokens : [];
+                const tokens = inTokens.length > 0 ? inTokens : exTokens;
                 batchMap.set(bId, {
                   ...existing,
                   ...b,
                   id: b.batchId || b.id || bId,
                   batchId: b.batchId || b.id || bId,
                   quantity: qty,
-                  tokens
+                  tokens,
+                  codes: tokens
                 });
               }
             });
@@ -447,11 +469,21 @@ export default async function handler(req, res) {
     );
 
     // 3. Vendors
+    const normalizeVendorCat = (cat) => {
+      const c = String(cat || 'Contractor').trim();
+      if (/contractor|applicator|mason/i.test(c)) return 'Contractor';
+      if (/dealer/i.test(c)) return 'Dealer';
+      if (/distributor/i.test(c)) return 'Distributor';
+      if (/retailer/i.test(c)) return 'Retailer';
+      if (/^raw material/i.test(c)) return 'Raw Material';
+      return c || 'Contractor';
+    };
+
     const vendorMap = new Map();
     const BASE_VENDORS = [
       {
-        id: 'VND-101', vendorId: 'VND-101', companyName: 'Ecreation IT Solution',
-        category: 'Chemicals', gstin: '24AAACD1011M1Z5', gstinVerified: true,
+        id: 'VND-101', vendorId: 'VND-101', companyName: 'Ecreation PT Solution',
+        category: 'Contractor', gstin: '24AAACD1011M1Z5', gstinVerified: true,
         location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
         contactPerson: 'Vendor Partner', phone: '8826021114', mobile: '8826021114',
         email: 'duragrit07@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
@@ -459,7 +491,7 @@ export default async function handler(req, res) {
       },
       {
         id: 'VND-102', vendorId: 'VND-102', companyName: 'JEEE Toure',
-        category: 'Chemicals', gstin: '24AAACD1022M1Z6', gstinVerified: true,
+        category: 'Contractor', gstin: '24AAACD1022M1Z6', gstinVerified: true,
         location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
         contactPerson: 'Sunaj Sahoo', phone: '9876543210', mobile: '9876543210',
         email: 'sahoo.sunaj@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
@@ -467,7 +499,7 @@ export default async function handler(req, res) {
       },
       {
         id: 'VND-103', vendorId: 'VND-103', companyName: 'RR Agency',
-        category: 'Packaging', gstin: '24AAACD1033M1Z7', gstinVerified: true,
+        category: 'Contractor', gstin: '24AAACD1033M1Z7', gstinVerified: true,
         location: 'Morbi Central Hub, Gujarat', state: 'Gujarat',
         contactPerson: 'Rohit Verma', phone: '9811223344', mobile: '9811223344',
         email: 'rohit.agency@gmail.com', status: 'ACTIVE', accountStatus: 'Active',
@@ -480,24 +512,30 @@ export default async function handler(req, res) {
       (vendRes.value.data || []).forEach((v) => {
         const vId = String(v.vendor_id || v.id || '').toUpperCase();
         if (vId && !deletedKeysSet.has(vId)) {
+          const meta = v.metadata || {};
+          const pass = meta.passkey || meta.tempPassword || (v.vendor_id === 'VND-101' ? 'Dura#4905' : '1234');
           vendorMap.set(vId, {
+            ...meta,
             id: v.vendor_id || v.id,
             vendorId: v.vendor_id || v.id,
-            companyName: v.company_name,
-            name: v.company_name,
-            category: v.category,
-            gstin: v.gstin,
+            supabaseId: v.id,
+            companyName: v.company_name || meta.companyName,
+            name: v.company_name || meta.name,
+            category: normalizeVendorCat(meta.uiCategory || meta.category || v.category),
+            gstin: v.gstin || meta.gstin || '',
             gstinVerified: Boolean(v.gstin_verified),
-            location: v.location || 'Morbi, Gujarat',
-            city: v.location ? v.location.split(',')[0].trim() : 'Morbi',
-            state: v.state || 'Gujarat',
-            contactPerson: v.contact_person,
-            phone: v.phone,
-            mobile: v.phone,
-            email: v.email,
+            location: v.location || meta.location || 'Morbi, Gujarat',
+            city: meta.city || (v.location ? v.location.split(',')[0].trim() : 'Morbi'),
+            state: v.state || meta.state || 'Gujarat',
+            contactPerson: v.contact_person || meta.contactPerson,
+            phone: v.phone || meta.phone,
+            mobile: v.phone || meta.mobile,
+            email: v.email || meta.email,
             status: (v.account_status || 'Active').toUpperCase(),
             accountStatus: v.account_status || 'Active',
-            passkey: v.vendor_id === 'VND-101' ? 'Dura#4905' : '1234',
+            passkey: pass,
+            tempPassword: pass,
+            payoutHistory: Array.isArray(meta.payoutHistory) ? meta.payoutHistory : [],
             active: v.account_status !== 'Inactive' && v.account_status !== 'Suspended'
           });
         }
@@ -514,7 +552,10 @@ export default async function handler(req, res) {
               vendorMap.delete(vId);
             } else if (ev.vendor) {
               const existing = vendorMap.get(vId) || {};
-              vendorMap.set(vId, { ...existing, ...ev.vendor });
+              const merged = { ...existing, ...ev.vendor };
+              merged.category = normalizeVendorCat(merged.uiCategory || merged.category);
+              if (!Array.isArray(merged.payoutHistory)) merged.payoutHistory = [];
+              vendorMap.set(vId, merged);
             }
           }
         } else if (r.qr_serial === 'DURAGRIT_VENDORS_STORE_V1' || (r.request_id && String(r.request_id).startsWith('SYNC_VENDORS_'))) {
@@ -523,7 +564,11 @@ export default async function handler(req, res) {
             list.forEach((v) => {
               const vId = String(v.vendorId || v.id || '').toUpperCase();
               if (vId && !deletedKeysSet.has(vId)) {
-                vendorMap.set(vId, { ...(vendorMap.get(vId) || {}), ...v });
+                const existing = vendorMap.get(vId) || {};
+                const merged = { ...existing, ...v };
+                merged.category = normalizeVendorCat(merged.uiCategory || merged.category);
+                if (!Array.isArray(merged.payoutHistory)) merged.payoutHistory = [];
+                vendorMap.set(vId, merged);
               }
             });
           }
@@ -535,32 +580,54 @@ export default async function handler(req, res) {
       for (const [vId, v] of global.__DURAGRIT_VENDORS_REGISTRY__.entries()) {
         if (!deletedKeysSet.has(vId)) {
           const existing = vendorMap.get(vId) || {};
-          vendorMap.set(vId, { ...existing, ...v });
+          const merged = { ...existing, ...v };
+          merged.category = normalizeVendorCat(merged.uiCategory || merged.category);
+          vendorMap.set(vId, merged);
         }
       }
     }
 
-    responseData.vendors = Array.from(vendorMap.values());
+    responseData.vendors = Array.from(vendorMap.values()).sort((a, b) => {
+      const numA = parseInt(String(a.vendorId || a.id || '').replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(String(b.vendorId || b.id || '').replace(/\D/g, ''), 10) || 0;
+      return numB - numA;
+    });
 
     // 4. Profiles / Users
     if (profRes.status === 'fulfilled' && !profRes.value.error) {
-      responseData.users = (profRes.value.data || []).map((u) => ({
-        id: u.id,
-        userId: u.id,
-        name: u.full_name,
-        fullLegalName: u.full_name,
-        mobile: u.mobile,
-        phone: u.mobile,
-        email: u.email,
-        role: u.role || 'Contractor',
-        tierLevel: u.tier_level || 'Gold Applicator (Tier 2)',
-        upi: u.upi_id,
-        bankName: u.bank_name,
-        accountNumber: u.account_number,
-        ifsc: u.ifsc_code,
-        location: u.location || 'Morbi, Gujarat',
-        status: u.account_status || 'Active'
-      }));
+      responseData.users = (profRes.value.data || []).map((u) => {
+        const meta = u.metadata || {};
+        const displayId = meta.displayId || meta.userId || meta.id || `USR-${String(u.mobile || '').slice(-4) || '1001'}`;
+        const cleanId = String(displayId).replace(/^USR-/i, '');
+        const pass = meta.passkey || meta.tempPassword || u.terminal_key || `Dura#${cleanId}`;
+        return {
+          ...meta,
+          id: cleanId,
+          userId: `USR-${cleanId}`,
+          supabaseId: u.id,
+          name: u.full_name,
+          fullLegalName: u.full_name,
+          mobile: u.mobile,
+          phone: u.mobile,
+          email: u.email || meta.email || '',
+          role: meta.uiRole || u.role || 'Contractor',
+          tierLevel: u.tier_level || meta.tierLevel || 'Gold Applicator (Tier 2)',
+          kycStatus: u.kyc_status || meta.kycStatus || 'Verified',
+          upi: u.vpa_upi_id || u.upi_id || meta.upi || '',
+          bankName: u.bank_name || meta.bankName || '',
+          accountNumber: u.account_number || meta.accountNo || '',
+          ifsc: u.ifsc_code || meta.ifsc || '',
+          location: u.location || meta.location || 'Morbi, Gujarat',
+          passkey: pass,
+          tempPassword: pass,
+          password: pass,
+          rewardBalance: Number(u.reward_balance ?? meta.rewardBalance ?? 0),
+          scansCount: Number(u.scans_count ?? meta.scansCount ?? 0),
+          status: u.account_status || 'Active',
+          accountStatus: u.account_status || 'Active',
+          active: u.account_status !== 'Suspended' && u.account_status !== 'Inactive'
+        };
+      });
     }
 
     // 5. Orders (Aggregated & Deduped)

@@ -89,7 +89,7 @@ export const BASE_REGISTERED_VENDORS = [
   {
     id: 'VND-101',
     vendorId: 'VND-101',
-    companyName: 'DuraGrit Authorized Partner',
+    companyName: 'Ecreation PT Solution',
     contactPerson: 'Vendor Partner',
     phone: '8826021114',
     mobile: '8826021114',
@@ -100,7 +100,7 @@ export const BASE_REGISTERED_VENDORS = [
     pass: 'Dura#4905',
     status: 'ACTIVE',
     accountStatus: 'Active',
-    category: 'Tile Contractor / Applicator',
+    category: 'Contractor',
     location: 'Morbi Central Hub, Gujarat',
     active: true,
   },
@@ -118,7 +118,7 @@ export const BASE_REGISTERED_VENDORS = [
     pass: '1234',
     status: 'ACTIVE',
     accountStatus: 'Active',
-    category: 'Tile Contractor / Applicator',
+    category: 'Contractor',
     location: 'Morbi Central Hub, Gujarat',
     active: true,
   },
@@ -136,7 +136,7 @@ export const BASE_REGISTERED_VENDORS = [
     pass: '1234',
     status: 'ACTIVE',
     accountStatus: 'Active',
-    category: 'Tile Contractor / Applicator',
+    category: 'Contractor',
     location: 'Morbi Central Hub, Gujarat',
     active: true,
   }
@@ -154,11 +154,16 @@ const toDbProductCategory = (cat) => {
 
 const toDbVendorCategory = (cat) => {
   const s = String(cat || '').toLowerCase();
+  if (s.includes('contract') || s.includes('applicat') || s.includes('mason')) return 'Contractor';
+  if (s.includes('deal')) return 'Dealer';
+  if (s.includes('dist')) return 'Distributor';
+  if (s.includes('retail')) return 'Retailer';
   if (s.includes('chem') || s.includes('polymer') || s.includes('epoxy')) return 'Chemicals';
   if (s.includes('pack') || s.includes('print') || s.includes('foil') || s.includes('bag')) return 'Packaging';
   if (s.includes('logis') || s.includes('trans') || s.includes('fleet')) return 'Logistics';
   if (s.includes('mach') || s.includes('kiln') || s.includes('plant')) return 'Machinery';
-  return 'Raw materials';
+  if (s.includes('raw')) return 'Raw Material';
+  return 'Contractor';
 };
 
 const toDbRole = (role) => {
@@ -182,6 +187,9 @@ const mapProductFromDb = (row) => {
   const uiMeta = row.metadata || row.pricing_tiers?._ui || {};
   const mrp = Number(uiMeta.mrp ?? row.base_mrp ?? 0);
   const cashback = Number(uiMeta.cashbackAmount ?? row.cashback_reward ?? 0);
+  const code = String(row.sku_code || uiMeta.skuCode || '').toUpperCase();
+  const fallbackImg = code.includes('555') ? '/assets/sku-dta-555.png' : '/assets/sku-da-777.png';
+  const img = uiMeta.imageUrl || uiMeta.image || fallbackImg;
   return {
     ...uiMeta,
     id: uiMeta.id || row.id,
@@ -194,11 +202,15 @@ const mapProductFromDb = (row) => {
     packWeight: row.pack_weight || uiMeta.packSize || '20 kg',
     mrp,
     baseMrp: mrp,
+    base: Number(uiMeta.base ?? uiMeta.dealerPrice ?? row.pricing_tiers?.dealer ?? Math.round(mrp * 0.75)),
     dealerPrice: Number(uiMeta.dealerPrice ?? row.pricing_tiers?.dealer ?? Math.round(mrp * 0.75)),
     contractorPrice: Number(uiMeta.contractorPrice ?? row.pricing_tiers?.contractor ?? Math.round(mrp * 0.82)),
     cashbackAmount: cashback,
     cashbackReward: cashback,
-    rewardPoints: Number(uiMeta.rewardPoints ?? cashback * 4),
+    rewardPoints: Number(uiMeta.rewardPoints ?? cashback * 10),
+    imageUrl: img,
+    image: img,
+    packRender: img,
     gstPercent: Number(uiMeta.gstPercent ?? 18),
     hsnCode: uiMeta.hsnCode || '38245090',
     minBatchQty: Number(row.initial_batch_qty ?? uiMeta.minBatchQty ?? 100),
@@ -259,6 +271,16 @@ const mapProfileFromDb = (row) => {
   };
 };
 
+const normalizeCanonicalVendorCategory = (cat) => {
+  const c = String(cat || 'Contractor').trim();
+  if (/contractor|applicator|mason/i.test(c)) return 'Contractor';
+  if (/dealer/i.test(c)) return 'Dealer';
+  if (/distributor/i.test(c)) return 'Distributor';
+  if (/retailer/i.test(c)) return 'Retailer';
+  if (/^raw material/i.test(c)) return 'Raw Material';
+  return c || 'Contractor';
+};
+
 const mapVendorFromDb = (row) => {
   const meta = row.metadata || {};
   const isActive = row.account_status === 'Active' || row.account_status === 'ACTIVE';
@@ -266,11 +288,7 @@ const mapVendorFromDb = (row) => {
   const relVal = Number(meta.releasedPayoutLakhs ?? meta.paidLakhs ?? 0);
   const passkey = meta.passkey || meta.tempPassword || row.passkey || '1234';
   const rawCat = meta.uiCategory || meta.category || row.category || 'Contractor';
-  const normCat = /contractor|applicator|mason/i.test(rawCat)
-    ? 'Contractor'
-    : /^raw material/i.test(rawCat)
-    ? 'Raw Material'
-    : rawCat;
+  const normCat = normalizeCanonicalVendorCategory(rawCat);
   return {
     ...meta,
     id: row.vendor_id,
@@ -299,7 +317,7 @@ const mapVendorFromDb = (row) => {
     totalPayoutLakhs: poVal,
     releasedPayoutLakhs: relVal,
     pendingPayoutLakhs: Math.max(0, Number((poVal - relVal).toFixed(2))),
-    payoutHistory: meta.payoutHistory || [],
+    payoutHistory: Array.isArray(meta.payoutHistory) ? meta.payoutHistory : [],
     passkey,
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : (meta.updatedAt || 0),
@@ -322,7 +340,8 @@ const mapBatchFromDb = (row, tokensRows = []) => {
       scannedAt: t.scanned_at,
     }));
 
-  let finalTokens = batchTokens.length > 0 ? batchTokens : (meta.tokens || []);
+  const safeMetaTokens = Array.isArray(meta.tokens) ? meta.tokens : (Array.isArray(meta.codes) ? meta.codes : []);
+  let finalTokens = batchTokens.length > 0 ? batchTokens : safeMetaTokens;
   const qty = Number(row.quantity ?? finalTokens.length ?? 0);
 
   if (qty > 0 && finalTokens.length < qty) {
@@ -519,8 +538,8 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
           passkey: existing.passkey || existing.tempPassword || sbItem.passkey || '1234',
           tempPassword: existing.tempPassword || existing.passkey || sbItem.tempPassword || '1234',
           supabaseId: sbItem.supabaseId || existing.supabaseId,
-          tokens: sbItem.tokens?.length ? sbItem.tokens : (existing.tokens || []),
-          codes: sbItem.codes?.length ? sbItem.codes : (existing.codes || []),
+          tokens: Array.isArray(sbItem.tokens) && sbItem.tokens.length ? sbItem.tokens : (Array.isArray(existing.tokens) ? existing.tokens : []),
+          codes: Array.isArray(sbItem.codes) && sbItem.codes.length ? sbItem.codes : (Array.isArray(existing.codes) ? existing.codes : []),
           paymentProofUrl: sbItem.paymentProofUrl || existing.paymentProofUrl || null,
         });
       } else {
@@ -533,6 +552,8 @@ function mergeCollections(sbList, syncList, getKey, deletedSet) {
           passkey: existing.passkey || existing.tempPassword || sbItem.passkey || '1234',
           tempPassword: existing.tempPassword || existing.passkey || sbItem.tempPassword || '1234',
           supabaseId: sbItem.supabaseId || existing.supabaseId,
+          tokens: Array.isArray(existing.tokens) && existing.tokens.length ? existing.tokens : (Array.isArray(sbItem.tokens) ? sbItem.tokens : []),
+          codes: Array.isArray(existing.codes) && existing.codes.length ? existing.codes : (Array.isArray(sbItem.codes) ? sbItem.codes : []),
         });
       }
     }
@@ -593,28 +614,95 @@ const DEFAULT_LIVE_SKUS = [
   {
     id: 'SKU-DA-777',
     skuCode: 'DA-777',
-    name: 'duragrit DA 777',
-    category: 'Adhesives',
+    name: 'DURAGRIT DTA 777',
+    category: 'High-Polymer Adhesive',
     subCategory: 'High-Polymer Vitrified',
-    packSize: '20 kg',
-    packWeight: '20 kg',
-    mrp: 650,
-    baseMrp: 650,
-    dealerPrice: 480,
-    contractorPrice: 530,
+    spec: 'Type 4 Vitrified',
+    packSize: '20 kg Bag',
+    packWeight: '20 kg Bag',
+    mrp: 1200,
+    baseMrp: 1200,
+    base: 900,
+    dealerPrice: 900,
+    contractorPrice: 980,
     cashbackAmount: 150,
     cashbackReward: 150,
-    rewardPoints: 600,
+    rewardPoints: 1500,
+    gstPercent: 18,
+    hsnCode: '38245090',
+    minBatchQty: 100,
+    batchesCount: 8,
+    activeBatchesCount: 8,
+    imageUrl: '/assets/sku-da-777.png',
+    image: '/assets/sku-da-777.png',
+    packRender: '/assets/sku-da-777.png',
+    status: 'Active',
+    isActive: true,
+    description: 'DuraGrit DA 777 High Polymer Polymer-Modified Adhesive for Vitrified & Large Format Tiles.',
+    createdAt: '2026-11-09T10:19:23.951Z',
+    updatedAt: 1794309551594,
+  },
+  {
+    id: 'SKU-DTA-555',
+    skuCode: 'DTA-555',
+    name: 'DURAGRIT DTA 555',
+    category: 'High-Polymer Adhesive',
+    subCategory: 'Type 4 Vitrified',
+    spec: 'Type 4 Vitrified',
+    packSize: '20 kg Bag',
+    packWeight: '20 kg Bag',
+    mrp: 650,
+    baseMrp: 650,
+    base: 488,
+    dealerPrice: 488,
+    contractorPrice: 533,
+    cashbackAmount: 50,
+    cashbackReward: 50,
+    rewardPoints: 500,
+    gstPercent: 18,
+    hsnCode: '38245090',
+    minBatchQty: 100,
+    batchesCount: 6,
+    activeBatchesCount: 6,
+    imageUrl: '/assets/sku-dta-555.png',
+    image: '/assets/sku-dta-555.png',
+    packRender: '/assets/sku-dta-555.png',
+    status: 'Active',
+    isActive: true,
+    description: 'DuraGrit DTA 555 High-Polymer Vitrified Tile Adhesive.',
+    createdAt: '2026-11-10T11:25:55.552Z',
+    updatedAt: 1794309955552,
+  },
+  {
+    id: 'SKU-DTA777',
+    skuCode: 'DTA777',
+    name: 'Duragrit DTA 777',
+    category: 'High-Polymer Adhesive',
+    subCategory: 'Type 4 Vitrified',
+    spec: 'Type 4 Vitrified',
+    packSize: '20 kg Bag',
+    packWeight: '20 kg Bag',
+    mrp: 1500,
+    baseMrp: 1500,
+    base: 1200,
+    dealerPrice: 1200,
+    contractorPrice: 1230,
+    cashbackAmount: 50,
+    cashbackReward: 50,
+    rewardPoints: 500,
     gstPercent: 18,
     hsnCode: '38245090',
     minBatchQty: 100,
     batchesCount: 1,
     activeBatchesCount: 1,
+    imageUrl: '/assets/sku-da-777.png',
+    image: '/assets/sku-da-777.png',
+    packRender: '/assets/sku-da-777.png',
     status: 'Active',
     isActive: true,
-    description: 'DuraGrit DA 777 High Polymer Polymer-Modified Adhesive for Vitrified & Large Format Tiles.',
-    createdAt: '2026-11-09T10:19:23.951Z',
-    updatedAt: 1794219563952,
+    description: 'DuraGrit DTA 777 High-Polymer Vitrified Tile Adhesive.',
+    createdAt: '2026-11-10T06:24:22.408Z',
+    updatedAt: 1794291862408,
   }
 ];
 
@@ -957,6 +1045,7 @@ export const DataProvider = ({ children }) => {
       let sbConnected = false;
       let registrySkus = [];
       let registryBatches = [];
+      let allClaimsRows = [];
 
       if (SB_ONLINE) {
         const [
@@ -1052,7 +1141,7 @@ export const DataProvider = ({ children }) => {
           ...rawVerifyActs
         ];
         const rawSmtp = smtpRes.status === 'fulfilled' && !smtpRes.value.error ? (smtpRes.value.data || []) : [];
-        const allClaimsRows = [...rawRealClaims, ...rawEvents, ...rawSmtp];
+        allClaimsRows = [...rawRealClaims, ...rawEvents, ...rawSmtp];
 
         // A. Process Deleted Keys from Supabase
         allClaimsRows.forEach((row) => {
@@ -1095,7 +1184,9 @@ export const DataProvider = ({ children }) => {
                   const sCode = String(s.skuCode || s.id || '').toUpperCase();
                   if (sCode && s.name && !deletedSet.has(sCode) && !deletedSet.has(String(s.id || '').toUpperCase())) {
                     const existing = skuMap.get(sCode) || {};
-                    skuMap.set(sCode, { ...existing, ...s });
+                    const fallbackImg = sCode.includes('555') ? '/assets/sku-dta-555.png' : '/assets/sku-da-777.png';
+                    const img = s.imageUrl || existing.imageUrl || fallbackImg;
+                    skuMap.set(sCode, { ...existing, ...s, imageUrl: img, image: img, packRender: img });
                   }
                 });
               }
@@ -1147,8 +1238,8 @@ export const DataProvider = ({ children }) => {
                   const qty = Number(b.quantity || 0);
                   if (bId && bId !== 'DG-BATCH-DA777' && qty > 0 && !deletedSet.has(bId)) {
                     const existing = batchMap.get(bId) || {};
-                    const existingTokens = existing.tokens || existing.codes || [];
-                    const incomingTokens = b.tokens || b.codes || [];
+                    const existingTokens = Array.isArray(existing.tokens) ? existing.tokens : (Array.isArray(existing.codes) ? existing.codes : []);
+                    const incomingTokens = Array.isArray(b.tokens) ? b.tokens : (Array.isArray(b.codes) ? b.codes : []);
                     let mergedTokens = incomingTokens.length >= existingTokens.length ? incomingTokens : existingTokens;
 
                     if (mergedTokens.length < qty) {
@@ -1265,6 +1356,7 @@ export const DataProvider = ({ children }) => {
                   vendorMap.set(vId, {
                     ...existing,
                     ...event.vendor,
+                    category: normalizeCanonicalVendorCategory(event.vendor.uiCategory || event.vendor.category || existing.category),
                     companyName: event.vendor.companyName || event.vendor.name || existing.companyName,
                     name: event.vendor.companyName || event.vendor.name || existing.name,
                     updatedAt: Math.max(Number(event.vendor.updatedAt || 0), eventTime)
@@ -1282,6 +1374,7 @@ export const DataProvider = ({ children }) => {
                     vendorMap.set(vId, {
                       ...existing,
                       ...v,
+                      category: normalizeCanonicalVendorCategory(v.uiCategory || v.category || existing.category),
                       companyName: v.companyName || v.name || existing.companyName,
                       name: v.companyName || v.name || existing.name,
                       updatedAt: Math.max(Number(v.updatedAt || 0), eventTime)
@@ -1343,8 +1436,6 @@ export const DataProvider = ({ children }) => {
           sbClaims = realClaimRows.map(mapClaimFromDb);
 
           // Apply claim action events (Approvals, Rejections, Payouts)
-          // Sort chronologically ascending (oldest to newest) so newer decisions (e.g. Disbursed)
-          // always take precedence over earlier steps (e.g. Approved/Pending)
           const claimActionRows = allClaimsRows
             .filter((row) => row.request_id && String(row.request_id).startsWith('CLAIM_ACTION_EVENT_'))
             .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
@@ -1397,7 +1488,7 @@ export const DataProvider = ({ children }) => {
               if (sKey) claimedSerialMap.set(sKey, c);
             });
             sbBatches = sbBatches.map((b) => {
-              const rawTokens = b.tokens || b.codes || [];
+              const rawTokens = Array.isArray(b.tokens) ? b.tokens : (Array.isArray(b.codes) ? b.codes : []);
               let changed = false;
               const syncedTokens = rawTokens.map((t) => {
                 const tKey = QREngineV24.extractSerialKey(t.serialKey || t.serial || t.code);
@@ -1451,7 +1542,6 @@ export const DataProvider = ({ children }) => {
           try {
             const parsedSmtp = JSON.parse(latestSmtpRow.flag_reason);
             if (parsedSmtp && typeof parsedSmtp === 'object') {
-              // Hydrate locally only — do NOT re-push to cloud on every load
               const mergedSmtp = persistSmtpConfigLocal(parsedSmtp);
               setSmtpConfig((prev) => {
                 if (JSON.stringify(prev) === JSON.stringify(mergedSmtp)) return prev;
@@ -1459,19 +1549,34 @@ export const DataProvider = ({ children }) => {
               });
             }
           } catch (_) {}
-        } else if (bridge?.smtpConfig) {
+        }
+      }
+
+      // Automatic Serverless Bridge Fallback if direct browser queries to *.supabase.co failed (e.g., ISP DNS block)
+      if (!sbConnected && !bridge) {
+        try {
+          const res = await fetch(DEV_SYNC_URL);
+          if (res.ok) {
+            bridge = await res.json();
+            sbConnected = true;
+          }
+        } catch (_) {}
+      }
+
+      if (bridge?.smtpConfig) {
+        try {
           const mergedSmtp = persistSmtpConfigLocal(bridge.smtpConfig);
           setSmtpConfig((prev) => {
             if (JSON.stringify(prev) === JSON.stringify(mergedSmtp)) return prev;
             return mergedSmtp;
           });
-        }
+        } catch (_) {}
       }
 
       // 3. Merge Collections with Authoritative Priority
       const skuBase = mergeCollections(
         sbSkus,
-        bridge?.skus ?? loadStorage(STORAGE_KEYS.SKUS, []),
+        bridge?.skus ?? loadStorage(STORAGE_KEYS.SKUS, DEFAULT_LIVE_SKUS),
         (s) => String(s.skuCode || s.id || '').toUpperCase(),
         deletedSet
       );
@@ -1496,16 +1601,21 @@ export const DataProvider = ({ children }) => {
           if (!v) return;
           const vKey = String(v.vendorId || v.id || '').trim().toUpperCase();
           if (!vKey || deletedSet.has(vKey)) return;
+          const normV = {
+            ...v,
+            category: normalizeCanonicalVendorCategory(v.uiCategory || v.category),
+            payoutHistory: Array.isArray(v.payoutHistory) ? v.payoutHistory : [],
+          };
           const existing = vendorMap.get(vKey);
           if (!existing) {
-            vendorMap.set(vKey, v);
+            vendorMap.set(vKey, normV);
           } else {
             const existTime = getVendorTs(existing);
-            const incomingTime = getVendorTs(v);
+            const incomingTime = getVendorTs(normV);
             if (incomingTime >= existTime) {
-              vendorMap.set(vKey, { ...existing, ...v, updatedAt: incomingTime || existTime });
+              vendorMap.set(vKey, { ...existing, ...normV, updatedAt: incomingTime || existTime });
             } else {
-              vendorMap.set(vKey, { ...v, ...existing, updatedAt: existTime });
+              vendorMap.set(vKey, { ...normV, ...existing, updatedAt: existTime });
             }
           }
         });
@@ -1527,11 +1637,6 @@ export const DataProvider = ({ children }) => {
           return parseTimestamp(b.createdAt || b.updatedAt) - parseTimestamp(a.createdAt || a.updatedAt);
         });
 
-      vendorsRef.current = nextVendors;
-      setVendors(nextVendors);
-      try {
-        localStorage.setItem(STORAGE_KEYS.VENDORS, JSON.stringify(nextVendors));
-      } catch (_) {}
       const batchBase = mergeCollections(
         sbBatches,
         bridge?.batches ?? loadStorage(STORAGE_KEYS.BATCHES, []),
@@ -1543,7 +1648,42 @@ export const DataProvider = ({ children }) => {
         batchesRef.current || [],
         (b) => String(b.batchId || b.id || '').toUpperCase(),
         deletedSet
-      );
+      ).map((b) => {
+        const qty = Number(b.quantity || 10);
+        let toks = Array.isArray(b.tokens) ? b.tokens : (Array.isArray(b.codes) ? b.codes : []);
+        if (toks.length < qty) {
+          const cleanSku = String(b.skuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+          const lotNum = String(b.lotNumber || String(b.batchId || b.id || '').split('-').pop() || '1001');
+          const dateMatch = String(b.prefix || b.batchId || b.id || '').match(/(20\d{2})[-_]?(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i);
+          const yyyymmm = dateMatch ? `${dateMatch[1]}${dateMatch[2].toUpperCase()}` : '2026NOV';
+          const reward = Number(b.cashbackAmount ?? 50);
+          const filled = [];
+          for (let i = 0; i < qty; i++) {
+            const existingTok = toks[i];
+            if (existingTok && (existingTok.serialKey || existingTok.serial)) {
+              filled.push(existingTok);
+            } else {
+              const seq = String(i + 1).padStart(6, '0');
+              const serial = `DG-${cleanSku}-${yyyymmm}-${seq}`;
+              filled.push({
+                serialKey: serial,
+                serial: serial,
+                serial_token_id: serial,
+                verification_url: `https://verify.duragritvitrified.com/qr/${serial}`,
+                qrPayloadUrl: `https://verify.duragritvitrified.com/qr/${serial}`,
+                sku_code: b.skuCode || cleanSku,
+                cashback_inr: reward,
+                cashbackAmount: reward,
+                lotNumber: lotNum,
+                isScanned: false,
+              });
+            }
+          }
+          toks = filled;
+        }
+        return { ...b, tokens: toks, codes: toks };
+      });
+
       const bridgeClaims = Array.isArray(bridge?.claims) && bridge.claims.length > 0
         ? bridge.claims
         : loadStorage(STORAGE_KEYS.CLAIMS, []);
@@ -1565,83 +1705,88 @@ export const DataProvider = ({ children }) => {
       batchesRef.current = nextBatches;
       claimsRef.current = nextClaims;
 
-      // C. Vendor Orders Synchronization
-      const orderRows = allClaimsRows
-        .filter((c) =>
-          c.qr_serial === 'DURAGRIT_VENDOR_ORDERS' ||
-          c.qr_serial === 'DURAGRIT_VENDOR_ORDERS_REGISTRY' ||
-          (c.request_id && (String(c.request_id).startsWith('ORDER_') || String(c.request_id).startsWith('ORD_')))
-        )
-        .sort((a, b) => parseTimestamp(a.timestamp || a.created_at) - parseTimestamp(b.timestamp || b.created_at));
-
-      const orderMap = new Map();
-
-      const mergeIntoOrderMap = (o, eventTs = null) => {
-        if (!o || typeof o !== 'object') return;
-        const key = String(o.id || o.orderNumber || '').trim().toUpperCase();
-        if (!key) return;
-        const existing = orderMap.get(key) || {};
-        const incomingTime = parseTimestamp(o.updatedAt || o.timestamp || eventTs || o.createdAt);
-        const existingTime = parseTimestamp(existing.updatedAt || existing.timestamp || existing.createdAt);
-
-        if (!existing.id || incomingTime >= existingTime) {
-          orderMap.set(key, {
-            ...existing,
-            ...o,
-            id: o.id || existing.id || key,
-            orderNumber: o.orderNumber || existing.orderNumber || key,
-            status: o.status || existing.status || 'Pending',
-            adminNotes: o.adminNotes !== undefined ? o.adminNotes : (existing.adminNotes || ''),
-            updatedAt: o.updatedAt || eventTs || existing.updatedAt || new Date().toISOString(),
-          });
-        }
-      };
-
-      // 1. Base defaults
-      DEFAULT_INITIAL_ORDERS.forEach((o) => mergeIntoOrderMap(o));
-
-      // 2. Saved local storage orders
-      (loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS) || []).forEach((o) => mergeIntoOrderMap(o));
-
-      // 3. Bridge orders from /api/sync
-      if (Array.isArray(bridge?.orders)) {
-        bridge.orders.forEach((o) => mergeIntoOrderMap(o));
-      }
-
-      // 4. Supabase live event rows (sorted chronologically ascending so newer decision wins)
-      orderRows.forEach((row) => {
-        if (row?.flag_reason) {
-          try {
-            const parsed = JSON.parse(row.flag_reason);
-            if (Array.isArray(parsed)) {
-              parsed.forEach((item) => mergeIntoOrderMap(item, row.timestamp));
-            } else if (parsed && typeof parsed === 'object') {
-              mergeIntoOrderMap(parsed, row.timestamp);
-            }
-          } catch (_) {}
-        }
-      });
-
-      // 5. In-memory ordersRef (guarantee in-flight or recent user changes are never downgraded)
-      ordersRef.current.forEach((localOrder) => {
-        mergeIntoOrderMap(localOrder);
-      });
-
-      const nextOrders = Array.from(orderMap.values()).sort(
-        (a, b) => parseTimestamp(b.createdAt || b.timestamp) - parseTimestamp(a.createdAt || a.timestamp)
-      );
-
-      ordersRef.current = nextOrders;
-      setOrders(nextOrders);
-      try {
-        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(nextOrders));
-      } catch (_) {}
-
       setSkus(nextSkus);
       setUsers(nextUsers);
       setVendors(nextVendors);
       setBatches(nextBatches);
       setClaims(nextClaims);
+
+      // C. Vendor Orders Synchronization
+      try {
+        const orderRows = (allClaimsRows || [])
+          .filter((c) =>
+            c.qr_serial === 'DURAGRIT_VENDOR_ORDERS' ||
+            c.qr_serial === 'DURAGRIT_VENDOR_ORDERS_REGISTRY' ||
+            (c.request_id && (String(c.request_id).startsWith('ORDER_') || String(c.request_id).startsWith('ORD_')))
+          )
+          .sort((a, b) => parseTimestamp(a.timestamp || a.created_at) - parseTimestamp(b.timestamp || b.created_at));
+
+        const orderMap = new Map();
+
+        const mergeIntoOrderMap = (o, eventTs = null) => {
+          if (!o || typeof o !== 'object') return;
+          const key = String(o.id || o.orderNumber || '').trim().toUpperCase();
+          if (!key) return;
+          const existing = orderMap.get(key) || {};
+          const incomingTime = parseTimestamp(o.updatedAt || o.timestamp || eventTs || o.createdAt);
+          const existingTime = parseTimestamp(existing.updatedAt || existing.timestamp || existing.createdAt);
+
+          if (!existing.id || incomingTime >= existingTime) {
+            orderMap.set(key, {
+              ...existing,
+              ...o,
+              id: o.id || existing.id || key,
+              orderNumber: o.orderNumber || existing.orderNumber || key,
+              items: Array.isArray(o.items) ? o.items : (Array.isArray(existing.items) ? existing.items : []),
+              status: o.status || existing.status || 'Pending',
+              adminNotes: o.adminNotes !== undefined ? o.adminNotes : (existing.adminNotes || ''),
+              updatedAt: o.updatedAt || eventTs || existing.updatedAt || new Date().toISOString(),
+            });
+          }
+        };
+
+        // 1. Base defaults
+        DEFAULT_INITIAL_ORDERS.forEach((o) => mergeIntoOrderMap(o));
+
+        // 2. Saved local storage orders
+        (loadStorage(STORAGE_KEYS.ORDERS, DEFAULT_INITIAL_ORDERS) || []).forEach((o) => mergeIntoOrderMap(o));
+
+        // 3. Bridge orders from /api/sync
+        if (Array.isArray(bridge?.orders)) {
+          bridge.orders.forEach((o) => mergeIntoOrderMap(o));
+        }
+
+        // 4. Supabase live event rows (sorted chronologically ascending so newer decision wins)
+        orderRows.forEach((row) => {
+          if (row?.flag_reason) {
+            try {
+              const parsed = JSON.parse(row.flag_reason);
+              if (Array.isArray(parsed)) {
+                parsed.forEach((item) => mergeIntoOrderMap(item, row.timestamp));
+              } else if (parsed && typeof parsed === 'object') {
+                mergeIntoOrderMap(parsed, row.timestamp);
+              }
+            } catch (_) {}
+          }
+        });
+
+        // 5. In-memory ordersRef (guarantee in-flight or recent user changes are never downgraded)
+        ordersRef.current.forEach((localOrder) => {
+          mergeIntoOrderMap(localOrder);
+        });
+
+        const nextOrders = Array.from(orderMap.values()).sort(
+          (a, b) => parseTimestamp(b.createdAt || b.timestamp) - parseTimestamp(a.createdAt || a.timestamp)
+        );
+
+        ordersRef.current = nextOrders;
+        setOrders(nextOrders);
+        try {
+          localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(nextOrders));
+        } catch (_) {}
+      } catch (ordErr) {
+        console.warn('Order sync warning:', ordErr);
+      }
 
       setDbStatus((prev) => ({
         ...prev,

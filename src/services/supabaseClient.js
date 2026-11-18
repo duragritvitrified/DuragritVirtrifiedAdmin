@@ -24,14 +24,19 @@ export const isSupabaseConfigured = () => {
 const supabaseUrl = SUPABASE_URL || DEFAULT_SUPABASE_URL;
 const supabaseKey = SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
+try {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.removeItem('duragrit_supabase_auth_v3');
+    window.localStorage.removeItem('duragrit_supabase_auth_v4');
+  }
+} catch (_) {}
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: 'duragrit_supabase_auth_v3',
-    storage: window.localStorage,
-    flowType: 'pkce',
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+    storageKey: 'duragrit_supabase_auth_v5',
   },
   realtime: {
     params: {
