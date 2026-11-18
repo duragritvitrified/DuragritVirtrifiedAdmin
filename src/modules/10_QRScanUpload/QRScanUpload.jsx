@@ -1,259 +1,689 @@
-import React, { useState, useEffect,  useRef } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
-import { QREngineV24 } from '../../services/qrEngine';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { AudioService } from '../services/audioService';
+import { Html5Qrcode } from 'html5-qrcode';
 import confetti from 'canvas-confetti';
-import { 
-  Camera, Keyboard,  CheckCircle, AlertCircle,  Zap, RotateCcw,  ArrowLeft, Sparkles,  ShieldCheck, ListFilter
+import { ManifestIngestSheet } from '../components/modals/ManifestIngestSheet';
+import { saveStoredClaimProof } from '../components/modals/ClaimProofPreviewModal';
+import {
+  ArrowLeft,
+  Flashlight,
+  FlashlightOff,
+  QrCode,
+  Box,
+  Image as ImageIcon,
+  CheckCircle2,
+  AlertCircle,
+  FileSpreadsheet,
+  UploadCloud,
+  RefreshCw
 } from 'lucide-react';
 
-export const QRScanUpload = ({ onBack, onClaimCreated }) => {
+export const FIELD_TAG_QUEUE_STORAGE_KEY = 'duragrit_field_tag_queue_v1';
+
+export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
   const { currentUser } = useAuth();
-  const { submitScannedCode, batches } = useData();
+  const { submitScannedCode, batches = [], claims = [], vendors = [] } = useData();
 
-  const [inputMode, setInputMode] = useState('camera'); // 'camera' | 'manual'
-  const [manualSerial, setManualSerial] = useState('DG-50142-000109');
-  const [isScanning, setIsScanning] = useState(true);
-  const [scanStatus, setScanStatus] = useState(null); // { type: 'success' | 'error', message: '' }
-  const [sessionLogs, setSessionLogs] = useState([
-    { id: '1', key: 'DG-50142-000101', status: 'Ingested', time: '17:42:10' }, { id: '2', key: 'DG-50142-000102', status: 'Ingested', time: '17:43:05' }
-  ]);
+  const [manualSerial, setManualSerial] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlSerial = params.get('serial') || params.get('qr') || params.get('code');
+      return urlSerial ? urlSerial.trim().toUpperCase() : '';
+    } catch (_) {
+      return '';
+    }
+  });
+  const [proofImage, setProofImage] = useState(null);
+  const [proofFileName, setProofFileName] = useState('');
+  const [torchOn, setTorchOn] = useState(false);
+  const [soundEnabled] = useState(true);
+  const [scanStatus, setScanStatus] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [showManifestSheet, setShowManifestSheet] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [recentTags, setRecentTags] = useState(() => {
+    try {
+      const localQueue = localStorage.getItem(FIELD_TAG_QUEUE_STORAGE_KEY);
+      if (localQueue) {
+        const parsed = JSON.parse(localQueue);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      const stored = sessionStorage.getItem('duragrit_recent_tags_session');
+      return stored ? JSON.parse(stored) : [];
+    } catch (_) {
+      return [];
+    }
+  });
 
-  // Video feed simulator / camera stream
-  const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
+  const isProcessingRef = useRef(false);
+  const lastScannedTextRef = useRef('');
+  const lastScannedTimeRef = useRef(0);
+  const lastBuzzTimeRef = useRef(0);
+  const scannerContainerId = 'interactive-qr-scanner-viewport';
+
+  const formatTimeHMS = () => {
+    const d = new Date();
+    return [
+      String(d.getHours()).padStart(2, '0'),
+      String(d.getMinutes()).padStart(2, '0'),
+      String(d.getSeconds()).padStart(2, '0'),
+    ].join(':');
+  };
+
+  // Persist session & offline queue tags under duragrit_field_tag_queue_v1
+  useEffect(() => {
+    try {
+      localStorage.setItem(FIELD_TAG_QUEUE_STORAGE_KEY, JSON.stringify(recentTags));
+      sessionStorage.setItem('duragrit_recent_tags_session', JSON.stringify(recentTags));
+    } catch (_) {}
+  }, [recentTags]);
+
+  // Step A.3: Replay queued items when connectivity becomes active
+  const replayQueuedTags = async () => {
+    const queuedItems = recentTags.filter((t) => t.status === 'QUEUED');
+    if (queuedItems.length === 0) return;
+
+    for (const item of queuedItems) {
+      try {
+        await submitScannedCode({
+          serialKey: item.tag,
+          user: currentUser,
+          proofImage: item.proofImage || null,
+        });
+      } catch (_) {}
+    }
+
+    const syncedTime = formatTimeHMS();
+    setRecentTags((prev) =>
+      prev.map((t) =>
+        t.status === 'QUEUED'
+          ? { ...t, status: 'SYNCED', time: syncedTime }
+          : t
+      )
+    );
+  };
 
   useEffect(() => {
-    let stream = null;
-    if (inputMode === 'camera' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(s => {
-          stream = s;
-          if (videoRef.current) {
-            videoRef.current.srcObject = s;
+    const handleOnline = () => {
+      setIsOnline(true);
+      replayQueuedTags();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [recentTags]);
+
+  // Optical Camera QR Scanner initialization
+  useEffect(() => {
+    let html5QrCode = null;
+
+    const startScanner = async () => {
+      try {
+        const element = document.getElementById(scannerContainerId);
+        if (!element) return;
+
+        html5QrCode = new Html5Qrcode(scannerContainerId);
+        html5QrCodeRef.current = html5QrCode;
+
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          const cameraId = cameras[cameras.length - 1].id; // back camera
+          await html5QrCode.start(
+            cameraId,
+            {
+              fps: 15, // Optimal 15 fps scanning to prevent CPU/battery strain and rapid jitter
+              qrbox: { width: 220, height: 220 },
+              aspectRatio: 1.0,
+            },
+            (decodedText) => {
+              if (!decodedText || isProcessingRef.current) return;
+              const clean = String(decodedText).trim();
+              const now = Date.now();
+              // Prevent repeat rapid firing on same code
+              if (lastScannedTextRef.current === clean && now - lastScannedTimeRef.current < 3000) {
+                return;
+              }
+              lastScannedTextRef.current = clean;
+              lastScannedTimeRef.current = now;
+              isProcessingRef.current = true;
+
+              processSubmission(clean).finally(() => {
+                setTimeout(() => {
+                  isProcessingRef.current = false;
+                }, 1500);
+              });
+            },
+            () => {}
+          );
+        }
+      } catch (_) {
+        // Camera permissions or mock browser fallback
+      }
+    };
+
+    startScanner();
+
+    return () => {
+      if (html5QrCodeRef.current) {
+        try {
+          html5QrCodeRef.current.stop().catch(() => {});
+        } catch (_) {}
+      }
+    };
+  }, []);
+
+  // Step A.1: Hardware Camera Torch Control (videoTrack.applyConstraints + Html5Qrcode)
+  const toggleTorch = async () => {
+    const nextTorchState = !torchOn;
+    try {
+      const container = document.getElementById(scannerContainerId);
+      const videoEl = container ? container.querySelector('video') : null;
+      const mediaStream = videoEl && videoEl.srcObject;
+      const videoTracks =
+        mediaStream && typeof mediaStream.getVideoTracks === 'function'
+          ? mediaStream.getVideoTracks()
+          : [];
+
+      if (videoTracks.length > 0 && typeof videoTracks[0].applyConstraints === 'function') {
+        await videoTracks[0].applyConstraints({
+          advanced: [{ torch: nextTorchState }],
+        });
+      } else if (html5QrCodeRef.current) {
+        await html5QrCodeRef.current.applyVideoConstraints({
+          advanced: [{ torch: nextTorchState }],
+        });
+      }
+    } catch (_) {
+      // Hardware flash fallback on non-torch cameras
+    }
+    setTorchOn(nextTorchState);
+  };
+
+  // Derive latest batch info for metadata cards
+  const latestBatch = batches[0] || null;
+
+  // Next available serial from generated batch for camera tap or fallback
+  const getNextAvailableSerial = () => {
+    const claimedSet = new Set(
+      claims.map((c) => String(c.serialKey || c.qrSerial || c.batchCode || '').trim().toUpperCase())
+    );
+    for (const batch of batches) {
+      const tokens = batch.tokens || batch.codes || [];
+      for (const tok of tokens) {
+        const key = String(tok.serialKey || tok.serial || '').trim().toUpperCase();
+        if (key && !tok.isScanned && !claimedSet.has(key)) {
+          return key;
+        }
+      }
+    }
+    return '';
+  };
+
+  const handleProofFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProofFileName(file.name);
+
+    // If it's an image, attempt optical QR decoding via html5-qrcode
+    if (file.type.startsWith('image/')) {
+      const html5Qr = new Html5Qrcode('temp-qr-file-scan-node');
+      html5Qr
+        .scanFile(file, true)
+        .then((decodedText) => {
+          if (decodedText) {
+            setManualSerial(decodedText);
+            processSubmission(decodedText);
           }
         })
-        .catch(err => {
-          // Camera not available or denied; fallback silently to optical simulator
-          console.warn('Camera feed not available, running optical targeting simulator', err);
+        .catch(() => {
+          // If optical detection fails, keep file as attachment
         });
     }
 
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const rawDataUrl = ev.target?.result || null;
+      if (typeof rawDataUrl === 'string' && rawDataUrl.startsWith('data:image/')) {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxDim = 480;
+            let w = img.width || 360;
+            let h = img.height || 360;
+            if (w > maxDim || h > maxDim) {
+              if (w >= h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            setProofImage(canvas.toDataURL('image/jpeg', 0.65));
+          } catch (_) {
+            setProofImage(rawDataUrl);
+          }
+        };
+        img.onerror = () => setProofImage(rawDataUrl);
+        img.src = rawDataUrl;
+      } else {
+        setProofImage(rawDataUrl);
       }
     };
-  }, [inputMode]);
-
-  const handleSimulateAutoIngest = () => {
-    // Pick an un-scanned sample from active batches or generate on-the-fly
-    const randomLot = 50142;
-    const randomUnit = Math.floor(100 + Math.random() * 899);
-    const generatedKey = `DG-${randomLot}-${String(randomUnit).padStart(6, '0')}`;
-    processKeySubmission(generatedKey);
+    reader.readAsDataURL(file);
   };
 
-  const processKeySubmission = (serialKey) => {
-    if (!QREngineV24.validateSerialFormat(serialKey)) {
+  const processSubmission = async (serialInput, customProofImg = null, customProofName = '') => {
+    const rawSerial = String(serialInput || manualSerial || '').trim();
+    if (!rawSerial) {
       setScanStatus({
-        type: 'error', message: 'Invalid Serial Key Format. Must match DG-[5-digit Lot]-[Unit Identifier] (e.g. DG-50142-000109)'
+        type: 'error',
+        message: 'Please align QR code in camera reticle or enter serial code.',
       });
       return;
     }
 
-    const result = submitScannedCode({
-      serialKey, user: currentUser || { name: 'Rameshwar Prasad Sharma', mobile: '9820144521', role: 'Contractor' }
+    // Clean leading # if present
+    const cleanSerial = rawSerial.replace(/^#/, '').trim();
+    const activeProof = customProofImg || proofImage;
+    const activeProofName = customProofName || proofFileName;
+
+    // Step A.3: If offline, queue into duragrit_field_tag_queue_v1 with QUEUED badge
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const queuedTag = {
+        id: Date.now() + Math.random(),
+        tag: cleanSerial,
+        desc: `Offline Field Scan • Queued for Auto-Sync`,
+        time: formatTimeHMS(),
+        status: 'QUEUED',
+        proofImage: activeProof || null,
+      };
+      setRecentTags((prev) => [queuedTag, ...prev.slice(0, 14)]);
+      setScanStatus({
+        type: 'processing',
+        message: `Offline Mode: Serial "${cleanSerial}" saved to local queue (QUEUED). Will auto-sync when online.`,
+      });
+      setManualSerial('');
+      return;
+    }
+
+    setIsScanning(true);
+    setScanStatus({
+      type: 'processing',
+      message: `Verifying QR code "${cleanSerial}"...`,
     });
 
-    if (result.success) {
-      confetti({
-        particleCount: 80, spread: 60, origin: { y: 0.6 }
+    // Insert as QUEUED first, then transition to green SYNCED once verified
+    const tempId = Date.now() + Math.random();
+    const initialTag = {
+      id: tempId,
+      tag: cleanSerial,
+      desc: `Validating with DuraGrit Serialization Ledger...`,
+      time: formatTimeHMS(),
+      status: 'QUEUED',
+    };
+    setRecentTags((prev) => [initialTag, ...prev.slice(0, 14)]);
+
+    try {
+      const result = await submitScannedCode({
+        serialKey: cleanSerial,
+        user: currentUser,
+        proofImage: activeProof,
       });
 
+      setIsScanning(false);
+
+      if (!result || !result.success) {
+        const now = Date.now();
+        if (now - lastBuzzTimeRef.current > 3000) {
+          lastBuzzTimeRef.current = now;
+          if (soundEnabled && AudioService?.playErrorBuzz) AudioService.playErrorBuzz();
+        }
+        // Keep in session queue as QUEUED if offline/unverified or remove if duplicate
+        setRecentTags((prev) => prev.filter((t) => t.id !== tempId));
+        setScanStatus({
+          type: 'error',
+          message: result?.message || 'Unable to verify QR code. Ensure batch is generated in Admin Panel.',
+        });
+        return;
+      }
+
+      if (activeProof && (result.claimCode || cleanSerial)) {
+        saveStoredClaimProof(result.claimCode || cleanSerial, {
+          fileName: activeProofName || 'Scan_Batch_Receipt_08.jpg',
+          dataUrl: activeProof,
+        });
+      }
+
+      if (soundEnabled && AudioService?.playSuccessChime) AudioService.playSuccessChime();
+      try {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#C84826', '#15803D', '#EAB308'],
+        });
+      } catch (_) {}
+
+      const syncedTimestamp = formatTimeHMS();
+      setRecentTags((prev) =>
+        prev.map((t) =>
+          t.id === tempId
+            ? {
+                ...t,
+                desc: `${result.productName || 'Vitrified SKU'} • ₹${result.cashbackAmount || 150} Cashback Claimed`,
+                time: syncedTimestamp,
+                status: 'SYNCED',
+              }
+            : t
+        )
+      );
+
       setScanStatus({
-        type: 'success', message: `Claim for , ${result.claim.amount} successfully ingested into Escrow Queue!`, claim: result.claim
+        type: 'success',
+        message: `Success! Claim ${result.claimCode || ''} (₹${result.cashbackAmount || 150}) synced to NPCI Escrow moderation.`,
       });
+      setManualSerial('');
+      setProofImage(null);
+      setProofFileName('');
 
-      setSessionLogs(prev => [
-        {
-          id: String(Date.now()), key: serialKey, status: 'Ingested', time: new Date().toLocaleTimeString()
-        },  ...prev
-      ]);
-
-      if (onClaimCreated) onClaimCreated(result.claim);
-    } else {
+      if (onClaimCreated) {
+        setTimeout(() => onClaimCreated(), 2000);
+      }
+    } catch (err) {
+      setIsScanning(false);
+      const now = Date.now();
+      if (now - lastBuzzTimeRef.current > 3000) {
+        lastBuzzTimeRef.current = now;
+        if (soundEnabled && AudioService?.playErrorBuzz) AudioService.playErrorBuzz();
+      }
       setScanStatus({
-        type: 'error', message: result.message
+        type: 'error',
+        message: `Verification Error: ${err.message}`,
       });
     }
   };
 
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    processKeySubmission(manualSerial);
-  };
-
   return (
-    <div className="max-w-md mx-auto space-y-4 pb-20">
-      
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Field Dashboard</span>
-        </button>
+    <div className="w-full max-w-[420px] mx-auto flex-1 flex flex-col font-serif select-none pb-8">
+      {/* Hidden container for file-based optical scan */}
+      <div id="temp-qr-file-scan-node" className="hidden"></div>
 
-        <div className="flex items-center bg-gray-100 p-1 rounded-lg text-xs font-bold">
+      {/* Screen Header matching PDF Page 10 (Sticky header, never hides on scroll) */}
+      <header className="px-4 pt-3 pb-3 bg-white border-b border-[#ECEAE6] flex items-center justify-between font-sans sticky top-0 z-30 shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setInputMode('camera')}
-            className={`px-3 py-1 rounded-md transition-all ${
-              inputMode === 'camera' ? 'bg-[#8B0000] text-white shadow-sm' : 'text-gray-600'
-            }`}
+            onClick={onBack}
+            className="p-1.5 -ml-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition cursor-pointer"
           >
-            Optical Scan
+            <ArrowLeft className="w-5 h-5 text-stone-900" />
           </button>
-          <button
-            onClick={() => setInputMode('manual')}
-            className={`px-3 py-1 rounded-md transition-all ${
-              inputMode === 'manual' ? 'bg-[#8B0000] text-white shadow-sm' : 'text-gray-600'
-            }`}
-          >
-            Manual Entry
-          </button>
+          <h2 className="text-base font-bold font-serif text-stone-900 tracking-tight">
+            Scan Qr &amp; Upload
+          </h2>
         </div>
-      </div>
 
-      {/* Main Viewport Container */}
-      {inputMode === 'camera' ? (
-        <div className="duragrit-card overflow-hidden bg-black relative rounded-2xl shadow-xl aspect-square flex flex-col items-center justify-center">
-          
-          {/* Simulated or Real Video Background */}
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-cover opacity-80"
-          />
-
-          {/* Optical Viewfinder Overlay (60FPS Styling) */}
-          <div className="relative z-10 w-64 h-64 border-2 border-white/40 rounded-2xl flex items-center justify-center pointer-events-none">
-            {/* Viewfinder Corners */}
-            <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-amber-400 rounded-tl"></div>
-            <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-amber-400 rounded-tr"></div>
-            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-amber-400 rounded-bl"></div>
-            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-amber-400 rounded-br"></div>
-
-            {/* Scanning Laser Line */}
-            <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_12px_rgba(239,68,68,  )] animate-bounce"></div>
-
-            <div className="absolute bottom-3 text-[10px] text-white/90 font-mono tracking-wider bg-black/60 px-2 py-0.5 rounded">
-              AUTO-INGEST ALIGNMENT 60FPS
-            </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold bg-[#F2F1EE] text-stone-700 px-2 py-0.5 rounded font-mono border border-[#DFDDD8]">
+            {currentUser?.id ? (String(currentUser.id).slice(-4)) : 'RS01'}
+          </span>
+          <div className="w-7 h-7 rounded-full bg-[#A6300F] text-white font-bold text-xs flex items-center justify-center font-mono shadow-xs">
+            {currentUser?.name ? currentUser.name[0] : 'R'}
           </div>
+        </div>
+      </header>
 
-          {/* Quick Trigger Button for Optical Ingest */}
-          <div className="absolute bottom-4 z-20 w-full px-6">
+      <div className="px-3.5 pt-3 space-y-3 flex-1">
+        {/* Camera HUD Box matching PDF Page 10 */}
+        <div className="relative w-full aspect-square bg-[#1A1A1A] rounded-3xl overflow-hidden shadow-inner flex flex-col justify-between p-3.5 border border-stone-800">
+          {/* Live Optical QR Video Container */}
+          <div
+            id={scannerContainerId}
+            className="absolute inset-0 w-full h-full object-cover [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>div]:hidden"
+          ></div>
+
+          {/* Top HUD Telemetry Row (Step 10A Blueprint Specification) */}
+          <div className="relative z-10 flex items-center justify-between font-sans text-xs">
+            <div className="flex items-center gap-1.5 bg-black/65 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-white font-mono text-[10px]">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>DETECTING: {latestBatch?.skuCode || 'DTA-TYPE3-HD'}</span>
+            </div>
+
             <button
-              onClick={handleSimulateAutoIngest}
-              className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-extrabold text-xs rounded-xl shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all flex items-center justify-center space-x-2"
+              type="button"
+              onClick={toggleTorch}
+              className={`px-2.5 py-1 rounded-full backdrop-blur-md border transition cursor-pointer flex items-center gap-1.5 font-mono text-[10px] font-bold ${
+                torchOn
+                  ? 'bg-amber-400 text-stone-900 border-amber-300 shadow-sm'
+                  : 'bg-black/65 text-white border-white/15 hover:bg-black/80'
+              }`}
+              title="Toggle Hardware Camera Torch"
             >
-              <Zap className="w-4 h-4 text-stone-950 fill-stone-950" />
-              <span>Simulate Auto-Ingest Optical Capture</span>
+              {torchOn ? (
+                <Flashlight className="w-3.5 h-3.5 text-stone-900" />
+              ) : (
+                <FlashlightOff className="w-3.5 h-3.5 text-stone-300" />
+              )}
+              <span>{torchOn ? 'Torch On' : 'Torch Off'}</span>
             </button>
           </div>
 
-        </div>
-      ) : (
-        /* Manual Key Entry Fallback */
-        <div className="duragrit-card p-5 bg-white space-y-4">
-          <div className="flex items-center space-x-2 text-xs font-bold text-gray-800 border-b pb-3">
-            <Keyboard className="w-4 h-4 text-[#8B0000]" />
-            <span>Manual Serial Key Fallback</span>
+          {/* Center Viewfinder Reticle with 3px #C84826 L-Brackets & 3x3 Grid */}
+          <div
+            onClick={() => {
+              const fallbackToken = getNextAvailableSerial();
+              if (fallbackToken) {
+                setManualSerial(fallbackToken);
+                processSubmission(fallbackToken);
+              } else {
+                setScanStatus({
+                  type: 'error',
+                  message: 'No active unscanned QR tokens in queue. Generate a batch in Admin Panel first.',
+                });
+              }
+            }}
+            className="relative z-10 mx-auto w-56 h-56 flex items-center justify-center cursor-pointer group"
+            title="Click reticle to scan next available token"
+          >
+            {/* 4 Corner L-Brackets */}
+            <div className="absolute top-0 left-0 w-7 h-7 border-t-[3px] border-l-[3px] border-[#C84826] rounded-tl-[4px]"></div>
+            <div className="absolute top-0 right-0 w-7 h-7 border-t-[3px] border-r-[3px] border-[#C84826] rounded-tr-[4px]"></div>
+            <div className="absolute bottom-0 left-0 w-7 h-7 border-b-[3px] border-l-[3px] border-[#C84826] rounded-bl-[4px]"></div>
+            <div className="absolute bottom-0 right-0 w-7 h-7 border-b-[3px] border-r-[3px] border-[#C84826] rounded-br-[4px]"></div>
+
+            {/* 3x3 Grid Hairlines */}
+            <div className="absolute inset-2 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-20">
+              <div className="border-r border-b border-white"></div>
+              <div className="border-r border-b border-white"></div>
+              <div className="border-b border-white"></div>
+              <div className="border-r border-b border-white"></div>
+              <div className="border-r border-b border-white"></div>
+              <div className="border-b border-white"></div>
+              <div className="border-r border-white"></div>
+              <div className="border-r border-white"></div>
+              <div></div>
+            </div>
+
+            {/* Red Scanning Laser Line */}
+            <div className="absolute inset-x-3 h-0.5 bg-[#C84826] shadow-[0_0_8px_#C84826] animate-pulse"></div>
+
+            {/* Center Circle Crosshair */}
+            <div className="w-4 h-4 rounded-full border border-white/80 flex items-center justify-center pointer-events-none">
+              <span className="w-1 h-1 rounded-full bg-[#C84826]"></span>
+            </div>
           </div>
 
-          <form onSubmit={handleManualSubmit} className="space-y-3">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                Serial Key (Format: DG-[5-digit Lot]-[Unit Identifier])
-              </label>
-              <input
-                type="text"
-                required
-                value={manualSerial}
-                onChange={(e) => setManualSerial(e.target.value)}
-                placeholder="DG-50142-000109"
-                className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#8B0000] font-mono uppercase font-bold"
-              />
-              <span className="text-[11px] text-gray-500 mt-1 block">
-                Found on the thermal foil tamper seal beneath the scratch layer.
+          {/* Bottom HUD Alignment Pill matching PDF Page 10 */}
+          <div className="relative z-10 font-sans">
+            <div className="bg-white/95 backdrop-blur-md rounded-full py-2 px-3 text-center shadow-lg border border-white">
+              <span className="text-[11px] font-bold text-stone-800">
+                Align DuraGrit QR within frame for auto-ingest
               </span>
             </div>
-
-            <button
-              type="submit"
-              className="w-full duragrit-btn-primary py-2.5 text-xs flex items-center justify-center space-x-2 font-bold"
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-300" />
-              <span>Verify Key & Ingest Escrow</span>
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Scan Feedback Alert */}
-      {scanStatus && (
-        <div
-          className={`p-3.5 rounded-xl border text-xs flex items-start space-x-2.5 ${
-            scanStatus.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}
-        >
-          {scanStatus.type === 'success' ? (
-            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-          )}
-          <div className="flex-1">
-            <p className="font-semibold">{scanStatus.message}</p>
-            {scanStatus.claim && (
-              <p className="text-[11px] text-emerald-700 mt-0.5">
-                Claim #{scanStatus.claim.claimNumber} • Awaiting NPCI Supervisor release.
-              </p>
-            )}
           </div>
         </div>
-      )}
 
-      {/* Session Queue Logs */}
-      <div className="duragrit-card p-4 space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold text-gray-700 border-b pb-2">
-          <span className="flex items-center gap-1.5">
-            <ListFilter className="w-3.5 h-3.5 text-gray-500" />
-            <span>Current Session Ingest Queue</span>
-          </span>
-          <span className="text-gray-400 font-normal">{sessionLogs.length} items logged</span>
+        {/* 3-Col Metadata Strip matching PDF Page 10 */}
+        <div className="grid grid-cols-3 gap-2 font-sans">
+          <div className="bg-white rounded-xl p-2.5 border border-[#ECEAE6] shadow-2xs">
+            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">
+              LOT TARGET
+            </span>
+            <span className="text-xs font-black text-stone-900 font-mono mt-0.5 block truncate">
+              {latestBatch?.batchId?.replace('DG-BATCH-', '') || 'MOR-24-B9'}
+            </span>
+          </div>
+
+          <div className="bg-white rounded-xl p-2.5 border border-[#ECEAE6] shadow-2xs">
+            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">
+              SKU CLASS
+            </span>
+            <span className="text-xs font-black text-stone-900 font-mono mt-0.5 block truncate">
+              {latestBatch?.skuCode || 'CER-ADH-70'}
+            </span>
+          </div>
+
+          <div className="bg-white rounded-xl p-2.5 border border-[#ECEAE6] shadow-2xs">
+            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">
+              BATCH STATE
+            </span>
+            <span className="text-xs font-bold text-emerald-700 mt-0.5 flex items-center gap-1 font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>VALIDATED</span>
+            </span>
+          </div>
         </div>
 
-        <div className="divide-y divide-gray-100 max-h-36 overflow-y-auto">
-          {sessionLogs.map(log => (
-            <div key={log.id} className="py-1.5 flex items-center justify-between text-xs">
-              <span className="font-mono text-gray-800 font-medium">{log.key}</span>
-              <div className="flex items-center space-x-2 text-[10px]">
-                <span className="text-gray-400">{log.time}</span>
-                <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
-                  {log.status}
-                </span>
-              </div>
+        {/* Status Alerts with stable container to eliminate vertical jumping */}
+        <div className="min-h-[58px] flex items-center">
+          {scanStatus ? (
+            <div
+              className={`w-full p-3 rounded-2xl text-xs flex items-start gap-2.5 font-sans transition-all duration-200 ${
+                scanStatus.type === 'error'
+                  ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                  : scanStatus.type === 'processing'
+                  ? 'bg-amber-50 border border-amber-200 text-amber-800'
+                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              }`}
+            >
+              {scanStatus.type === 'error' ? (
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+              ) : scanStatus.type === 'processing' ? (
+                <div className="w-4 h-4 shrink-0 mt-0.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+              )}
+              <span className="leading-relaxed font-semibold">{scanStatus.message}</span>
             </div>
-          ))}
+          ) : (
+            <div className="w-full py-2.5 px-3 bg-stone-50 border border-stone-200/60 rounded-xl text-center text-[11px] text-stone-500 font-sans">
+              Point camera steadily at QR code on DuraGrit bag or carton
+            </div>
+          )}
         </div>
+
+        {/* Manual Serial Ingest Card matching PDF Page 10 */}
+        <section className="bg-white rounded-2xl p-4 border border-[#ECEAE6] shadow-xs space-y-3 font-sans">
+          <div>
+            <h3 className="font-bold text-stone-900 text-xs font-serif">
+              Manual Serial Ingest
+            </h3>
+            <p className="text-[11px] text-stone-500">Having trouble scanning label?</p>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              processSubmission(manualSerial);
+            }}
+            className="space-y-2.5"
+          >
+            <div>
+              <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                Serial / Batch Key
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1 flex items-center">
+                  <span className="absolute left-3 text-stone-400 font-mono font-bold text-xs">
+                    #
+                  </span>
+                  <input
+                    type="text"
+                    value={manualSerial}
+                    onChange={(e) => setManualSerial(e.target.value.toUpperCase())}
+                    placeholder="DG-88410-B04"
+                    className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold bg-[#F4F3F0] border border-[#ECEAE6] rounded-xl focus:bg-white focus:border-[#C84826] outline-none text-stone-900"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isScanning || !manualSerial.trim()}
+                  className="bg-[#C84826] hover:bg-[#A6300F] disabled:opacity-50 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-2xs transition cursor-pointer font-serif shrink-0"
+                >
+                  {isScanning ? 'Logging...' : 'Log Code'}
+                </button>
+              </div>
+              <p className="text-[10px] text-stone-400 font-mono mt-1">
+                ⓘ Format: DG-[5-digit Lot]-[Unit Identifier]
+              </p>
+            </div>
+
+            {/* Switch to Manifest CSV / Photo Ingest Button matching PDF Page 10 (Step A.2) */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleProofFileChange}
+              accept="image/*,.csv"
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => setShowManifestSheet(true)}
+              className="w-full bg-white hover:bg-stone-50 text-stone-800 font-bold py-2.5 px-3 rounded-xl border border-stone-300 text-xs flex items-center justify-center gap-2 transition shadow-2xs cursor-pointer font-serif"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-[#C84826]" />
+              <span>
+                {proofFileName ? `Selected: ${proofFileName}` : 'Switch to Manifest CSV / Photo Ingest'}
+              </span>
+            </button>
+
+            {/* Field Device Sync Pill matching PDF Page 10 */}
+            <div className="bg-[#F4F3F0] rounded-xl p-2 text-center border border-[#ECEAE6] flex items-center justify-between text-[10px] text-stone-600 font-mono">
+              <span className="flex items-center gap-1 font-bold text-stone-800">
+                <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                <span>Field Device Sync: MOR-FD-08</span>
+              </span>
+              <span>MORBI YARD 04</span>
+            </div>
+          </form>
+        </section>
       </div>
 
+      {/* Step A.2: Manifest CSV / Photo Ingest Modal */}
+      <ManifestIngestSheet
+        isOpen={showManifestSheet}
+        onClose={() => setShowManifestSheet(false)}
+        vendors={vendors}
+        onIngestSerial={(serial, photoDataUrl, fileName) =>
+          processSubmission(serial, photoDataUrl, fileName)
+        }
+      />
     </div>
   );
 };

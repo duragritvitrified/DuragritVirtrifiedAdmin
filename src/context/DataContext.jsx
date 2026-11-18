@@ -1968,7 +1968,7 @@ export const DataProvider = ({ children }) => {
           : new Date(Date.now() + 730 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
       const batchInsert = {
-        batch_prefix: 'DG',
+        batch_prefix: String(finalBatch.prefix || 'DG').slice(0, 50),
         batch_identifier: finalBatch.batchId,
         product_id: sbProductId,
         lot_number: String(finalBatch.lotNumber || finalBatch.batchId).slice(0, 20),
@@ -1977,6 +1977,20 @@ export const DataProvider = ({ children }) => {
         expiry_date: expDate,
         cryptographic_hash: finalBatch.tokens[0]?.dualSha128 || `SHA-${nowTs}`,
         status: 'Active',
+        metadata: {
+          skuId: finalBatch.skuId,
+          skuCode: finalBatch.skuCode,
+          productName: finalBatch.productName,
+          packSize: finalBatch.packSize,
+          mrp: finalBatch.mrp,
+          prefix: finalBatch.prefix,
+          lotNumber: finalBatch.lotNumber,
+          cashbackAmount: finalBatch.cashbackAmount,
+          pointsReward: finalBatch.pointsReward || finalBatch.rewardPoints || 0,
+          rewardPoints: finalBatch.rewardPoints || finalBatch.pointsReward || 0,
+          validityPeriod: finalBatch.validityPeriod,
+          createdAt: finalBatch.createdAt,
+        },
       };
 
       const { data: batchRow, error: batchErr } = await supabase

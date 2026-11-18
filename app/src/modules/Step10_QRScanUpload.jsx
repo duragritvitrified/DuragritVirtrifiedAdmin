@@ -251,7 +251,40 @@ export const Step10_QRScanUpload = ({ onBack, onClaimCreated }) => {
 
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setProofImage(ev.target?.result || null);
+      const rawDataUrl = ev.target?.result || null;
+      if (typeof rawDataUrl === 'string' && rawDataUrl.startsWith('data:image/')) {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxDim = 480;
+            let w = img.width || 360;
+            let h = img.height || 360;
+            if (w > maxDim || h > maxDim) {
+              if (w >= h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            setProofImage(canvas.toDataURL('image/jpeg', 0.65));
+          } catch (_) {
+            setProofImage(rawDataUrl);
+          }
+        };
+        img.onerror = () => setProofImage(rawDataUrl);
+        img.src = rawDataUrl;
+      } else {
+        setProofImage(rawDataUrl);
+      }
     };
     reader.readAsDataURL(file);
   };

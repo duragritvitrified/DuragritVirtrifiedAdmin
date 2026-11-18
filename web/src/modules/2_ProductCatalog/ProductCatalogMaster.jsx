@@ -68,13 +68,57 @@ export function ProductCatalogMaster({ onNavigateQR }) {
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const dataUrl = ev.target?.result;
-      setFormData((prev) => ({
-        ...prev,
-        imageUrl: dataUrl,
-        imageFileName: file.name,
-      }));
-      showToast(`Product packaging image loaded: ${file.name}`);
+      const rawDataUrl = ev.target?.result;
+      if (typeof rawDataUrl === 'string' && rawDataUrl.startsWith('data:image/')) {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxDim = 320;
+            let w = img.width || 240;
+            let h = img.height || 280;
+            if (w > maxDim || h > maxDim) {
+              if (w >= h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            let compressed = canvas.toDataURL('image/webp', 0.72);
+            if (!compressed || compressed.length > 40000) {
+              compressed = canvas.toDataURL('image/jpeg', 0.68);
+            }
+            setFormData((prev) => ({
+              ...prev,
+              imageUrl: compressed,
+              imageFileName: file.name,
+            }));
+            showToast(`Product packaging image optimized & loaded: ${file.name}`);
+          } catch (_) {
+            setFormData((prev) => ({
+              ...prev,
+              imageUrl: rawDataUrl,
+              imageFileName: file.name,
+            }));
+          }
+        };
+        img.onerror = () => {
+          setFormData((prev) => ({ ...prev, imageUrl: rawDataUrl, imageFileName: file.name }));
+        };
+        img.src = rawDataUrl;
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          imageUrl: rawDataUrl,
+          imageFileName: file.name,
+        }));
+      }
     };
     reader.onerror = () => {
       showToast('Failed to read image file.');
