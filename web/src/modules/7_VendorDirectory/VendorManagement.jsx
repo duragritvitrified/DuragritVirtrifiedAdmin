@@ -2045,38 +2045,62 @@ export function VendorManagement() {
     });
   };
 
+  // Canonical category helper so KPI counts and Table rows match 100%
+  const getCanonicalCategory = (v) => {
+    const raw = String(v?.category || v?.uiCategory || v?.appRole || '').trim();
+    if (!raw || /contractor|applicator|mason/i.test(raw)) return 'Contractor';
+    if (/^dealer$/i.test(raw)) return 'Dealer';
+    if (/^retailer$/i.test(raw)) return 'Retailer';
+    if (/^distributor$/i.test(raw)) return 'Distributor';
+    if (/raw material|chemical|polymer|machinery/i.test(raw)) return 'Raw Material';
+    if (/packaging/i.test(raw)) return 'Packaging';
+    if (/printing/i.test(raw)) return 'Printing';
+    if (/logistics|fleet|transport/i.test(raw)) return 'Logistics';
+    return 'Contractor';
+  };
+
   // KPI Calculations
   const totalVendors = vendors.length;
-  const contractorsCount = vendors.filter((v) => v.category === 'Contractor').length;
-  const tradePartnersCount = vendors.filter((v) => ['Distributor', 'Retailer', 'Dealer'].includes(v.category)).length;
-  const suppliersCount = vendors.filter((v) => ['Raw Material', 'Packaging', 'Printing', 'Logistics'].includes(v.category)).length;
+  const contractorsCount = vendors.filter((v) => getCanonicalCategory(v) === 'Contractor').length;
+  const tradePartnersCount = vendors.filter((v) => ['Distributor', 'Retailer', 'Dealer'].includes(getCanonicalCategory(v))).length;
+  const suppliersCount = vendors.filter((v) => ['Raw Material', 'Packaging', 'Printing', 'Logistics'].includes(getCanonicalCategory(v))).length;
   const totalPOLakhs = vendors.reduce(
     (sum, v) => sum + parseFloat(v.totalPayoutLakhs ?? v.poValueLakhs ?? 0),
     0
   );
 
-  // Filtered List
+  // Filtered & Sorted List (Latest vendor on top)
   const filteredVendors = useMemo(() => {
-    return vendors.filter((v) => {
-      const q = search.toLowerCase().trim();
-      const matchSearch =
-        !q ||
-        (v.companyName || '').toLowerCase().includes(q) ||
-        (v.contactPerson || '').toLowerCase().includes(q) ||
-        (v.phone || v.mobile || '').includes(q) ||
-        (v.city || '').toLowerCase().includes(q) ||
-        (v.gstin || '').toLowerCase().includes(q) ||
-        (v.vendorId || '').toLowerCase().includes(q);
+    return vendors
+      .filter((v) => {
+        const q = search.toLowerCase().trim();
+        const matchSearch =
+          !q ||
+          (v.companyName || '').toLowerCase().includes(q) ||
+          (v.contactPerson || '').toLowerCase().includes(q) ||
+          (v.phone || v.mobile || '').includes(q) ||
+          (v.city || '').toLowerCase().includes(q) ||
+          (v.gstin || '').toLowerCase().includes(q) ||
+          (v.vendorId || '').toLowerCase().includes(q);
 
-      const matchCat = selectedCategory === 'all' || v.category === selectedCategory;
-      const matchStatus =
-        selectedStatus === 'all' ||
-        (selectedStatus === 'active' && (v.status === 'ACTIVE' || v.status === 'Active')) ||
-        (selectedStatus === 'pending' && (v.status === 'Pending KYC' || v.status === 'INACTIVE' || v.status === 'Pending')) ||
-        (selectedStatus === 'suspended' && (v.status === 'INACTIVE' || v.status === 'Suspended'));
+        const canCat = getCanonicalCategory(v);
+        const matchCat = selectedCategory === 'all' || canCat === selectedCategory || v.category === selectedCategory;
+        const matchStatus =
+          selectedStatus === 'all' ||
+          (selectedStatus === 'active' && (v.status === 'ACTIVE' || v.status === 'Active')) ||
+          (selectedStatus === 'pending' && (v.status === 'Pending KYC' || v.status === 'INACTIVE' || v.status === 'Pending')) ||
+          (selectedStatus === 'suspended' && (v.status === 'INACTIVE' || v.status === 'Suspended'));
 
-      return matchSearch && matchCat && matchStatus;
-    });
+        return matchSearch && matchCat && matchStatus;
+      })
+      .sort((a, b) => {
+        const numA = parseInt(String(a.vendorId || a.id || '').replace(/\D/g, ''), 10) || 0;
+        const numB = parseInt(String(b.vendorId || b.id || '').replace(/\D/g, ''), 10) || 0;
+        if (numB !== numA) return numB - numA;
+        const tA = new Date(a.createdAt || a.updatedAt || 0).getTime() || Number(a.updatedAt || 0);
+        const tB = new Date(b.createdAt || b.updatedAt || 0).getTime() || Number(b.updatedAt || 0);
+        return tB - tA;
+      });
   }, [vendors, search, selectedCategory, selectedStatus]);
 
   // Pagination
@@ -2256,7 +2280,14 @@ export function VendorManagement() {
       )}
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        <KpiCard
+          label="Total Partners"
+          value={totalVendors}
+          sub="All registered in directory"
+          icon={Building2}
+          accent="bg-slate-800"
+        />
         <KpiCard
           label="Contractors &amp; Masons"
           value={contractorsCount}
@@ -2376,7 +2407,8 @@ export function VendorManagement() {
                 </tr>
               ) : (
                 paginatedVendors.map((vendor) => {
-                  const cat = CATEGORY_CONFIG[vendor.category] || CATEGORY_CONFIG.Contractor;
+                  const displayCat = getCanonicalCategory(vendor);
+                  const cat = CATEGORY_CONFIG[displayCat] || CATEGORY_CONFIG.Contractor;
                   const isPassVisible = showPasswordMap[vendor.vendorId];
                   return (
                     <tr key={vendor.vendorId} className="hover:bg-stone-50/80 transition-colors">
@@ -2414,7 +2446,7 @@ export function VendorManagement() {
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border ${cat.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
-                          <span>{vendor.category}</span>
+                          <span>{displayCat}</span>
                         </span>
                       </td>
 

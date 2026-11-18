@@ -265,6 +265,12 @@ const mapVendorFromDb = (row) => {
   const poVal = Number(meta.poValueLakhs ?? meta.totalPayoutLakhs ?? 0);
   const relVal = Number(meta.releasedPayoutLakhs ?? meta.paidLakhs ?? 0);
   const passkey = meta.passkey || meta.tempPassword || row.passkey || '1234';
+  const rawCat = meta.uiCategory || meta.category || row.category || 'Contractor';
+  const normCat = /contractor|applicator|mason/i.test(rawCat)
+    ? 'Contractor'
+    : /^raw material/i.test(rawCat)
+    ? 'Raw Material'
+    : rawCat;
   return {
     ...meta,
     id: row.vendor_id,
@@ -272,7 +278,7 @@ const mapVendorFromDb = (row) => {
     supabaseId: row.id,
     companyName: row.company_name,
     name: row.company_name,
-    category: meta.uiCategory || row.category || 'Raw materials',
+    category: normCat,
     gstin: row.gstin || meta.gstin || '',
     gstinVerified: row.gstin_verified !== false,
     contactPerson: row.contact_person || meta.contactPerson || '',
@@ -1512,9 +1518,14 @@ export const DataProvider = ({ children }) => {
       mergeIntoVendorMap(sbVendors);
       mergeIntoVendorMap(vendorsRef.current);
 
-      const nextVendors = Array.from(vendorMap.values()).filter(
-        (v) => !deletedSet.has(String(v.vendorId || v.id || '').toUpperCase())
-      );
+      const nextVendors = Array.from(vendorMap.values())
+        .filter((v) => !deletedSet.has(String(v.vendorId || v.id || '').toUpperCase()))
+        .sort((a, b) => {
+          const numA = parseInt(String(a.vendorId || a.id || '').replace(/\D/g, ''), 10) || 0;
+          const numB = parseInt(String(b.vendorId || b.id || '').replace(/\D/g, ''), 10) || 0;
+          if (numB !== numA) return numB - numA;
+          return parseTimestamp(b.createdAt || b.updatedAt) - parseTimestamp(a.createdAt || a.updatedAt);
+        });
 
       vendorsRef.current = nextVendors;
       setVendors(nextVendors);
