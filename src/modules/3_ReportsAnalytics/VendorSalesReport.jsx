@@ -197,6 +197,7 @@ export function VendorSalesReport() {
       const vInfo = resolveVendorInfo(c);
       const ts = new Date(c.submittedAt || c.date || c.createdAt || Date.now()).getTime();
       const amount = Number(c.amount ?? c.claimValue ?? c.cashback ?? 50);
+      const points = Number(c.points ?? c.rewardPoints ?? (amount * 10));
       const isRedeemed = c.status === 'Approved' || c.status === 'Disbursed';
       const isPending = c.status === 'Pending';
       const isRejected = c.status === 'Rejected' || c.status === 'Flagged';
@@ -208,6 +209,7 @@ export function VendorSalesReport() {
         vendorName: vInfo.vendorName,
         timestamp: ts,
         amount,
+        points,
         isRedeemed,
         isPending,
         isRejected,
@@ -282,6 +284,8 @@ export function VendorSalesReport() {
     const totalRedeemedAmount = redeemedClaims.reduce((sum, c) => sum + c.amount, 0);
     const totalPendingAmount = pendingClaims.reduce((sum, c) => sum + c.amount, 0);
     const totalRejectedAmount = rejectedClaims.reduce((sum, c) => sum + c.amount, 0);
+    const totalRewardPoints = redeemedClaims.reduce((sum, c) => sum + c.points, 0);
+    const pendingRewardPoints = pendingClaims.reduce((sum, c) => sum + c.points, 0);
 
     // Products Sold = Total verified scanned cartons/boxes
     // In tile distribution, each scanned/verified QR code corresponds to a physical carton sold
@@ -307,6 +311,8 @@ export function VendorSalesReport() {
     return {
       redeemedAmount: totalRedeemedAmount,
       redeemedCount: redeemedClaims.length,
+      totalRewardPoints,
+      pendingRewardPoints,
       pendingAmount: totalPendingAmount,
       pendingCount: pendingClaims.length,
       rejectedAmount: totalRejectedAmount,
@@ -342,6 +348,7 @@ export function VendorSalesReport() {
         const vRejected = vClaims.filter((c) => c.isRejected);
 
         const redeemedAmt = vRedeemed.reduce((sum, c) => sum + c.amount, 0);
+        const rewardPointsEarned = vRedeemed.reduce((sum, c) => sum + c.points, 0);
         const pendingAmt = vPending.reduce((sum, c) => sum + c.amount, 0);
         const rejectedAmt = vRejected.reduce((sum, c) => sum + c.amount, 0);
 
@@ -358,6 +365,7 @@ export function VendorSalesReport() {
           productsSold,
           salesTurnover,
           redeemedAmt,
+          rewardPointsEarned,
           redeemedCount: vRedeemed.length,
           pendingAmt,
           pendingCount: vPending.length,
@@ -449,6 +457,7 @@ export function VendorSalesReport() {
         'Products Sold (Units)',
         'Sales Turnover (INR)',
         'Cashback Redeemed (INR)',
+        'Total Reward Points Earned (pts)',
         'Cashback Pending (INR)',
         'Cashback Rejected (INR)',
         'Net Profit (INR)',
@@ -464,6 +473,7 @@ export function VendorSalesReport() {
         v.productsSold,
         v.salesTurnover,
         v.redeemedAmt,
+        v.rewardPointsEarned,
         v.pendingAmt,
         v.rejectedAmt,
         v.netProfit,
@@ -707,8 +717,8 @@ export function VendorSalesReport() {
         )}
       </section>
 
-      {/* 6 TOP EXECUTIVE KPI CARDS */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+      {/* 7 TOP EXECUTIVE KPI CARDS */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3.5">
         {/* Card 1: Total Cashback Redeemed */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
@@ -725,6 +735,25 @@ export function VendorSalesReport() {
           </div>
           <span className="text-[9.5px] text-slate-400 font-medium mt-2 pt-1.5 border-t border-slate-100 block">
             Instant UPI &amp; Bank Disbursed
+          </span>
+        </div>
+
+        {/* Card 1B: Total Reward Points */}
+        <div className="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-black uppercase tracking-wider">Reward Points</span>
+              <Award className="w-4 h-4 text-[#C84826]" />
+            </div>
+            <div className="text-xl font-black text-slate-900 mt-1 font-mono tracking-tight">
+              {kpiData.totalRewardPoints.toLocaleString('en-IN')} <span className="text-xs font-bold text-[#C84826]">pts</span>
+            </div>
+            <div className="text-[11px] text-amber-700 font-bold mt-0.5">
+              {kpiData.pendingRewardPoints.toLocaleString('en-IN')} pts Pending
+            </div>
+          </div>
+          <span className="text-[9.5px] text-slate-400 font-medium mt-2 pt-1.5 border-t border-slate-100 block">
+            Verified Loyalty Points Earned
           </span>
         </div>
 
@@ -1067,6 +1096,7 @@ export function VendorSalesReport() {
                 <th className="py-3.5 px-3 text-right min-w-[120px]">Products Sold</th>
                 <th className="py-3.5 px-3 text-right min-w-[130px]">Sales Turnover</th>
                 <th className="py-3.5 px-3 text-right min-w-[130px]">Cashback Redeemed</th>
+                <th className="py-3.5 px-3 text-right min-w-[155px]">Total Reward Points Earned</th>
                 <th className="py-3.5 px-3 text-right min-w-[120px]">Pending Escrow</th>
                 <th className="py-3.5 px-3 text-right min-w-[110px]">Rejected</th>
                 <th className="py-3.5 px-3 text-right min-w-[130px]">Net Profit (Est.)</th>
@@ -1078,7 +1108,7 @@ export function VendorSalesReport() {
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {vendorBreakdown.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-12 text-center text-slate-400">
+                  <td colSpan={12} className="py-12 text-center text-slate-400">
                     No vendors found matching your filter criteria. Try clearing the search query or selecting &ldquo;All Vendors&rdquo;.
                   </td>
                 </tr>
@@ -1121,6 +1151,11 @@ export function VendorSalesReport() {
                     {/* Cashback Redeemed */}
                     <td className="py-3 px-3 text-right font-mono font-bold text-emerald-700">
                       {formatINR(v.redeemedAmt)}
+                    </td>
+
+                    {/* Total Reward Points Earned */}
+                    <td className="py-3 px-3 text-right font-mono font-bold text-[#A62C11]">
+                      {Number(v.rewardPointsEarned || 0).toLocaleString('en-IN')} pts
                     </td>
 
                     {/* Pending Escrow */}
