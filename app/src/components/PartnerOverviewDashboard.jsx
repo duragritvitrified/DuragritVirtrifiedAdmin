@@ -996,12 +996,25 @@ export const PartnerOverviewDashboard = ({
                 const isApproved = claim.status === 'Approved' && !isDisbursed;
                 const isRejected = claim.status === 'Rejected' || claim.status === 'Flagged';
                 const skuCode = claim.skuCode || 'DG-ADH-01';
+                const rawDate = claim.date || claim.submittedAt || claim.createdAt;
+                const parsedDate = rawDate ? new Date(rawDate) : null;
+                const formattedDateTime =
+                  parsedDate && !Number.isNaN(parsedDate.getTime())
+                    ? parsedDate.toLocaleString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })
+                    : rawDate || 'Today';
 
                 return (
                   <div
                     key={claim.id}
                     onClick={() => setSelectedClaim(claim)}
-                    className={`p-2.5 rounded-xl border bg-white transition cursor-pointer shadow-2xs flex items-center justify-between gap-2 ${
+                    className={`p-2.5 rounded-xl border bg-white transition cursor-pointer shadow-2xs space-y-1.5 overflow-hidden ${
                       isDisbursed
                         ? 'border-emerald-300 border-l-4 border-l-emerald-500 hover:border-emerald-400'
                         : isApproved
@@ -1011,23 +1024,18 @@ export const PartnerOverviewDashboard = ({
                         : 'border-amber-300 border-l-4 border-l-amber-500 hover:border-amber-400'
                     }`}
                   >
-                    <div className="min-w-0">
-                      <div className="font-bold text-stone-900 text-xs flex items-center gap-1.5 truncate">
-                        <span className="font-mono text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.2 rounded border border-stone-200">
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <div className="font-bold text-stone-900 text-xs flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="font-mono text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded border border-stone-200 shrink-0">
                           {skuCode}
                         </span>
                         <span className="font-mono text-[11px] text-stone-600 truncate">
                           {claim.serialKey || claim.qrSerial || claim.batchCode}
                         </span>
                       </div>
-                      <div className="text-[10px] text-stone-500 mt-0.5 truncate">
-                        {claim.productName || 'High-Polymer Vitrified Adhesive'}
-                      </div>
-                    </div>
 
-                    <div className="text-right shrink-0">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider font-mono border ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider font-mono border shrink-0 whitespace-nowrap ${
                           isDisbursed
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             : isApproved
@@ -1060,14 +1068,20 @@ export const PartnerOverviewDashboard = ({
                         )}
                         <span>(₹{claim.amount})</span>
                       </span>
+                    </div>
 
-                      <div className="flex items-center justify-end gap-1.5 mt-0.5">
-                        <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold font-mono px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                    <div className="flex items-center justify-between gap-2 min-w-0 flex-wrap">
+                      <div className="text-[10px] text-stone-500 truncate min-w-0 flex-1">
+                        {claim.productName || 'High-Polymer Vitrified Adhesive'}
+                      </div>
+
+                      <div className="flex items-center justify-end gap-1.5 shrink-0">
+                        <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
                           <Sparkles className="w-2.5 h-2.5 text-amber-600" />
                           <span>{Number(claim.points ?? claim.rewardPoints ?? (Number(claim.amount || claim.claimValue) * 10)).toLocaleString('en-IN')} pts</span>
                         </span>
-                        <span className="text-[9.5px] text-stone-400 font-mono">
-                          {claim.date || claim.submittedAt || 'Today'}
+                        <span className="text-[9.5px] text-stone-500 font-mono whitespace-nowrap">
+                          {formattedDateTime}
                         </span>
                       </div>
                     </div>
