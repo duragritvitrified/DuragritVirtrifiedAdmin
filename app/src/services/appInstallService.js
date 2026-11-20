@@ -32,13 +32,28 @@ export const isVersionHigher = (vNew, vOld) => {
 
 export const DEFAULT_RELEASES = [
   {
+    id: 'REL-2026-024',
+    version: 'v5.0.3',
+    buildNumber: 173,
+    releaseDate: '2026-11-20 21:20:00',
+    title: 'Gift Rewards Catalog, Responsive KPI Boxes & Force OTA Sync v5.0.3',
+    changelog: 'Added Gift Rewards catalog page with optimized images and Approved+Paid points tracking, responsive KPI cards, and automatic Service Worker cache purge.',
+    status: 'LIVE',
+    isMandatory: true,
+    author: 'Corporate Release Ops',
+    downloadSize: '18.6 MB',
+    bundleHash: 'sha256-vendorgiftrewardsv503build173',
+    minSupportedVersion: 'v4.5.0',
+    targetDevices: 'All Connected Partners & Admins'
+  },
+  {
     id: 'REL-2026-023',
     version: 'v5.0.2',
     buildNumber: 172,
     releaseDate: '2026-11-11 01:40:00',
     title: 'Adaptive Launcher Icons & Consistent Brand Border System v5.0.2',
     changelog: 'Fixed Vendor adaptive icon mapping in Android manifest & mipmap-anydpi-v26, added consistent warm colorful borders across Contractor Escrow, Recent Scans, and Account Dossier.',
-    status: 'LIVE',
+    status: 'ARCHIVED',
     isMandatory: true,
     author: 'Corporate Release Ops',
     downloadSize: '18.4 MB',

@@ -1,11 +1,11 @@
 {
-  "version": "4.9.9",
-  "buildNumber": 169,
-  "adminVersion": "4.9.9",
-  "adminBuildNumber": 169,
-  "vendorVersion": "4.9.9",
-  "vendorBuildNumber": 169,
+  "version": "5.0.3",
+  "buildNumber": 173,
+  "adminVersion": "5.0.3",
+  "adminBuildNumber": 173,
+  "vendorVersion": "5.0.3",
+  "vendorBuildNumber": 173,
   "apkUrl": "https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk",
   "pwaUrl": "https://duragrit-virtrified-admin.vercel.app/app/?app=admin",
-  "changelog": "Product inspection modal with SKU, packing size, category, MRP, and photo on Web Admin Cashback Requests page v4.9.9."
+  "changelog": "Gift Rewards Catalog, Responsive KPI Boxes & Force OTA Sync v5.0.3."
 }
