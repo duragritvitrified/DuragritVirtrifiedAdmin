@@ -531,51 +531,51 @@ export const PartnerOverviewDashboard = ({
           {/* Top 2 Primary Metrics: Total Scans & Total Payout */}
           <div className="grid grid-cols-2 gap-2.5 relative z-10">
             {/* KPI 1: Kitna Scan Kiya with matching warm border */}
-            <div className="bg-gradient-to-br from-[#FFF8F5] to-white border border-[#F9CEB8] rounded-2xl p-3 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-stone-600 uppercase tracking-wider">
+            <div className="bg-gradient-to-br from-[#FFF8F5] to-white border border-[#F9CEB8] rounded-2xl p-3 shadow-2xs min-w-0 overflow-hidden">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] font-bold text-stone-600 uppercase tracking-wider truncate">
                   Total Scanned
                 </span>
-                <div className="w-6 h-6 rounded-lg bg-[#FEF2EE] text-[#A6300F] flex items-center justify-center">
+                <div className="w-6 h-6 rounded-lg bg-[#FEF2EE] text-[#A6300F] flex items-center justify-center shrink-0">
                   <QrCode className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-2xl font-black text-stone-900 font-mono tracking-tight">
-                  {totalScans}
+              <div className="mt-1 flex items-baseline gap-1 flex-wrap min-w-0">
+                <span className="text-[clamp(1.05rem,4.5vw,1.5rem)] font-black text-stone-900 font-mono tracking-tight leading-tight break-all">
+                  {totalScans.toLocaleString('en-IN')}
                 </span>
-                <span className="text-[11px] font-semibold text-stone-500 font-serif">
+                <span className="text-[10.5px] font-semibold text-stone-500 font-serif shrink-0">
                   {totalScans === 1 ? 'Bag' : 'Bags'}
                 </span>
               </div>
-              <span className="text-[9.5px] text-stone-400 block mt-0.5">
+              <span className="text-[9.5px] text-stone-400 block mt-0.5 truncate">
                 QR Serials Claimed
               </span>
             </div>
 
             {/* KPI 2: Kitna Payout Total / Kitne Points Total */}
-            <div className="bg-gradient-to-br from-[#FFF8F5] to-white border border-[#F9CEB8] rounded-2xl p-3 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#A6300F] uppercase tracking-wider">
+            <div className="bg-gradient-to-br from-[#FFF8F5] to-white border border-[#F9CEB8] rounded-2xl p-3 shadow-2xs min-w-0 overflow-hidden">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[9.5px] sm:text-[10px] font-bold text-[#A6300F] uppercase tracking-wider leading-tight min-w-0">
                   {rewardMode === 'points' ? 'Earned Reward Points' : 'Total Payout'}
                 </span>
-                <div className="w-6 h-6 rounded-lg bg-[#A6300F] text-white flex items-center justify-center shadow-xs">
+                <div className="w-6 h-6 rounded-lg bg-[#A6300F] text-white flex items-center justify-center shadow-xs shrink-0">
                   {rewardMode === 'points' ? <Sparkles className="w-3.5 h-3.5" /> : <Wallet className="w-3.5 h-3.5" />}
                 </div>
               </div>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-2xl font-black text-[#A6300F] font-mono tracking-tight">
+              <div className="mt-1 flex items-baseline gap-1 flex-wrap min-w-0">
+                <span className="text-[clamp(1.05rem,4.5vw,1.5rem)] font-black text-[#A6300F] font-mono tracking-tight leading-tight break-all">
                   {rewardMode === 'points'
                     ? `${totalEarnedPoints.toLocaleString('en-IN')}`
                     : `₹${totalPayout.toLocaleString('en-IN')}`}
                 </span>
                 {rewardMode === 'points' && (
-                  <span className="text-[10px] font-bold text-[#A6300F] font-mono uppercase">
+                  <span className="text-[10px] font-bold text-[#A6300F] font-mono uppercase shrink-0">
                     pts
                   </span>
                 )}
               </div>
-              <span className="text-[9.5px] text-[#A6300F]/70 block mt-0.5 font-medium">
+              <span className="text-[9.5px] text-[#A6300F]/70 block mt-0.5 font-medium leading-snug break-words">
                 {rewardMode === 'points'
                   ? `Approved (${pendingPoints.toLocaleString('en-IN')} Pts in Review)`
                   : 'Gross Claim Value'}
@@ -588,21 +588,21 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 3: Disbursed / Paid Kitna */}
             <div
               onClick={() => setClaimFilter('disbursed')}
-              className={`bg-gradient-to-br from-emerald-50/90 via-emerald-50/70 to-teal-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-emerald-50/90 via-emerald-50/70 to-teal-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs min-w-0 overflow-hidden ${
                 claimFilter === 'disbursed'
                   ? 'border-emerald-500 ring-2 ring-emerald-200/80'
                   : 'border-emerald-200/90 hover:border-emerald-300'
               }`}
             >
-              <div className="flex items-center gap-1.5 text-emerald-800">
+              <div className="flex items-center gap-1.5 text-emerald-800 min-w-0">
                 <div className="w-5 h-5 rounded-lg bg-emerald-100/90 flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 </div>
-                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-emerald-900">
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-emerald-900 truncate">
                   Paid
                 </span>
               </div>
-              <div className="text-base sm:text-lg font-black text-emerald-700 font-mono leading-tight tracking-tight">
+              <div className="text-[clamp(0.9rem,3.8vw,1.125rem)] font-black text-emerald-700 font-mono leading-tight tracking-tight break-words">
                 {rewardMode === 'points'
                   ? `${disbursedPoints.toLocaleString('en-IN')} pts`
                   : `₹${disbursedAmount.toLocaleString('en-IN')}`}
@@ -611,7 +611,7 @@ export const PartnerOverviewDashboard = ({
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
                   {disbursedCount} Paid ✓
                 </span>
-                <span className="text-[9px] font-semibold text-emerald-700">
+                <span className="text-[9px] font-semibold text-emerald-700 truncate">
                   {rewardMode === 'points' ? `₹${disbursedAmount.toLocaleString('en-IN')}` : `${disbursedPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
@@ -620,21 +620,21 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 4: Approve Kitna */}
             <div
               onClick={() => setClaimFilter('approved')}
-              className={`bg-gradient-to-br from-blue-50/90 via-blue-50/70 to-indigo-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-blue-50/90 via-blue-50/70 to-indigo-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs min-w-0 overflow-hidden ${
                 claimFilter === 'approved'
                   ? 'border-blue-500 ring-2 ring-blue-200/80'
                   : 'border-blue-200/90 hover:border-blue-300'
               }`}
             >
-              <div className="flex items-center gap-1.5 text-blue-800">
+              <div className="flex items-center gap-1.5 text-blue-800 min-w-0">
                 <div className="w-5 h-5 rounded-lg bg-blue-100/90 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                 </div>
-                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-blue-900">
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-blue-900 truncate">
                   Approved
                 </span>
               </div>
-              <div className="text-base sm:text-lg font-black text-blue-700 font-mono leading-tight tracking-tight">
+              <div className="text-[clamp(0.9rem,3.8vw,1.125rem)] font-black text-blue-700 font-mono leading-tight tracking-tight break-words">
                 {rewardMode === 'points'
                   ? `${approvedPoints.toLocaleString('en-IN')} pts`
                   : `₹${approvedAmount.toLocaleString('en-IN')}`}
@@ -643,7 +643,7 @@ export const PartnerOverviewDashboard = ({
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-blue-800 bg-white/90 px-2 py-0.5 rounded-full border border-blue-200 shadow-2xs">
                   {approvedCount} Queued
                 </span>
-                <span className="text-[9px] font-semibold text-blue-700">
+                <span className="text-[9px] font-semibold text-blue-700 truncate">
                   {rewardMode === 'points' ? `₹${approvedAmount.toLocaleString('en-IN')}` : `${approvedPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
@@ -652,21 +652,21 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 5: Pending Kitna Hai */}
             <div
               onClick={() => setClaimFilter('pending')}
-              className={`bg-gradient-to-br from-amber-50/90 via-amber-50/70 to-orange-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-amber-50/90 via-amber-50/70 to-orange-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs min-w-0 overflow-hidden ${
                 claimFilter === 'pending'
                   ? 'border-amber-500 ring-2 ring-amber-200/80'
                   : 'border-amber-200/90 hover:border-amber-300'
               }`}
             >
-              <div className="flex items-center gap-1.5 text-amber-800">
+              <div className="flex items-center gap-1.5 text-amber-800 min-w-0">
                 <div className="w-5 h-5 rounded-lg bg-amber-100/90 flex items-center justify-center shrink-0">
                   <Clock className="w-3.5 h-3.5 text-amber-600" />
                 </div>
-                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-amber-900">
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-amber-900 truncate">
                   Pending
                 </span>
               </div>
-              <div className="text-base sm:text-lg font-black text-amber-800 font-mono leading-tight tracking-tight">
+              <div className="text-[clamp(0.9rem,3.8vw,1.125rem)] font-black text-amber-800 font-mono leading-tight tracking-tight break-words">
                 {rewardMode === 'points'
                   ? `${pendingPoints.toLocaleString('en-IN')} pts`
                   : `₹${pendingAmount.toLocaleString('en-IN')}`}
@@ -675,7 +675,7 @@ export const PartnerOverviewDashboard = ({
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-amber-800 bg-white/90 px-2 py-0.5 rounded-full border border-amber-200 shadow-2xs">
                   {pendingCount} Review
                 </span>
-                <span className="text-[9px] font-semibold text-amber-700">
+                <span className="text-[9px] font-semibold text-amber-700 truncate">
                   {rewardMode === 'points' ? `₹${pendingAmount.toLocaleString('en-IN')}` : `${pendingPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
@@ -684,21 +684,21 @@ export const PartnerOverviewDashboard = ({
             {/* KPI 6: Reject Kitna Hai */}
             <div
               onClick={() => setClaimFilter('rejected')}
-              className={`bg-gradient-to-br from-rose-50/90 via-rose-50/70 to-red-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs ${
+              className={`bg-gradient-to-br from-rose-50/90 via-rose-50/70 to-red-50/50 border rounded-2xl p-3 flex flex-col justify-between gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-2xs min-w-0 overflow-hidden ${
                 claimFilter === 'rejected'
                   ? 'border-rose-500 ring-2 ring-rose-200/80'
                   : 'border-rose-200/90 hover:border-rose-300'
               }`}
             >
-              <div className="flex items-center gap-1.5 text-rose-800">
+              <div className="flex items-center gap-1.5 text-rose-800 min-w-0">
                 <div className="w-5 h-5 rounded-lg bg-rose-100/90 flex items-center justify-center shrink-0">
                   <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
                 </div>
-                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-rose-900">
+                <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-rose-900 truncate">
                   Rejected
                 </span>
               </div>
-              <div className="text-base sm:text-lg font-black text-rose-700 font-mono leading-tight tracking-tight">
+              <div className="text-[clamp(0.9rem,3.8vw,1.125rem)] font-black text-rose-700 font-mono leading-tight tracking-tight break-words">
                 {rewardMode === 'points'
                   ? `${rejectedPoints.toLocaleString('en-IN')} pts`
                   : `₹${rejectedAmount.toLocaleString('en-IN')}`}
@@ -707,7 +707,7 @@ export const PartnerOverviewDashboard = ({
                 <span className="inline-flex items-center text-[9.5px] font-mono font-bold text-rose-800 bg-white/90 px-2 py-0.5 rounded-full border border-rose-200 shadow-2xs">
                   {rejectedCount} Rejected
                 </span>
-                <span className="text-[9px] font-semibold text-rose-700">
+                <span className="text-[9px] font-semibold text-rose-700 truncate">
                   {rewardMode === 'points' ? `₹${rejectedAmount.toLocaleString('en-IN')}` : `${rejectedPoints.toLocaleString('en-IN')} pts`}
                 </span>
               </div>
