@@ -18,10 +18,11 @@ import {
   Rocket,
   Building2,
   Mail,
-  ShieldCheck
+  ShieldCheck,
+  Gift
 } from 'lucide-react';
 
-export function Step13_WelcomeDossier({ onBack }) {
+export function Step13_WelcomeDossier({ onBack, onNavigateGifts }) {
   const { currentUser } = useAuth();
   const { users = [], vendors = [] } = useData();
   const [copiedKey, setCopiedKey] = useState(false);
@@ -355,6 +356,28 @@ export function Step13_WelcomeDossier({ onBack }) {
                   <span>{copiedKey ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
+
+              {onNavigateGifts && (
+                <button
+                  type="button"
+                  onClick={onNavigateGifts}
+                  className="w-full bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100/80 hover:to-orange-100/70 border border-amber-300 rounded-xl p-3 flex items-center justify-between gap-2 transition active:scale-[0.98] cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 text-left">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
+                      <Gift className="w-4 h-4 text-amber-700" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-extrabold text-stone-900 block leading-tight">
+                        Gift Rewards Catalog
+                      </span>
+                      <span className="text-[10px] text-amber-800 font-semibold block">
+                        Check gifts &amp; required points →
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
         </div>

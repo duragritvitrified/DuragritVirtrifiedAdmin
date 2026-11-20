@@ -33,7 +33,8 @@ import {
   ChevronRight,
   TrendingUp,
   PieChart as PieChartIcon,
-  Package
+  Package,
+  Gift
 } from 'lucide-react';
 
 export const PartnerOverviewDashboard = ({
@@ -41,6 +42,7 @@ export const PartnerOverviewDashboard = ({
   onNavigateRequests,
   onNavigateDossier,
   onNavigateOrders,
+  onNavigateGifts,
   onLogout,
   isVendorMode = false
 }) => {
@@ -430,10 +432,15 @@ export const PartnerOverviewDashboard = ({
               <span className="inline-flex items-center font-mono text-[9px] sm:text-[9.5px] font-black text-[#A6300F] bg-[#FEF2EE] px-1.5 py-0.5 rounded border border-[#F9CEB8] shrink-0 tracking-wider">
                 {partner.id}
               </span>
-              <span className="inline-flex items-center gap-1 font-mono text-[9px] sm:text-[9.5px] font-black text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 shrink-0 shadow-2xs" title="Total Earned Points (Approved Scans)">
+              <button
+                type="button"
+                onClick={onNavigateGifts}
+                className="inline-flex items-center gap-1 font-mono text-[9px] sm:text-[9.5px] font-black text-amber-800 bg-amber-50 hover:bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 shrink-0 shadow-2xs cursor-pointer transition"
+                title="View Gift Rewards Catalog"
+              >
                 <Sparkles className="w-2.5 h-2.5 text-amber-600 shrink-0" />
                 <span>{totalEarnedPoints.toLocaleString('en-IN')} Pts</span>
-              </span>
+              </button>
             </div>
           </div>
         </div>
@@ -692,25 +699,45 @@ export const PartnerOverviewDashboard = ({
         </section>
 
         {/* ===================================================================== */}
-        {/* 4. PRIMARY ACTION BUTTON (View Request List) with colorful border     */}
+        {/* 4. PRIMARY ACTION BUTTONS (View Request List & Gift Rewards)          */}
         {/* ===================================================================== */}
-        <section className="pt-0.5">
+        <section className="pt-0.5 grid grid-cols-2 gap-2.5">
           <button
             onClick={onNavigateRequests}
-            className="w-full bg-gradient-to-r from-white via-[#FFFBF9] to-[#FFF5F0] hover:bg-stone-50 border-2 border-[#C84826]/50 hover:border-[#C84826] border-l-4 border-l-[#C84826] text-stone-900 py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98] transition cursor-pointer font-bold text-xs"
+            className="w-full bg-gradient-to-r from-white via-[#FFFBF9] to-[#FFF5F0] hover:bg-stone-50 border-2 border-[#C84826]/50 hover:border-[#C84826] border-l-4 border-l-[#C84826] text-stone-900 py-3 px-3 rounded-2xl flex items-center gap-2 shadow-2xs active:scale-[0.98] transition cursor-pointer font-bold text-xs"
           >
-            <div className="w-7 h-7 rounded-xl bg-[#FEF2EE] text-[#C84826] border border-[#F9CEB8] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-[#FEF2EE] text-[#C84826] border border-[#F9CEB8] flex items-center justify-center shrink-0">
               <ClipboardList className="w-4 h-4 text-[#A6300F]" />
             </div>
-            <div className="text-left">
-              <span className="block leading-tight font-extrabold text-[12px] text-stone-900">
-                View Request List
+            <div className="text-left min-w-0">
+              <span className="block leading-tight font-extrabold text-[11.5px] text-stone-900 truncate">
+                Request List
               </span>
-              <span className="block text-[9.5px] text-[#A6300F] font-mono font-bold">
-                {userClaims.length} Claims Recorded →
+              <span className="block text-[9.5px] text-[#A6300F] font-mono font-bold truncate">
+                {userClaims.length} Claims →
               </span>
             </div>
           </button>
+
+          {onNavigateGifts && (
+            <button
+              type="button"
+              onClick={onNavigateGifts}
+              className="w-full bg-gradient-to-r from-amber-50/90 via-[#FFF9EE] to-orange-50/70 hover:bg-amber-50 border-2 border-amber-300/80 hover:border-amber-500 border-l-4 border-l-amber-500 text-stone-900 py-3 px-3 rounded-2xl flex items-center gap-2 shadow-2xs active:scale-[0.98] transition cursor-pointer font-bold text-xs"
+            >
+              <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 border border-amber-200 flex items-center justify-center shrink-0">
+                <Gift className="w-4 h-4 text-amber-700" />
+              </div>
+              <div className="text-left min-w-0">
+                <span className="block leading-tight font-extrabold text-[11.5px] text-stone-900 truncate">
+                  Gift Rewards
+                </span>
+                <span className="block text-[9.5px] text-amber-800 font-mono font-bold truncate">
+                  View Catalog →
+                </span>
+              </div>
+            </button>
+          )}
         </section>
 
         {/* ===================================================================== */}

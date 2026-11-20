@@ -10,6 +10,7 @@ import { Step12_MobileModeration } from './modules/Step12_MobileModeration';
 import { AdminMobileApp } from './modules/AdminMobileApp';
 import { Step13_WelcomeDossier } from './modules/Step13_WelcomeDossier';
 import { Step14_VendorOrders } from './modules/Step14_VendorOrders';
+import { Step15_GiftRewards } from './modules/Step15_GiftRewards';
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 import { PartnerVerificationPortal } from './components/PartnerVerificationPortal';
 import {
@@ -470,6 +471,7 @@ export function App() {
                 onNavigateRequests={() => setCurrentScreen('requests')}
                 onNavigateDossier={() => setCurrentScreen('dossier')}
                 onNavigateOrders={() => setCurrentScreen('orders')}
+                onNavigateGifts={() => setCurrentScreen('gifts')}
                 onLogout={() => {
                   logout();
                   setCurrentScreen('signin');
@@ -481,6 +483,7 @@ export function App() {
                 onNavigateRequests={() => setCurrentScreen('requests')}
                 onNavigateDossier={() => setCurrentScreen('dossier')}
                 onNavigateOrders={() => setCurrentScreen('orders')}
+                onNavigateGifts={() => setCurrentScreen('gifts')}
                 onLogout={() => {
                   logout();
                   setCurrentScreen('signin');
@@ -491,6 +494,13 @@ export function App() {
 
           {currentScreen === 'dossier' && (
             <Step13_WelcomeDossier
+              onBack={() => setCurrentScreen('dashboard')}
+              onNavigateGifts={() => setCurrentScreen('gifts')}
+            />
+          )}
+
+          {currentScreen === 'gifts' && (
+            <Step15_GiftRewards
               onBack={() => setCurrentScreen('dashboard')}
             />
           )}

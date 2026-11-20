@@ -407,6 +407,96 @@ export function VendorSalesReport() {
     });
   }, [kpiData]);
 
+  // Actual Month-Wise Trajectory for Vendor Detail Popup (Fixed from Nov 2026 onwards, no dummy/test data)
+  const modalMonthlyTrajectory = useMemo(() => {
+    if (!detailModalVendor) return [];
+
+    const START_YEAR = 2026;
+    const START_MONTH = 10; // 0-indexed: 10 = November 2026
+    const startMs = new Date(START_YEAR, START_MONTH, 1).getTime();
+    const targetVendorId = String(detailModalVendor.vendorId || '').toUpperCase();
+
+    const vendorClaims = enrichedClaims.filter((c) => {
+      const cVendorId = String(c.vendorId || '').toUpperCase();
+      return cVendorId === targetVendorId && Number.isFinite(c.timestamp) && c.timestamp >= startMs;
+    });
+
+    const now = new Date();
+    let endYear = now.getFullYear();
+    let endMonth = now.getMonth();
+
+    // Ensure range never ends before Nov 2026 and includes any later claim months
+    if (endYear < START_YEAR || (endYear === START_YEAR && endMonth < START_MONTH)) {
+      endYear = START_YEAR;
+      endMonth = START_MONTH;
+    }
+    vendorClaims.forEach((c) => {
+      const d = new Date(c.timestamp);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      if (y > endYear || (y === endYear && m > endMonth)) {
+        endYear = y;
+        endMonth = m;
+      }
+    });
+
+    const byMonth = {};
+    vendorClaims.forEach((c) => {
+      const d = new Date(c.timestamp);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!byMonth[key]) {
+        byMonth[key] = { units: 0, sales: 0, cashback: 0 };
+      }
+      if (!c.isRejected) {
+        const qty = Number(c.quantity || c.units || 1);
+        const unitPrice = skuPriceMap[c.skuCode] || 750;
+        byMonth[key].units += qty;
+        byMonth[key].sales += Math.round(qty * unitPrice);
+      }
+      if (c.isRedeemed) {
+        byMonth[key].cashback += Number(c.amount || 0);
+      }
+    });
+
+    const rows = [];
+    let y = START_YEAR;
+    let m = START_MONTH;
+    while (y < endYear || (y === endYear && m <= endMonth)) {
+      const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+      const label = new Date(y, m, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+      const data = byMonth[key] || { units: 0, sales: 0, cashback: 0 };
+      const profit = Math.max(0, Math.round(data.sales * 0.36 - data.cashback));
+
+      let growth = null;
+      if (rows.length > 0) {
+        const prevSales = rows[rows.length - 1].sales;
+        if (prevSales > 0) {
+          growth = Number((((data.sales - prevSales) / prevSales) * 100).toFixed(1));
+        } else {
+          growth = data.sales > 0 ? 100.0 : 0.0;
+        }
+      }
+
+      rows.push({
+        key,
+        month: label,
+        units: data.units,
+        sales: data.sales,
+        cashback: data.cashback,
+        profit,
+        growth,
+      });
+
+      m += 1;
+      if (m > 11) {
+        m = 0;
+        y += 1;
+      }
+    }
+
+    return rows;
+  }, [detailModalVendor, enrichedClaims, skuPriceMap]);
+
   // Top SKUs Distribution
   const topSkuBreakdown = useMemo(() => {
     const skuMap = {};
@@ -1289,24 +1379,26 @@ export function VendorSalesReport() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium font-mono text-slate-700">
-                      {monthlyTrajectory.map((m, i) => {
-                        const vendorScale = detailModalVendor.productsSold / (kpiData.totalProductsSold || 1);
-                        const vSales = Math.round(m.sales * vendorScale);
-                        const vCashback = Math.round(m.cashback * vendorScale);
-                        const vProfit = Math.round(vSales * 0.36 - vCashback);
-                        const vUnits = Math.round(vSales / 750);
-
-                        return (
-                          <tr key={i} className="hover:bg-slate-50/60">
-                            <td className="py-2 px-3 font-sans font-bold text-slate-900">{m.month}</td>
-                            <td className="py-2 px-3 text-right">{vUnits}</td>
-                            <td className="py-2 px-3 text-right text-blue-700">{formatINR(vSales)}</td>
-                            <td className="py-2 px-3 text-right text-emerald-700">{formatINR(vCashback)}</td>
-                            <td className="py-2 px-3 text-right font-bold text-slate-900">{formatINR(vProfit)}</td>
-                            <td className="py-2 px-3 text-right text-emerald-600 font-bold">+{m.growth}%</td>
-                          </tr>
-                        );
-                      })}
+                      {modalMonthlyTrajectory.map((m) => (
+                        <tr key={m.key} className="hover:bg-slate-50/60">
+                          <td className="py-2 px-3 font-sans font-bold text-slate-900">{m.month}</td>
+                          <td className="py-2 px-3 text-right">{m.units}</td>
+                          <td className="py-2 px-3 text-right text-blue-700">{formatINR(m.sales)}</td>
+                          <td className="py-2 px-3 text-right text-emerald-700">{formatINR(m.cashback)}</td>
+                          <td className="py-2 px-3 text-right font-bold text-slate-900">{formatINR(m.profit)}</td>
+                          <td
+                            className={`py-2 px-3 text-right font-bold ${
+                              m.growth === null
+                                ? 'text-slate-400'
+                                : m.growth >= 0
+                                  ? 'text-emerald-600'
+                                  : 'text-rose-600'
+                            }`}
+                          >
+                            {m.growth === null ? '—' : `${m.growth >= 0 ? '+' : ''}${m.growth}%`}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
