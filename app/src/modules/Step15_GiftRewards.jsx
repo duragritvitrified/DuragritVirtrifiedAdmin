@@ -28,39 +28,83 @@ const GIFT_REWARDS = [
 
 export function Step15_GiftRewards({ onBack }) {
   const { currentUser } = useAuth();
-  const { claims = [], vendors = [] } = useData();
+  const { claims = [], vendors = [], users = [] } = useData();
   const [previewGift, setPreviewGift] = useState(null);
 
   const totalEarnedPoints = useMemo(() => {
-    const myMobile = String(currentUser?.mobile || currentUser?.phone || '').replace(/\D/g, '').slice(-10);
-    const myVendorId = String(currentUser?.vendorId || currentUser?.id || '').toLowerCase();
-    const myUserId = String(currentUser?.id || currentUser?.userId || '').toLowerCase();
-    const myName = String(currentUser?.companyName || currentUser?.name || '').toLowerCase().trim();
+    const currentDigits = String(currentUser?.mobile || currentUser?.phone || '').replace(/\D/g, '').slice(-10);
+    const currentEmail = String(currentUser?.email || '').toLowerCase().trim();
+    const currentId = String(currentUser?.vendorId || currentUser?.id || currentUser?.userId || '').toLowerCase();
+    const currentName = String(currentUser?.companyName || currentUser?.name || '').toLowerCase().trim();
 
     const matchedVendor = vendors.find((v) => {
       const vDigits = String(v.phone || v.mobile || '').replace(/\D/g, '').slice(-10);
       const vId = String(v.vendorId || v.id || '').toLowerCase();
-      return (vId && myVendorId && vId === myVendorId) || (myMobile.length === 10 && vDigits === myMobile);
+      const vEmail = String(v.email || '').toLowerCase().trim();
+      const vCompany = String(v.companyName || '').toLowerCase().trim();
+      const vContact = String(v.contactPerson || '').toLowerCase().trim();
+
+      return (
+        (currentDigits.length === 10 && vDigits === currentDigits) ||
+        (vId && currentId && (vId === currentId || currentId.includes(vId) || vId.includes(currentId))) ||
+        (currentEmail && vEmail && vEmail === currentEmail) ||
+        (currentName && vCompany && (vCompany === currentName || vCompany.includes(currentName) || currentName.includes(vCompany))) ||
+        (currentName && vContact && (vContact === currentName || vContact.includes(currentName) || currentName.includes(vContact)))
+      );
     });
-    const resolvedVendorId = String(matchedVendor?.vendorId || matchedVendor?.id || myVendorId).toLowerCase();
+
+    const matchedUser = users.find((u) => {
+      const uDigits = String(u.phone || u.mobile || '').replace(/\D/g, '').slice(-10);
+      const uId = String(u.id || '').toLowerCase();
+      const uEmail = String(u.email || '').toLowerCase().trim();
+      return (
+        (currentDigits.length === 10 && uDigits === currentDigits) ||
+        (uId && currentId && uId === currentId) ||
+        (currentEmail && uEmail && uEmail === currentEmail)
+      );
+    });
+
+    const partnerId = matchedVendor?.vendorId || matchedVendor?.id || currentUser?.vendorId || currentUser?.id || matchedUser?.id || '';
+    const partnerEmail = matchedVendor?.email || currentUser?.email || matchedUser?.email || '';
+    const partnerContact = matchedVendor?.contactPerson || currentUser?.name || matchedUser?.name || '';
+    const partnerCompany = matchedVendor?.companyName || matchedVendor?.name || currentUser?.companyName || currentUser?.name || '';
 
     const userClaims = claims.filter((c) => {
-      const cMobile = String(c.userMobile || c.mobile || '').replace(/\D/g, '').slice(-10);
-      const cVendorId = String(c.vendorId || '').toLowerCase();
-      const cUserId = String(c.userId || c.userSupabaseId || '').toLowerCase();
-      const cName = String(c.userName || c.contractorName || c.vendorName || '').toLowerCase().trim();
+      const cDigits = String(c.userMobile || c.contractorPhone || c.mobile || '').replace(/\D/g, '').slice(-10);
+      const cUserId = String(c.userId || c.contractorId || c.vendorId || '').toLowerCase().replace(/^(usr|vnd)-/i, '');
+      const myIdClean = String(partnerId || '').toLowerCase().replace(/^(usr|vnd)-/i, '');
+      const cEmail = String(c.userEmail || c.email || '').toLowerCase().trim();
+      const myEmail = String(partnerEmail || '').toLowerCase().trim();
+      const cName = String(c.userName || c.contractorName || c.companyName || c.vendorName || '').toLowerCase().trim();
+      const myContact = String(partnerContact || '').toLowerCase().trim();
+      const myCompany = String(partnerCompany || '').toLowerCase().trim();
 
-      if (myMobile.length === 10 && cMobile === myMobile) return true;
-      if (resolvedVendorId && cVendorId === resolvedVendorId) return true;
-      if (myUserId && (cUserId === myUserId || cVendorId === myUserId)) return true;
-      if (myName && cName && cName === myName) return true;
-      return false;
+      return (
+        (currentDigits.length === 10 && cDigits === currentDigits) ||
+        (myIdClean && cUserId && (cUserId === myIdClean || myIdClean.includes(cUserId) || cUserId.includes(myIdClean))) ||
+        (myEmail && cEmail && cEmail === myEmail) ||
+        (cName && (cName === myContact || cName === myCompany || cName.includes(myContact) || cName.includes(myCompany) || myCompany.includes(cName)))
+      );
     });
 
+    const isClaimDisbursed = (c) => {
+      const s = String(c.status || '').toLowerCase();
+      const p = String(c.payoutStatus || '').toLowerCase();
+      return s === 'disbursed' || p === 'disbursed' || s === 'completed' || s === 'paid' || p === 'paid' || Number(c.disbursedAmount || 0) > 0;
+    };
+
+    const isClaimApproved = (c) => {
+      const s = String(c.status || '').toLowerCase();
+      const p = String(c.payoutStatus || '').toLowerCase();
+      return !isClaimDisbursed(c) && (s === 'approved' || p === 'pending release' || s === 'in process');
+    };
+
+    const getClaimPoints = (c) => Number(c.points ?? c.rewardPoints ?? (Number(c.amount || c.claimValue) * 10)) || 0;
+
     return userClaims
-      .filter((c) => c.status === 'Approved' || c.status === 'Disbursed' || c.payoutStatus === 'Disbursed')
-      .reduce((sum, c) => sum + (Number(c.points ?? c.rewardPoints ?? (Number(c.amount || c.claimValue) * 10)) || 0), 0);
-  }, [claims, vendors, currentUser]);
+      .filter((c) => isClaimDisbursed(c) || isClaimApproved(c))
+      .reduce((sum, c) => sum + getClaimPoints(c), 0);
+  }, [claims, vendors, users, currentUser]);
 
   const unlockedCount = GIFT_REWARDS.filter((g) => totalEarnedPoints >= g.points).length;
 
