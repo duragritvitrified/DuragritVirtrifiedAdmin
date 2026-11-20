@@ -729,6 +729,7 @@ export function AppInstallReports() {
                 <th className="py-3.5 px-4">OS</th>
                 <th className="py-3.5 px-4">App Version &amp; Status</th>
                 <th className="py-3.5 px-4">Install Date</th>
+                <th className="py-3.5 px-4">Last Update</th>
                 <th className="py-3.5 px-4">Last Active</th>
                 <th className="py-3.5 px-4 text-center">Status</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -737,7 +738,7 @@ export function AppInstallReports() {
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {filteredInstalls.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-14 text-center text-slate-400">
+                  <td colSpan={9} className="py-14 text-center text-slate-400">
                     <Smartphone className="w-9 h-9 mx-auto text-slate-300 mb-2" />
                     <p className="font-bold text-slate-700">No mobile app installations recorded yet</p>
                     <p className="text-[11px] mt-0.5">
@@ -802,6 +803,10 @@ export function AppInstallReports() {
 
                       <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
                         {inst.installDate}
+                      </td>
+
+                      <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px] whitespace-nowrap">
+                        {inst.lastUpdated || inst.lastActiveTimestamp || inst.installDate || '—'}
                       </td>
 
                       <td className="py-3.5 px-4 text-slate-500 text-[11px]">
