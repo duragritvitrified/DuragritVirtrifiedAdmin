@@ -58,7 +58,7 @@ export function Step15_GiftRewards({ onBack }) {
     });
 
     return userClaims
-      .filter((c) => c.status === 'Approved' && c.payoutStatus !== 'Disbursed')
+      .filter((c) => c.status === 'Approved' || c.status === 'Disbursed' || c.payoutStatus === 'Disbursed')
       .reduce((sum, c) => sum + (Number(c.points ?? c.rewardPoints ?? (Number(c.amount || c.claimValue) * 10)) || 0), 0);
   }, [claims, vendors, currentUser]);
 
@@ -100,7 +100,7 @@ export function Step15_GiftRewards({ onBack }) {
         <section className="bg-gradient-to-r from-[#A6300F] to-[#C84826] text-white rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-white/80 block">
-              Approved Points
+              Earned Points (Approved + Paid)
             </span>
             <span className="text-xl font-black font-mono tracking-tight block mt-0.5">
               {totalEarnedPoints.toLocaleString('en-IN')} Pts
