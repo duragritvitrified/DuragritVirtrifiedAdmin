@@ -2,18 +2,28 @@ import React, { useMemo, useState } from 'react';
 import { ArrowLeft, Gift, Sparkles, CheckCircle2, Lock, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import img1500 from '../assets/gift-rewards/1500.jpg?inline';
+import img2000 from '../assets/gift-rewards/2000.jpg?inline';
+import img2500 from '../assets/gift-rewards/2500.jpg?inline';
+import img3500 from '../assets/gift-rewards/3500.jpg?inline';
+import img4500 from '../assets/gift-rewards/4500.jpg?inline';
+import img5000 from '../assets/gift-rewards/5000.jpg?inline';
+import img5500 from '../assets/gift-rewards/5500.jpg?inline';
+import img6000 from '../assets/gift-rewards/6000.jpg?inline';
+import img7000 from '../assets/gift-rewards/7000.jpg?inline';
+import img15000 from '../assets/gift-rewards/15000.jpg?inline';
 
 const GIFT_REWARDS = [
-  { points: 1500, image: '/gift-rewards/1500.jpg' },
-  { points: 2000, image: '/gift-rewards/2000.jpg' },
-  { points: 2500, image: '/gift-rewards/2500.jpg' },
-  { points: 3500, image: '/gift-rewards/3500.jpg' },
-  { points: 4500, image: '/gift-rewards/4500.jpg' },
-  { points: 5000, image: '/gift-rewards/5000.jpg' },
-  { points: 5500, image: '/gift-rewards/5500.jpg' },
-  { points: 6000, image: '/gift-rewards/6000.jpg' },
-  { points: 7000, image: '/gift-rewards/7000.jpg' },
-  { points: 15000, image: '/gift-rewards/15000.jpg' }
+  { points: 1500, image: img1500 },
+  { points: 2000, image: img2000 },
+  { points: 2500, image: img2500 },
+  { points: 3500, image: img3500 },
+  { points: 4500, image: img4500 },
+  { points: 5000, image: img5000 },
+  { points: 5500, image: img5500 },
+  { points: 6000, image: img6000 },
+  { points: 7000, image: img7000 },
+  { points: 15000, image: img15000 }
 ];
 
 export function Step15_GiftRewards({ onBack }) {

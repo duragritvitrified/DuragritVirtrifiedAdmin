@@ -10,7 +10,10 @@ import { Step12_MobileModeration } from './modules/Step12_MobileModeration';
 import { AdminMobileApp } from './modules/AdminMobileApp';
 import { Step13_WelcomeDossier } from './modules/Step13_WelcomeDossier';
 import { Step14_VendorOrders } from './modules/Step14_VendorOrders';
-import { Step15_GiftRewards } from './modules/Step15_GiftRewards';
+
+const Step15_GiftRewards = React.lazy(() =>
+  import('./modules/Step15_GiftRewards').then((m) => ({ default: m.Step15_GiftRewards }))
+);
 import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 import { PartnerVerificationPortal } from './components/PartnerVerificationPortal';
 import {
@@ -500,9 +503,17 @@ export function App() {
           )}
 
           {currentScreen === 'gifts' && (
-            <Step15_GiftRewards
-              onBack={() => setCurrentScreen('dashboard')}
-            />
+            <React.Suspense
+              fallback={
+                <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center text-xs font-bold text-stone-500">
+                  Loading Gift Rewards...
+                </div>
+              }
+            >
+              <Step15_GiftRewards
+                onBack={() => setCurrentScreen('dashboard')}
+              />
+            </React.Suspense>
           )}
 
           {currentScreen === 'scan' && (
