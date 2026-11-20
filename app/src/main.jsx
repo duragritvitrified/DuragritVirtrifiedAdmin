@@ -17,11 +17,28 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 // Register Dedicated Progressive Web App Service Worker for Vendor Portal with active update
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw-vendor.js', { scope: '/app/', updateViaCache: 'none' })
       .then((registration) => {
         console.log('[Vendor Mobile PWA] Service Worker registered with scope:', registration.scope);
         registration.update();
+
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            registration.update().catch(() => {});
+          }
+        });
 
         registration.addEventListener('updatefound', () => {
           const installingWorker = registration.installing;
@@ -30,7 +47,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
               if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 console.log('[Vendor Mobile PWA] New version installed. Activating immediately...');
                 installingWorker.postMessage({ type: 'SKIP_WAITING' });
-                window.location.reload();
               }
             });
           }

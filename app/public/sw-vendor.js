@@ -5,7 +5,7 @@
  * NEVER falls back to Admin ERP (/index.html).
  */
 
-const VENDOR_CACHE_NAME = 'duragrit-vendor-portal-v4.9.5-live';
+const VENDOR_CACHE_NAME = 'duragrit-vendor-portal-v5.0.3-live';
 const VENDOR_STATIC_ASSETS = [
   '/manifest-vendor.json',
   '/icon.svg',
@@ -26,6 +26,12 @@ self.addEventListener('install', (event) => {
     })
   );
   self.skipWaiting();
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Activate Event - Clean up stale vendor cache versions

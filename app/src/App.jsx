@@ -55,6 +55,15 @@ export function App() {
       if (refreshAllData) {
         await refreshAllData();
       }
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration('/app/').catch(() => null);
+        if (reg) {
+          await reg.update().catch(() => {});
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }
+      }
       setToastMsg('✓ Sync complete! Live data reflected.');
     } catch (_) {
       setToastMsg('Sync updated with local cache.');
