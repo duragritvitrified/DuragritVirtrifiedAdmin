@@ -445,8 +445,22 @@ export const PartnerOverviewDashboard = ({
           </div>
         </div>
 
-        {/* 4. Active Badge & Instant Live Sync Icon */}
+        {/* 4. Gift Rewards, Instant Live Sync & Active Badge */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {onNavigateGifts && (
+            <button
+              type="button"
+              onClick={onNavigateGifts}
+              title="Open Gift Rewards Catalog"
+              className="relative p-1.5 sm:p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#C84826] border border-amber-300 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
+            >
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#C84826]"></span>
+              </span>
+              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C84826] animate-pulse" />
+            </button>
+          )}
           <button
             type="button"
             onClick={handleRefresh}
