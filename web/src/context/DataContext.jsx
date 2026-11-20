@@ -1161,8 +1161,8 @@ export const DataProvider = ({ children }) => {
           supabase.from('cashback_requests')
             .select('request_id, qr_serial, flag_reason, timestamp')
             .or('qr_serial.eq.DURAGRIT_APP_INSTALLS,request_id.ilike.SYNC_APP_INSTALL%')
-            .order('timestamp', { ascending: true })
-            .limit(30),
+            .order('timestamp', { ascending: false })
+            .limit(100),
         ]);
 
         const rawRealClaims = realClaimRes.status === 'fulfilled' && !realClaimRes.value.error ? (realClaimRes.value.data || []) : [];
@@ -1577,12 +1577,12 @@ export const DataProvider = ({ children }) => {
         // I. Process App Installs & Telemetry
         if (installRes.status === 'fulfilled' && !installRes.value.error) {
           const instMap = new Map();
-          (installRes.value.data || []).forEach((row) => {
+          [...(installRes.value.data || [])].reverse().forEach((row) => {
             try {
               const parsed = JSON.parse(row.flag_reason || '[]');
               const items = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? [parsed] : []);
               items.forEach((inst) => {
-                const key = String(inst.deviceUuid || inst.id || inst.userId || '').toUpperCase();
+                const key = String(inst.userId || inst.deviceUuid || inst.id || '').toUpperCase();
                 if (key) instMap.set(key, { ...(instMap.get(key) || {}), ...inst });
               });
             } catch (_) { }
