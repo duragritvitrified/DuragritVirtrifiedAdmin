@@ -58,7 +58,7 @@ export function Step15_GiftRewards({ onBack }) {
     });
 
     return userClaims
-      .filter((c) => c.status === 'Approved' || c.status === 'Disbursed')
+      .filter((c) => c.status === 'Approved' && c.payoutStatus !== 'Disbursed')
       .reduce((sum, c) => sum + (Number(c.points ?? c.rewardPoints ?? (Number(c.amount || c.claimValue) * 10)) || 0), 0);
   }, [claims, vendors, currentUser]);
 
@@ -100,7 +100,7 @@ export function Step15_GiftRewards({ onBack }) {
         <section className="bg-gradient-to-r from-[#A6300F] to-[#C84826] text-white rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-white/80 block">
-              Your Earned Points
+              Approved Points
             </span>
             <span className="text-xl font-black font-mono tracking-tight block mt-0.5">
               {totalEarnedPoints.toLocaleString('en-IN')} Pts
@@ -131,12 +131,12 @@ export function Step15_GiftRewards({ onBack }) {
                     : 'border-[#ECEAE6] hover:border-[#F9CEB8]'
                 }`}
               >
-                <div className="w-full aspect-square bg-white p-2 flex items-center justify-center border-b border-stone-100 relative">
+                <div className="w-full h-32 sm:h-36 bg-white p-2.5 flex items-center justify-center border-b border-stone-100 relative overflow-hidden">
                   <img
                     src={gift.image}
                     alt={`${gift.points} Points Gift Reward`}
                     loading="lazy"
-                    className="w-full h-full object-contain rounded-lg"
+                    className="max-h-24 sm:max-h-28 max-w-full w-auto h-auto object-contain rounded-lg"
                   />
                   <span
                     className={`absolute top-2 right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${

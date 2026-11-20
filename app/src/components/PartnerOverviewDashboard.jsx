@@ -445,22 +445,8 @@ export const PartnerOverviewDashboard = ({
           </div>
         </div>
 
-        {/* 4. Gift Rewards, Instant Live Sync & Active Badge */}
+        {/* 4. Active Badge & Instant Live Sync Icon */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {onNavigateGifts && (
-            <button
-              type="button"
-              onClick={onNavigateGifts}
-              title="Open Gift Rewards Catalog"
-              className="relative p-1.5 sm:p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#C84826] border border-amber-300 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
-            >
-              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#C84826]"></span>
-              </span>
-              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C84826] animate-pulse" />
-            </button>
-          )}
           <button
             type="button"
             onClick={handleRefresh}
@@ -486,11 +472,26 @@ export const PartnerOverviewDashboard = ({
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#FEF2EE] to-transparent rounded-bl-full pointer-events-none -mr-8 -mt-8"></div>
 
           <div className="flex items-center justify-between relative z-10 flex-wrap gap-2">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <TrendingUp className="w-4 h-4 text-[#A6300F]" />
               <span className="text-[11px] font-black tracking-wider text-stone-900 uppercase">
                 {rewardMode === 'points' ? 'Reward Points & Scan Summary' : 'Payout & Scan Summary'}
               </span>
+              {onNavigateGifts && (
+                <button
+                  type="button"
+                  onClick={onNavigateGifts}
+                  title="Open Gift Rewards Catalog"
+                  className="relative inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 hover:from-amber-200 hover:to-orange-200 text-[#A6300F] border border-amber-400 shadow-xs transition active:scale-95 cursor-pointer ml-0.5"
+                >
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C84826] opacity-80"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#A6300F]"></span>
+                  </span>
+                  <Gift className="w-3.5 h-3.5 text-[#C84826] animate-pulse" />
+                  <span className="text-[9.5px] font-black uppercase tracking-wide">Gifts</span>
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-1.5">
               {/* Dual Mode Switch: Points & Cashback */}
