@@ -231,6 +231,48 @@ export function Step13_WelcomeDossier({ onBack, onNavigateGifts }) {
 
         {/* Credentials & Dossier Body */}
         <div className="p-4 bg-[#FAF9F6] space-y-4">
+          {onNavigateGifts && (
+            <>
+              <style>{`
+                @keyframes giftBannerShift {
+                  0%, 100% { background-position: 0% 50%; box-shadow: 0 4px 14px rgba(200, 72, 38, 0.22); }
+                  50% { background-position: 100% 50%; box-shadow: 0 6px 20px rgba(217, 119, 6, 0.36); }
+                }
+              `}</style>
+              <button
+                type="button"
+                onClick={onNavigateGifts}
+                style={{
+                  backgroundImage: 'linear-gradient(120deg, #A6300F, #D97706, #C84826, #B45309)',
+                  backgroundSize: '250% 250%',
+                  animation: 'giftBannerShift 3s ease infinite'
+                }}
+                className="w-full rounded-2xl p-3.5 text-white border-2 border-amber-300/80 flex items-center justify-between gap-3 transition active:scale-[0.98] cursor-pointer relative overflow-hidden"
+              >
+                <div className="flex items-center gap-3 text-left min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0 relative">
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-90"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-300"></span>
+                    </span>
+                    <Gift className="w-5 h-5 text-amber-200 animate-pulse" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-black uppercase tracking-wider text-white block leading-tight">
+                      Gift Rewards Catalog
+                    </span>
+                    <span className="text-[10.5px] text-amber-100 font-semibold block mt-0.5 truncate">
+                      Check gifts &amp; required points to unlock
+                    </span>
+                  </div>
+                </div>
+                <span className="shrink-0 bg-white text-[#A6300F] font-black text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-xl shadow-xs animate-pulse">
+                  Open →
+                </span>
+              </button>
+            </>
+          )}
+
           {/* Colorful yet simple professional border on Vendor Account & Credentials section */}
           <div className="bg-white rounded-2xl border-2 border-[#C84826]/70 border-l-4 border-l-[#C84826] shadow-sm overflow-hidden">
             <div className="bg-gradient-to-r from-orange-50 via-amber-50/70 to-rose-50/40 px-4 py-2.5 border-b border-orange-200/70 flex items-center justify-between">
@@ -356,28 +398,6 @@ export function Step13_WelcomeDossier({ onBack, onNavigateGifts }) {
                   <span>{copiedKey ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
-
-              {onNavigateGifts && (
-                <button
-                  type="button"
-                  onClick={onNavigateGifts}
-                  className="w-full bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100/80 hover:to-orange-100/70 border border-amber-300 rounded-xl p-3 flex items-center justify-between gap-2 transition active:scale-[0.98] cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 text-left">
-                    <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
-                      <Gift className="w-4 h-4 text-amber-700" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-extrabold text-stone-900 block leading-tight">
-                        Gift Rewards Catalog
-                      </span>
-                      <span className="text-[10px] text-amber-800 font-semibold block">
-                        Check gifts &amp; required points →
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              )}
             </div>
           </div>
         </div>
