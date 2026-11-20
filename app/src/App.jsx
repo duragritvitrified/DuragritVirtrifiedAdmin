@@ -55,6 +55,9 @@ export function App() {
       if (refreshAllData) {
         await refreshAllData();
       }
+      if (currentUser?.isAuthenticated) {
+        syncMobileClientDevice(currentUser);
+      }
       if ('serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.getRegistration('/app/').catch(() => null);
         if (reg) {
@@ -168,6 +171,7 @@ export function App() {
       setCurrentScreen('signin');
     } else {
       refreshAllData?.();
+      syncMobileClientDevice(currentUser);
     }
   }, [currentUser?.isAuthenticated, refreshAllData]);
 

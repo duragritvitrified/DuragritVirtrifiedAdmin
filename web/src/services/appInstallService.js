@@ -568,14 +568,24 @@ export const saveDeviceInstalls = (installs, options = {}) => {
 
 export const mergeCloudAppInstalls = (cloudList = []) => {
   const local = getDeviceInstalls();
+  const latestVer = getLatestRelease()?.version || CURRENT_BUILT_IN_VERSION;
   const map = new Map();
+  const keyFor = (item) => String(item.userId || item.deviceUuid || item.id || '').toUpperCase();
   local.forEach((item) => {
-    const k = String(item.deviceUuid || item.id || item.userId || '').toUpperCase();
+    const k = keyFor(item);
     if (k) map.set(k, item);
   });
   (cloudList || []).forEach((item) => {
-    const k = String(item.deviceUuid || item.id || item.userId || '').toUpperCase();
-    if (k) map.set(k, { ...(map.get(k) || {}), ...item });
+    const k = keyFor(item);
+    if (k) {
+      const mergedItem = { ...(map.get(k) || {}), ...item };
+      const ver = mergedItem.appVersion || latestVer;
+      const isLatest = ver === latestVer || !isVersionHigher(latestVer, ver);
+      mergedItem.isLatestVersion = isLatest;
+      mergedItem.hasPendingUpdate = !isLatest;
+      mergedItem.pendingVersion = isLatest ? null : latestVer;
+      map.set(k, mergedItem);
+    }
   });
   const merged = Array.from(map.values()).sort(
     (a, b) => new Date(b.installDate || b.lastActiveTimestamp || 0) - new Date(a.installDate || a.lastActiveTimestamp || 0)

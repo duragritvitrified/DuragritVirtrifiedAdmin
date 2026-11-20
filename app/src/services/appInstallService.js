@@ -552,11 +552,14 @@ export const saveDeviceInstalls = (installs, options = {}) => {
     if (!options.skipCloudSync && typeof window !== 'undefined' && typeof fetch === 'function') {
       const syncUrl = (window.location.hostname.endsWith('.vercel.app') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? '/api/sync'
-        : 'https://duragrit-virtrified-admin-khaki.vercel.app/api/sync';
+        : 'https://duragrit-virtrified-admin.vercel.app/api/sync';
+      const bodyPayload = options.singleRecord
+        ? { appInstall: options.singleRecord }
+        : { appInstalls: installs };
       fetch(syncUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appInstalls: installs }),
+        body: JSON.stringify(bodyPayload),
       }).catch(() => {});
     }
     return true;
@@ -592,7 +595,7 @@ export const registerAppInstall = (data) => {
 
   const existingIdx = list.findIndex(
     i => (data.deviceUuid && i.deviceUuid === data.deviceUuid) ||
-         (data.userId && i.userId === data.userId && i.deviceModel === data.deviceModel)
+         (data.userId && i.userId && String(i.userId).toUpperCase() === String(data.userId).toUpperCase())
   );
 
   const deviceVer = data.appVersion || latestVer;
@@ -648,18 +651,20 @@ export const registerAppInstall = (data) => {
     screenResolution: '1440 x 3120 QHD+'
   };
 
+  let savedRecord = record;
   if (existingIdx >= 0) {
-    list[existingIdx] = {
+    savedRecord = {
       ...list[existingIdx],
       ...record,
       id: list[existingIdx].id
     };
+    list[existingIdx] = savedRecord;
   } else {
-    list.unshift(record);
+    list.unshift(savedRecord);
   }
 
-  saveDeviceInstalls(list);
-  return record;
+  saveDeviceInstalls(list, { singleRecord: savedRecord });
+  return savedRecord;
 };
 
 // ============================================================================
@@ -891,21 +896,26 @@ export const syncMobileClientDevice = (user) => {
   const currentVer = getClientInstalledVersion();
   const latestRelease = getLatestRelease();
   const isLatest = currentVer === latestRelease.version;
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const detectedOs = isIOS ? 'iOS' : 'Android';
+  const detectedModel = isIOS ? 'iPhone' : (/Android/i.test(ua) ? 'Android Smartphone' : 'Mobile Web Portal');
 
+  const resolvedUserId = user?.vendorId || user?.id || user?.userId || 'USR-1042';
   const data = {
     deviceUuid: uuid,
-    userId: user?.id || user?.userId || 'USR-1042',
-    userName: user?.name || user?.fullLegalName || 'Partner',
-    userRole: user?.role || 'Contractor',
+    userId: resolvedUserId,
+    userName: user?.companyName || user?.name || user?.fullLegalName || 'Partner',
+    userRole: user?.role || 'Vendor',
     userMobile: user?.mobile || user?.phone || '+91 98000 00000',
     userEmail: user?.email || 'partner@duragrit.com',
     location: user?.location || 'Morbi Ceramic Cluster',
-    deviceModel: 'Samsung Galaxy S24 Ultra',
-    deviceBrand: 'Samsung',
+    deviceModel: detectedModel,
+    deviceBrand: isIOS ? 'Apple' : 'Android',
     deviceType: 'Smartphone',
-    os: 'Android 14',
+    os: detectedOs,
     appVersion: currentVer,
-    appBuildNumber: latestRelease.buildNumber || 148,
+    appBuildNumber: latestRelease.buildNumber || 173,
     isLatestVersion: isLatest,
     hasPendingUpdate: !isLatest,
     pendingVersion: !isLatest ? latestRelease.version : null
