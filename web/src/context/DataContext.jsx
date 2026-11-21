@@ -3617,6 +3617,11 @@ export const DataProvider = ({ children }) => {
       claimAction: targetClaim ? {
         claimId: targetClaim.id,
         requestId: targetClaim.requestId,
+        vendorId: targetClaim.vendorId,
+        vendorName: targetClaim.vendorName,
+        userId: targetClaim.userId,
+        userName: targetClaim.userName,
+        userMobile: targetClaim.userMobile,
         status: 'Rejected',
         payoutStatus: 'Rejected',
         flagReason: reason,
@@ -3645,9 +3650,14 @@ export const DataProvider = ({ children }) => {
     }
 
     if (SB_ONLINE && existing) {
-      pushClaimActionToSupabase({
+      await pushClaimActionToSupabase({
         claimId: existing.id,
         requestId: existing.requestId,
+        vendorId: existing.vendorId,
+        vendorName: existing.vendorName,
+        userId: existing.userId,
+        userName: existing.userName,
+        userMobile: existing.userMobile,
         status: 'Rejected',
         payoutStatus: 'Rejected',
         flagReason: reason,
@@ -3655,9 +3665,33 @@ export const DataProvider = ({ children }) => {
         rejectedAt: rejectedIso,
       });
 
+      let updatedFlagReason = reason;
+      try {
+        updatedFlagReason = JSON.stringify({
+          vendorName: existing.vendorName,
+          vendorId: existing.vendorId,
+          userId: existing.userId,
+          userName: existing.userName,
+          userMobile: existing.userMobile,
+          userRole: existing.userRole,
+          productName: existing.productName,
+          skuCode: existing.skuCode,
+          packSize: existing.packSize || '20 kg',
+          category: existing.category || 'Adhesives',
+          subCategory: existing.subCategory || 'High-Polymer Vitrified',
+          mrp: existing.mrp || 650,
+          claimValue: existing.amount || existing.claimValue || 0,
+          serialKey: existing.serialKey || existing.qrSerial,
+          remarks: reason,
+          flagReason: reason,
+          rejectedAt: rejectedIso,
+          payoutStatus: 'Rejected'
+        });
+      } catch (_) {}
+
       const q = existing.supabaseId
-        ? supabase.from('cashback_requests').update({ status: 'Rejected', flag_reason: reason, updated_at: new Date().toISOString() }).eq('id', existing.supabaseId)
-        : supabase.from('cashback_requests').update({ status: 'Rejected', flag_reason: reason, updated_at: new Date().toISOString() }).eq('request_id', existing.requestId || existing.id);
+        ? supabase.from('cashback_requests').update({ status: 'Rejected', flag_reason: updatedFlagReason, updated_at: rejectedIso }).eq('id', existing.supabaseId)
+        : supabase.from('cashback_requests').update({ status: 'Rejected', flag_reason: updatedFlagReason, updated_at: rejectedIso }).eq('request_id', existing.requestId || existing.id);
       await q;
     }
     return { success: true };

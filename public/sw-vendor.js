@@ -5,7 +5,7 @@
  * NEVER falls back to Admin ERP (/index.html).
  */
 
-const VENDOR_CACHE_NAME = 'duragrit-vendor-portal-v5.0.3-live';
+const VENDOR_CACHE_NAME = 'duragrit-vendor-portal-v5.0.4-live';
 const VENDOR_STATIC_ASSETS = [
   '/manifest-vendor.json',
   '/icon.svg',

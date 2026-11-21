@@ -1,11 +1,11 @@
 {
-  "version": "5.0.3",
-  "buildNumber": 173,
-  "adminVersion": "5.0.3",
-  "adminBuildNumber": 173,
-  "vendorVersion": "5.0.3",
-  "vendorBuildNumber": 173,
+  "version": "5.0.4",
+  "buildNumber": 174,
+  "adminVersion": "5.0.4",
+  "adminBuildNumber": 174,
+  "vendorVersion": "5.0.4",
+  "vendorBuildNumber": 174,
   "apkUrl": "https://duragrit-virtrified-admin.vercel.app/apk/duragrit-admin-command-v2.apk",
   "pwaUrl": "https://duragrit-virtrified-admin.vercel.app/app/?app=admin",
-  "changelog": "Gift Rewards Catalog, Responsive KPI Boxes & Force OTA Sync v5.0.3."
+  "changelog": "Preserve vendor metadata on Rejected claims so Rejected tab updates immediately on Vendor Mobile App v5.0.4."
 }

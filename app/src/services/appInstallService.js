@@ -6,10 +6,10 @@ export const RELEASES_KEY = 'duragrit_app_releases_v1';
 export const CLIENT_VERSION_KEY = 'duragrit_client_installed_version';
 export const CLIENT_DEVICE_UUID_KEY = 'duragrit_client_device_uuid';
 
-export const CURRENT_BUILT_IN_VERSION = 'v5.0.3';
-export const CURRENT_BUILT_IN_BUILD = 173;
-export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v5.0.3';
-export const CURRENT_ADMIN_BUILT_IN_BUILD = 173;
+export const CURRENT_BUILT_IN_VERSION = 'v5.0.4';
+export const CURRENT_BUILT_IN_BUILD = 174;
+export const CURRENT_ADMIN_BUILT_IN_VERSION = 'v5.0.4';
+export const CURRENT_ADMIN_BUILT_IN_BUILD = 174;
 
 const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
